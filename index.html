@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cuaderno del profesor · Evaluación y Corrector</title>
+<meta name="theme-color" content="#0a1120">
+<!-- Ajustes para usarla como app desde la pantalla de inicio en iPad/iPhone (Safari > Compartir > Añadir a pantalla de inicio) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Eval. y Corrector">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="stylesheet" href="css/app.css">
+<script src="js/registro-sw.js"></script>
+</head>
+<body>
+<header id="appHeader">
+  <div class="wrap">
+    <div class="flex" style="justify-content:space-between">
+      <div class="flex" style="gap:10px">
+        <h1 style="cursor:pointer" onclick="irInicio()" id="pageH1">Cuaderno del profesor</h1>
+        <button class="ghost" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="buscarAbrir()" title="Buscar (Ctrl/Cmd + K)">🔍 Buscar</button>
+        <button class="ghost" id="temaToggleBtn" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="toggleTemaApp()" title="Cambiar modo claro/oscuro">🌙</button>
+        <button class="ghost" id="anchoToggleBtn" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="toggleAnchoApp()" title="Alternar versión iPad / escritorio">🖥️</button>
+      </div>
+      <div class="flex" id="backupBar"></div>
+    </div>
+  </div>
+</header>
+<div class="grouptabs" id="groupTabs"></div>
+<main id="app"></main>
+
+<button id="cronoFab" class="crono-fab" onclick="cronoTogglePanel()" title="Cronómetro">⏱️</button>
+<div id="cronoPanel" class="crono-panel">
+  <div class="flex" style="justify-content:space-between;align-items:center">
+    <strong style="font-size:14px">⏱️ Cronómetro</strong>
+    <button class="ghost" style="padding:3px 9px" onclick="cronoTogglePanel()">✕</button>
+  </div>
+  <div class="crono-display" id="cronoDisplay">00:00</div>
+  <div class="crono-quick">
+    <button class="ghost" onclick="cronoIniciarMinutos(1)">1 min</button>
+    <button class="ghost" onclick="cronoIniciarMinutos(5)">5 min</button>
+    <button class="ghost" onclick="cronoIniciarMinutos(10)">10 min</button>
+    <button class="ghost" onclick="cronoIniciarMinutos(15)">15 min</button>
+    <button class="ghost" onclick="cronoIniciarMinutos(20)">20 min</button>
+    <button class="ghost" onclick="cronoIniciarMinutos(30)">30 min</button>
+    <button class="ghost" onclick="cronoIniciarMinutos(45)">45 min</button>
+  </div>
+  <div class="flex" style="margin-top:10px;gap:6px;align-items:center">
+    <input type="number" id="cronoCustomMin" class="in" style="width:60px" placeholder="min" min="0">
+    <span style="color:var(--mut)">:</span>
+    <input type="number" id="cronoCustomSeg" class="in" style="width:60px" placeholder="seg" min="0" max="59">
+    <button class="btn" style="flex:1" onclick="cronoIniciarCustom()">Iniciar</button>
+  </div>
+  <div class="flex" style="margin-top:12px;gap:8px">
+    <button class="btn" id="cronoBtnPausar" style="flex:1" onclick="cronoTogglePausa()">⏸ Pausar</button>
+    <button class="ghost" style="flex:1;border:1px solid var(--line)" onclick="cronoReiniciar()">↺ Reiniciar</button>
+  </div>
+</div>
+
+<script src="js/00-preferencias-ui.js"></script>
+<script src="js/datos/competencias.js"></script>
+<script src="js/datos/catalogos-curriculares.js"></script>
+<script src="js/datos/modelos-nese-refuerzo.js"></script>
+<script src="js/nucleo/utilidades.js"></script>
+<script src="js/nucleo/plantillas-materias.js"></script>
+<script src="js/nucleo/modelo-datos.js"></script>
+<script src="js/nucleo/estado-migraciones.js"></script>
+<script src="js/nucleo/guardado-copias.js"></script>
+<script src="js/nucleo/cifrado.js"></script>
+<script src="js/curriculo/catalogos-importador.js"></script>
+<script src="js/evaluacion/calculo-notas.js"></script>
+<script src="js/ui/barra-superior.js"></script>
+<script src="js/inicio/cronometro.js"></script>
+<script src="js/inicio/calendario.js"></script>
+<script src="js/inicio/reuniones.js"></script>
+<script src="js/alumnado/plan-refuerzo.js"></script>
+<script src="js/alumnado/plan-repeticion.js"></script>
+<script src="js/alumnado/alumnos-nese.js"></script>
+<script src="js/inicio/horario.js"></script>
+<script src="js/inicio/alertas-home.js"></script>
+<script src="js/ui/grupo-y-copias.js"></script>
+<script src="js/alumnado/plano-aula.js"></script>
+<script src="js/alumnado/ficha-familia.js"></script>
+<script src="js/evaluacion/actividades.js"></script>
+<script src="js/evaluacion/calificar.js"></script>
+<script src="js/resultados/informe-detallado.js"></script>
+<script src="js/resultados/resultados.js"></script>
+<script src="js/resultados/cobertura-diagnostico.js"></script>
+<script src="js/clase/asistencia.js"></script>
+<script src="js/clase/convivencia.js"></script>
+<script src="js/clase/familias.js"></script>
+<script src="js/clase/diario.js"></script>
+<script src="js/programacion/programacion-aula.js"></script>
+<script src="js/programacion/actividades-y-texto-rico.js"></script>
+<script src="js/programacion/detalle-imprimir.js"></script>
+<script src="js/programacion/planificacion-temporal.js"></script>
+<script src="js/memoria/memoria-curso.js"></script>
+<script src="js/ajustes/ajustes-grupo.js"></script>
+<script src="js/informes/exportaciones.js"></script>
+<script src="js/informes/impresion.js"></script>
+<script src="js/informes/informe-final.js"></script>
+<script src="js/resumen/resumen-grupo.js"></script>
+<script src="js/corrector/motor-rubricas.js"></script>
+<script src="js/corrector/programacion-corrector.js"></script>
+<script src="js/corrector/navegacion-lista-crear.js"></script>
+<script src="js/corrector/editor-rubrica.js"></script>
+<script src="js/corrector/corregir.js"></script>
+<script src="js/ui/buscador.js"></script>
+<script src="js/ui/bienvenida.js"></script>
+<script src="js/ui/render-accesibilidad.js"></script>
+<script src="js/corrector/editor-examenes.js"></script>
+<script src="js/99-arranque.js"></script>
+</body>
+</html>

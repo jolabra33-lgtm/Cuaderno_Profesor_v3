@@ -1,0 +1,25 @@
+Para que los gráficos y la vista previa de PDF funcionen SIN internet
+(tanto abriendo el archivo suelto en el PC como en GitHub Pages), descarga
+estos 3 archivos y guárdalos en esta misma carpeta (tutoria/vendor/) con
+EXACTAMENTE estos nombres:
+
+1. chart.umd.min.js
+   https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js
+
+2. pdf.min.js
+   https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js
+
+3. pdf.worker.min.js
+   https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js
+
+Cómo descargarlos (cualquiera de estas opciones):
+- Clic derecho sobre cada enlace (abierto en el navegador) → "Guardar como…"
+  → guarda dentro de tutoria/vendor/ con el nombre indicado arriba.
+- O en una terminal con conexión:
+    curl -o chart.umd.min.js      https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js
+    curl -o pdf.min.js            https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js
+    curl -o pdf.worker.min.js     https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js
+
+¿Y si no los descargas? No pasa nada grave: Tutoría sigue funcionando con
+normalidad, solo que los gráficos no se dibujan y la vista previa de PDF no
+se genera (el resto de la app funciona igual, con o sin conexión).

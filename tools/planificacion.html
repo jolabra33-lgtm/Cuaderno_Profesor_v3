@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="docTitle">Geografía e Historia · 1º ESO · Secuenciación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500&amp;family=Public+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #FBFAF6;
+    --paper-deep: #F1EEE4;
+    --paper-card: #FFFFFF;
+    --ink: #2A2823;
+    --ink-soft: #736C58;
+    --hairline: #E2DCC9;
+    --navy: #3A5578;
+    --wine: #93454A;
+    --gold: #AD8A3C;
+    --grey4: #918C7C;
+    --shadow: 0 1px 0 rgba(42,40,35,0.03), 0 10px 26px -16px rgba(42,40,35,0.22);
+    --radius: 8px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Public Sans', sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    text-align:justify;
+  }
+
+  .wrap{max-width:1180px; margin:0 auto; padding:0 28px 90px;}
+
+  header.hero{
+    padding:48px 28px 34px;
+    border-bottom:1px solid var(--hairline);
+    margin-bottom:36px;
+    background:linear-gradient(180deg, #FFFFFF, var(--paper) 85%);
+  }
+  .hero-inner{max-width:1180px; margin:0 auto; display:flex; align-items:flex-end; justify-content:space-between; gap:28px; flex-wrap:wrap;}
+  .hero-text{flex:1 1 480px; min-width:0;}
+  .eyebrow{font-family:'IBM Plex Mono', monospace; letter-spacing:0.13em; text-transform:uppercase; font-size:12px; color:var(--ink-soft); margin:0 0 12px;}
+  h1{font-family:'Fraunces', serif; font-weight:700; font-size:clamp(32px, 4.6vw, 52px); line-height:1.04; margin:0 0 10px; letter-spacing:-0.01em;}
+  h1 em{font-style:italic; font-weight:500; color:var(--wine);}
+  .subtitle{font-size:16px; color:var(--ink-soft); margin:0; text-align:justify; width:100%;}
+
+  .hero-actions{display:flex; flex-direction:column; align-items:flex-end; gap:10px;}
+  .seal{
+    flex:0 0 auto; width:112px; height:112px; border-radius:50%; border:2px solid var(--navy);
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    font-family:'IBM Plex Mono', monospace; font-size:10.2px; letter-spacing:0.04em; color:var(--navy);
+    position:relative; background:var(--paper-card); padding:6px;
+  }
+  .seal::before{content:""; position:absolute; inset:8px; border-radius:50%; border:1px dashed var(--navy); opacity:0.5;}
+  .seal b{display:block; font-family:'Fraunces', serif; font-size:21px; font-weight:800; margin-bottom:3px;}
+
+  .btn{
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; letter-spacing:0.02em;
+    border:1px solid var(--ink); background:var(--paper-card); color:var(--ink);
+    padding:9px 16px; border-radius:20px; cursor:pointer; transition:background 0.15s, color 0.15s;
+  }
+  .btn:hover{background:var(--ink); color:#fff;}
+  .btn.primary{background:var(--navy); border-color:var(--navy); color:#fff;}
+  .btn.primary:hover{background:#2c4260;}
+  .btn.ghost{border-color:var(--hairline); color:var(--ink-soft);}
+  .btn.small{padding:5px 11px; font-size:11.5px; border-radius:14px;}
+  .btn.accent{background:var(--gold); border-color:var(--gold); color:#fff;}
+  .btn.accent:hover{background:#8f7130;}
+  .btn.lock{background:var(--wine); border-color:var(--wine); color:#fff;}
+  .btn.lock:hover{background:#7a3438;}
+
+  .lang-toggle{display:none; gap:6px;}
+  .lang-btn{min-width:40px; text-align:center;}
+  .lang-btn.active{background:var(--navy); border-color:var(--navy); color:#fff;}
+
+  .datestrip{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:1px; background:var(--hairline);
+    border:1px solid var(--hairline); margin-bottom:52px; box-shadow:var(--shadow); border-radius:var(--radius); overflow:hidden;
+  }
+  .datestrip .cell{background:var(--paper-card); padding:16px 20px;}
+  .datestrip .cell .lbl{font-family:'IBM Plex Mono', monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin-bottom:6px;}
+  .datestrip .cell .val{font-family:'Fraunces', serif; font-weight:600; font-size:18px;}
+
+  .quick-actions{
+    display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    background:var(--paper-card); border:1px solid var(--hairline); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 22px; margin-bottom:36px;
+  }
+  .quick-actions-text{display:flex; flex-direction:column; gap:2px; max-width:420px;}
+  .quick-actions-text strong{font-family:'Fraunces', serif; font-size:15.5px;}
+  .quick-actions-text span{font-size:12.8px; color:var(--ink-soft);}
+  .quick-actions-btns{display:flex; gap:10px; flex-wrap:wrap;}
+
+  #warnings{margin-bottom:24px;}
+  .warning{border:1px solid var(--wine); background:#FBEFEF; color:#6E2A2E; padding:12px 16px; border-radius:var(--radius); font-size:13.5px; margin-bottom:10px;}
+  .frozen-banner{border:1px solid var(--gold); background:#FBF6E9; color:#6E551E; padding:10px 16px; border-radius:var(--radius); font-size:12.5px; margin-bottom:20px; font-family:'IBM Plex Mono', monospace;}
+
+  section{margin-bottom:60px;}
+  .section-head{display:flex; align-items:baseline; gap:14px; margin-bottom:20px; flex-wrap:wrap;}
+  .section-head .num{font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--ink-soft); border:1px solid var(--hairline); padding:2px 8px; border-radius:20px;}
+  h2{font-family:'Fraunces', serif; font-weight:700; font-size:26px; margin:0; letter-spacing:-0.01em;}
+  .section-note{color:var(--ink-soft); font-size:14px; margin:-6px 0 22px; text-align:justify; width:100%;}
+
+  .edit-panel{display:none;}
+  body.edit-mode .edit-panel{display:block;}
+  .edit-panel-inner{background:var(--paper-card); border:1px solid var(--hairline); border-radius:var(--radius); box-shadow:var(--shadow); padding:26px 28px;}
+  .edit-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:22px;}
+  .field label{display:block; font-family:'IBM Plex Mono', monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft); margin-bottom:5px;}
+  .field input[type=text], .field input[type=date], .field input[type=number], .field textarea{
+    width:100%; padding:8px 10px; border:1px solid var(--hairline); border-radius:6px;
+    font-family:'Public Sans', sans-serif; font-size:14px; background:var(--paper); color:var(--ink);
+  }
+  .field textarea{resize:vertical; min-height:56px; line-height:1.4;}
+  .field input:focus, .field textarea:focus{outline:2px solid var(--navy); outline-offset:1px;}
+  .field.full{grid-column:1/-1;}
+
+  .weekday-picker{display:flex; gap:8px; flex-wrap:wrap;}
+  .weekday-picker label{display:flex; align-items:center; gap:5px; font-family:'Public Sans'; font-size:13px; border:1px solid var(--hairline); padding:6px 10px; border-radius:16px; cursor:pointer; color:var(--ink-soft); text-transform:none; letter-spacing:0;}
+  .weekday-picker input{accent-color:var(--navy);}
+  .weekday-picker label.checked{border-color:var(--navy); color:var(--navy); background:#EEF2F6;}
+
+  .edit-subhead{font-family:'Fraunces', serif; font-weight:600; font-size:16px; margin:26px 0 6px; padding-top:18px; border-top:1px dashed var(--hairline); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .edit-subhead .hint{font-family:'Public Sans'; font-weight:400; font-size:12.5px; color:var(--ink-soft);}
+
+  .dyn-row{display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap;}
+  .dyn-row input[type=text]{flex:1 1 220px; padding:7px 10px; border:1px solid var(--hairline); border-radius:6px; font-size:13.5px; background:var(--paper);}
+  .dyn-row input[type=date]{padding:7px 9px; border:1px solid var(--hairline); border-radius:6px; font-size:13px; background:var(--paper);}
+  .dyn-row input[type=number]{width:64px; padding:7px 8px; border:1px solid var(--hairline); border-radius:6px; font-size:13.5px; background:var(--paper); text-align:center;}
+  .dyn-row .row-btns{display:flex; gap:4px;}
+  .dyn-row .drag-handle{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft); width:20px; flex:0 0 auto;}
+  .dyn-row .max-hint{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); white-space:nowrap; flex:0 0 auto;}
+  .dyn-row .fixed-toggle{display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--ink-soft); border:1px solid var(--hairline); padding:5px 9px; border-radius:14px; cursor:pointer; white-space:nowrap;}
+  .dyn-row .fixed-toggle input{accent-color:var(--gold);}
+  .dyn-row .fixed-toggle.checked{color:var(--gold); border-color:var(--gold); background:#FBF6E9;}
+
+  .dyn-block{border:1px solid var(--hairline); border-radius:6px; padding:12px 14px; margin-bottom:10px; background:var(--paper);}
+  .dyn-block .dyn-block-top{display:flex; gap:8px; align-items:center; margin-bottom:8px;}
+  .dyn-block textarea{width:100%; padding:7px 10px; border:1px solid var(--hairline); border-radius:6px; font-size:13px; background:#fff;}
+
+  .icon-btn{width:26px; height:26px; border-radius:6px; border:1px solid var(--hairline); background:var(--paper-card); color:var(--ink-soft); cursor:pointer; font-size:12px; line-height:1;}
+  .icon-btn:hover{background:var(--paper-deep);}
+
+  .edit-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:24px; padding-top:20px; border-top:1px solid var(--hairline);}
+  .edit-help{font-size:12.8px; color:var(--ink-soft); margin-top:14px; text-align:justify; width:100%;}
+  .file-import{display:inline-block;}
+  .file-import input[type=file]{display:none;}
+
+  .gantt-scroll{overflow-x:auto; box-shadow:var(--shadow); border:1px solid var(--hairline); border-radius:var(--radius);}
+  table.gantt{border-collapse:collapse; width:100%; min-width:920px; background:var(--paper-card);}
+  table.gantt th, table.gantt td{border:1px solid var(--hairline);}
+  table.gantt thead tr.trims th{font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; text-align:center; padding:8px 4px; color:#fff; border-color:rgba(255,255,255,0.2);}
+  th.tband1{background:var(--navy);} th.tband2{background:var(--wine);} th.tband3{background:var(--gold);} th.tband4{background:var(--grey4);}
+  table.gantt thead tr.months th{font-family:'Fraunces', serif; font-weight:600; font-size:14px; text-align:center; padding:9px 6px; background:var(--paper-deep);}
+  table.gantt thead tr.months th.label-col, table.gantt tbody td.label-col{text-align:left; background:var(--paper-deep);}
+  table.gantt td.label-col{padding:10px 14px; font-size:13.6px; min-width:230px; background:var(--paper-card);}
+  table.gantt td.label-col .uname{font-weight:600; display:block;}
+  table.gantt td.label-col .usessions{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft);}
+  table.gantt td.empty{background:var(--paper-card);}
+  table.gantt td.bar{position:relative; padding:0; height:42px;}
+  table.gantt td.bar .fill{position:absolute; inset:5px 4px; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#fff; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:500;}
+  .fill.tband1{background:var(--navy);} .fill.tband2{background:var(--wine);} .fill.tband3{background:var(--gold);} .fill.tband4{background:var(--grey4);}
+  .fill[data-tooltip]{cursor:help;}
+  .fill[data-tooltip]:hover::after, .fill[data-tooltip]:focus::after{
+    content:attr(data-tooltip);
+    position:absolute;
+    bottom:calc(100% + 9px);
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--ink);
+    color:#fff;
+    padding:9px 13px;
+    border-radius:7px;
+    font-family:'Public Sans', sans-serif;
+    font-size:12.5px;
+    font-weight:400;
+    line-height:1.4;
+    text-align:justify;
+    white-space:normal;
+    width:max-content;
+    max-width:260px;
+    z-index:30;
+    box-shadow:var(--shadow);
+    pointer-events:none;
+  }
+  .fill[data-tooltip]:hover::before, .fill[data-tooltip]:focus::before{
+    content:"";
+    position:absolute;
+    bottom:calc(100% + 3px);
+    left:50%;
+    transform:translateX(-50%);
+    border:6px solid transparent;
+    border-top-color:var(--ink);
+    z-index:30;
+    pointer-events:none;
+  }
+
+  .gantt-legend{display:flex; gap:20px; flex-wrap:wrap; margin-top:14px; font-size:13px; color:var(--ink-soft);}
+  .gantt-legend span{display:inline-flex; align-items:center; gap:7px;}
+  .swatch{width:13px; height:13px; border-radius:3px; display:inline-block;}
+
+  table.detail{width:100%; border-collapse:collapse; font-size:13.6px; background:var(--paper-card); box-shadow:var(--shadow); border:1px solid var(--hairline); border-radius:var(--radius); overflow:hidden;}
+  table.detail th{font-family:'IBM Plex Mono', monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; text-align:left; padding:11px 14px; background:var(--ink); color:var(--paper-card);}
+  table.detail td{padding:11px 14px; border-top:1px solid var(--hairline); vertical-align:top;}
+  table.detail tr:nth-child(even) td{background:var(--paper);}
+  .badge{display:inline-block; padding:2px 9px; border-radius:20px; font-family:'IBM Plex Mono', monospace; font-size:11px; color:#fff; margin-right:3px;}
+  .badge.tband1{background:var(--navy);} .badge.tband2{background:var(--wine);} .badge.tband3{background:var(--gold);} .badge.tband4{background:var(--grey4);}
+
+  .trim-cards{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+  .trim-card{background:var(--paper-card); border:1px solid var(--hairline); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px 20px 18px; position:relative; overflow:hidden;}
+  .trim-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px;}
+  .trim-card.tband1::before{background:var(--navy);} .trim-card.tband2::before{background:var(--wine);} .trim-card.tband3::before{background:var(--gold);}
+  .trim-card .tag{font-family:'IBM Plex Mono', monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-soft); margin-bottom:6px; display:block;}
+  .trim-card h3{font-family:'Fraunces', serif; font-size:19px; margin:0 0 4px; font-weight:700;}
+  .trim-card .range{font-family:'IBM Plex Mono', monospace; font-size:12.2px; color:var(--ink-soft); margin-bottom:12px; display:block;}
+  .trim-card ul{margin:0 0 12px; padding-left:18px; font-size:13.4px;}
+  .trim-card ul li{margin-bottom:4px;}
+  .trim-card .nolectivo{font-size:12.2px; color:var(--ink-soft); margin-top:8px; font-style:italic; border-top:1px dashed var(--hairline); padding-top:10px;}
+
+  .rubric{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:14px;}
+  .rubric .lvl{background:var(--paper-card); border:1px solid var(--hairline); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px 18px; position:relative; overflow:hidden;}
+  .rubric .lvl::after{content:attr(data-n); position:absolute; right:-6px; bottom:-24px; font-family:'Fraunces', serif; font-weight:900; font-size:84px; color:rgba(42,40,35,0.045); line-height:1;}
+  .rubric .lvl h4{font-family:'Fraunces', serif; font-size:17px; margin:0 0 10px; font-weight:700; display:flex; align-items:center; gap:9px;}
+  .rubric .lvl h4 .dot{width:11px; height:11px; border-radius:50%; display:inline-block; flex:0 0 auto;}
+  .rubric .lvl p{font-size:13.3px; color:var(--ink-soft); margin:0; position:relative; z-index:1; white-space:pre-line;}
+
+  .quant-wrap{background:var(--paper-card); border:1px solid var(--hairline); border-radius:var(--radius); box-shadow:var(--shadow); padding:24px 26px;}
+  .quant-bar{display:flex; width:100%; height:44px; border-radius:6px; overflow:hidden; border:1px solid var(--hairline); margin:16px 0 10px;}
+  .quant-bar .seg{display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; color:#fff; font-size:13px; font-weight:600; text-align:center; padding:0 6px; overflow:hidden;}
+  .quant-bar .seg.big{background:var(--navy);}
+  .quant-bar .seg.small{background:var(--gold); color:var(--ink);}
+  .quant-legend{display:flex; justify-content:space-between; gap:10px; font-size:13px; color:var(--ink-soft); margin-bottom:20px;}
+  .quant-wrap p{font-size:13.8px; margin:8px 0; white-space:pre-line;}
+  .note-box{border-left:3px solid var(--wine); padding:10px 16px; margin-top:16px; font-size:13.2px; color:var(--ink-soft); background:#FBF3EE; border-radius:0 6px 6px 0;}
+
+  .method-wrap{background:var(--paper-card); border:1px solid var(--hairline); border-radius:var(--radius); box-shadow:var(--shadow); padding:24px 26px;}
+  .method-wrap p{font-size:13.8px; margin:0; white-space:pre-line;}
+
+  footer{border-top:1px solid var(--hairline); padding-top:22px; font-size:12.3px; color:var(--ink-soft);}
+
+  @media (max-width: 880px){
+    .trim-cards{grid-template-columns:1fr;}
+    .datestrip{grid-template-columns:repeat(2,1fr);}
+    .hero-inner{flex-direction:column; align-items:flex-start;}
+    .edit-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width: 520px){
+    .edit-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body class="">
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <p class="eyebrow" id="eyebrowText">Herramienta de secuenciación</p>
+      <h1 id="pageTitle">Geografía e Historia<br><em>1º ESO</em></h1>
+      <p class="subtitle" id="pageSubtitle">Distribución de las situaciones de aprendizaje a lo largo del curso, con reparto automático de sesiones y edición completa del calendario, las situaciones de aprendizaje y la calificación.</p>
+    </div>
+    <div class="hero-actions">
+      <div class="seal" id="sealBox"><div><b>26·27</b>Geografía e Historia<br>1º ESO</div></div>
+      <div class="lang-toggle" id="langToggle">
+        <button class="btn small lang-btn active" id="langEs" type="button" data-lang="es">ES</button>
+        <button class="btn small lang-btn" id="langVa" type="button" data-lang="va">VA</button>
+      </div>
+      <button class="btn" id="toggleEdit" type="button">✎ Modo edición</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div id="warnings"></div>
+  <div class="datestrip" id="datestrip"></div>
+
+  <div class="quick-actions" id="quickActions">
+    <div class="quick-actions-text">
+      <strong id="quickTitle">Guardar y distribuir</strong>
+      <span id="quickDesc">Guarda la configuración para reutilizarla más adelante, o genera la copia final para entregar a alumnado, familias y dirección.</span>
+    </div>
+    <div class="quick-actions-btns">
+      <button class="btn ghost" id="btnExport" type="button">💾 Guardar configuración (.json)</button>
+      <button class="btn lock" id="btnDownloadFrozen" type="button">🔒 Exportar copia final (sin edición)</button>
+    </div>
+  </div>
+
+  <!-- ===================== EDIT PANEL ===================== -->
+  <section class="edit-panel" id="editPanel">
+    <div class="section-head"><h2 id="editPanelTitle">Herramienta de reutilización</h2></div>
+    <p class="section-note" id="editPanelNote">Configura la asignatura, el calendario y las situaciones de aprendizaje de cualquier curso. Todo se recalcula al instante.</p>
+    <div class="edit-panel-inner">
+
+      <div class="edit-grid">
+        <div class="field"><label id="lbl-subjectName">Nombre de la asignatura</label><input type="text" id="f-subjectName"></div>
+        <div class="field"><label id="lbl-courseLevel">Curso o etapa</label><input type="text" id="f-courseLevel"></div>
+        <div class="field"><label id="lbl-courseLabel">Curso académico (ej. 2026-2027)</label><input type="text" id="f-courseLabel"></div>
+        <div class="field full"><label id="lbl-subtitle">Subtítulo / descripción</label><textarea id="f-pageSubtitle" rows="2"></textarea></div>
+      </div>
+
+      <div class="edit-grid">
+        <div class="field"><label id="lbl-start">Inicio de curso</label><input type="date" id="f-start"></div>
+        <div class="field"><label id="lbl-courseEnd">Fin de curso (opcional)</label><input type="date" id="f-courseEnd"></div>
+        <div class="field"><label id="lbl-t1End">Fin 1er trimestre</label><input type="date" id="f-t1End"></div>
+        <div class="field"><label id="lbl-t2End">Fin 2º trimestre</label><input type="date" id="f-t2End"></div>
+        <div class="field"><label id="lbl-t3End">Fin 3er trimestre (contenidos)</label><input type="date" id="f-t3End"></div>
+      </div>
+
+      <div class="field">
+        <label id="lbl-weekdays">Días lectivos de la materia</label>
+        <div class="weekday-picker" id="weekdayPicker"></div>
+      </div>
+
+      <div class="edit-subhead" id="subheadHolidays">Vacaciones y días festivos (periodos no lectivos)</div>
+      <div id="nlList"></div>
+      <button class="btn small ghost" id="addNl" type="button">+ Añadir periodo no lectivo</button>
+
+      <div class="edit-subhead">
+        <span id="subheadUnits">Situaciones de aprendizaje</span>
+        <span class="hint" id="hintUnits">Marca «fija» en las situaciones cuyo nº de sesiones no quieres que toque el reparto automático.</span>
+      </div>
+      <div id="unitList"></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+        <button class="btn small ghost" id="addUnit" type="button">+ Añadir situación</button>
+        <button class="btn small accent" id="autoDistribute" type="button">🔀 Distribuir sesiones automáticamente</button>
+      </div>
+      <p class="edit-help" id="distributeHelp"></p>
+
+      <div class="edit-subhead">
+        <span id="subheadQual">Rúbrica de calificación cualitativa</span>
+        <span class="hint" id="hintQual">Título y descripción de cada nivel de desempeño.</span>
+      </div>
+      <div id="qualList"></div>
+      <button class="btn small ghost" id="addQual" type="button">+ Añadir nivel</button>
+
+      <div class="edit-subhead" id="subheadQuant">Calificación cuantitativa</div>
+      <div class="edit-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="field"><label id="lbl-examWeight">Peso pruebas / trabajos (%)</label><input type="number" id="f-examWeight" min="0" max="100"></div>
+        <div class="field"><label id="lbl-homeworkWeight">Peso trabajo de casa y clase (%)</label><input type="number" id="f-homeworkWeight" disabled=""></div>
+      </div>
+      <div class="edit-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="field"><label id="lbl-examLabel">Etiqueta del bloque principal</label><input type="text" id="f-examLabel"></div>
+        <div class="field"><label id="lbl-homeworkLabel">Etiqueta del bloque secundario</label><input type="text" id="f-homeworkLabel"></div>
+      </div>
+      <div class="field" style="margin-bottom:12px;"><label id="lbl-quantParagraph">Texto explicativo</label><textarea id="f-quantParagraph" rows="3"></textarea></div>
+      <div class="field"><label id="lbl-quantNote">Nota sobre exclusividad de instrumentos</label><input type="text" id="f-quantNote"></div>
+
+      <div class="edit-subhead">
+        <span id="subheadSectionTexts">Textos introductorios de las secciones</span>
+        <span class="hint" id="hintSectionTexts">Estos textos aparecen debajo del título de cada sección de la ficha.</span>
+      </div>
+      <div class="field" style="margin-bottom:12px;"><label id="lbl-note1">01 · Cuadro de distribución</label><textarea id="f-note1" rows="2"></textarea></div>
+      <div class="field" style="margin-bottom:12px;"><label id="lbl-note2">02 · Fechas aproximadas</label><textarea id="f-note2" rows="2"></textarea></div>
+      <div class="field" style="margin-bottom:12px;"><label id="lbl-note3">03 · Resumen por trimestre</label><textarea id="f-note3" rows="2"></textarea></div>
+      <div class="field" style="margin-bottom:12px;"><label id="lbl-note4">04 · Criterios de calificación</label><textarea id="f-note4" rows="2"></textarea></div>
+      <div class="field"><label id="lbl-note5">05 · Metodología docente</label><textarea id="f-note5" rows="2"></textarea></div>
+
+      <div class="edit-subhead">
+        <span id="subheadMethodology">Metodología docente</span>
+        <span class="hint" id="hintMethodology">Contenido completo que se muestra en la sección 05.</span>
+      </div>
+      <div class="field"><label id="lbl-methodologyText">Desarrollo de la metodología</label><textarea id="f-methodology" rows="5"></textarea></div>
+
+      <div class="edit-actions">
+        <button class="btn primary" id="btnRecalc" type="button">Recalcular ahora</button>
+        <button class="btn ghost" id="btnReset" type="button">Restablecer valores de este archivo</button>
+        <label class="btn ghost file-import"><span id="btnImportLabel">Importar configuración (.json)</span><input type="file" id="importFile" accept="application/json"></label>
+        <button class="btn primary" id="btnDownloadHtml" type="button">⬇ Descargar copia editable (para otro curso)</button>
+      </div>
+      <p class="edit-help" id="editHelpText"><strong>Copia editable:</strong> conserva la herramienta completa (modo edición, botones, reparto automático) con estos datos como punto de partida — úsala tú misma el año que viene o para otra materia. Para guardar la configuración o generar la copia final para distribuir, usa los botones de arriba, junto a la fecha de inicio de curso.</p>
+    </div>
+  </section>
+
+  <section id="cuadro">
+    <div class="section-head"><span class="num">01</span><h2 id="secTitle1">Cuadro de distribución por situaciones de aprendizaje y mes</h2></div>
+    <p class="section-note" id="ganttNote"></p>
+    <div class="gantt-scroll">
+      <table class="gantt">
+        <thead id="ganttHead"></thead>
+        <tbody id="ganttBody"></tbody>
+      </table>
+    </div>
+    <div class="gantt-legend" id="ganttLegend"></div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="num">02</span><h2 id="secTitle2">Fechas aproximadas y trimestre por situación de aprendizaje</h2></div>
+    <p class="section-note" id="note2"></p>
+    <table class="detail">
+      <thead><tr><th id="thUnit">Situación de aprendizaje</th><th id="thSessions">Sesiones</th><th id="thDates">Fechas aproximadas</th><th id="thTrim">Trimestre</th></tr></thead>
+      <tbody id="detailBody"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="num">03</span><h2 id="secTitle3">Resumen por trimestre</h2></div>
+    <p class="section-note" id="note3"></p>
+    <div class="trim-cards" id="trimCards"></div>
+  </section>
+
+  <section id="calificacion">
+    <div class="section-head"><span class="num">04</span><h2 id="secTitle4">Criterios de calificación</h2></div>
+    <p class="section-note" id="note4" style="margin-bottom:18px;"></p>
+    <span class="tag" id="qualCaption" style="font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); display:block; margin-bottom:10px;">Valoración cualitativa</span>
+    <div class="rubric" id="rubricOutput"></div>
+
+    <div class="quant-wrap" style="margin-top:26px;">
+      <span class="tag" id="quantCaption" style="font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft);">Valoración cuantitativa · ponderación por evaluación</span>
+      <div class="quant-bar" id="quantBar"></div>
+      <div class="quant-legend" id="quantLegend"></div>
+      <p id="quantParagraphOutput"></p>
+      <div class="note-box" id="quantNoteOutput"></div>
+    </div>
+  </section>
+
+  <section id="metodologia">
+    <div class="section-head"><span class="num">05</span><h2 id="secTitle5">Metodología docente</h2></div>
+    <p class="section-note" id="note5"></p>
+    <div class="method-wrap">
+      <p id="methodologyOutput"></p>
+    </div>
+  </section>
+
+  <footer id="footerNote"></footer>
+
+</div>
+
+<script type="application/json" id="course-data">{
+  "lang": "es",
+  "subjectName": {"es": "Geografía e Historia", "va": "Geografia i Història"},
+  "courseLevel": {"es": "1º ESO", "va": "1r ESO"},
+  "pageSubtitle": {
+    "es": "Distribución de las situaciones de aprendizaje a lo largo del curso, con reparto automático de sesiones y edición completa del calendario, las situaciones de aprendizaje y la calificación.",
+    "va": "Distribució de les situacions d'aprenentatge al llarg del curs, amb repartiment automàtic de sessions i edició completa del calendari, les situacions d'aprenentatge i la qualificació."
+  },
+  "courseLabel": "2026-2027",
+  "start": "2026-09-09",
+  "t1End": "2026-12-17",
+  "t2End": "2027-03-22",
+  "t3End": "2027-06-17",
+  "courseEnd": "2027-06-17",
+  "weekdays": [1, 4, 5],
+  "nonLectivo": [
+    {"label": {"es": "Día de la Comunitat Valenciana", "va": "Dia de la Comunitat Valenciana"}, "start": "2026-10-09", "end": "2026-10-09"},
+    {"label": {"es": "Fiesta Nacional de España", "va": "Festa Nacional d'Espanya"}, "start": "2026-10-12", "end": "2026-10-12"},
+    {"label": {"es": "Inmaculada Concepción", "va": "Immaculada Concepció"}, "start": "2026-12-07", "end": "2026-12-08"},
+    {"label": {"es": "Vacaciones de Navidad", "va": "Vacances de Nadal"}, "start": "2026-12-23", "end": "2027-01-06"},
+    {"label": {"es": "Sant Josep / Fallas", "va": "Sant Josep / Falles"}, "start": "2027-03-18", "end": "2027-03-19"},
+    {"label": {"es": "Vacaciones de Semana Santa", "va": "Vacances de Setmana Santa"}, "start": "2027-03-25", "end": "2027-04-05"},
+    {"label": {"es": "Festivo local", "va": "Festiu local"}, "start": "2026-10-16", "end": "2026-10-19"}
+  ],
+  "units": [
+    {"name": {"es": "La tecnología y el estudio geográfico de la Tierra", "va": "La tecnologia i l'estudi geogràfic de la Terra"}, "sessions": 9, "fixed": false},
+    {"name": {"es": "El relieve terrestre", "va": "El relleu terrestre"}, "sessions": 9, "fixed": false},
+    {"name": {"es": "El desafío del cambio climático", "va": "El repte del canvi climàtic"}, "sessions": 9, "fixed": false},
+    {"name": {"es": "El aprovechamiento responsable de las aguas del planeta", "va": "L'aprofitament responsable de les aigües del planeta"}, "sessions": 9, "fixed": false},
+    {"name": {"es": "La relación entre los paisajes de la Tierra y las personas", "va": "La relació entre els paisatges de la Terra i les persones"}, "sessions": 9, "fixed": false},
+    {"name": {"es": "Un estudio geográfico: el medio físico de los continentes", "va": "Un estudi geogràfic: el medi físic dels continents"}, "sessions": 9, "fixed": false},
+    {"name": {"es": "Conocer nuestro entorno para conservar el medio natural", "va": "Conèixer el nostre entorn per a conservar el medi natural"}, "sessions": 8, "fixed": false},
+    {"name": {"es": "La prehistoria", "va": "La prehistòria"}, "sessions": 8, "fixed": false},
+    {"name": {"es": "El nacimiento de la escritura. Las primeras civilizaciones", "va": "El naixement de l'escriptura. Les primeres civilitzacions"}, "sessions": 8, "fixed": false},
+    {"name": {"es": "La civilización griega. El origen de la democracia", "va": "La civilització grega. L'origen de la democràcia"}, "sessions": 8, "fixed": false},
+    {"name": {"es": "La civilización romana. Un imperio mundial", "va": "La civilització romana. Un imperi mundial"}, "sessions": 8, "fixed": false},
+    {"name": {"es": "Hispania en la antigüedad. Un mosaico cultural", "va": "Hispània en l'antiguitat. Un mosaic cultural"}, "sessions": 8, "fixed": false}
+  ],
+  "sectionNotes": {
+    "s1": {
+      "es": "Sesiones lectivas de la materia según los días marcados en el modo edición, descontando los periodos no lectivos configurados.",
+      "va": "Sessions lectives de la matèria segons els dies marcats en el mode edició, descomptant els períodes no lectius configurats."
+    },
+    "s2": {
+      "es": "Fechas orientativas calculadas sobre el calendario configurado arriba. Cada centro puede fijar además días de libre disposición propios, que pueden desplazar el cuadro en ±1-2 sesiones.",
+      "va": "Dates orientatives calculades sobre el calendari configurat a dalt. Cada centre pot fixar a més dies de lliure disposició propis, que poden desplaçar el quadre en ±1-2 sessions."
+    },
+    "s3": {
+      "es": "Agrupación de las situaciones de aprendizaje y de los periodos no lectivos en cada trimestre del curso.",
+      "va": "Agrupació de les situacions d'aprenentatge i dels períodes no lectius en cada trimestre del curs."
+    },
+    "s4": {
+      "es": "Describe el nivel de desempeño competencial alcanzado y se traslada al alumnado y a las familias mediante observaciones individualizadas con logros, dificultades y orientaciones de mejora.",
+      "va": "Descriu el nivell d'acompliment competencial assolit i es trasllada a l'alumnat i a les famílies mitjançant observacions individualitzades amb assoliments, dificultats i orientacions de millora."
+    },
+    "s5": {
+      "es": "Principios metodológicos que orientan el desarrollo de las situaciones de aprendizaje a lo largo del curso.",
+      "va": "Principis metodològics que orienten el desenvolupament de les situacions d'aprenentatge al llarg del curs."
+    }
+  },
+  "methodology": {
+    "text": {
+      "es": "El enfoque metodológico es competencial: se parte de los conocimientos previos del alumnado y se avanza mediante situaciones de aprendizaje contextualizadas, significativas y funcionales, que combinan el trabajo individual y cooperativo e integran las TIC y la alfabetización informacional. La programación incorpora el Diseño Universal para el Aprendizaje (DUA), actividades graduadas de refuerzo y ampliación, y medidas de atención a la diversidad organizadas en cuatro niveles de respuesta educativa, desde medidas generales hasta adaptaciones extraordinarias coordinadas con los servicios de orientación.",
+      "va": "L'enfocament metodològic és competencial: es parteix dels coneixements previs de l'alumnat i s'avança mitjançant situacions d'aprenentatge contextualitzades, significatives i funcionals, que combinen el treball individual i cooperatiu i integren les TIC i l'alfabetització informacional. La programació incorpora el Disseny Universal per a l'Aprenentatge (DUA), activitats graduades de reforç i ampliació, i mesures d'atenció a la diversitat organitzades en quatre nivells de resposta educativa, des de mesures generals fins a adaptacions extraordinàries coordinades amb els serveis d'orientació."
+    }
+  },
+  "evaluation": {
+    "qualitative": [
+      {
+        "title": {"es": "Excelente", "va": "Excel·lent"},
+        "description": {
+          "es": "Dominio muy elevado de las competencias específicas. Interpreta críticamente procesos históricos complejos, aplica con rigor el método histórico, argumenta con precisión y vocabulario específico, y relaciona los procesos históricos con la realidad actual.",
+          "va": "Domini molt elevat de les competències específiques. Interpreta críticament processos històrics complexos, aplica amb rigor el mètode històric, argumenta amb precisió i vocabulari específic, i relaciona els processos històrics amb la realitat actual."
+        }
+      },
+      {
+        "title": {"es": "Adecuado", "va": "Adequat"},
+        "description": {
+          "es": "Alcanza satisfactoriamente los criterios de calificación previstos. Interpreta correctamente hechos y procesos históricos, utiliza adecuadamente las fuentes y comunica sus conocimientos con suficiente rigor y autonomía.",
+          "va": "Assoleix satisfactòriament els criteris de qualificació previstos. Interpreta correctament fets i processos històrics, utilitza adequadament les fonts i comunica els seus coneixements amb prou rigor i autonomia."
+        }
+      },
+      {
+        "title": {"es": "En proceso", "va": "En procés"},
+        "description": {
+          "es": "Alcanza parcialmente los criterios de calificación. Necesita apoyos puntuales para interpretar fuentes, elaborar explicaciones históricas o argumentar con el nivel de profundidad requerido.",
+          "va": "Assoleix parcialment els criteris de qualificació. Necessita suports puntuals per a interpretar fonts, elaborar explicacions històriques o argumentar amb el nivell de profunditat requerit."
+        }
+      },
+      {
+        "title": {"es": "Necesita mejorar", "va": "Necessita millorar"},
+        "description": {
+          "es": "No alcanza todavía el nivel competencial esperado en una parte significativa de los criterios. Requiere medidas específicas de refuerzo, acompañamiento y nuevas oportunidades de aprendizaje.",
+          "va": "Encara no assoleix el nivell competencial esperat en una part significativa dels criteris. Requereix mesures específiques de reforç, acompanyament i noves oportunitats d'aprenentatge."
+        }
+      }
+    ],
+    "quantitative": {
+      "examWeight": 70,
+      "examLabel": {
+        "es": "Exámenes y trabajos (pruebas escritas, mapas conceptuales, trabajos expuestos por el alumnado…)",
+        "va": "Exàmens i treballs (proves escrites, mapes conceptuals, treballs exposats per l'alumnat…)"
+      },
+      "homeworkLabel": {"es": "Trabajo de casa y de clase", "va": "Treball de casa i de classe"},
+      "paragraph": {
+        "es": "La calificación de cada evaluación se obtiene ponderando el grado de consecución de los criterios de calificación de las competencias específicas, a partir de las evidencias recogidas con los distintos instrumentos. Dada la naturaleza de la materia, las pruebas escritas tienen una presencia relevante, sin perjuicio de que la calificación incorpore también otras evidencias de aprendizaje.",
+        "va": "La qualificació de cada avaluació s'obté ponderant el grau de consecució dels criteris de qualificació de les competències específiques, a partir de les evidències recollides amb els diferents instruments. Donada la naturalesa de la matèria, les proves escrites tenen una presència rellevant, sense perjudici que la qualificació incorpore també altres evidències d'aprenentatge."
+      },
+      "noteExclusivity": {
+        "es": "Ningún instrumento de evaluación tiene carácter exclusivo para determinar la calificación final.",
+        "va": "Cap instrument d'avaluació té caràcter exclusiu per a determinar la qualificació final."
+      }
+    }
+  }
+}</script>
+
+<script>
+(function(){
+  "use strict";
+
+  const MESES_BY_LANG = {
+    es: ["ene.","feb.","mar.","abr.","may.","jun.","jul.","ago.","sep.","oct.","nov.","dic."],
+    va: ["gen.","febr.","març","abr.","maig","juny","jul.","ag.","set.","oct.","nov.","des."]
+  };
+  const MESES_CORTOS_BY_LANG = {
+    es: ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"],
+    va: ["gen","febr","mar","abr","maig","jun","jul","ag","set","oct","nov","des"]
+  };
+  const DIAS_BY_LANG = {
+    es: [{v:1,l:"Lun"},{v:2,l:"Mar"},{v:3,l:"Mié"},{v:4,l:"Jue"},{v:5,l:"Vie"}],
+    va: [{v:1,l:"Dl"},{v:2,l:"Dt"},{v:3,l:"Dc"},{v:4,l:"Dj"},{v:5,l:"Dv"}]
+  };
+  const ORD_BY_LANG = {
+    es: {1:"1er",2:"2º",3:"3er",4:"Repaso"},
+    va: {1:"1r",2:"2n",3:"3r",4:"Repàs"}
+  };
+  const TCLASS = {1:"tband1",2:"tband2",3:"tband3",4:"tband4"};
+  const QUAL_COLORS = ["var(--navy)", "#4E7A5C", "var(--gold)", "var(--wine)", "#7C6FA6", "#4478A6", "#B0603C"];
+
+  const T = {
+    eyebrowText: {es:"Herramienta de secuenciación", va:"Eina de seqüenciació"},
+    docTitleSuffix: {es:"Secuenciación", va:"Seqüenciació"},
+    toggleEditOn: {es:"✎ Modo edición", va:"✎ Mode edició"},
+    toggleEditOff: {es:"✓ Cerrar modo edición", va:"✓ Tancar mode edició"},
+    dsStart: {es:"Inicio de curso", va:"Inici de curs"},
+    dsT1: {es:"1er trimestre hasta", va:"1r trimestre fins a"},
+    dsT2: {es:"2º trimestre hasta", va:"2n trimestre fins a"},
+    dsT3: {es:"3er trimestre hasta", va:"3r trimestre fins a"},
+    quickTitle: {es:"Guardar y distribuir", va:"Guardar i distribuir"},
+    quickDesc: {es:"Guarda la configuración para reutilizarla más adelante, o genera la copia final para entregar a alumnado, familias y dirección.", va:"Guarda la configuració per a reutilitzar-la més endavant, o genera la còpia final per a lliurar a l'alumnat, les famílies i direcció."},
+    btnExport: {es:"💾 Guardar configuración (.json)", va:"💾 Guardar configuració (.json)"},
+    btnDownloadFrozen: {es:"🔒 Exportar copia final (sin edición)", va:"🔒 Exportar còpia final (sense edició)"},
+    editPanelTitle: {es:"Herramienta de reutilización", va:"Eina de reutilització"},
+    editPanelNote: {es:"Configura la asignatura, el calendario y las situaciones de aprendizaje de cualquier curso. Todo se recalcula al instante.", va:"Configura la matèria, el calendari i les situacions d'aprenentatge de qualsevol curs. Tot es recalcula a l'instant."},
+    lblSubjectName: {es:"Nombre de la asignatura", va:"Nom de la matèria"},
+    lblCourseLevel: {es:"Curso o etapa", va:"Curs o etapa"},
+    lblCourseLabel: {es:"Curso académico (ej. 2026-2027)", va:"Curs acadèmic (ex. 2026-2027)"},
+    lblSubtitle: {es:"Subtítulo / descripción", va:"Subtítol / descripció"},
+    lblStart: {es:"Inicio de curso", va:"Inici de curs"},
+    lblCourseEnd: {es:"Fin de curso (opcional)", va:"Fi de curs (opcional)"},
+    lblT1End: {es:"Fin 1er trimestre", va:"Fi 1r trimestre"},
+    lblT2End: {es:"Fin 2º trimestre", va:"Fi 2n trimestre"},
+    lblT3End: {es:"Fin 3er trimestre (contenidos)", va:"Fi 3r trimestre (continguts)"},
+    lblWeekdays: {es:"Días lectivos de la materia", va:"Dies lectius de la matèria"},
+    subheadHolidays: {es:"Vacaciones y días festivos (periodos no lectivos)", va:"Vacances i dies festius (períodes no lectius)"},
+    phHolidayLabel: {es:"Descripción", va:"Descripció"},
+    btnAddHoliday: {es:"+ Añadir periodo no lectivo", va:"+ Afegir període no lectiu"},
+    subheadUnits: {es:"Situaciones de aprendizaje", va:"Situacions d'aprenentatge"},
+    hintUnits: {es:"Marca «fija» en las situaciones cuyo nº de sesiones no quieres que toque el reparto automático.", va:"Marca «fixa» en les situacions el nombre de sessions de les quals no vols que toque el repartiment automàtic."},
+    phUnitName: {es:"Nombre de la situación de aprendizaje", va:"Nom de la situació d'aprenentatge"},
+    fixedLabel: {es:"fija", va:"fixa"},
+    maxHintPrefix: {es:"/ máx", va:"/ màx"},
+    btnAddUnit: {es:"+ Añadir situación", va:"+ Afegir situació"},
+    btnAutoDistribute: {es:"🔀 Distribuir sesiones automáticamente", va:"🔀 Distribuir sessions automàticament"},
+    subheadQual: {es:"Rúbrica de calificación cualitativa", va:"Rúbrica de qualificació qualitativa"},
+    hintQual: {es:"Título y descripción de cada nivel de desempeño.", va:"Títol i descripció de cada nivell d'acompliment."},
+    phQualTitle: {es:"Título del nivel", va:"Títol del nivell"},
+    phQualDesc: {es:"Descripción del nivel", va:"Descripció del nivell"},
+    btnAddQual: {es:"+ Añadir nivel", va:"+ Afegir nivell"},
+    subheadQuant: {es:"Calificación cuantitativa", va:"Qualificació quantitativa"},
+    lblExamWeight: {es:"Peso pruebas / trabajos (%)", va:"Pes proves / treballs (%)"},
+    lblHomeworkWeight: {es:"Peso trabajo de casa y clase (%)", va:"Pes treball de casa i classe (%)"},
+    lblExamLabel: {es:"Etiqueta del bloque principal", va:"Etiqueta del bloc principal"},
+    lblHomeworkLabel: {es:"Etiqueta del bloque secundario", va:"Etiqueta del bloc secundari"},
+    lblQuantParagraph: {es:"Texto explicativo", va:"Text explicatiu"},
+    lblQuantNote: {es:"Nota sobre exclusividad de instrumentos", va:"Nota sobre exclusivitat d'instruments"},
+    subheadSectionTexts: {es:"Textos introductorios de las secciones", va:"Textos introductoris de les seccions"},
+    hintSectionTexts: {es:"Estos textos aparecen debajo del título de cada sección de la ficha.", va:"Aquests textos apareixen davall del títol de cada secció de la fitxa."},
+    lblNote1: {es:"01 · Cuadro de distribución", va:"01 · Quadre de distribució"},
+    lblNote2: {es:"02 · Fechas aproximadas", va:"02 · Dates aproximades"},
+    lblNote3: {es:"03 · Resumen por trimestre", va:"03 · Resum per trimestre"},
+    lblNote4: {es:"04 · Criterios de calificación", va:"04 · Criteris de qualificació"},
+    lblNote5: {es:"05 · Metodología docente", va:"05 · Metodologia docent"},
+    subheadMethodology: {es:"Metodología docente", va:"Metodologia docent"},
+    hintMethodology: {es:"Contenido completo que se muestra en la sección 05.", va:"Contingut complet que es mostra en la secció 05."},
+    lblMethodologyText: {es:"Desarrollo de la metodología", va:"Desenvolupament de la metodologia"},
+    btnRecalc: {es:"Recalcular ahora", va:"Recalcular ara"},
+    btnReset: {es:"Restablecer valores de este archivo", va:"Restablir valors d'aquest arxiu"},
+    btnImport: {es:"Importar configuración (.json)", va:"Importar configuració (.json)"},
+    btnDownloadHtml: {es:"⬇ Descargar copia editable (para otro curso)", va:"⬇ Descarregar còpia editable (per a un altre curs)"},
+    editHelp: {
+      es:"<strong>Copia editable:</strong> conserva la herramienta completa (modo edición, botones, reparto automático) con estos datos como punto de partida — úsala tú misma el año que viene o para otra materia. Para guardar la configuración o generar la copia final para distribuir, usa los botones de arriba, junto a la fecha de inicio de curso.",
+      va:"<strong>Còpia editable:</strong> conserva l'eina completa (mode edició, botons, repartiment automàtic) amb aquestes dades com a punt de partida — utilitza-la tu mateixa l'any que ve o per a una altra matèria. Per a guardar la configuració o generar la còpia final per a distribuir, utilitza els botons de dalt, junt a la data d'inici de curs."
+    },
+    secTitle1: {es:"Cuadro de distribución por situaciones de aprendizaje y mes", va:"Quadre de distribució per situacions d'aprenentatge i mes"},
+    unitColHeader: {es:"Situación de aprendizaje", va:"Situació d'aprenentatge"},
+    legendT1: {es:"1er trimestre", va:"1r trimestre"},
+    legendT2: {es:"2º trimestre", va:"2n trimestre"},
+    legendT3: {es:"3er trimestre", va:"3r trimestre"},
+    legendStraddle: {es:"situación a caballo entre dos trimestres", va:"situació a cavall entre dos trimestres"},
+    reviewLabel: {es:"Repaso / EBAU", va:"Repàs / EBAU"},
+    trimHeaderSuffix: {es:"trimestre — hasta", va:"trimestre — fins a"},
+    noDateAssigned: {es:"sin fecha asignada", va:"sense data assignada"},
+    secTitle2: {es:"Fechas aproximadas y trimestre por situación de aprendizaje", va:"Dates aproximades i trimestre per situació d'aprenentatge"},
+    thSessions: {es:"Sesiones", va:"Sessions"},
+    thDates: {es:"Fechas aproximadas", va:"Dates aproximades"},
+    thTrim: {es:"Trimestre", va:"Trimestre"},
+    noDateAssignedFull: {es:"sin fecha asignada (revisa el número total de sesiones)", va:"sense data assignada (revisa el nombre total de sessions)"},
+    secTitle3: {es:"Resumen por trimestre", va:"Resum per trimestre"},
+    noLectivosLabel: {es:"No lectivos:", va:"No lectius:"},
+    afterT3Label: {es:"Tras el 3er trimestre", va:"Després del 3r trimestre"},
+    reviewCardTitle: {es:"Repaso general y EBAU", va:"Repàs general i EBAU"},
+    reviewCardItem: {es:"Repaso global y preparación de la prueba de acceso", va:"Repàs global i preparació de la prova d'accés"},
+    secTitle4: {es:"Criterios de calificación", va:"Criteris de qualificació"},
+    qualCaption: {es:"Valoración cualitativa", va:"Valoració qualitativa"},
+    quantCaption: {es:"Valoración cuantitativa · ponderación por evaluación", va:"Valoració quantitativa · ponderació per avaluació"},
+    secTitle5: {es:"Metodología docente", va:"Metodologia docent"},
+    importError: {es:"No se ha podido leer el archivo de configuración. Comprueba que sea un .json exportado desde esta misma herramienta.", va:"No s'ha pogut llegir l'arxiu de configuració. Comprova que siga un .json exportat des d'aquesta mateixa eina."},
+    autoDistributeNoNonFixed: {es:"No hay situaciones sin marcar como «fija»: no hay nada que repartir automáticamente.", va:"No hi ha situacions sense marcar com a «fixa»: no hi ha res a repartir automàticament."}
+  };
+
+  function t(key){
+    const entry = T[key];
+    if(!entry) return key;
+    return entry[state.lang] || entry.es || key;
+  }
+
+  function parseISO(s){ return new Date(s+"T00:00:00"); }
+  function fmtISO(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
+  function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+  function monthKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+  function monthLabel(d){ return MESES_CORTOS_BY_LANG[state.lang][d.getMonth()]+" "+String(d.getFullYear()).slice(2); }
+  function fmtHuman(d){ const M=MESES_BY_LANG[state.lang]; return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`; }
+  function rangeLabel(first,last){
+    const M=MESES_BY_LANG[state.lang];
+    if(first.getTime()===last.getTime()) return fmtHuman(first);
+    const y1=first.getFullYear(), y2=last.getFullYear(), m1=first.getMonth(), m2=last.getMonth();
+    if(y1===y2 && m1===m2) return `${first.getDate()} – ${last.getDate()} ${M[m1]} ${y1}`;
+    if(y1===y2) return `${first.getDate()} ${M[m1]} – ${last.getDate()} ${M[m2]} ${y1}`;
+    return `${first.getDate()} ${M[m1]} ${y1} – ${last.getDate()} ${M[m2]} ${y2}`;
+  }
+  function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+  function slug(s){ return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\w]+/g,"_").replace(/^_+|_+$/g,"") || "sin_nombre"; }
+
+  function deriveSealYear(label){
+    if(!label) return "curso";
+    const m = String(label).match(/(\d{4}).*?(\d{4})/);
+    if(m) return m[1].slice(2)+"·"+m[2].slice(2);
+    const m2 = String(label).match(/(\d{4})/);
+    if(m2) return m2[1].slice(2);
+    return String(label).slice(0,8);
+  }
+
+  // ---- bilingual content helpers ----
+  function L(v){
+    if(v && typeof v === "object" && !Array.isArray(v)){
+      const s = v[state.lang];
+      if(s!=null) return s;
+      if(v.es!=null) return v.es;
+      if(v.va!=null) return v.va;
+      return "";
+    }
+    return v==null ? "" : v;
+  }
+  function setL(obj, key, value){
+    if(!obj[key] || typeof obj[key] !== "object" || Array.isArray(obj[key])) obj[key] = {es:"", va:""};
+    obj[key][state.lang] = value;
+  }
+  function ensureBilingual(obj, key){
+    const v = obj[key];
+    if(v && typeof v === "object" && !Array.isArray(v)){
+      if(typeof v.es !== "string") v.es = (typeof v.va === "string") ? v.va : "";
+      if(typeof v.va !== "string") v.va = v.es;
+    } else {
+      const s = (typeof v === "string") ? v : "";
+      obj[key] = {es:s, va:s};
+    }
+  }
+
+  let ORIGINAL_DEFAULT = null;
+  let state = null;
+  try{ ORIGINAL_DEFAULT = JSON.parse(document.getElementById('course-data').textContent); }
+  catch(e){
+    const now = fmtISO(new Date());
+    ORIGINAL_DEFAULT = {
+      lang:"es",
+      subjectName:{es:"Materia",va:"Matèria"}, courseLevel:{es:"Curso",va:"Curs"}, pageSubtitle:{es:"",va:""},
+      courseLabel:"Curso", start:now, t1End:now, t2End:now, t3End:now, courseEnd:"",
+      weekdays:[2,3,5], nonLectivo:[], units:[],
+      sectionNotes:{s1:{es:"",va:""},s2:{es:"",va:""},s3:{es:"",va:""},s4:{es:"",va:""},s5:{es:"",va:""}},
+      methodology:{text:{es:"",va:""}},
+      evaluation:{qualitative:[],quantitative:{examWeight:90,examLabel:{es:"",va:""},homeworkLabel:{es:"",va:""},paragraph:{es:"",va:""},noteExclusivity:{es:"",va:""}}}
+    };
+  }
+  state = JSON.parse(JSON.stringify(ORIGINAL_DEFAULT));
+
+  function ensureShape(st){
+    if(st.lang !== "es" && st.lang !== "va") st.lang = "es";
+    if(!st.evaluation) st.evaluation = {qualitative:[],quantitative:{}};
+    if(!st.evaluation.quantitative) st.evaluation.quantitative = {};
+    if(typeof st.evaluation.quantitative.examWeight !== "number") st.evaluation.quantitative.examWeight = Number(st.evaluation.quantitative.examWeight)||90;
+    if(!Array.isArray(st.evaluation.qualitative)) st.evaluation.qualitative = [];
+    ensureBilingual(st, "subjectName");
+    ensureBilingual(st, "courseLevel");
+    ensureBilingual(st, "pageSubtitle");
+    if(typeof st.courseLabel !== "string") st.courseLabel = "";
+    if(!Array.isArray(st.weekdays)) st.weekdays = [1,2,3,4,5];
+    st.weekdays = st.weekdays.map(Number).filter(d=>d>=1 && d<=5);
+    if(st.weekdays.length===0) st.weekdays = [1,2,3,4,5];
+    if(!Array.isArray(st.nonLectivo)) st.nonLectivo = [];
+    st.nonLectivo.forEach(r=>ensureBilingual(r,"label"));
+    if(!Array.isArray(st.units)) st.units = [];
+    st.units.forEach(u=>{ ensureBilingual(u,"name"); if(typeof u.fixed !== "boolean") u.fixed = false; if(typeof u.sessions !== "number") u.sessions = Number(u.sessions)||0; });
+    st.evaluation.qualitative.forEach(lvl=>{ ensureBilingual(lvl,"title"); ensureBilingual(lvl,"description"); });
+    ensureBilingual(st.evaluation.quantitative, "examLabel");
+    ensureBilingual(st.evaluation.quantitative, "homeworkLabel");
+    ensureBilingual(st.evaluation.quantitative, "paragraph");
+    ensureBilingual(st.evaluation.quantitative, "noteExclusivity");
+    if(!st.sectionNotes) st.sectionNotes = {};
+    ["s1","s2","s3","s4","s5"].forEach(k=>{
+      const cur = st.sectionNotes[k];
+      const isEmpty = !cur || (typeof cur === "object" && !cur.es && !cur.va) || (typeof cur === "string" && !cur);
+      if(isEmpty && ORIGINAL_DEFAULT && ORIGINAL_DEFAULT.sectionNotes && ORIGINAL_DEFAULT.sectionNotes[k]){
+        st.sectionNotes[k] = JSON.parse(JSON.stringify(ORIGINAL_DEFAULT.sectionNotes[k]));
+      }
+      ensureBilingual(st.sectionNotes,k);
+    });
+    if(!st.methodology) st.methodology = {};
+    {
+      const cur = st.methodology.text;
+      const isEmpty = !cur || (typeof cur === "object" && !cur.es && !cur.va) || (typeof cur === "string" && !cur);
+      if(isEmpty && ORIGINAL_DEFAULT && ORIGINAL_DEFAULT.methodology && ORIGINAL_DEFAULT.methodology.text){
+        st.methodology.text = JSON.parse(JSON.stringify(ORIGINAL_DEFAULT.methodology.text));
+      }
+    }
+    ensureBilingual(st.methodology, "text");
+  }
+  ensureShape(state);
+
+  // Detects files exported by the pre-bilingual (single-language) version of this tool:
+  // flat strings instead of {es,va} objects, and/or missing the newer sectionNotes/methodology fields.
+  function looksLegacy(raw){
+    if(!raw || typeof raw !== "object") return false;
+    if(!raw.sectionNotes || !raw.methodology) return true;
+    return ["subjectName","courseLevel","pageSubtitle"].some(k=> typeof raw[k] === "string");
+  }
+
+  let FROZEN = false; // true in the "final copy (no editing)" export: keeps the ES/VA switch, hides the edit UI
+  let legacyImportNotice = false;
+  function importNoticeText(){
+    return state.lang === "va"
+      ? "Aquest arxiu prové d'una versió anterior sense selector d'idioma: el contingut (matèria, situacions d'aprenentatge, criteris de qualificació, textos de les seccions…) s'ha carregat igual en els dos idiomes. Utilitza el selector ES/VA i revisa camp a camp en «Mode edició» per a completar la traducció al valencià."
+      : "Este archivo procede de una versión anterior sin selector de idioma: el contenido (asignatura, situaciones de aprendizaje, criterios de calificación, textos de las secciones…) se ha cargado igual en los dos idiomas. Usa el selector ES/VA y revisa campo a campo en «Modo edición» para completar la traducción al valenciano.";
+  }
+
+  function countSessionsInRange(st, fromDate, toDate){
+    const weekdaySet = new Set(st.weekdays.map(Number));
+    const nlRanges = st.nonLectivo.map(r=>({start:parseISO(r.start), end:parseISO(r.end)}));
+    let cur = new Date(fromDate), count=0, guard=0;
+    while(cur<=toDate && guard<4000){
+      guard++;
+      if(weekdaySet.has(cur.getDay()) && !nlRanges.some(r=>cur>=r.start && cur<=r.end)) count++;
+      cur = addDays(cur,1);
+    }
+    return count;
+  }
+
+  function computeSchedule(st){
+    const start = parseISO(st.start);
+    const t1End = parseISO(st.t1End);
+    const t2End = parseISO(st.t2End);
+    const t3End = parseISO(st.t3End);
+    const totalNeeded = st.units.reduce((a,u)=>a+(Number(u.sessions)||0),0);
+    const weekdaySet = new Set(st.weekdays.map(Number));
+    const nlRanges = st.nonLectivo.map(r=>({start:parseISO(r.start), end:parseISO(r.end), label:L(r.label)}));
+
+    let sessions = [];
+    let cur = new Date(start);
+    let guard = 0;
+    while(sessions.length < totalNeeded && guard < 6000){
+      guard++;
+      if(weekdaySet.has(cur.getDay())){
+        const isNL = nlRanges.some(r=> cur>=r.start && cur<=r.end);
+        if(!isNL){
+          let trimestre;
+          if(cur<=t1End) trimestre=1;
+          else if(cur<=t2End) trimestre=2;
+          else if(cur<=t3End) trimestre=3;
+          else trimestre=4;
+          sessions.push({date:new Date(cur), trimestre});
+        }
+      }
+      cur = addDays(cur,1);
+    }
+
+    let idx=0;
+    const unitBlocks = st.units.map(u=>{
+      const n = Number(u.sessions)||0;
+      const block = sessions.slice(idx, idx+n);
+      idx+=n;
+      return {name:L(u.name), sessions:n, dates:block};
+    });
+
+    const availableUntilT3 = countSessionsInRange(st, start, t3End);
+    const overflow = totalNeeded - availableUntilT3;
+
+    let reviewSessions = 0;
+    if(st.courseEnd){
+      const courseEnd = parseISO(st.courseEnd);
+      if(courseEnd > t3End) reviewSessions = countSessionsInRange(st, addDays(t3End,1), courseEnd);
+    }
+
+    return {sessions, unitBlocks, totalNeeded, availableUntilT3, overflow, reviewSessions};
+  }
+
+  function buildColumns(sessions){
+    const map = new Map();
+    sessions.forEach(s=>{
+      const k = monthKey(s.date);
+      if(!map.has(k)) map.set(k, {key:k, label:monthLabel(s.date), trimestres:new Set()});
+      map.get(k).trimestres.add(s.trimestre);
+    });
+    return Array.from(map.values());
+  }
+
+  function groupHeaderBands(columns){
+    const bands=[]; let i=0;
+    while(i<columns.length){
+      const key = Array.from(columns[i].trimestres).sort().join(",");
+      let j=i;
+      while(j<columns.length && Array.from(columns[j].trimestres).sort().join(",")===key) j++;
+      bands.push({startIdx:i, span:j-i, trimestres:Array.from(columns[i].trimestres).sort((a,b)=>a-b)});
+      i=j;
+    }
+    return bands;
+  }
+
+  function computeUnitDateText(u){
+    const ord = ORD_BY_LANG[state.lang];
+    if(u.dates.length===0) return t('noDateAssigned');
+    const groups = groupConsecutiveByTrimestre(u.dates);
+    if(groups.length===1) return rangeLabel(u.dates[0].date, u.dates[u.dates.length-1].date);
+    return groups.map(g=>`${rangeLabel(g.dates[0], g.dates[g.dates.length-1])} (${ord[g.trimestre]})`).join(" · ");
+  }
+
+  function groupConsecutiveByTrimestre(dates){
+    const groups=[];
+    dates.forEach(d=>{
+      const last=groups[groups.length-1];
+      if(last && last.trimestre===d.trimestre) last.dates.push(d.date);
+      else groups.push({trimestre:d.trimestre, dates:[d.date]});
+    });
+    return groups;
+  }
+
+  function gradientStyle(groupsWithCounts, totalCount){
+    let acc=0; const stops=[];
+    groupsWithCounts.forEach((g,i)=>{
+      const pct = g.count/totalCount*100;
+      const startPct = acc; acc += pct;
+      const endPct = (i===groupsWithCounts.length-1)?100:acc;
+      stops.push(`var(--${colorVarName(g.trimestre)}) ${startPct.toFixed(1)}% ${endPct.toFixed(1)}%`);
+    });
+    return `background:linear-gradient(100deg, ${stops.join(", ")});`;
+  }
+  function colorVarName(t){ return t===1?"navy":t===2?"wine":t===3?"gold":"grey4"; }
+
+  function sessionsLabel(n){
+    if(state.lang==="va") return `${n} sessi${n===1?"ó":"ons"}`;
+    return `${n} sesi${n===1?"ón":"ones"}`;
+  }
+
+  function getTotalAvailable(){
+    return countSessionsInRange(state, parseISO(state.start), parseISO(state.t3End));
+  }
+
+  function enforceTotalCap(){
+    const totalAvailable = getTotalAvailable();
+    let excess = state.units.reduce((a,u)=>a+(Number(u.sessions)||0),0) - totalAvailable;
+    if(excess <= 0) return false;
+    const nonFixedRev = state.units.map((u,i)=>i).filter(i=>!state.units[i].fixed).reverse();
+    const fixedRev = state.units.map((u,i)=>i).filter(i=>state.units[i].fixed).reverse();
+    for(const i of nonFixedRev.concat(fixedRev)){
+      if(excess<=0) break;
+      const u = state.units[i];
+      const cut = Math.min(Number(u.sessions)||0, excess);
+      u.sessions = (Number(u.sessions)||0) - cut;
+      excess -= cut;
+    }
+    return true;
+  }
+
+  function updateMaxHints(){
+    const totalAvailable = getTotalAvailable();
+    document.querySelectorAll('.max-hint').forEach(span=>{
+      const i = Number(span.dataset.idx);
+      const others = state.units.reduce((a,u,idx)=> idx===i?a:a+(Number(u.sessions)||0), 0);
+      const max = Math.max(0, totalAvailable - others);
+      span.textContent = `${t('maxHintPrefix')} ${max}`;
+      const input = document.querySelector(`.u-sessions[data-idx="${i}"]`);
+      if(input) input.setAttribute('max', max);
+    });
+  }
+
+  function autoDistributeOverflowMsg(fixedSum, available){
+    return state.lang==="va"
+      ? `Les situacions fixes ja sumen ${fixedSum} sessions, més que les ${available} disponibles fins a la fi del 3r trimestre. S'han posat a 0 la resta de situacions: revisa les dates o les situacions fixes.`
+      : `Las situaciones fijas ya suman ${fixedSum} sesiones, más que las ${available} disponibles hasta el fin del 3er trimestre. Se han puesto a 0 las demás situaciones: revisa las fechas o las situaciones fijas.`;
+  }
+  function autoDistributeOkMsg(remaining, n, fixedSum, available){
+    return state.lang==="va"
+      ? `Repartides ${remaining} sessions entre ${n} situació(ns) no fixes (${fixedSum} sessions ja reservades en situacions fixes). Total disponible fins a la fi del 3r trimestre: ${available}.`
+      : `Repartidas ${remaining} sesiones entre ${n} situación(es) no fijas (${fixedSum} sesiones ya reservadas en situaciones fijas). Total disponible hasta el fin del 3er trimestre: ${available}.`;
+  }
+
+  function autoDistribute(){
+    const start = parseISO(state.start), t3End = parseISO(state.t3End);
+    const totalAvailable = countSessionsInRange(state, start, t3End);
+    const fixedSum = state.units.filter(u=>u.fixed).reduce((a,u)=>a+(Number(u.sessions)||0),0);
+    const nonFixedIdx = state.units.map((u,i)=>u.fixed?-1:i).filter(i=>i>=0);
+    let remaining = totalAvailable - fixedSum;
+    const help = document.getElementById('distributeHelp');
+    if(nonFixedIdx.length===0){
+      help.textContent = t('autoDistributeNoNonFixed');
+      return;
+    }
+    if(remaining < 0){
+      help.textContent = autoDistributeOverflowMsg(fixedSum, totalAvailable);
+      remaining = 0;
+    } else {
+      help.textContent = autoDistributeOkMsg(remaining, nonFixedIdx.length, fixedSum, totalAvailable);
+    }
+    const n = nonFixedIdx.length;
+    const base = Math.floor(remaining/n);
+    const extra = remaining - base*n;
+    nonFixedIdx.forEach((idx,pos)=>{ state.units[idx].sessions = base + (pos<extra?1:0); });
+    renderUnitList();
+    renderOutputs();
+  }
+
+  function renderHeader(st){
+    const subject = L(st.subjectName), level = L(st.courseLevel);
+    document.getElementById('pageTitle').innerHTML = `${escapeHtml(subject)}<br><em>${escapeHtml(level)}</em>`;
+    document.getElementById('pageSubtitle').textContent = L(st.pageSubtitle)||"";
+    const titleParts = [subject, level].filter(Boolean).join(" · ");
+    document.getElementById('docTitle').textContent = (titleParts?titleParts+" · ":"") + t('docTitleSuffix');
+    document.title = document.getElementById('docTitle').textContent;
+    const seal = document.getElementById('sealBox');
+    seal.innerHTML = `<div><b>${escapeHtml(deriveSealYear(st.courseLabel))}</b>${escapeHtml((subject||"").slice(0,22))}<br>${escapeHtml((level||"").slice(0,22))}</div>`;
+  }
+
+  function warningText(needed, available, date, overflow){
+    return state.lang==="va"
+      ? `⚠ Hi ha ${needed} sessions repartides entre les situacions d'aprenentatge, però només caben ${available} abans de la fi del 3r trimestre (${date}). ${overflow} sessió(ns) cauen després d'eixa data — ajusta les dates, utilitza «Distribuir sessions automàticament» o redueix sessions en alguna situació.`
+      : `⚠ Hay ${needed} sesiones repartidas entre las situaciones de aprendizaje, pero solo caben ${available} antes del fin del 3er trimestre (${date}). ${overflow} sesión(es) caen después de esa fecha — ajusta las fechas, usa «Distribuir sesiones automáticamente» o reduce sesiones en alguna situación.`;
+  }
+
+  function renderTopBars(st, sched){
+    const warn = document.getElementById('warnings');
+    warn.innerHTML = "";
+    if(legacyImportNotice){
+      const div = document.createElement('div');
+      div.className = "warning";
+      div.style.display = "flex";
+      div.style.alignItems = "center";
+      div.style.justifyContent = "space-between";
+      div.style.gap = "14px";
+      const span = document.createElement('span');
+      span.textContent = importNoticeText();
+      const closeBtn = document.createElement('button');
+      closeBtn.type = "button";
+      closeBtn.className = "icon-btn";
+      closeBtn.setAttribute('aria-label', state.lang==='va' ? 'Tancar avís' : 'Cerrar aviso');
+      closeBtn.textContent = "✕";
+      closeBtn.addEventListener('click', ()=>{ legacyImportNotice = false; renderOutputs(); });
+      div.appendChild(span);
+      div.appendChild(closeBtn);
+      warn.appendChild(div);
+    }
+    if(sched.overflow > 0){
+      const div = document.createElement('div');
+      div.className = "warning";
+      div.textContent = warningText(sched.totalNeeded, sched.availableUntilT3, fmtHuman(parseISO(st.t3End)), sched.overflow);
+      warn.appendChild(div);
+    }
+    const ds = document.getElementById('datestrip');
+    ds.innerHTML = `
+      <div class="cell"><div class="lbl">${t('dsStart')}</div><div class="val">${fmtHuman(parseISO(st.start))}</div></div>
+      <div class="cell"><div class="lbl">${t('dsT1')}</div><div class="val">${fmtHuman(parseISO(st.t1End))}</div></div>
+      <div class="cell"><div class="lbl">${t('dsT2')}</div><div class="val">${fmtHuman(parseISO(st.t2End))}</div></div>
+      <div class="cell"><div class="lbl">${t('dsT3')}</div><div class="val">${fmtHuman(parseISO(st.t3End))}</div></div>
+    `;
+  }
+
+  function renderGantt(st, sched){
+    const ord = ORD_BY_LANG[state.lang];
+    const columns = buildColumns(sched.sessions);
+    const bands = groupHeaderBands(columns);
+    const head = document.getElementById('ganttHead');
+    const body = document.getElementById('ganttBody');
+
+    let trimsRow = `<tr class="trims"><th class="label-col" style="background:var(--ink);"></th>`;
+    bands.forEach(band=>{
+      const cls = band.trimestres.length===1 ? TCLASS[band.trimestres[0]] : "";
+      let style = "", label = "";
+      if(band.trimestres.length===1){
+        const tr = band.trimestres[0];
+        if(tr===4){ label = t('reviewLabel'); }
+        else {
+          const endKey = tr===1?"t1End":tr===2?"t2End":"t3End";
+          label = `${ord[tr]} ${t('trimHeaderSuffix')} ${fmtHuman(parseISO(st[endKey]))}`;
+        }
+      } else {
+        const keys = columns.slice(band.startIdx, band.startIdx+band.span).map(c=>c.key);
+        const relevant = sched.sessions.filter(s=>keys.includes(monthKey(s.date)));
+        const tMin = Math.min(...band.trimestres), tMax = Math.max(...band.trimestres);
+        const lows = relevant.filter(s=>s.trimestre===tMin);
+        const highs = relevant.filter(s=>s.trimestre===tMax);
+        const lastLow = lows[lows.length-1], firstHigh = highs[0];
+        const bandSince = state.lang==="va" ? " trim. des de " : " trim. desde ";
+        label = `${ord[tMin]} trim. → ${lastLow?fmtHuman(lastLow.date):""} · ${ord[tMax]}${bandSince}${firstHigh?fmtHuman(firstHigh.date):""}`;
+        const stopPct = Math.round(lows.length/relevant.length*100);
+        style = `background:linear-gradient(100deg, var(--${colorVarName(tMin)}) 0 ${Math.max(stopPct-2,0)}%, var(--${colorVarName(tMax)}) ${Math.min(stopPct+2,100)}% 100%);`;
+      }
+      trimsRow += `<th class="${cls}" style="${style}" colspan="${band.span}">${label}</th>`;
+    });
+    trimsRow += `</tr>`;
+
+    let monthsRow = `<tr class="months"><th class="label-col">${t('unitColHeader')}</th>`;
+    columns.forEach(c=>{ monthsRow += `<th>${c.label}</th>`; });
+    monthsRow += `</tr>`;
+    head.innerHTML = trimsRow + monthsRow;
+
+    let rowsHtml = "";
+    sched.unitBlocks.forEach(u=>{
+      if(u.dates.length===0){
+        rowsHtml += `<tr><td class="label-col"><span class="uname">${escapeHtml(u.name)}</span><span class="usessions">${sessionsLabel(u.sessions)} · ${t('noDateAssigned')}</span></td><td class="empty" colspan="${Math.max(columns.length,1)}"></td></tr>`;
+        return;
+      }
+      const firstCol = columns.findIndex(c=>c.key===monthKey(u.dates[0].date));
+      const lastCol = columns.findIndex(c=>c.key===monthKey(u.dates[u.dates.length-1].date));
+      const span = lastCol-firstCol+1;
+      const before = firstCol;
+      const after = columns.length-1-lastCol;
+      const groups = groupConsecutiveByTrimestre(u.dates);
+      let cellStyle = "", cellClass = "";
+      if(groups.length===1){ cellClass = TCLASS[groups[0].trimestre]; }
+      else { cellStyle = gradientStyle(groups.map(g=>({trimestre:g.trimestre,count:g.dates.length})), u.dates.length); }
+
+      const tooltip = `${u.name} — ${computeUnitDateText(u)}`;
+      rowsHtml += `<tr>`;
+      rowsHtml += `<td class="label-col"><span class="uname">${escapeHtml(u.name)}</span><span class="usessions">${sessionsLabel(u.sessions)}</span></td>`;
+      if(before>0) rowsHtml += `<td class="empty" colspan="${before}"></td>`;
+      rowsHtml += `<td class="bar" colspan="${span}"><div class="fill ${cellClass}" style="${cellStyle}" data-tooltip="${escapeHtml(tooltip)}" tabindex="0">${u.sessions}</div></td>`;
+      if(after>0) rowsHtml += `<td class="empty" colspan="${after}"></td>`;
+      rowsHtml += `</tr>`;
+    });
+    body.innerHTML = rowsHtml;
+
+    let noteText = L(state.sectionNotes.s1);
+    noteText += state.lang==="va" ? ` Total: ${sched.totalNeeded} sessions assignades` : ` Total: ${sched.totalNeeded} sesiones asignadas`;
+    if(sched.reviewSessions>0){
+      noteText += state.lang==="va"
+        ? ` · ${sched.reviewSessions} sessions addicionals de repàs fins a ${fmtHuman(parseISO(state.courseEnd))}.`
+        : ` · ${sched.reviewSessions} sesiones adicionales de repaso hasta ${fmtHuman(parseISO(state.courseEnd))}.`;
+    } else {
+      noteText += ".";
+    }
+    document.getElementById('ganttNote').textContent = noteText;
+
+    document.getElementById('ganttLegend').innerHTML = `
+      <span><span class="swatch" style="background:var(--navy);"></span>${t('legendT1')}</span>
+      <span><span class="swatch" style="background:var(--wine);"></span>${t('legendT2')}</span>
+      <span><span class="swatch" style="background:var(--gold);"></span>${t('legendT3')}</span>
+      <span><span class="swatch" style="background:linear-gradient(100deg,var(--wine),var(--gold));"></span>${t('legendStraddle')}</span>
+    `;
+  }
+
+  function renderDetail(st, sched){
+    const ord = ORD_BY_LANG[state.lang];
+    const body = document.getElementById('detailBody');
+    let html = "";
+    sched.unitBlocks.forEach(u=>{
+      if(u.dates.length===0){
+        html += `<tr><td>${escapeHtml(u.name)}</td><td>${u.sessions}</td><td colspan="2">${t('noDateAssignedFull')}</td></tr>`;
+        return;
+      }
+      const groups = groupConsecutiveByTrimestre(u.dates);
+      const dateText = computeUnitDateText(u);
+      const badges = groups.map(g=>`<span class="badge ${TCLASS[g.trimestre]}">${ord[g.trimestre]}</span>`).join("");
+      html += `<tr><td>${escapeHtml(u.name)}</td><td>${u.sessions}</td><td>${dateText}</td><td class="trim-badge">${badges}</td></tr>`;
+    });
+    body.innerHTML = html;
+  }
+
+  function renderTrimCards(st, sched){
+    const ord = ORD_BY_LANG[state.lang];
+    const container = document.getElementById('trimCards');
+    let html = "";
+    for(let tr=1;tr<=3;tr++){
+      const inT = sched.sessions.filter(s=>s.trimestre===tr);
+      if(inT.length===0) continue;
+      const first = inT[0].date, last = inT[inT.length-1].date;
+      const unitsHere = sched.unitBlocks.filter(u=>u.dates.some(d=>d.trimestre===tr));
+      const boundaries = {
+        1: [parseISO(st.start), parseISO(st.t1End)],
+        2: [addDays(parseISO(st.t1End),1), parseISO(st.t2End)],
+        3: [addDays(parseISO(st.t2End),1), parseISO(st.t3End)]
+      }[tr];
+      const nlHere = st.nonLectivo.filter(r=>{
+        const rs = parseISO(r.start), re = parseISO(r.end);
+        return re>=boundaries[0] && rs<=boundaries[1];
+      });
+      html += `<div class="trim-card ${TCLASS[tr]}">
+        <span class="tag">${ord[tr]} ${state.lang==="va"?"trimestre":"trimestre"}</span>
+        <h3>${unitsHere[0]?unitsHere[0].name.split(":")[0]:""}${unitsHere.length>1?" → "+unitsHere[unitsHere.length-1].name.split(":")[0]:""}</h3>
+        <span class="range">${rangeLabel(first,last)} · ${sessionsLabel(inT.length)}</span>
+        <ul>${unitsHere.map(u=>{
+          const own = u.dates.filter(d=>d.trimestre===tr).length;
+          const partial = own<u.dates.length ? (state.lang==="va" ? ` (${own} de ${u.dates.length} sessions)` : ` (${own} de ${u.dates.length} sesiones)`) : "";
+          return `<li>${escapeHtml(u.name)}${partial}</li>`;
+        }).join("")}</ul>
+        ${nlHere.length? `<div class="nolectivo">${t('noLectivosLabel')} ${nlHere.map(r=>escapeHtml(L(r.label))+" ("+rangeLabel(parseISO(r.start),parseISO(r.end))+")").join("; ")}.</div>` : ""}
+      </div>`;
+    }
+    if(sched.reviewSessions>0){
+      html += `<div class="trim-card tband4">
+        <span class="tag">${t('afterT3Label')}</span>
+        <h3>${t('reviewCardTitle')}</h3>
+        <span class="range">${fmtHuman(addDays(parseISO(st.t3End),1))} – ${fmtHuman(parseISO(st.courseEnd))} · ${sessionsLabel(sched.reviewSessions)}</span>
+        <ul><li>${t('reviewCardItem')}</li></ul>
+      </div>`;
+    }
+    container.innerHTML = html;
+  }
+
+  function renderEvaluationOutput(st){
+    const rub = document.getElementById('rubricOutput');
+    rub.innerHTML = (st.evaluation.qualitative||[]).map((lvl,i)=>{
+      const color = QUAL_COLORS[i % QUAL_COLORS.length];
+      const letter = String.fromCharCode(65+i);
+      return `<div class="lvl" data-n="${letter}">
+        <h4><span class="dot" style="background:${color};"></span>${escapeHtml(L(lvl.title))}</h4>
+        <p>${escapeHtml(L(lvl.description))}</p>
+      </div>`;
+    }).join("");
+
+    const q = st.evaluation.quantitative || {};
+    const examW = Math.max(0, Math.min(100, Number(q.examWeight)||0));
+    const hwW = 100-examW;
+    const bar = document.getElementById('quantBar');
+    bar.innerHTML = "";
+    if(examW>0) bar.innerHTML += `<div class="seg big" style="width:${examW}%;">${examW} % — ${escapeHtml(L(q.examLabel)||"")}</div>`;
+    if(hwW>0) bar.innerHTML += `<div class="seg small" style="width:${hwW}%;">${hwW} %</div>`;
+
+    document.getElementById('quantLegend').innerHTML =
+      `<span>${escapeHtml(L(q.examLabel)||"")}</span><span>${escapeHtml(L(q.homeworkLabel)||"")}</span>`;
+    document.getElementById('quantParagraphOutput').textContent = L(q.paragraph)||"";
+    document.getElementById('quantNoteOutput').textContent = L(q.noteExclusivity)||"";
+    document.getElementById('qualCaption').textContent = t('qualCaption');
+    document.getElementById('quantCaption').textContent = t('quantCaption');
+  }
+
+  function footerHtml(subject, level, course){
+    if(FROZEN){
+      return state.lang==="va"
+        ? `Quadre generat amb l'Eina de seqüenciació — <strong>${escapeHtml(subject)}</strong>, ${escapeHtml(level)}, curs <strong>${escapeHtml(course)}</strong>. No s'han inclòs els dies de lliure disposició de fixació municipal, que varien segons el centre i poden desplaçar lleugerament les dates.`
+        : `Cuadro generado con la Herramienta de secuenciación — <strong>${escapeHtml(subject)}</strong>, ${escapeHtml(level)}, curso <strong>${escapeHtml(course)}</strong>. No se han incluido los días de libre disposición de fijación municipal, que varían según el centro y pueden desplazar ligeramente las fechas.`;
+    }
+    return state.lang==="va"
+      ? `Quadre generat amb l'Eina de seqüenciació: canvia la matèria, el calendari, les situacions d'aprenentatge i els criteris de qualificació en «Mode edició» per a adaptar-lo a qualsevol curs o matèria. Dades actuals — <strong>${escapeHtml(subject)}</strong>, ${escapeHtml(level)}, curs <strong>${escapeHtml(course)}</strong>. No s'han inclòs els dies de lliure disposició de fixació municipal, que varien segons el centre i poden desplaçar lleugerament les dates.`
+      : `Cuadro generado con la Herramienta de secuenciación: cambia la asignatura, el calendario, las situaciones de aprendizaje y los criterios de calificación en «Modo edición» para adaptarlo a cualquier curso o materia. Datos actuales — <strong>${escapeHtml(subject)}</strong>, ${escapeHtml(level)}, curso <strong>${escapeHtml(course)}</strong>. No se han incluido los días de libre disposición de fijación municipal, que varían según el centro y pueden desplazar ligeramente las fechas.`;
+  }
+
+  function renderFooter(st){
+    document.getElementById('footerNote').innerHTML = footerHtml(L(st.subjectName)||"", L(st.courseLevel)||"", st.courseLabel||"");
+  }
+
+  function renderSectionNotes(st){
+    document.getElementById('note2').textContent = L(st.sectionNotes.s2);
+    document.getElementById('note3').textContent = L(st.sectionNotes.s3);
+    document.getElementById('note4').textContent = L(st.sectionNotes.s4);
+    document.getElementById('note5').textContent = L(st.sectionNotes.s5);
+    document.getElementById('methodologyOutput').textContent = L(st.methodology.text);
+  }
+
+  function notifyEmbedParent(sched){
+    try{
+      if(window.parent && window.parent!==window){
+        let unitsSchedule = [];
+        try{
+          unitsSchedule = (sched && sched.unitBlocks ? sched.unitBlocks : []).map(u=>({
+            name: u.name || "",
+            sessions: u.sessions || 0,
+            trimestres: Array.from(new Set((u.dates||[]).map(d=>d.trimestre))).sort((a,b)=>a-b)
+          }));
+        }catch(e){}
+        window.parent.postMessage({type:"planTempState", progId:(window.name||""), state:JSON.parse(JSON.stringify(state)), unitsSchedule}, "*");
+      }
+    }catch(e){}
+  }
+
+  function renderOutputs(){
+    const sched = computeSchedule(state);
+    renderHeader(state);
+    renderTopBars(state, sched);
+    renderGantt(state, sched);
+    renderDetail(state, sched);
+    renderTrimCards(state, sched);
+    renderEvaluationOutput(state);
+    renderSectionNotes(state);
+    renderFooter(state);
+    notifyEmbedParent(sched);
+  }
+
+  function renderWeekdayPicker(){
+    const el = document.getElementById('weekdayPicker');
+    const dias = DIAS_BY_LANG[state.lang];
+    el.innerHTML = dias.map(d=>{
+      const checked = state.weekdays.includes(d.v);
+      return `<label class="${checked?'checked':''}"><input type="checkbox" data-day="${d.v}" ${checked?'checked':''}> ${d.l}</label>`;
+    }).join("");
+    el.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+      cb.addEventListener('change', e=>{
+        const day = Number(e.target.getAttribute('data-day'));
+        if(e.target.checked){ if(!state.weekdays.includes(day)) state.weekdays.push(day); }
+        else { state.weekdays = state.weekdays.filter(d=>d!==day); }
+        e.target.closest('label').classList.toggle('checked', e.target.checked);
+        enforceTotalCap(); renderUnitList(); renderOutputs();
+      });
+    });
+  }
+
+  function renderNlList(){
+    const el = document.getElementById('nlList');
+    el.innerHTML = state.nonLectivo.map((r,i)=>`
+      <div class="dyn-row" data-idx="${i}">
+        <input type="text" class="nl-label" data-idx="${i}" value="${escapeHtml(L(r.label))}" placeholder="${escapeHtml(t('phHolidayLabel'))}">
+        <input type="date" class="nl-start" data-idx="${i}" value="${r.start}">
+        <input type="date" class="nl-end" data-idx="${i}" value="${r.end}">
+        <button type="button" class="icon-btn btn-remove-nl" data-idx="${i}">✕</button>
+      </div>
+    `).join("");
+    el.querySelectorAll('.nl-label').forEach(inp=>inp.addEventListener('input', e=>{ setL(state.nonLectivo[Number(e.target.dataset.idx)],'label', e.target.value); renderOutputs(); }));
+    el.querySelectorAll('.nl-start').forEach(inp=>inp.addEventListener('change', e=>{ state.nonLectivo[Number(e.target.dataset.idx)].start = e.target.value; enforceTotalCap(); renderUnitList(); renderOutputs(); }));
+    el.querySelectorAll('.nl-end').forEach(inp=>inp.addEventListener('change', e=>{ state.nonLectivo[Number(e.target.dataset.idx)].end = e.target.value; enforceTotalCap(); renderUnitList(); renderOutputs(); }));
+    el.querySelectorAll('.btn-remove-nl').forEach(btn=>btn.addEventListener('click', e=>{ state.nonLectivo.splice(Number(e.target.dataset.idx),1); renderNlList(); enforceTotalCap(); renderUnitList(); renderOutputs(); }));
+  }
+
+  function renderUnitList(){
+    const el = document.getElementById('unitList');
+    el.innerHTML = state.units.map((u,i)=>`
+      <div class="dyn-row" data-idx="${i}">
+        <span class="drag-handle">${i+1}.</span>
+        <input type="text" class="u-name" data-idx="${i}" value="${escapeHtml(L(u.name))}" placeholder="${escapeHtml(t('phUnitName'))}">
+        <input type="number" min="0" class="u-sessions" data-idx="${i}" value="${u.sessions}">
+        <span class="max-hint" data-idx="${i}"></span>
+        <label class="fixed-toggle ${u.fixed?'checked':''}"><input type="checkbox" class="u-fixed" data-idx="${i}" ${u.fixed?'checked':''}> ${t('fixedLabel')}</label>
+        <div class="row-btns">
+          <button type="button" class="icon-btn btn-up" data-idx="${i}">↑</button>
+          <button type="button" class="icon-btn btn-down" data-idx="${i}">↓</button>
+          <button type="button" class="icon-btn btn-remove-unit" data-idx="${i}">✕</button>
+        </div>
+      </div>
+    `).join("");
+    el.querySelectorAll('.u-name').forEach(inp=>inp.addEventListener('input', e=>{ setL(state.units[Number(e.target.dataset.idx)],'name', e.target.value); renderOutputs(); }));
+    el.querySelectorAll('.u-sessions').forEach(inp=>inp.addEventListener('input', e=>{
+      const i = Number(e.target.dataset.idx);
+      let v = Math.max(0, Math.floor(Number(e.target.value)||0));
+      const totalAvailable = getTotalAvailable();
+      const others = state.units.reduce((a,u,idx)=> idx===i?a:a+(Number(u.sessions)||0), 0);
+      const maxAllowed = Math.max(0, totalAvailable - others);
+      if(v > maxAllowed) v = maxAllowed;
+      state.units[i].sessions = v;
+      e.target.value = v;
+      updateMaxHints();
+      renderOutputs();
+    }));
+    el.querySelectorAll('.u-fixed').forEach(inp=>inp.addEventListener('change', e=>{
+      const i = Number(e.target.dataset.idx);
+      state.units[i].fixed = e.target.checked;
+      e.target.closest('label').classList.toggle('checked', e.target.checked);
+    }));
+    el.querySelectorAll('.btn-remove-unit').forEach(btn=>btn.addEventListener('click', e=>{ state.units.splice(Number(e.target.dataset.idx),1); renderUnitList(); renderOutputs(); }));
+    el.querySelectorAll('.btn-up').forEach(btn=>btn.addEventListener('click', e=>{
+      const i = Number(e.target.dataset.idx);
+      if(i>0){ const tmp=state.units[i-1]; state.units[i-1]=state.units[i]; state.units[i]=tmp; renderUnitList(); renderOutputs(); }
+    }));
+    el.querySelectorAll('.btn-down').forEach(btn=>btn.addEventListener('click', e=>{
+      const i = Number(e.target.dataset.idx);
+      if(i<state.units.length-1){ const tmp=state.units[i+1]; state.units[i+1]=state.units[i]; state.units[i]=tmp; renderUnitList(); renderOutputs(); }
+    }));
+    updateMaxHints();
+  }
+
+  function renderQualList(){
+    const el = document.getElementById('qualList');
+    el.innerHTML = state.evaluation.qualitative.map((lvl,i)=>`
+      <div class="dyn-block" data-idx="${i}">
+        <div class="dyn-block-top">
+          <span class="drag-handle">${String.fromCharCode(65+i)}.</span>
+          <input type="text" class="q-title" data-idx="${i}" value="${escapeHtml(L(lvl.title))}" placeholder="${escapeHtml(t('phQualTitle'))}" style="flex:1;">
+          <div class="row-btns">
+            <button type="button" class="icon-btn q-up" data-idx="${i}">↑</button>
+            <button type="button" class="icon-btn q-down" data-idx="${i}">↓</button>
+            <button type="button" class="icon-btn q-remove" data-idx="${i}">✕</button>
+          </div>
+        </div>
+        <textarea class="q-desc" data-idx="${i}" rows="2" placeholder="${escapeHtml(t('phQualDesc'))}">${escapeHtml(L(lvl.description))}</textarea>
+      </div>
+    `).join("");
+    el.querySelectorAll('.q-title').forEach(inp=>inp.addEventListener('input', e=>{ setL(state.evaluation.qualitative[Number(e.target.dataset.idx)],'title', e.target.value); renderOutputs(); }));
+    el.querySelectorAll('.q-desc').forEach(inp=>inp.addEventListener('input', e=>{ setL(state.evaluation.qualitative[Number(e.target.dataset.idx)],'description', e.target.value); renderOutputs(); }));
+    el.querySelectorAll('.q-remove').forEach(btn=>btn.addEventListener('click', e=>{ state.evaluation.qualitative.splice(Number(e.target.dataset.idx),1); renderQualList(); renderOutputs(); }));
+    el.querySelectorAll('.q-up').forEach(btn=>btn.addEventListener('click', e=>{
+      const i=Number(e.target.dataset.idx);
+      if(i>0){ const arr=state.evaluation.qualitative; const tmp=arr[i-1]; arr[i-1]=arr[i]; arr[i]=tmp; renderQualList(); renderOutputs(); }
+    }));
+    el.querySelectorAll('.q-down').forEach(btn=>btn.addEventListener('click', e=>{
+      const i=Number(e.target.dataset.idx); const arr=state.evaluation.qualitative;
+      if(i<arr.length-1){ const tmp=arr[i+1]; arr[i+1]=arr[i]; arr[i]=tmp; renderQualList(); renderOutputs(); }
+    }));
+  }
+
+  function populateSimpleFields(){
+    document.getElementById('f-subjectName').value = L(state.subjectName)||"";
+    document.getElementById('f-courseLevel').value = L(state.courseLevel)||"";
+    document.getElementById('f-courseLabel').value = state.courseLabel||"";
+    document.getElementById('f-pageSubtitle').value = L(state.pageSubtitle)||"";
+    document.getElementById('f-start').value = state.start||"";
+    document.getElementById('f-courseEnd').value = state.courseEnd||"";
+    document.getElementById('f-t1End').value = state.t1End||"";
+    document.getElementById('f-t2End').value = state.t2End||"";
+    document.getElementById('f-t3End').value = state.t3End||"";
+    const q = state.evaluation.quantitative;
+    document.getElementById('f-examWeight').value = q.examWeight;
+    document.getElementById('f-homeworkWeight').value = 100-Number(q.examWeight||0);
+    document.getElementById('f-examLabel').value = L(q.examLabel)||"";
+    document.getElementById('f-homeworkLabel').value = L(q.homeworkLabel)||"";
+    document.getElementById('f-quantParagraph').value = L(q.paragraph)||"";
+    document.getElementById('f-quantNote').value = L(q.noteExclusivity)||"";
+  }
+
+  function populateSectionNoteFields(){
+    document.getElementById('f-note1').value = L(state.sectionNotes.s1)||"";
+    document.getElementById('f-note2').value = L(state.sectionNotes.s2)||"";
+    document.getElementById('f-note3').value = L(state.sectionNotes.s3)||"";
+    document.getElementById('f-note4').value = L(state.sectionNotes.s4)||"";
+    document.getElementById('f-note5').value = L(state.sectionNotes.s5)||"";
+    document.getElementById('f-methodology').value = L(state.methodology.text)||"";
+  }
+
+  function renderEditPanel(){
+    populateSimpleFields();
+    populateSectionNoteFields();
+    renderWeekdayPicker();
+    renderNlList();
+    renderUnitList();
+    renderQualList();
+    document.getElementById('distributeHelp').textContent = "";
+  }
+
+  function wireSimpleFields(){
+    document.getElementById('f-subjectName').addEventListener('input', e=>{ setL(state,'subjectName', e.target.value); renderOutputs(); });
+    document.getElementById('f-courseLevel').addEventListener('input', e=>{ setL(state,'courseLevel', e.target.value); renderOutputs(); });
+    document.getElementById('f-courseLabel').addEventListener('input', e=>{ state.courseLabel=e.target.value; renderOutputs(); });
+    document.getElementById('f-pageSubtitle').addEventListener('input', e=>{ setL(state,'pageSubtitle', e.target.value); renderOutputs(); });
+    document.getElementById('f-start').addEventListener('change', e=>{ state.start=e.target.value; enforceTotalCap(); renderUnitList(); renderOutputs(); });
+    document.getElementById('f-courseEnd').addEventListener('change', e=>{ state.courseEnd=e.target.value; renderOutputs(); });
+    document.getElementById('f-t1End').addEventListener('change', e=>{ state.t1End=e.target.value; renderOutputs(); });
+    document.getElementById('f-t2End').addEventListener('change', e=>{ state.t2End=e.target.value; renderOutputs(); });
+    document.getElementById('f-t3End').addEventListener('change', e=>{ state.t3End=e.target.value; enforceTotalCap(); renderUnitList(); renderOutputs(); });
+
+    document.getElementById('f-examWeight').addEventListener('input', e=>{
+      let v = Number(e.target.value); if(isNaN(v)) v=0; v=Math.max(0,Math.min(100,v));
+      state.evaluation.quantitative.examWeight = v;
+      document.getElementById('f-homeworkWeight').value = 100-v;
+      renderOutputs();
+    });
+    document.getElementById('f-examLabel').addEventListener('input', e=>{ setL(state.evaluation.quantitative,'examLabel', e.target.value); renderOutputs(); });
+    document.getElementById('f-homeworkLabel').addEventListener('input', e=>{ setL(state.evaluation.quantitative,'homeworkLabel', e.target.value); renderOutputs(); });
+    document.getElementById('f-quantParagraph').addEventListener('input', e=>{ setL(state.evaluation.quantitative,'paragraph', e.target.value); renderOutputs(); });
+    document.getElementById('f-quantNote').addEventListener('input', e=>{ setL(state.evaluation.quantitative,'noteExclusivity', e.target.value); renderOutputs(); });
+  }
+
+  function wireSectionNoteFields(){
+    document.getElementById('f-note1').addEventListener('input', e=>{ setL(state.sectionNotes,'s1', e.target.value); renderOutputs(); });
+    document.getElementById('f-note2').addEventListener('input', e=>{ setL(state.sectionNotes,'s2', e.target.value); renderOutputs(); });
+    document.getElementById('f-note3').addEventListener('input', e=>{ setL(state.sectionNotes,'s3', e.target.value); renderOutputs(); });
+    document.getElementById('f-note4').addEventListener('input', e=>{ setL(state.sectionNotes,'s4', e.target.value); renderOutputs(); });
+    document.getElementById('f-note5').addEventListener('input', e=>{ setL(state.sectionNotes,'s5', e.target.value); renderOutputs(); });
+    document.getElementById('f-methodology').addEventListener('input', e=>{ setL(state.methodology,'text', e.target.value); renderOutputs(); });
+  }
+
+  function downloadBlob(content, type, filename){
+    const blob = new Blob([content], {type});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function updateToggleEditButton(){
+    const btn = document.getElementById('toggleEdit');
+    if(!btn) return;
+    const on = document.body.classList.contains('edit-mode');
+    btn.textContent = on ? t('toggleEditOff') : t('toggleEditOn');
+  }
+
+  function applyStaticTranslations(){
+    const ids = [
+      'eyebrowText','quickTitle','quickDesc','btnExport','btnDownloadFrozen',
+      'editPanelTitle','editPanelNote',
+      'lbl-subjectName','lbl-courseLevel','lbl-courseLabel','lbl-subtitle',
+      'lbl-start','lbl-courseEnd','lbl-t1End','lbl-t2End','lbl-t3End','lbl-weekdays',
+      'subheadHolidays','subheadUnits','hintUnits','subheadQual','hintQual','subheadQuant',
+      'lbl-examWeight','lbl-homeworkWeight','lbl-examLabel','lbl-homeworkLabel','lbl-quantParagraph','lbl-quantNote',
+      'subheadSectionTexts','hintSectionTexts','lbl-note1','lbl-note2','lbl-note3','lbl-note4','lbl-note5',
+      'subheadMethodology','hintMethodology','lbl-methodologyText',
+      'btnRecalc','btnReset','btnImportLabel','btnDownloadHtml',
+      'addNl','addUnit','autoDistribute','addQual',
+      'secTitle1','secTitle2','secTitle3','secTitle4','secTitle5',
+      'thSessions','thDates','thTrim'
+    ];
+    const keyMap = {
+      'lbl-subjectName':'lblSubjectName','lbl-courseLevel':'lblCourseLevel','lbl-courseLabel':'lblCourseLabel','lbl-subtitle':'lblSubtitle',
+      'lbl-start':'lblStart','lbl-courseEnd':'lblCourseEnd','lbl-t1End':'lblT1End','lbl-t2End':'lblT2End','lbl-t3End':'lblT3End','lbl-weekdays':'lblWeekdays',
+      'lbl-examWeight':'lblExamWeight','lbl-homeworkWeight':'lblHomeworkWeight','lbl-examLabel':'lblExamLabel','lbl-homeworkLabel':'lblHomeworkLabel',
+      'lbl-quantParagraph':'lblQuantParagraph','lbl-quantNote':'lblQuantNote',
+      'lbl-note1':'lblNote1','lbl-note2':'lblNote2','lbl-note3':'lblNote3','lbl-note4':'lblNote4','lbl-note5':'lblNote5',
+      'lbl-methodologyText':'lblMethodologyText','btnImportLabel':'btnImport',
+      'addNl':'btnAddHoliday','addUnit':'btnAddUnit','autoDistribute':'btnAutoDistribute','addQual':'btnAddQual'
+    };
+    ids.forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      const key = keyMap[id] || id;
+      el.textContent = t(key);
+    });
+    document.getElementById('thUnit') && (document.getElementById('thUnit').textContent = t('unitColHeader'));
+    const editHelpEl = document.getElementById('editHelpText');
+    if(editHelpEl) editHelpEl.innerHTML = t('editHelp');
+    updateToggleEditButton();
+  }
+
+  function updateLangButtons(){
+    document.getElementById('langEs').classList.toggle('active', state.lang==='es');
+    document.getElementById('langVa').classList.toggle('active', state.lang==='va');
+  }
+
+  function setLang(lang){
+    if(lang!=='es' && lang!=='va') return;
+    if(state.lang===lang) return;
+    state.lang = lang;
+    updateLangButtons();
+    applyStaticTranslations();
+    if(!FROZEN) renderEditPanel();
+    renderOutputs();
+  }
+
+  function wireLangToggle(){
+    document.getElementById('langEs').addEventListener('click', ()=>setLang('es'));
+    document.getElementById('langVa').addEventListener('click', ()=>setLang('va'));
+  }
+
+  function wireActions(){
+    document.getElementById('toggleEdit').addEventListener('click', ()=>{
+      document.body.classList.toggle('edit-mode');
+      updateToggleEditButton();
+    });
+
+    document.getElementById('addNl').addEventListener('click', ()=>{
+      state.nonLectivo.push({label:{es:"Nuevo periodo no lectivo", va:"Nou període no lectiu"}, start:state.start, end:state.start});
+      renderNlList(); enforceTotalCap(); renderUnitList(); renderOutputs();
+    });
+
+    document.getElementById('addUnit').addEventListener('click', ()=>{
+      const totalAvailable = getTotalAvailable();
+      const used = state.units.reduce((a,u)=>a+(Number(u.sessions)||0),0);
+      const remaining = Math.max(0, totalAvailable - used);
+      state.units.push({name:{es:"Nueva situación", va:"Nova situació"}, sessions:Math.min(6, remaining), fixed:false});
+      renderUnitList(); renderOutputs();
+    });
+
+    document.getElementById('addQual').addEventListener('click', ()=>{
+      state.evaluation.qualitative.push({title:{es:"Nuevo nivel", va:"Nou nivell"}, description:{es:"Descripción del nivel de desempeño.", va:"Descripció del nivell d'acompliment."}});
+      renderQualList(); renderOutputs();
+    });
+
+    document.getElementById('autoDistribute').addEventListener('click', autoDistribute);
+    document.getElementById('btnRecalc').addEventListener('click', renderOutputs);
+
+    document.getElementById('btnReset').addEventListener('click', ()=>{
+      const keepLang = state.lang;
+      state = JSON.parse(JSON.stringify(ORIGINAL_DEFAULT));
+      ensureShape(state);
+      state.lang = keepLang;
+      legacyImportNotice = false;
+      enforceTotalCap();
+      updateLangButtons();
+      renderEditPanel(); renderOutputs();
+    });
+
+    document.getElementById('btnExport').addEventListener('click', ()=>{
+      downloadBlob(JSON.stringify(state,null,2), "application/json", `configuracion_${slug(L(state.subjectName))}_${slug(state.courseLabel)}.json`);
+    });
+
+    document.getElementById('importFile').addEventListener('change', e=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{
+          const imported = JSON.parse(reader.result);
+          const wasLegacy = looksLegacy(imported);
+          ensureShape(imported);
+          state = imported;
+          legacyImportNotice = wasLegacy;
+          enforceTotalCap();
+          updateLangButtons();
+          applyStaticTranslations();
+          renderEditPanel(); renderOutputs();
+        }catch(err){
+          alert(t('importError'));
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    });
+
+    document.getElementById('btnDownloadHtml').addEventListener('click', ()=>{
+      const clone = document.documentElement.cloneNode(true);
+      const scriptTag = clone.querySelector('#course-data');
+      scriptTag.textContent = JSON.stringify(state, null, 2);
+      clone.querySelector('body').classList.remove('edit-mode');
+      const toggleBtn = clone.querySelector('#toggleEdit');
+      if(toggleBtn) toggleBtn.textContent = t('toggleEditOn');
+      const htmlStr = "<!DOCTYPE html>\n" + clone.outerHTML;
+      downloadBlob(htmlStr, "text/html", `secuenciacion_editable_${slug(L(state.subjectName))}_${slug(state.courseLabel)}.html`);
+    });
+
+    document.getElementById('btnDownloadFrozen').addEventListener('click', ()=>{
+      const clone = document.documentElement.cloneNode(true);
+      const scriptTag = clone.querySelector('#course-data');
+      if(scriptTag) scriptTag.textContent = JSON.stringify(state, null, 2);
+      const ep = clone.querySelector('#editPanel'); if(ep) ep.remove();
+      const qa = clone.querySelector('#quickActions'); if(qa) qa.remove();
+      const tb = clone.querySelector('#toggleEdit'); if(tb) tb.remove();
+      const eyebrow = clone.querySelector('header.hero .eyebrow'); if(eyebrow) eyebrow.remove();
+      const body = clone.querySelector('body');
+      if(body){ body.classList.remove('edit-mode'); body.setAttribute('data-frozen','true'); }
+      // The ES/VA switch and its rendering logic (script + data) are kept on purpose,
+      // so the final copy stays bilingual and interactive even without the edit panel.
+      const htmlStr = "<!DOCTYPE html>\n" + clone.outerHTML;
+      downloadBlob(htmlStr, "text/html", `secuenciacion_FINAL_${slug(L(state.subjectName))}_${slug(state.courseLabel)}.html`);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    FROZEN = document.body.hasAttribute('data-frozen');
+    wireLangToggle();
+    updateLangButtons();
+    applyStaticTranslations();
+    enforceTotalCap();
+    if(!FROZEN){
+      wireSimpleFields();
+      wireSectionNoteFields();
+      wireActions();
+      renderEditPanel();
+    }
+    renderOutputs();
+  });
+})();
+</script>
+
+
+
+</body></html>

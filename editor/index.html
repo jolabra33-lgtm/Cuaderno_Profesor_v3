@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor de exámenes</title>
+<link rel="stylesheet" href="css/editor.css" data-css-editor>
+<link rel="stylesheet" href="css/fuentes.css" id="embeddedFontFaces">
+<style id="pagecss">@page{size:210mm 297mm;margin:0}</style>
+</head>
+<body>
+<div id="app" data-view="stage">
+  <header class="topbar">
+    <div class="brand"><i></i>Editor de exámenes</div>
+    <input id="examName" class="examname" type="text" aria-label="Nombre del examen" placeholder="Nombre del examen">
+    <button class="btn" id="btnNew">Nuevo</button>
+    <button class="btn" id="btnOpen">Abrir</button>
+    <button class="btn" id="btnSave" title="Descarga una copia del examen para guardarla o pasarla a otro ordenador">Guardar archivo</button>
+    <span class="group">
+      <button class="btn icon" id="btnUndo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer">↶</button>
+      <button class="btn icon" id="btnRedo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer">↷</button>
+    </span>
+    <button class="btn" id="btnAudit" title="Comprobar puntuaciones, contenidos y paginación antes de exportar">Validar</button>
+    <button class="btn" id="btnVersions" title="Consultar versiones guardadas y recuperar una anterior">Versiones</button>
+    <button class="btn" id="btnBank" title="Guardar e insertar bloques reutilizables">Banco de bloques</button>
+    <span class="sp"></span>
+    <span class="status" id="status"></span>
+    <button class="btn themebtn" id="btnTheme" title="Cambiar entre tema automático, claro y oscuro">Tema</button>
+    <button class="btn" id="btnDocx" title="Descargar una versión editable en Word">Exportar Word</button>
+    <button class="btn primary" id="btnPdf">Exportar PDF</button>
+  </header>
+
+  <nav class="mobile-tabs">
+    <button data-view="outline">Estructura</button>
+    <button data-view="stage" class="on">Vista</button>
+    <button data-view="side">Ajustes</button>
+  </nav>
+
+  <aside id="outline" class="panel" aria-label="Estructura del examen">
+    <div class="panel-head">
+      <h2>Estructura</h2>
+      <button class="btn sm primary" id="btnAdd">+ Añadir</button>
+    </div>
+    <div class="scroll"><div id="tree"></div></div>
+    <div class="totals" id="totals"></div>
+  </aside>
+
+  <main id="stage">
+    <div class="stagebar">
+      <span class="group">
+        <button class="btn sm icon" id="zOut" aria-label="Reducir">−</button>
+        <button class="btn sm" id="zFit" title="Ajustar al ancho">Ajustar</button>
+        <button class="btn sm icon" id="zIn" aria-label="Ampliar">+</button>
+      </span>
+      <span class="zoomval" id="zVal">100%</span>
+      <label><input type="checkbox" id="chkGuides"> Ver márgenes</label>
+      <span class="sp"></span>
+      <span class="status" id="pageCount"></span>
+    </div>
+    <div class="warnbar" id="warn" hidden></div>
+    <div id="stageScroll" tabindex="0" aria-label="Páginas del examen"><div id="pagesOuter"><div id="pages"></div></div></div>
+  </main>
+
+  <aside id="side" class="panel" aria-label="Ajustes">
+    <div class="tabs" role="tablist">
+      <button data-tab="block" class="on" role="tab" aria-selected="true" aria-controls="inspector">Bloque</button>
+      <button data-tab="page" role="tab" aria-selected="false" aria-controls="inspector">Examen</button>
+      <button data-tab="hf" role="tab" aria-selected="false" aria-controls="inspector">Encabezado y pie</button>
+    </div>
+    <div class="scroll"><div id="inspector" class="pad" role="tabpanel"></div></div>
+  </aside>
+</div>
+
+<div id="measure" class="paper"></div>
+
+<dialog id="dlg"></dialog>
+<input type="file" id="fileOpen" accept=".json,application/json" hidden>
+<input type="file" id="fileSnippetOpen" accept=".json,application/json" hidden>
+<script src="js/01-nucleo.js"></script>
+<script src="js/02-maquetacion.js"></script>
+<script src="js/03-interfaz-arbol.js"></script>
+<script src="js/04-inspector.js"></script>
+<script src="js/05-dialogos.js"></script>
+<script src="js/06-exportacion-docx.js"></script>
+<script src="js/07-archivos-y-calidad.js"></script>
+<script src="js/08-arranque.js"></script>
+<script src="js/puente-cuaderno.js"></script>
+</body>
+</html>

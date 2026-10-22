@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EvalIES — Control de Evaluaciones</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f8ef7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EvalIES">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<script src="../js/registro-sw.js"></script>
+<!-- Se ha quitado la fuente de Google Fonts para que la app no dependa de internet:
+     todas las reglas font-family ya tenían sans-serif/monospace como alternativa,
+     así que el iPad usará su tipografía nativa (San Francisco) automáticamente. -->
+<script src="vendor/chart.umd.min.js"></script>
+<!-- ^ Copia local (ver vendor/LEEME.txt). Si el archivo no está ahí, los
+     gráficos simplemente no se dibujan; el resto de la app sigue funcionando. -->
+<link rel="stylesheet" href="css/tutoria.css">
+</head>
+<body>
+
+<!-- PWA INSTALL BANNER -->
+<div id="installBanner">
+  <div class="install-banner-text">
+    📲 <strong>Instalar EvalIES</strong> como aplicación en tu escritorio
+  </div>
+  <button class="install-banner-btn" onclick="pwaInstall()">Instalar</button>
+  <button class="install-banner-close" onclick="document.getElementById('installBanner').classList.remove('show')">✕</button>
+</div>
+
+<!-- WELCOME SCREEN -->
+<div id="welcomeScreen">
+
+  <!-- LEFT: Hero panel -->
+  <div class="ws-hero">
+    <div class="ws-hero-bg"></div>
+    <div class="ws-orb ws-orb-1"></div>
+    <div class="ws-orb ws-orb-2"></div>
+    <div class="ws-orb ws-orb-3"></div>
+    <div class="ws-grid"></div>
+    <div class="ws-noise"></div>
+
+    <div class="ws-hero-content">
+      <div class="ws-logo-mark">IE</div>
+      <div class="ws-hero-label">Gestor de Tutoría</div>
+      <div class="ws-hero-title">Control de<br><span>Evaluaciones</span></div>
+      <div class="ws-hero-desc">
+        Gestiona evaluaciones, decisiones de promoción y estadísticas de todos tus grupos desde un único archivo.
+      </div>
+      <div class="ws-features">
+        <div class="ws-feature-pill"><span class="pill-dot"></span>Evaluaciones I, II y III</div>
+        <div class="ws-feature-pill"><span class="pill-dot"></span>Informes imprimibles</div>
+        <div class="ws-feature-pill"><span class="pill-dot"></span>Estadísticas por grupo</div>
+        <div class="ws-feature-pill"><span class="pill-dot"></span>Edición masiva</div>
+        <div class="ws-feature-pill"><span class="pill-dot"></span>Guardado automático</div>
+        <div class="ws-feature-pill"><span class="pill-dot"></span>Modo claro / oscuro</div>
+      </div>
+    </div>
+
+    <div class="ws-hero-footer">
+      <div class="ws-hero-footer-badge">
+        <span class="badge-dot"></span>
+        PWA · Funciona sin internet
+      </div>
+      <div class="ws-hero-footer-sep"></div>
+      <div class="ws-hero-footer-badge">Archivos .json</div>
+      <div class="ws-hero-footer-sep"></div>
+      <div class="ws-hero-footer-badge">EvalIES v2025</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Actions panel -->
+  <div class="ws-actions-panel">
+    <div class="ws-actions-inner">
+      <div class="ws-actions-heading">Bienvenido/a</div>
+      <div class="ws-actions-sub" id="wsSubtitle">Abre un archivo existente o empieza uno nuevo para tu centro.</div>
+
+      <!-- Shown only when localStorage has saved data -->
+      <button class="ws-btn ws-btn-new" id="wsBtnContinue" onclick="hideWelcomeScreen();renderAll();syncDateInputs();updateFileIndicator();" style="display:none;background:linear-gradient(135deg,#059669,#0d9488)">
+        <div class="ws-btn-icon" style="background:rgba(255,255,255,0.2)">▶</div>
+        <div style="flex:1">
+          <span class="ws-btn-label">Continuar sesión anterior</span>
+          <span class="ws-btn-desc" id="wsContinueDesc">Retomar los datos guardados</span>
+        </div>
+        <span class="ws-btn-arrow">→</span>
+      </button>
+
+      <button class="ws-btn ws-btn-new" onclick="fsNewFile()">
+        <div class="ws-btn-icon">✦</div>
+        <div style="flex:1">
+          <span class="ws-btn-label">Nuevo archivo</span>
+          <span class="ws-btn-desc">Crear un nuevo centro desde cero</span>
+        </div>
+        <span class="ws-btn-arrow">→</span>
+      </button>
+
+      <button class="ws-btn ws-btn-open" onclick="fsOpenFile()">
+        <div class="ws-btn-icon">📂</div>
+        <div style="flex:1">
+          <span class="ws-btn-label">Abrir archivo .json</span>
+          <span class="ws-btn-desc">Continuar con un archivo guardado</span>
+        </div>
+        <span class="ws-btn-arrow">→</span>
+      </button>
+
+      <div class="welcome-recents" id="welcomeRecents" style="display:none">
+        <div class="ws-divider">
+          <div class="ws-divider-line"></div>
+          <div class="ws-divider-label">Recientes</div>
+          <div class="ws-divider-line"></div>
+        </div>
+        <div id="recentsList"></div>
+      </div>
+
+      <div class="ws-kbd-hints">
+        <span class="ws-kbd-hint"><kbd class="kbd">Ctrl+S</kbd> Guardar</span>
+        <span class="ws-kbd-hint"><kbd class="kbd">Ctrl+⇧+S</kbd> Guardar como</span>
+        <span class="ws-kbd-hint"><kbd class="kbd">Ctrl+Z</kbd> Deshacer</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="header">
+  <div class="header-left">
+    <div class="logo">IE</div>
+    <div class="header-title-wrap">
+      <div class="header-title">EvalIES</div>
+      <input class="header-ies-name" id="headerIesName" type="text"
+        placeholder="Nombre del centro educativo…"
+        value="Gestor de Tutoría"
+        oninput="saveIesName(this.value)" />
+    </div>
+    <div class="header-divider"></div>
+    <div class="autosave-indicator" id="autosaveIndicator">
+      <div class="autosave-dot" id="autosaveDot"></div>
+      <span id="autosaveLabel">Guardado</span>
+    </div>
+    <div class="header-divider"></div>
+    <!-- FILE INDICATOR -->
+    <div class="file-indicator" id="fileIndicator" title="Archivo activo y estado de guardado">
+      <div class="file-dot nofile" id="fileDot"></div>
+      <span class="file-name" id="fileNameLabel">Sin archivo abierto</span>
+      <span class="file-status" id="fileStatus"></span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <a class="theme-toggle" href="../index.html" title="Volver al Inicio (Evaluación y Corrector)" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:16px">🏠</a>
+    <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="Cambiar modo claro/oscuro">🌙</button>
+    <button class="theme-toggle" onclick="openGuide()" title="Guía de usuario" style="font-size:16px;">?</button>
+    <!-- Menú Gestión de Curso -->
+    <div class="dropdown-wrapper" id="courseMenuWrapper">
+      <button class="btn btn-ghost dropdown-toggle" onclick="toggleCourseMenu(event)">
+        ⚙️ Gestión del Curso <span class="dropdown-arrow" id="courseMenuArrow">▾</span>
+      </button>
+      <div class="dropdown-menu" id="courseMenu">
+        <div class="dropdown-section-label">Datos</div>
+        <button class="dropdown-item" onclick="closeCourseMenu();openImportCentroModal()" style="border:1px solid rgba(79,142,247,0.3);border-radius:8px;margin-bottom:4px;">
+          <span class="di-icon">🏫</span>
+          <div><div class="di-title" style="color:var(--accent)">Importar centro completo</div><div class="di-desc">Distribuye todos los alumnos de golpe por grupos</div></div>
+        </button>
+        <button class="dropdown-item" onclick="closeCourseMenu();importarDelCuaderno()">
+          <span class="di-icon">🔗</span>
+          <div><div class="di-title">Importar suspensos del Cuaderno</div><div class="di-desc">Archivo «Para la tutoría» de cada profesor/a</div></div>
+        </button>
+        <button class="dropdown-item" onclick="closeCourseMenu();openImportModal()">
+          <span class="di-icon">📥</span>
+          <div><div class="di-title">Importar CSV (un grupo)</div><div class="di-desc">Cargar alumnos desde hoja de cálculo</div></div>
+        </button>
+        <button class="dropdown-item" onclick="closeCourseMenu();exportData()">
+          <span class="di-icon">📤</span>
+          <div><div class="di-title">Exportar CSV (grupo actual)</div><div class="di-desc">Descargar datos del grupo activo</div></div>
+        </button>
+        <button class="dropdown-item" onclick="closeCourseMenu();exportAllCSV()">
+          <span class="di-icon">📦</span>
+          <div><div class="di-title">Exportar CSV completo</div><div class="di-desc">Todos los niveles y grupos en un archivo</div></div>
+        </button>
+        <button class="dropdown-item" onclick="closeCourseMenu();exportJSON()">
+          <span class="di-icon">💾</span>
+          <div><div class="di-title">Exportar JSON</div><div class="di-desc">Copia de seguridad completa</div></div>
+        </button>
+        <button class="dropdown-item" onclick="closeCourseMenu();guardarVersionCurso()" style="border:1px solid rgba(124,92,252,0.3);border-radius:8px;margin-bottom:4px;">
+          <span class="di-icon">📧</span>
+          <div><div class="di-title" style="color:var(--accent2)">Exportar para el Claustro</div><div class="di-desc">Versión fosilizada (.html autónomo, con todos los datos) — para enviar por correo</div></div>
+        </button>
+        <label class="dropdown-item" style="cursor:pointer;">
+          <span class="di-icon">📂</span>
+          <div><div class="di-title">Importar JSON</div><div class="di-desc">Restaurar copia de seguridad</div></div>
+          <input type="file" accept=".json" style="display:none" onchange="closeCourseMenu();importJSON(this)">
+        </label>
+        <button class="dropdown-item" onclick="closeCourseMenu();openBackupsModal()">
+          <span class="di-icon">🛟</span>
+          <div><div class="di-title">Copias de seguridad</div><div class="di-desc">Restaura una versión automática reciente</div></div>
+        </button>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-section-label">Fin de Curso</div>
+        <button class="dropdown-item install-app-btn" onclick="closeCourseMenu();pwaInstall()" style="display:none">
+          <span class="di-icon">📲</span>
+          <div><div class="di-title">Instalar app</div><div class="di-desc">Instala EvalIES en tu escritorio o móvil</div></div>
+        </button>
+        <button class="dropdown-item di-danger" onclick="closeCourseMenu();openResetModal()">
+          <span class="di-icon">🗑</span>
+          <div><div class="di-title">Nueva convocatoria</div><div class="di-desc">Borra todos los alumnos, mantiene grupos</div></div>
+        </button>
+      </div>
+    </div>
+    <button id="btnAddAlumnoHeader" class="btn btn-primary" onclick="openAddAlumno()" style="display:none;">+ Añadir Alumno</button>
+  </div>
+</div>
+
+<!-- NIVEL TABS -->
+<div class="nivel-tabs" id="nivelTabs"></div>
+
+<!-- EVAL DATES BAR (compacta, fusionada bajo las pestañas) -->
+<div id="evalDatesBar" style="background:var(--surface);border-bottom:1px solid var(--border);padding:7px 32px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+  <!-- filled dynamically by syncDateInputs() -->
+</div>
+
+<!-- UNDO TOAST -->
+<div id="undoToast">
+  <span></span>
+  <button onclick="_undoPop()">Deshacer</button>
+</div>
+
+<!-- SCROLL TO TOP FAB -->
+<button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Volver arriba">▲</button>
+
+<!-- MAIN -->
+<div class="main" id="mainContent"></div>
+
+<!-- MODAL IMPORTAR CSV -->
+<div class="modal-overlay" id="importOverlay">
+  <div class="modal import-modal">
+
+    <!-- Steps -->
+    <div class="import-steps">
+      <div class="import-step active" id="istep1">1 · Archivo</div>
+      <div class="import-step" id="istep2">2 · Mapeo</div>
+      <div class="import-step" id="istep3">3 · Destino</div>
+      <div class="import-step" id="istep4">4 · Previsualización</div>
+    </div>
+
+    <div class="modal-scroll" id="importBody">
+      <!-- Content injected by JS -->
+    </div>
+
+    <div class="modal-actions" id="importActions"></div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" style="width:520px;">
+    <div class="modal-title">➕ Nuevo Alumno</div>
+    <div class="modal-field">
+      <label class="modal-label">Nombre completo <span style="color:var(--red)">*</span></label>
+      <input class="modal-input" id="mNombre" placeholder="Apellidos, Nombre" />
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="modal-field">
+        <label class="modal-label">Fecha de nacimiento</label>
+        <input class="modal-input" id="mFecha" type="date" />
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Repetidor</label>
+        <select class="modal-input" id="mRepetidor">
+          <option value="">—</option>
+          <option value="Sí">Sí</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">NESE</label>
+        <select class="modal-input" id="mNESE">
+          <option value="">—</option>
+          <option value="Sí">Sí</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Compensatoria</label>
+        <select class="modal-input" id="mCompensatoria">
+          <option value="">—</option>
+          <option value="Sí">Sí</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">🗣️ Lengua base</label>
+        <select class="modal-input" id="mLengua">
+          <option value="">— No vota</option>
+          <option value="Castellano">Castellano</option>
+          <option value="Valenciano">Valenciano</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-field" style="margin-top:4px">
+      <label class="modal-label">🏫 CEIP de procedencia</label>
+      <select class="modal-input" id="mCeip" onchange="
+        var inp=document.getElementById('mCeipOtros');
+        inp.style.display=this.value==='__otros__'?'block':'none';
+        if(this.value!=='__otros__')inp.value='';
+      ">
+        <option value="">—</option>
+        <option>CEIP Verge de la Font (Villalonga)</option>
+        <option>CEIP Sant Marc (Beniarjó)</option>
+        <option>CEIP La Murtera (Ador/Palma de Gandía)</option>
+        <option>CEIP Francesc Carròs (La Font d'en Carròs)</option>
+        <option>CRA Alfauir-Ròtova (Rótova)</option>
+        <option>CRA Alfauir-Ròtova (Alfauir)</option>
+        <option>CRA Riu Vernissa (Llocnou de Sant Jeroni/Almiserà/Castellonet de la Conquesta)</option>
+        <option value="__otros__">Otros…</option>
+      </select>
+      <input class="modal-input" id="mCeipOtros" type="text" placeholder="Centro, Municipio"
+        style="display:none;margin-top:6px;" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="addAlumno()">Guardar alumno</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PAP (Plan de Actuación Personalizado) -->
+<div class="modal-overlay" id="papOverlay">
+  <div class="modal pap-modal" id="papModalBox"></div>
+</div>
+
+<!-- MODAL AC (Programa de Enriquecimiento Curricular - Altas Capacidades) -->
+<div class="modal-overlay" id="acOverlay">
+  <div class="modal pap-modal" id="acModalBox"></div>
+</div>
+
+<!-- MODAL LEYENDA COMPENSATORIA -->
+<div class="modal-overlay" id="legendaOverlay">
+  <div class="modal" style="width:900px;max-width:96vw;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="modal-title" style="margin:0">📋 Códigos de Situación Compensatoria</div>
+      <button class="btn btn-ghost" onclick="document.getElementById('legendaOverlay').classList.remove('open')" style="padding:6px 10px;font-size:16px;">✕</button>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr>
+          <th style="background:var(--surface2);padding:10px 14px;text-align:center;border-bottom:2px solid var(--accent);color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;width:70px;">Código</th>
+          <th style="background:var(--surface2);padding:10px 14px;text-align:left;border-bottom:2px solid var(--accent);color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Situación Compensatoria</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">1</td><td style="padding:9px 14px;color:var(--text);">Acogida en instituciones de protección social del menor o acogida familiar</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">2</td><td style="padding:9px 14px;color:var(--text);">Condiciones económicas o sociales desfavorecidas</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">3</td><td style="padding:9px 14px;color:var(--text);">Condiciones sociales que comportan posibles situaciones de desprotección y abandono</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">4</td><td style="padding:9px 14px;color:var(--text);">Cumplimiento de medidas judiciales</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">5</td><td style="padding:9px 14px;color:var(--text);">Informe del equipo de intervención social APB</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">6</td><td style="padding:9px 14px;color:var(--text);">Dolencias crónicas que requieren una atención específica</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">7</td><td style="padding:9px 14px;color:var(--text);">Escolarización irregular por abandonos educativos reiterados y periódicos y absentismo</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">8</td><td style="padding:9px 14px;color:var(--text);">Escolarización irregular por itinerancia familiar</td></tr>
+        <tr><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">9</td><td style="padding:9px 14px;color:var(--text);">Pertenencia a minorías étnicas o culturales y alumnado recién llegado en situación de desventaja social y económico</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:16px;text-align:right;">
+      <button class="btn btn-primary" onclick="document.getElementById('legendaOverlay').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/01-avisos-y-vista-documentos.js"></script>
+
+<script src="js/02-datos.js"></script>
+<script src="js/03-tabla.js"></script>
+<script src="js/04-acciones-nese-pap.js"></script>
+<script src="js/05-alumnado-importar-exportar.js"></script>
+<script src="js/06-materias.js"></script>
+<script src="js/07-actas.js"></script>
+<script src="js/08-grupos-niveles-vacantes.js"></script>
+<script src="js/09-informes-promocion.js"></script>
+<script src="js/10-notas-y-mover-alumnado.js"></script>
+<script src="js/11-acta-oficial-y-seguimiento.js"></script>
+<script src="js/12-calendario-y-convivencia.js"></script>
+<script src="js/13-panel-direccion.js"></script>
+<script src="js/14-inicio-y-curso.js"></script>
+<script src="js/15-guardado-y-archivos.js"></script>
+
+<!-- MODAL NUEVA CONVOCATORIA -->
+<div id="resetOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <span style="font-size:22px">🗑</span>
+      <span style="font-size:16px;font-weight:700;color:var(--text)">Nueva convocatoria</span>
+    </div>
+    <p style="font-size:13px;color:var(--text2);margin:0 0 16px;line-height:1.6;">
+      Esta acción eliminará <strong style="color:var(--text)">todos los alumnos</strong> de todos los niveles y grupos.<br>
+      La estructura de grupos, tutores y fechas de evaluación se mantendrá intacta.
+    </p>
+    <div style="background:rgba(247,110,110,0.08);border:1px solid rgba(247,110,110,0.25);border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--text2);">
+      💡 <strong style="color:var(--text)">Consejo:</strong> Antes de continuar, guarda una copia del curso actual con <em>Exportar JSON</em>.
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">Escribe <strong style="color:var(--red)">CONFIRMAR</strong> para continuar:</div>
+    <input id="resetConfirmInput" type="text" placeholder="CONFIRMAR"
+      style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:inherit;font-size:13px;margin-bottom:18px;outline:none;"
+      oninput="document.getElementById('resetExecBtn').disabled=this.value!=='CONFIRMAR'" />
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeResetModal()">Cancelar</button>
+      <button id="resetExecBtn" class="btn" disabled onclick="executeReset()"
+        style="background:var(--red);color:#fff;border:none;opacity:1;cursor:pointer;padding:8px 20px;border-radius:8px;font-weight:600;font-size:13px;">
+        Eliminar todos los alumnos
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL INFORME DE EVALUACIÓN -->
+<div id="informeOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;backdrop-filter:blur(6px);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;">
+  <div style="background:#fff;border-radius:14px;width:900px;max-width:98vw;margin:auto;box-shadow:0 24px 80px rgba(0,0,0,0.6);position:relative;">
+    <!-- Toolbar -->
+    <div id="informeToolbar" style="position:sticky;top:0;z-index:10;background:#1a1d27;border-radius:14px 14px 0 0;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div style="font-size:13px;font-weight:600;color:#e8eaf2;" id="informeToolbarTitle">Acta de Evaluación</div>
+      <div style="display:flex;gap:8px;">
+        <button id="actaSaveBtn" onclick="saveActa()" style="padding:7px 14px;border-radius:7px;border:1px solid #2dd4a0;background:rgba(45,212,160,0.15);color:#2dd4a0;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">💾 Guardar</button>
+        <button onclick="printInforme()" style="padding:7px 14px;border-radius:7px;border:1px solid #4f8ef7;background:rgba(79,142,247,0.15);color:#4f8ef7;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">🖨️ Imprimir / PDF</button>
+        <button onclick="exportInformeWord()" style="padding:7px 14px;border-radius:7px;border:1px solid #8a63d2;background:rgba(138,99,210,0.15);color:#8a63d2;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">📄 Exportar a Word</button>
+        <button onclick="exportInformeHTML()" style="padding:7px 14px;border-radius:7px;border:1px solid #22d3ee;background:rgba(34,211,238,0.15);color:#22d3ee;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">🌐 Exportar a HTML</button>
+        <button onclick="closeInforme()" style="padding:7px 14px;border-radius:7px;border:1px solid #2e3350;background:transparent;color:#8891b4;cursor:pointer;font-family:inherit;font-size:12px;">✕ Cerrar</button>
+      </div>
+    </div>
+    <!-- Aviso de acta guardada previamente -->
+    <div id="actaSavedNotice" style="display:none;background:#2a2410;color:#f5c842;font-size:11.5px;padding:8px 20px;border-bottom:1px solid #4a3f12;"></div>
+    <!-- Report content -->
+    <div id="informeContent" style="padding:32px 40px;font-family:Arial,sans-serif;font-size:12pt;color:#111;background:#fff;border-radius:0 0 14px 14px;"></div>
+  </div>
+</div>
+
+<!-- MODAL AÑADIR GRUPO -->
+<div class="modal-overlay" id="addNivelOverlay">
+  <div class="modal" style="width:430px">
+    <div class="modal-title">➕ Nuevo Nivel</div>
+    <div class="modal-field">
+      <label class="modal-label">Nombre del nivel</label>
+      <input class="modal-input" id="addNivelNombre" placeholder="Ej: 1º ESO, 2º Bach., 1º FPB…"
+        onkeydown="if(event.key==='Enter')confirmAddNivel()" />
+      <div style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5;">
+        Si el nombre contiene «Bach» se tratará como Bachillerato (con evaluación extraordinaria).<br>
+        Si es un curso reconocido (1º-4º ESO, 1º/2º Bach.), las «materias pendientes de cursos anteriores» se toman automáticamente del catálogo de ⚙ Materias de los cursos previos, estén o no creados. Para niveles personalizados (FPB, PDC…) se usan en su lugar los niveles situados a la izquierda en esta misma barra.
+      </div>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Primer grupo</label>
+      <input class="modal-input" id="addNivelGrupo" placeholder="Ej: A" value="A"
+        onkeydown="if(event.key==='Enter')confirmAddNivel()" />
+    </div>
+    <div id="addNivelError" style="display:none;color:var(--red);font-size:12px;margin-top:-8px;margin-bottom:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAddNivelModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmAddNivel()">Crear nivel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="renameNivelOverlay">
+  <div class="modal" style="width:430px">
+    <div class="modal-title">✏️ Renombrar Nivel</div>
+    <div class="modal-field">
+      <label class="modal-label">Nuevo nombre</label>
+      <input class="modal-input" id="renameNivelNombre" placeholder="Ej: 1º ESO, 2º Bach., 1º FPB…"
+        onkeydown="if(event.key==='Enter')confirmRenameNivel()" />
+      <div style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5;">
+        Se actualizan automáticamente los grupos, alumnado, tutores, actas guardadas, asistencia, fotos y horario de este nivel. Si el nuevo nombre cambia el tipo de curso reconocido (p. ej. de ESO a Bach.), las columnas ocultas se restauran a la vista por defecto y conviene revisar las materias pendientes de cursos anteriores.
+      </div>
+    </div>
+    <div id="renameNivelError" style="display:none;color:var(--red);font-size:12px;margin-top:-8px;margin-bottom:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeRenameNivelModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmRenameNivel()">Renombrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addGrupoOverlay">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">➕ Nuevo Grupo</div>
+    <input type="hidden" id="addGrupoNivel" />
+    <div class="modal-field">
+      <label class="modal-label">Nivel</label>
+      <div id="addGrupoNivelDisplay" style="font-size:13px;font-weight:600;color:var(--accent);padding:4px 0;"></div>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Nombre del grupo (letra, número o nombre)</label>
+      <input class="modal-input" id="addGrupoLetra" placeholder="Ej: E, 5, Bilingüe…"
+        onkeydown="if(event.key==='Enter')confirmAddGrupo()" />
+    </div>
+    <div id="addGrupoError" style="display:none;color:var(--red);font-size:12px;margin-top:-8px;margin-bottom:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAddGrupoModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmAddGrupo()">Crear grupo</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="renameGrupoOverlay">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">✏️ Renombrar Grupo</div>
+    <div class="modal-field">
+      <label class="modal-label">Nuevo nombre del grupo (letra, número o nombre)</label>
+      <input class="modal-input" id="renameGrupoNombre" placeholder="Ej: E, 5, Bilingüe…"
+        onkeydown="if(event.key==='Enter')confirmRenameGrupo()" />
+      <div style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5;">
+        Se actualizan automáticamente el alumnado, el tutor/a, las actas guardadas, las observaciones, la asistencia, las fotos y el horario de este grupo.
+      </div>
+    </div>
+    <div id="renameGrupoError" style="display:none;color:var(--red);font-size:12px;margin-top:-8px;margin-bottom:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeRenameGrupoModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmRenameGrupo()">Renombrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR JSON -->
+<div class="modal-overlay" id="jsonImportOverlay">
+  <div class="modal" style="width:480px">
+    <div class="modal-title">📂 Importar JSON</div>
+    <div id="jsonImportInfo" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:18px;"></div>
+    <div class="modal-field">
+      <label class="modal-label">Modo de importación</label>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
+        <label id="jsonOptOverwrite" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color 0.2s;">
+          <input type="radio" name="jsonMode" value="overwrite" checked style="margin-top:2px;accent-color:var(--accent);">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">Sobrescribir todo</div>
+            <div style="font-size:11px;color:var(--text3);">Reemplaza todos los datos actuales con los del archivo</div>
+          </div>
+        </label>
+        <label id="jsonOptMerge" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color 0.2s;">
+          <input type="radio" name="jsonMode" value="merge" style="margin-top:2px;accent-color:var(--accent);">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">Combinar</div>
+            <div style="font-size:11px;color:var(--text3);">Añade niveles/grupos/alumnos nuevos sin borrar los existentes</div>
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeJsonImportModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="executeJsonImport()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ELIMINAR NIVEL -->
+<div class="modal-overlay" id="deleteNivelOverlay">
+  <div class="modal" style="width:420px">
+    <div class="modal-title" style="color:var(--red)">🗑 Eliminar nivel</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;">
+      Vas a eliminar el nivel <strong id="deleteNivelName" style="color:var(--text)"></strong> y todos sus grupos y alumnos.<br>Esta acción no se puede deshacer.
+    </p>
+    <div style="background:rgba(247,110,110,0.08);border:1px solid rgba(247,110,110,0.25);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:12px;color:var(--text2);">
+      💡 <strong style="color:var(--text)">Consejo:</strong> Exporta un JSON antes si quieres conservar los datos.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeDeleteNivelModal()">Cancelar</button>
+      <button class="btn btn-danger" onclick="executeDeleteNivel()">Eliminar nivel</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR CENTRO COMPLETO -->
+<div class="modal-overlay" id="importCentroOverlay">
+  <div class="modal ic-modal">
+    <div class="modal-title" style="margin-bottom:6px">🏫 Importar centro completo</div>
+    <div id="icBody" class="ic-body"></div>
+    <div class="modal-actions" id="icActions" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);"></div>
+  </div>
+</div>
+
+<!-- MODAL OBSERVACIONES DEL GRUPO -->
+<div id="obsGrupoOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:410;backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;width:640px;max-width:97vw;box-shadow:0 24px 80px rgba(0,0,0,0.6);">
+    <div class="foto-modal-header">
+      <div class="foto-modal-title">📝 <span id="obsTitulo">Observaciones del grupo</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeObservacionesGrupo()">✕ Cerrar</button>
+    </div>
+    <div style="padding:22px;display:flex;flex-direction:column;gap:14px;">
+      <div style="font-size:12px;color:var(--text2);">
+        Notas generales sobre el grupo: dinámica de clase, aspectos a destacar, acuerdos de equipo docente, situaciones especiales, etc.
+      </div>
+      <textarea id="obsGrupoTextarea"
+        placeholder="Escribe aquí las observaciones generales del grupo…"
+        style="width:100%;min-height:220px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+               padding:12px 14px;color:var(--text);font-family:inherit;font-size:13px;line-height:1.6;
+               resize:vertical;outline:none;transition:border-color 0.2s;"
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor='var(--border)'"
+      ></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <span id="obsCharCount" style="font-size:11px;color:var(--text3);">0 caracteres</span>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-ghost" onclick="printObservacionesGrupo()">🖨 Imprimir</button>
+          <button class="btn btn-ghost" onclick="closeObservacionesGrupo()">Cancelar</button>
+          <button class="btn btn-primary" onclick="saveObservacionesGrupo()">💾 Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HORARIO DEL GRUPO -->
+<div id="horarioOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:405;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;">
+  <div class="foto-modal" style="width:860px;max-width:97vw;">
+    <div class="foto-modal-header">
+      <div class="foto-modal-title">🗓️ <span id="horarioTitulo">Horario del grupo</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeHorarioGrupo()">✕ Cerrar</button>
+    </div>
+    <div class="foto-modal-body">
+      <!-- Drop zone -->
+      <div class="foto-drop-zone" id="horarioDrop" onclick="document.getElementById('horarioFileInput').click()">
+        <input type="file" id="horarioFileInput" accept="image/*,application/pdf" style="display:none" onchange="handleHorarioFile(this.files[0]);this.value='';">
+        <div class="foto-drop-icon">🗓️</div>
+        <div class="foto-drop-title">Arrastra aquí la imagen o PDF del horario</div>
+        <div class="foto-drop-sub">JPG, PNG, GIF, WEBP · También PDF (se importa la primera página)</div>
+      </div>
+      <!-- Loading -->
+      <div id="horarioLoadingMsg" style="display:none;text-align:center;padding:24px;color:var(--green);font-size:13px;font-weight:600;">⏳ Procesando horario…</div>
+      <!-- Display -->
+      <div id="horarioDisplay" style="display:none;text-align:center;">
+        <div style="position:relative;display:inline-block;border-radius:12px;overflow:hidden;border:2px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+          <img id="horarioDisplayImg" src="" alt="" style="max-width:100%;max-height:56vh;display:block;cursor:zoom-in;" onclick="openHorarioLightbox()">
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;gap:14px;transition:background 0.2s;"
+            onmouseenter="this.style.background='rgba(0,0,0,0.45)';this.querySelectorAll('button').forEach(b=>b.style.opacity='1');"
+            onmouseleave="this.style.background='rgba(0,0,0,0)';this.querySelectorAll('button').forEach(b=>b.style.opacity='0');">
+            <button onclick="openHorarioLightbox()" style="opacity:0;transition:opacity 0.2s;padding:10px 18px;border-radius:8px;border:none;background:rgba(255,255,255,0.92);color:#111;font-size:13px;font-weight:700;cursor:pointer;">🔍 Zoom</button>
+            <button onclick="printHorario()" style="opacity:0;transition:opacity 0.2s;padding:10px 18px;border-radius:8px;border:none;background:rgba(45,212,160,0.92);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">🖨 Imprimir</button>
+            <button onclick="deleteHorarioGrupo()" style="opacity:0;transition:opacity 0.2s;padding:10px 18px;border-radius:8px;border:none;background:rgba(247,110,110,0.92);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">🗑 Eliminar</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+          <button onclick="openHorarioLightbox()" style="padding:8px 20px;border-radius:8px;border:1px solid var(--green);background:rgba(45,212,160,0.15);color:var(--green);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">🔍 Pantalla completa</button>
+          <button onclick="printHorario()" style="padding:8px 20px;border-radius:8px;border:1px solid var(--accent);background:rgba(79,142,247,0.15);color:var(--accent);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">🖨 Imprimir horario</button>
+          <button onclick="deleteHorarioGrupo()" style="padding:8px 20px;border-radius:8px;border:1px solid var(--red);background:rgba(247,110,110,0.12);color:var(--red);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">🗑 Eliminar</button>
+          <label style="padding:8px 20px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">
+            🔄 Cambiar
+            <input type="file" accept="image/*,application/pdf" style="display:none" onchange="handleHorarioFile(this.files[0]);this.value='';">
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX HORARIO -->
+<div id="horarioLightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:610;align-items:center;justify-content:center;flex-direction:column;gap:16px;" onclick="closeHorarioLightbox()">
+  <img id="horarioLightboxImg" src="" alt="" style="max-width:94vw;max-height:88vh;border-radius:10px;box-shadow:0 12px 60px rgba(0,0,0,0.7);cursor:zoom-out;">
+  <div style="font-size:12px;color:rgba(255,255,255,0.4);">Haz clic en cualquier lugar o pulsa Esc para cerrar</div>
+</div>
+
+<!-- MODAL FOTO DEL GRUPO (una sola foto) -->
+<div id="fotoGaleriaOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:400;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;">
+  <div class="foto-modal" style="width:700px;max-width:97vw;">
+    <div class="foto-modal-header">
+      <div class="foto-modal-title">🖼️ <span id="fotoGaleriaTitulo">Foto del grupo</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeFotoGaleria()">✕ Cerrar</button>
+    </div>
+    <div class="foto-modal-body">
+
+      <!-- Drop zone (shown only when no photo) -->
+      <div class="foto-drop-zone" id="fotoDrop" onclick="document.getElementById('fotoFileInput').click()">
+        <input type="file" id="fotoFileInput" accept="image/*,application/pdf" style="display:none" onchange="handleFotoFile(this.files[0]);this.value='';">
+        <div class="foto-drop-icon">📁</div>
+        <div class="foto-drop-title">Arrastra aquí la imagen o PDF de la clase</div>
+        <div class="foto-drop-sub">JPG, PNG, GIF, WEBP · También PDF (se importa la primera página)</div>
+      </div>
+
+      <!-- Loading indicator -->
+      <div id="fotoLoadingMsg" style="display:none;text-align:center;padding:24px;color:var(--purple);font-size:13px;font-weight:600;">⏳ Procesando imagen…</div>
+
+      <!-- Photo display (shown when photo exists) -->
+      <div id="fotoDisplay" style="display:none;text-align:center;">
+        <div style="position:relative;display:inline-block;border-radius:12px;overflow:hidden;border:2px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+          <img id="fotoDisplayImg" src="" alt="" style="max-width:100%;max-height:52vh;display:block;cursor:zoom-in;" onclick="openLightbox()">
+          <!-- Overlay buttons on hover -->
+          <div id="fotoOverlayBtns" style="position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;gap:14px;transition:background 0.2s;"
+            onmouseenter="this.style.background='rgba(0,0,0,0.45)';document.getElementById('fotoZoomBtn').style.opacity='1';document.getElementById('fotoDelBtn').style.opacity='1';"
+            onmouseleave="this.style.background='rgba(0,0,0,0)';document.getElementById('fotoZoomBtn').style.opacity='0';document.getElementById('fotoDelBtn').style.opacity='0';">
+            <button id="fotoZoomBtn" onclick="openLightbox()" title="Ver en pantalla completa"
+              style="opacity:0;transition:opacity 0.2s;padding:10px 18px;border-radius:8px;border:none;background:rgba(255,255,255,0.92);color:#111;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
+              🔍 Zoom
+            </button>
+            <button id="fotoDelBtn" onclick="deleteFotoGrupo()" title="Eliminar foto"
+              style="opacity:0;transition:opacity 0.2s;padding:10px 18px;border-radius:8px;border:none;background:rgba(247,110,110,0.92);color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
+              🗑 Eliminar
+            </button>
+          </div>
+        </div>
+        <!-- Buttons also below image for easy access -->
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+          <button onclick="openLightbox()" style="padding:8px 20px;border-radius:8px;border:1px solid var(--purple);background:rgba(167,139,250,0.15);color:var(--purple);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;">🔍 Ver en pantalla completa</button>
+          <button onclick="deleteFotoGrupo()" style="padding:8px 20px;border-radius:8px;border:1px solid var(--red);background:rgba(247,110,110,0.12);color:var(--red);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;">🗑 Eliminar foto</button>
+          <label style="padding:8px 20px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;">
+            🔄 Cambiar foto
+            <input type="file" accept="image/*,application/pdf" style="display:none" onchange="handleFotoFile(this.files[0]);this.value='';">
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX FOTO -->
+<div id="fotoLightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:600;align-items:center;justify-content:center;flex-direction:column;gap:16px;" onclick="closeLightbox()">
+  <img id="fotoLightboxImg" src="" alt="" style="max-width:92vw;max-height:86vh;border-radius:10px;box-shadow:0 12px 60px rgba(0,0,0,0.7);cursor:zoom-out;">
+  <div style="font-size:12px;color:rgba(255,255,255,0.4);">Haz clic en cualquier lugar o pulsa Esc para cerrar</div>
+</div>
+
+<script src="js/16-foto-y-horario.js"></script>
+
+<!-- HISTORIAL ALUMNO -->
+<div id="histOverlay" class="hist-overlay">
+  <div class="hist-modal">
+    <div class="hist-header">
+      <div>
+        <div class="hist-title" id="histTitle">Historial académico</div>
+        <div class="hist-subtitle" id="histSubtitle"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeHistorial()">✕ Cerrar</button>
+    </div>
+    <div class="hist-body" id="histBody"></div>
+    <div class="hist-footer">
+      <button class="btn btn-ghost" onclick="closeHistorial()">Cerrar</button>
+      <button class="btn btn-primary" onclick="saveHistorial()">💾 Guardar historial</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/17-historial.js"></script>
+
+<div id="bulkBar" class="bulk-bar" style="display:none">
+  <div class="bulk-bar-info">✏️ <span id="bulkBarCount" class="bulk-count">0</span> <span id="bulkBarLabel">seleccionados</span></div>
+  <div class="bulk-bar-sep"></div>
+  <div class="bulk-bar-field">
+    <span class="bulk-bar-label">I Prop.</span>
+    <select onchange="if(this.value){applyBulkEditPropTipo('propuesta1',this.value);this.value=''}">
+      <option value="">— Asignar —</option>
+      <option value="Repetición">Repetición</option>
+      <option value="Promoción">Promoción</option>
+      <option value="Titulación">Titulación</option>
+      <option value="Abandono">Abandono</option>
+    </select>
+  </div>
+  <div class="bulk-bar-field">
+    <span class="bulk-bar-label">→ I Destino</span>
+    <select id="bulkDestino1Select" onchange="if(this.value){applyBulkEditPropDestino('propuesta1',this.value==='__clear__'?'':this.value);this.value=''}">
+      <option value="">— Asignar —</option>
+      <option value="__clear__">— Borrar destino —</option>
+    </select>
+  </div>
+  <div class="bulk-bar-sep"></div>
+  <div class="bulk-bar-field">
+    <span class="bulk-bar-label">II Prop.</span>
+    <select onchange="if(this.value){applyBulkEditPropTipo('propuesta2',this.value);this.value=''}">
+      <option value="">— Asignar —</option>
+      <option value="Repetición">Repetición</option>
+      <option value="Promoción">Promoción</option>
+      <option value="Titulación">Titulación</option>
+      <option value="Abandono">Abandono</option>
+    </select>
+  </div>
+  <div class="bulk-bar-field">
+    <span class="bulk-bar-label">→ II Destino</span>
+    <select id="bulkDestino2Select" onchange="if(this.value){applyBulkEditPropDestino('propuesta2',this.value==='__clear__'?'':this.value);this.value=''}">
+      <option value="">— Asignar —</option>
+      <option value="__clear__">— Borrar destino —</option>
+    </select>
+  </div>
+  <div class="bulk-bar-sep"></div>
+  <div class="bulk-bar-field">
+    <span class="bulk-bar-label">Promociona</span>
+    <select onchange="if(this.value){applyBulkEditPropTipo('promociona',this.value);this.value=''}">
+      <option value="">— Asignar —</option>
+      <option value="Repetición">Repetición</option>
+      <option value="Promoción">Promoción</option>
+      <option value="Titulación">Titulación</option>
+      <option value="Abandono">Abandono</option>
+    </select>
+  </div>
+  <div class="bulk-bar-field">
+    <span class="bulk-bar-label">→ Destino Final</span>
+    <select id="bulkDestinoSelect" onchange="if(this.value){applyBulkEditPropDestino('promociona',this.value==='__clear__'?'':this.value);this.value=''}">
+      <option value="">— Asignar —</option>
+      <option value="__clear__">— Borrar destino —</option>
+    </select>
+  </div>
+  <div class="bulk-bar-sep"></div>
+  <div class="bulk-bar-field">
+    <span class="bulk-bar-label">Lengua Base</span>
+    <select onchange="if(this.value)applyBulkEdit('lenguaBase',this.value);this.value=''">
+      <option value="">— Asignar —</option>
+      <option value="Castellano">Castellano</option>
+      <option value="Valenciano">Valenciano</option>
+    </select>
+  </div>
+  <div class="bulk-bar-actions">
+    <button class="btn btn-ghost btn-sm" onclick="clearBulkSelection()">✕ Cancelar</button>
+    <button class="btn btn-ghost btn-sm" style="color:var(--accent);border-color:rgba(79,142,247,0.4)" onclick="openBulkMovePanel()">↗ Mover a…</button>
+    <button class="btn btn-primary btn-sm" onclick="clearBulkSelection()">✓ Confirmar</button>
+  </div>
+</div>
+
+<div id="fixedScrollbar"><div id="fixedScrollbarInner"></div></div>
+
+<!-- ===================== ASISTENCIA A LA SESIÓN ===================== -->
+<link rel="stylesheet" href="css/asistencia.css">
+
+<div id="asistOverlay" class="asist-overlay">
+  <div class="asist-modal">
+    <div class="asist-header">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)" id="asistTitle">Asistencia a la sesión</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px" id="asistSubtitle"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeAsistencia()">✕ Cerrar</button>
+    </div>
+    <div class="asist-tabs" id="asistTabs"></div>
+    <div class="asist-body" id="asistBody"></div>
+    <div class="asist-footer">
+      <button class="btn btn-ghost" onclick="exportAsistenciaPDF()">🖨 Exportar lista</button>
+      <button class="btn btn-ghost" onclick="closeAsistencia()">Cerrar</button>
+      <button class="btn btn-primary" onclick="saveAsistencia()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="eqDocenteOverlay" class="asist-overlay">
+  <div class="asist-modal">
+    <div class="asist-header">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">👨‍🏫 Equipo docente</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px" id="eqDocenteSubtitle"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeEquipoDocente()">✕ Cerrar</button>
+    </div>
+    <div class="asist-body" id="eqDocenteBody"></div>
+    <div class="asist-footer">
+      <button class="btn btn-ghost" onclick="closeEquipoDocente()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="segFamOverlay" class="asist-overlay">
+  <div class="asist-modal">
+    <div class="asist-header">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">📞 Seguimiento con familia</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px" id="segFamSubtitle"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeSegFamilia()">✕ Cerrar</button>
+    </div>
+    <div class="asist-body" id="segFamBody"></div>
+    <div class="asist-footer">
+      <button class="btn btn-ghost" onclick="closeSegFamilia()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="planoGrupoOverlay" class="asist-overlay">
+  <div class="asist-modal">
+    <div class="asist-header">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">🪑 Plano del grupo</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px" id="planoGrupoSubtitle"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closePlanoGrupo()">✕ Cerrar</button>
+    </div>
+    <div class="asist-body" id="planoGrupoBody"></div>
+    <div class="asist-footer">
+      <button class="btn btn-ghost" onclick="printPlanoGrupo()">🖨 Imprimir</button>
+      <button class="btn btn-ghost" onclick="closePlanoGrupo()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/18-plano-del-grupo.js"></script>
+
+<script src="js/19-seguimiento.js"></script>
+
+<script src="js/20-equipo-docente.js"></script>
+
+<script src="js/21-asistencia.js"></script>
+<script src="js/22-importar-del-cuaderno.js"></script>
+
+</body>
+</html>
