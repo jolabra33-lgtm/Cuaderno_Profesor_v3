@@ -1390,6 +1390,8 @@
   }
   .table-scroll { position: relative; }
   thead th { position: sticky; top: 0; z-index: 10; }
+  /* La casilla y el nombre, fijos también a la izquierda, por encima del resto de cabeceras al desplazar. */
+  thead th.cb-col, thead th.sticky-nombre { z-index: 12; }
   thead tr { background: var(--surface2); }
 
   /* ===== ROW COLOR CODING BY DECISION ===== */
@@ -2829,3 +2831,21 @@
   #fotoLightbox.open { display: flex; }
   #fotoLightbox img { max-width: 88vw; max-height: 80vh; border-radius: 10px; box-shadow: 0 12px 60px rgba(0,0,0,0.7); }
   #fotoLightboxName { font-size: 15px; font-weight: 600; color: #fff; }
+
+
+/* ---- v3 · Cabecera en pantallas estrechas (iPad en vertical, móvil) ----
+   Antes los botones de la derecha se salían de la pantalla. */
+@media (max-width: 1100px) {
+  .header { padding: 0 16px; gap: 10px; }
+  .header-left { gap: 10px; min-width: 0; flex: 1 1 auto; }
+  .header-actions { flex-shrink: 0; gap: 6px; }
+  .header-ies-name { width: 200px; max-width: 30vw; text-overflow: ellipsis; }
+  .header-divider { display: none; }
+  .file-indicator { min-width: 0; max-width: 180px; }
+  .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@media (max-width: 760px) {
+  .autosave-indicator #autosaveLabel, .file-indicator .file-status { display: none; }
+  .file-indicator { max-width: 120px; }
+  .header-ies-name { display: none; }
+}

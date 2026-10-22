@@ -550,7 +550,7 @@ function executeJsonImport() {
     }
     if (typeof src.actasNoOficialesTabVisible === 'boolean') _actasNoOficialesTabVisible = src.actasNoOficialesTabVisible;
     // Preferencias de interfaz (solo tiene sentido restaurarlas al sobrescribir)
-    if (src.colState) { Object.keys(_colState).forEach(k => delete _colState[k]); Object.assign(_colState, src.colState); saveColState(); }
+    if (src.colState) { Object.keys(_colState).forEach(k => delete _colState[k]); const cs = JSON.parse(JSON.stringify(src.colState)); _colStateNombrePrimero(cs); Object.assign(_colState, cs); saveColState(); }
     if (src.theme === 'light' || src.theme === 'dark') {
       localStorage.setItem('evalies_theme', src.theme);
       document.documentElement.classList.toggle('light', src.theme === 'light');

@@ -141,26 +141,24 @@ window.aplicarArreglosDiagnostico=async()=>{
 };
 
 /* v3 · Tarjeta de novedades: se ve una vez tras actualizar, y se cierra. */
-const NOVEDADES_VERSION="mejorada-v7";
+const NOVEDADES_VERSION="v3-1";
 window.cerrarNovedades=()=>{ state.novedadesVistas=NOVEDADES_VERSION; save(); render(); };
+const NOVEDADES_V3=[
+  ["✨ Aviso de versión nueva","al publicar cambios aparece «Actualizar»; ya no hace falta cerrar la app del todo."],
+  ["🔒 Una sola ventana guarda","si abres la app dos veces (o la v2 y la v3), la segunda avisa y no pisa tus cambios."],
+  ["📥 Del Cuaderno a Tutoría","la lista de alumnado se copia con un botón; los suspensos, con «👥 Para la tutoría»."]
+];
 function novedadesHTML(){
   if(state.novedadesVistas===NOVEDADES_VERSION) return "";
-  return `<div class="card" style="border-left:4px solid var(--accent-2);padding:14px 18px">
-    <div class="flex" style="justify-content:space-between;align-items:flex-start;gap:10px">
-      <strong style="font-size:14.5px">✨ Novedades de esta versión</strong>
+  return `<div class="card" style="border-left:4px solid var(--accent-2);padding:12px 16px">
+    <div class="flex" style="justify-content:space-between;align-items:center;gap:10px">
+      <strong style="font-size:14px">Novedades de la v3</strong>
       <button class="modal-close" onclick="cerrarNovedades()" aria-label="Cerrar novedades">×</button>
     </div>
-    <ul style="margin:8px 0 0 18px;font-size:13.5px;line-height:1.6">
-      <li><strong>Nota de acta</strong> entera y coherente (Ajustes → regla de redondeo), <strong>NP / Exento</strong> y <strong>🔁 recuperaciones</strong>.</li>
-      <li><strong>🛟 Copias</strong> automáticas en el dispositivo, recuperación sola si se borran los datos y <strong>🔒 copia cifrada</strong>.</li>
-      <li><strong>📌 Hoy</strong> con tus clases, <strong>franjas horarias</strong> editables, <strong>Intro</strong> y <strong>pegar desde Excel</strong> al calificar.</li>
-      <li>Plano: <strong>pasar lista</strong> tocando mesas y <strong>🎲 alumno al azar</strong>. <strong>🧭 Cobertura</strong> antes del cierre y <strong>💬 comentarios sugeridos</strong> (castellano/valencià).</li>
-      <li><strong>Imprimir</strong> sin ventanas emergentes (vista previa dentro de la app, también en iPad) y <strong>↶ deshacer / ↷ rehacer</strong> cualquier cambio (Ctrl/Cmd+Z).</li>
-      <li><strong>👪 Correos de la familia</strong> en la ficha de cada alumno/a (Alumnado → Editar), con la columna «Familia» para ver de un vistazo a quién le falta.</li>
-      <li><strong>🩺 Revisar mis datos</strong> (Inicio): comprueba que todo cuadra y arregla solo lo seguro. Más rápida con muchos grupos y mejor en modo oscuro.</li>
-      <li><strong>👥 Para la tutoría</strong> (Resultados): pasa tus suspensos de cada evaluación al Gestor de Tutoría del tutor/a, que ahora también arranca en blanco, sin ventanas emergentes y con el curso escolar correcto en las actas.</li>
+    <ul style="margin:6px 0 0 18px;font-size:13.5px;line-height:1.55">
+      ${NOVEDADES_V3.map(([t,d])=>`<li><strong>${t}</strong>: ${d}</li>`).join("")}
     </ul>
-    <div class="flex" style="gap:8px;margin-top:10px"><a class="btn small" href="guia_mejorada.html#novedades" style="text-decoration:none">Ver la guía de novedades</a><button class="ghost small" style="border:1px solid var(--line)" onclick="cerrarNovedades()">Entendido</button></div>
+    <div class="flex" style="gap:8px;margin-top:8px"><a class="btn small" href="guia_mejorada.html#novedades" style="text-decoration:none">Ver la guía</a><button class="ghost small" style="border:1px solid var(--line)" onclick="cerrarNovedades()">Entendido</button></div>
   </div>`;
 }
 function coberturaTrim(grupo,trim){

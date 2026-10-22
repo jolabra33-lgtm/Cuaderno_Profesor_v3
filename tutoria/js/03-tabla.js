@@ -326,12 +326,6 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
   tw.id = `table-${key}`;
   grupoBlock.appendChild(tw);
 
-  // Charts
-  const chartsTitle = document.createElement('div');
-  chartsTitle.style.cssText = 'font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;';
-  chartsTitle.textContent = '📊 Estadísticas del Grupo';
-  mc.appendChild(chartsTitle);
-
   // ── ESTADÍSTICAS FINALES ──────────────────────────────────────────────
   const divStats = document.createElement('div');
   divStats.className = 'section-divider';
@@ -583,7 +577,7 @@ function getColDefs(nivel, evalTab) {
   const bach = isBach(nivel);
   const tab = evalTab || 'eval1';
 
-  const baseNames = ['Lengua Base','CEIP Origen','Curso','Grupo','Repetidor','Alumno / a','F. Nacimiento','Edad Actual','NESE','Recurso NESE','Compensatoria','Cód. Comp.','Pend. Ant.'];
+  const baseNames = ['Alumno / a','Lengua Base','CEIP Origen','Curso','Grupo','Repetidor','F. Nacimiento','Edad Actual','NESE','Recurso NESE','Compensatoria','Cód. Comp.','Pend. Ant.'];
   const baseRequired = baseNames.map(n => n === 'Alumno / a');
   const baseShared = baseNames.map(() => true);
   // Nota: hasta hace poco había aquí dos columnas más ('📝' y una vacía) que
@@ -676,27 +670,41 @@ function isColVisible(key, nivel, evalTab, i) {
   return !cs.deleted[i] && cs.visible[i];
 }
 
+/* La v3 guarda el estado de columnas con su propia clave: la v2 usa el orden
+   antiguo (nombre en 6.ª posición) y comparte el almacenamiento del navegador. */
+const _COLSTATE_CLAVE = 'evalies_colstate_v3';
 function saveColState() {
   try {
-    localStorage.setItem('evalies_colstate', JSON.stringify(_colState));
+    localStorage.setItem(_COLSTATE_CLAVE, JSON.stringify(_colState));
   } catch(e) {}
+}
+
+// Pasa un estado de columnas del orden antiguo al nuevo: la posición 5
+// («Alumno / a») va al principio en cada almacén (visible / deleted).
+function _colStateNombrePrimero(cs) {
+  Object.keys(cs).forEach(k => {
+    const st = cs[k]; if (!st || typeof st !== 'object') return;
+    ['visible', 'deleted'].forEach(p => {
+      const a = st[p];
+      if (Array.isArray(a) && a.length > 5) a.unshift(a.splice(5, 1)[0]);
+    });
+  });
 }
 
 function loadColState() {
   try {
-    const raw = localStorage.getItem('evalies_colstate');
-    if (raw) Object.assign(_colState, JSON.parse(raw));
-    // Limpieza única: las claves del formato antiguo (sin sufijo _eval1/_eval2/_eval3)
-    // quedaron huérfanas cuando el estado de columnas pasó a guardarse por
-    // evaluación. Nunca se leen, así que se eliminan para no arrastrarlas en
-    // cada guardado.
-    if (localStorage.getItem('evalies_colstate_cleanup_v2') !== '1') {
-      Object.keys(_colState).forEach(k => {
-        if (!/_eval[123]$/.test(k)) delete _colState[k];
-      });
-      localStorage.setItem('evalies_colstate_cleanup_v2', '1');
-      saveColState();
+    const raw = localStorage.getItem(_COLSTATE_CLAVE);
+    if (raw) { Object.assign(_colState, JSON.parse(raw)); return; }
+    // Primera vez en la v3: se parte del estado de la v2 (si lo hay), reordenado.
+    const rawV2 = localStorage.getItem('evalies_colstate');
+    if (rawV2) {
+      const cs = JSON.parse(rawV2);
+      // Las claves del formato antiguo (sin sufijo de evaluación) nunca se leen.
+      Object.keys(cs).forEach(k => { if (!/_(eval[123]|shared)$/.test(k)) delete cs[k]; });
+      _colStateNombrePrimero(cs);
+      Object.assign(_colState, cs);
     }
+    saveColState();
   } catch(e) {}
 }
 
@@ -930,6 +938,9 @@ function updateTable(nivel, grupo) {
   const tw = document.getElementById(`table-${key}`);
   if (!tw) return;
   const rawAlumnos = data[nivel][grupo];
+  // Contador de la cabecera de la sección («N alumnos registrados»), también al añadir o quitar.
+  const _meta = tw.previousElementSibling && tw.previousElementSibling.querySelector('.section-meta');
+  if (_meta) _meta.textContent = `${rawAlumnos.length} alumnos registrados`;
 
   // Render filter bar
   renderFilterBar(nivel, grupo);
@@ -965,13 +976,14 @@ function updateTable(nivel, grupo) {
   }
 
   // Shared base columns (always shown)
-  // Indices: 0=Curso,1=Grupo,2=Repetidor,3=Alumno,4=F.Nac,5=Edad,6=NESE,7=RecursoNESE,8=Comp,9=CodComp
+  // v3: «Alumno / a» es la PRIMERA columna (antes la 6.ª), así queda fija a la izquierda
+  // y se ve en el iPad. El estado de columnas guardado se reordena una vez (loadColState).
   // Then eval-specific, then shared trailing
   let colNames, thClasses, sortCols;
 
-  const baseNames = ['Lengua Base','CEIP Origen','Curso','Grupo','Repetidor','Alumno / a','F. Nacimiento','Edad Actual','NESE','Recurso NESE','Compensatoria','Cód. Comp.','Pend. Ant.'];
+  const baseNames = ['Alumno / a','Lengua Base','CEIP Origen','Curso','Grupo','Repetidor','F. Nacimiento','Edad Actual','NESE','Recurso NESE','Compensatoria','Cód. Comp.','Pend. Ant.'];
   const baseClasses = ['','','','','','','','','','','','comp-code-th',''];
-  const baseSorts = [null,null,null,null,null,'nombre','fecha',null,'nese',null,null,null,null];
+  const baseSorts = ['nombre',null,null,null,null,null,'fecha',null,'nese',null,null,null,null];
   // (ver nota en getColDefs: aquí había dos columnas más, '📝' y una vacía,
   // sin celda real correspondiente — retiradas por el mismo motivo.)
 
@@ -996,8 +1008,8 @@ function updateTable(nivel, grupo) {
   const defaults = colNames.map(() => 120);
   const _nombreIdx = colNames.indexOf('Alumno / a');
   if (_nombreIdx >= 0) defaults[_nombreIdx] = 180; // Alumno
-  defaults[0] = 130; // Lengua Base
-  defaults[1] = 150; // CEIP Origen
+  defaults[colNames.indexOf('Lengua Base')] = 130;
+  defaults[colNames.indexOf('CEIP Origen')] = 150;
   const cols = window.colWidths[key+'_'+evalTab] || (window.colWidths[key+'_'+evalTab] = [...defaults]);
 
   const ss = _sortState[key] || {};
@@ -1084,6 +1096,21 @@ function updateTable(nivel, grupo) {
 
     // Base shared cells (always present in all eval tabs)
     const baseCells = `
+      <td class="td-nombre sticky-nombre">
+        <div class="nombre-cell">
+          <div class="nombre-cell-top">
+            <input class="cell-input" value="${a.nombre.replace(/"/g,'&quot;')}" onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'nombre',this.value))" placeholder="Apellidos, Nombre" style="min-width:0"/>
+            ${evalTab === 'eval3' ? trendHtml : ''}
+            <button class="notes-btn obs-inline${hasNote?' has-note':''}" title="${hasNote?'Ver / editar observaciones':'Añadir observaciones'}"
+              onclick="openNotesPanel(event,'${nivel}','${grupo}',${i})">📝</button>
+          </div>
+          ${(pendiente || isCritical) && evalTab === 'eval3' ? `<div class="nombre-cell-badges">
+            ${pendiente ? '<span class="pending-badge">pendiente</span>' : ''}
+            ${criticalBadge}
+          </div>` : ''}
+          ${tooltipHtml}
+        </div>
+      </td>
       <td>
         <select class="cell-input" style="color:${lbColor}" onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'lenguaBase',this.value))">
           <option value="" ${!lbVal?'selected':''}>— No vota</option>
@@ -1108,21 +1135,6 @@ function updateTable(nivel, grupo) {
           <option ${!a.repetidor||a.repetidor==='No'?'selected':''} value="No">No</option>
           <option ${a.repetidor==='Sí'?'selected':''} value="Sí">Sí</option>
         </select>
-      </td>
-      <td class="td-nombre sticky-nombre">
-        <div class="nombre-cell">
-          <div class="nombre-cell-top">
-            <input class="cell-input" value="${a.nombre.replace(/"/g,'&quot;')}" onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'nombre',this.value))" placeholder="Apellidos, Nombre" style="min-width:0"/>
-            ${evalTab === 'eval3' ? trendHtml : ''}
-            <button class="notes-btn obs-inline${hasNote?' has-note':''}" title="${hasNote?'Ver / editar observaciones':'Añadir observaciones'}"
-              onclick="openNotesPanel(event,'${nivel}','${grupo}',${i})">📝</button>
-          </div>
-          ${(pendiente || isCritical) && evalTab === 'eval3' ? `<div class="nombre-cell-badges">
-            ${pendiente ? '<span class="pending-badge">pendiente</span>' : ''}
-            ${criticalBadge}
-          </div>` : ''}
-          ${tooltipHtml}
-        </div>
       </td>
       <td><input class="cell-input" type="date" value="${a.fecha}" onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'fecha',this.value))" /></td>
       <td style="${ageStyle}color:var(--text2)">${calcEdad(a.fecha) !== '' ? calcEdad(a.fecha) : '—'}</td>
