@@ -15,7 +15,7 @@
     /* Superficie de contenido — tema claro ("papel de día") */
     --ink:#141b28; --mut:#5b6b82; --paper:#eef1f6; --card:#ffffff;
     --line:#dde3ec; --danger:#c62839; --danger-soft:#fdeceb;
-    --warning:#a3620a; --warning-soft:#fdf1de; --warning-ink:#5c3a08;
+    --warning:#9c5e0a; --warning-soft:#fdf1de; --warning-ink:#5c3a08;
     --surface:#f3f6fa; --surface-2:#e8edf4; --border-soft:rgba(20,27,40,.08); --muted-border:#c7d1de;
     --gpill-on-1:var(--brand-1); --gpill-on-2:var(--brand-3); --overlay-hover:rgba(10,17,32,.08);
     --glass-bg:rgba(255,255,255,.58); --glass-border:rgba(255,255,255,.6); --glass-blur:18px;
@@ -154,7 +154,7 @@
   .gpillx{border:none;background:transparent;color:inherit;opacity:.55;font-size:15px;line-height:1;width:22px;height:22px;border-radius:50%;cursor:pointer;flex-shrink:0}
   .gpillx:hover{opacity:1;background:var(--overlay-hover);color:#fca5a5}
   .badge{font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:2px 9px;background:var(--surface);font-weight:600}
-  .critlink{cursor:pointer;color:var(--accent-2);border-bottom:1px dotted var(--accent);font-weight:700;white-space:nowrap;padding:4px 2px;margin:-4px -2px;display:inline-block}
+  .critlink{cursor:pointer;color:#87672c;border-bottom:1px dotted var(--accent);font-weight:700;white-space:nowrap;padding:4px 2px;margin:-4px -2px;display:inline-block}
   .critlink:hover{opacity:.7}
   .modal-overlay{position:fixed;inset:0;background:rgba(6,10,18,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;animation:modalFade .14s ease-out}
   @keyframes modalFade{from{opacity:0}to{opacity:1}}
@@ -274,7 +274,7 @@
   .gcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
   .gcard-title{font-size:15px;font-weight:800;letter-spacing:-.015em}
   .gcard-meta{font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.5}
-  .gcard-count{font-size:12px;color:var(--accent-2);font-weight:700;margin-top:8px}
+  .gcard-count{font-size:12px;color:#87672c;font-weight:700;margin-top:8px}   /* latón oscurecido: contraste ≥ 4,5:1 */
   body[data-tema="oscuro"] .gcard-count{color:var(--accent)}
   .gcard-actions{display:flex;gap:8px;margin-top:14px}
   /* v4 · vista previa de impresión dentro de la app */
@@ -480,3 +480,5 @@
   .cal-crit-id{width:40px;flex-shrink:0;font-size:12.5px;color:var(--mut)}
   .cal-chips{display:flex;gap:6px;flex-wrap:wrap}
   .cal-chips .chip{padding:4px 10px;font-size:12.5px}
+
+  body[data-tema="oscuro"] .critlink{color:var(--accent)}

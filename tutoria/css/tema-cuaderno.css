@@ -23,7 +23,7 @@
   --purple: #b49cf5;
   --text: #eef1f2;
   --text2: #8d97ab;
-  --text3: #5f6b80;
+  --text3: #848e9e;   /* contraste ≥ 4,5:1 sobre todas las superficies oscuras */
   --shadow: 0 6px 16px -4px rgba(0,0,0,.4), 0 3px 6px -2px rgba(0,0,0,.3);
   --shadow-lg: 0 24px 48px -10px rgba(0,0,0,.55), 0 8px 16px -6px rgba(0,0,0,.4);
   --oro-1: #d7b463; --oro-2: #b3893a; --oro-tinta: #1c1408;
@@ -41,15 +41,15 @@
   --accent: #25456b;
   --accent2: #b3893a;
   --accent-glow: rgba(183,137,58,0.20);
-  --green: #15803d;
+  --green: #147739;
   --green-glow: rgba(21,128,61,0.14);
-  --yellow: #a3620a;
+  --yellow: #9c5e0a;
   --red: #c62839;
   --orange: #c2410c;
   --purple: #6d28d9;
   --text: #141b28;
-  --text2: #5b6b82;
-  --text3: #8a97ab;
+  --text2: #58687e;
+  --text3: #5d6879;   /* contraste ≥ 4,5:1 sobre todas las superficies claras */
   --shadow: 0 1px 2px rgba(10,17,32,.05), 0 1px 3px rgba(10,17,32,.07);
   --shadow-lg: 0 20px 40px -8px rgba(10,17,32,.20), 0 6px 12px -4px rgba(10,17,32,.10);
 }
@@ -131,3 +131,7 @@
 .mas-menu-lista > button:hover, .mas-menu-lista > button:focus-visible { background: var(--surface3); }
 .mas-punto { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); vertical-align: middle; margin-left: 3px; }
 @media (max-width: 760px) { .mas-menu-lista { right: auto; left: 0; } }
+
+/* Contraste: textos que usaban colores fijos de la paleta anterior */
+:root .conviv-table thead th { color: var(--text) !important; }
+:root:not(.light) .conviv-mbtn.active { color: var(--marca-1) !important; }

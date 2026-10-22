@@ -20,7 +20,7 @@
    evaluación individual.
    ================================================================= */
 const ASIST_ESTADOS=[
-  {id:"presente",label:"Presente",color:"#16a34a"},
+  {id:"presente",label:"Presente",color:"#15803d"},
   {id:"falta_justificada",label:"Falta justificada",color:"#2563eb"},
   {id:"falta_no_justificada",label:"Falta no justificada",color:"#dc2626"},
   {id:"retraso",label:"Retraso",color:"#b45309"}

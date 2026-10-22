@@ -417,7 +417,7 @@ function renderListaCatalogosPersonalizados(){
       ${datos.map(d=>{
         const nCrit=d.cat.ces.reduce((n,ce)=>n+ce.criterios.length,0);
         const badges=`<span class="badge">${d.cat.ces.length} CE · ${nCrit} criterios</span>`
-          +(d.oficial?` <span class="badge" style="opacity:.75">oficial</span>`:` <span class="badge" style="opacity:.75">personalizada</span>`)
+          +(d.oficial?` <span class="badge">oficial</span>`:` <span class="badge" style="opacity:.75">personalizada</span>`)
           +(d.override?` <span class="badge" style="background:var(--accent-soft);color:var(--accent-2)">editada</span>`:"")
           +(d.oculto?` <span class="badge" style="background:var(--danger-soft);color:var(--danger)">oculta</span>`:"");
         const editable=catalogoEsEditableComoTexto(d.cat);
@@ -455,7 +455,7 @@ function renderGestionCatalogosHTML(){
     <p class="sub" style="margin-top:-8px">Descarga la plantilla, ábrela con cualquier editor de texto (Bloc de notas, TextEdit…), sustituye lo que está entre corchetes <code>[así]</code> por los datos de tu materia y vuelve aquí para cargarla con el botón "cargar un archivo" de más abajo.</p>
     <pre id="catEjemplo" style="display:none;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;white-space:pre-wrap;margin-bottom:14px">${esc(ejemploCatalogoTexto())}</pre>
     <details style="margin-bottom:14px">
-      <summary style="cursor:pointer;font-size:13.5px;color:var(--accent);font-weight:500">Cómo rellenar el formato (instrucciones)</summary>
+      <summary style="cursor:pointer;font-size:13.5px;color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--accent)">Cómo rellenar el formato (instrucciones)</summary>
       <div style="font-size:13.5px;color:var(--ink);margin-top:10px;line-height:1.65">
         <p>La plantilla descargable ya trae el formato con marcadores de ejemplo, pero por si prefieres escribirlo tú mismo/a, así funciona, una línea por dato:</p>
         <ul style="padding-left:18px;margin:6px 0">
