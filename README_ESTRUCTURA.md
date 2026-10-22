@@ -123,14 +123,15 @@ Antes era un único `index.html` de casi 20.000 líneas. En la v3 está dividido
 Los bloques de HTML que había entre los scripts (ventanas de historial, asistencia, plano…) siguen en
 `tutoria/index.html`, en el mismo sitio, para que cada script encuentre lo que necesita al cargarse.
 
-## Pruebas del cálculo de notas (`tests/`)
+## Pruebas (`tests/`)
 
-`tests/calculo-notas.html` carga los mismos archivos que `index.html` (los lee de su lista, así que no hay
-que mantenerla aparte) y comprueba más de 30 casos calculados a mano: nota de actividad, bloque, evaluación
-y final; pesos; recuperaciones (nota más alta, sustituye, media, tope y exentos); competencias específicas y
-clave; avisos de bloques sin nota; y redondeo de la nota mostrada y de la nota de acta.
-Ábrela en el navegador (desde GitHub Pages o un servidor local) después de tocar
-`js/evaluacion/calculo-notas.js` o `js/nucleo/utilidades.js`: todas deben salir en verde. No guarda nada.
+- `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
+- `tests/navegador/`: 14 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+  importaciones, dos ventanas, versión del curso, sin conexión, copia en carpeta, accesibilidad, actualización…).
+  `npm test` las ejecuta todas; GitHub también, en cada subida (`.github/workflows/pruebas.yml`).
+  Instrucciones y lista completa en `tests/README.md`.
+
+**Antes de publicar un cambio, ejecuta `npm test`.** Si añades una función, añade su prueba.
 
 ## Reglas para modificar la aplicación
 
@@ -158,7 +159,7 @@ clave; avisos de bloques sin nota; y redondeo de la nota mostrada y de la nota d
 - **Tutoría dividida en módulos** (`tutoria/css/` y `tutoria/js/`), sin cambiar su funcionamiento.
 - **Importar alumnado del Cuaderno en Tutoría** (botón «📥 Del Cuaderno» en cada grupo). Lee los datos del
   Cuaderno sin modificarlos; no duplica a quien ya está y se puede deshacer con Ctrl+Z.
-- **Pruebas del cálculo de notas** en `tests/calculo-notas.html`.
+- **Pruebas** en `tests/`: cálculo de notas y 14 pruebas de navegador (`npm test`).
 - **Copia automática en una carpeta** (`js/nucleo/copia-carpeta.js`): 🛟 Copias → «Elegir carpeta». Guarda
   `copia-cuaderno-auto-AAAA-MM-DD-<dispositivo>.json` unos minutos después de cada cambio y al ocultar la app;
   conserva 10 por dispositivo. Al abrir, si otro dispositivo dejó una copia más reciente, Inicio ofrece cargarla.

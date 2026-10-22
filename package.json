@@ -1,0 +1,13 @@
+{
+  "name": "cuaderno-profesor-v3",
+  "private": true,
+  "description": "Cuaderno del profesor y Gestor de Tutoría. La app no necesita compilarse: este archivo solo sirve para ejecutar las pruebas (tests/README.md).",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/navegador/ejecutar.mjs"
+  },
+  "devDependencies": {
+    "axe-core": "4.10.2",
+    "playwright": "1.56.1"
+  }
+}

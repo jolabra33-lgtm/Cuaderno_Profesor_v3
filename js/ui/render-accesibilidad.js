@@ -30,9 +30,45 @@ function accesibilidadPasada(raiz){
   });
   raiz.querySelectorAll("[onclick]:not(button):not(a):not(input):not(select):not(label):not(option):not([role])").forEach(el=>{
     if(el.classList.contains("modal-overlay")) return;
+    // Una fila o tarjeta que ya contiene botones o campos no se anuncia como botón
+    // (un botón dentro de otro confunde al lector de pantalla); sus botones siguen accesibles.
+    if(el.querySelector("button,a[href],input,select,textarea")) return;
     el.setAttribute("role","button");
     if(!el.hasAttribute("tabindex")) el.setAttribute("tabindex","0");
   });
+  // v3: campos y desplegables sin nombre: el de su columna o el del texto que los acompaña.
+  raiz.querySelectorAll('input:not([type="hidden"]):not([aria-label]),select:not([aria-label]),textarea:not([aria-label])').forEach(el=>{
+    if(el.title || el.getAttribute("aria-labelledby") || (el.labels && el.labels.length)) return;
+    const n=_a11yNombreCampo(el); if(n) el.setAttribute("aria-label",n);
+  });
+}
+function _a11yTexto(nodo){
+  const c=nodo.cloneNode(true); c.querySelectorAll("button,select,input").forEach(x=>x.remove());
+  return (c.textContent||"").replace(/\s+/g," ").trim();
+}
+/* Campos sin texto visible al lado: el contexto lo da la pantalla, así que el nombre se pone aquí. */
+const _A11Y_CAMPOS={fT:"Tipo de actividad",fB:"Bloque de calificación",gpNombre:"Nombre del grupo",calSel:"Actividad que se califica",
+  convFiltroAlumno:"Filtrar por alumno/a",convFiltroTipo:"Filtrar por tipo",famFiltroAlumno:"Filtrar por alumno/a",famFiltroMedio:"Filtrar por medio de contacto",
+  repGrupoSel:"Periodo del informe",trimSel:"Periodo",agMesInput:"Elegir mes",gpProgramacion:"Programación de aula del grupo",
+  agFiltroSel:"Filtrar el calendario por grupo",agFiltroTipoSel:"Filtrar el calendario por tipo",rfFiltroInput:"Filtrar planes de refuerzo",
+  rpFiltroInput:"Filtrar planes de repetición",reFiltroInput:"Filtrar reuniones"};
+function _a11yNombreCampo(el){
+  if(el.id && _A11Y_CAMPOS[el.id]) return _A11Y_CAMPOS[el.id];
+  const td=el.closest("td");
+  if(td){
+    const tabla=td.closest("table"), filas=tabla && tabla.tHead && tabla.tHead.rows;
+    if(filas && filas.length){
+      let x=0; for(let c=td.previousElementSibling;c;c=c.previousElementSibling) x+=c.colSpan||1;
+      for(let i=filas.length-1;i>=0;i--){ let pos=0;
+        for(const th of filas[i].cells){ const w=th.colSpan||1; if(x>=pos && x<pos+w){ const t=_a11yTexto(th); if(t) return t; break; } pos+=w; } }
+    }
+  }
+  if(el.placeholder) return el.placeholder;
+  const prev=el.previousElementSibling, t=prev && _a11yTexto(prev);
+  if(t && t.length<=40) return t.replace(/[:：]\s*$/,"");
+  if(el.type==="month") return "Mes";
+  if(el.type==="date") return "Fecha";
+  return "";
 }
 document.addEventListener("keydown",e=>{
   const el=e.target;

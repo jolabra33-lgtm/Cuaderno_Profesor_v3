@@ -18,7 +18,8 @@ la lista de alumnado y los suspensos de cada evaluación (ver «Cosas importante
 index.html              → Cuaderno del profesor (estructura y lista de scripts)
 css/                    → estilos de la aplicación
 js/                     → código de la aplicación en módulos (ver README_ESTRUCTURA.md)
-tests/                  → pruebas del cálculo de notas (abre tests/calculo-notas.html)
+tests/                  → pruebas: cálculo de notas (tests/calculo-notas.html) y de navegador (tests/README.md)
+package.json            → solo para ejecutar las pruebas (npm test); la app no necesita compilarse
 editor/                 → editor de exámenes (página propia, con sus fuentes Lora e Inter)
 tools/                  → Planificación temporal de la materia
 sw.js                   → service worker: funcionamiento sin conexión y versión de la caché

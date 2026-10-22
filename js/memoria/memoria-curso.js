@@ -156,7 +156,7 @@ function renderMemoriaApp(){
     <div class="flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div><strong style="font-size:15px">📄 Memoria de curso</strong><span style="color:var(--mut);font-size:13px"> · todos tus grupos juntos</span></div>
       <div class="flex">
-        <select class="in" onchange="memoriaSetPeriodo(this.value)">
+        <select class="in" onchange="memoriaSetPeriodo(this.value)" aria-label="Periodo de la memoria">
           <option value="0" ${periodo===0?"selected":""}>1ª evaluación</option>
           <option value="1" ${periodo===1?"selected":""}>2ª evaluación</option>
           <option value="2" ${periodo===2?"selected":""}>3ª evaluación</option>

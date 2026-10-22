@@ -42,7 +42,7 @@ function renderAjustes(grupo){
   <div class="card">
     <h2>Redondeo de la nota de acta</h2>
     <p class="sub">La calificación oficial (Insuficiente…Sobresaliente, aprobado/suspenso) sale siempre de la <strong>nota de acta</strong>, entera y sin decimales, como en ITACA. Aquí eliges cómo se pasa de la media con decimales a esa nota. Se aplica a <strong>todos tus grupos</strong>. En ESO la nota mínima de acta es 1; en Bachillerato, 0.</p>
-    <select class="in" style="min-width:260px;max-width:100%" onchange="setRedondeoActa(this.value)">
+    <select class="in" style="min-width:260px;max-width:100%" onchange="setRedondeoActa(this.value)" aria-label="Regla de redondeo de la nota de acta">
       ${REDONDEO_MODOS.map(m=>`<option value="${m.id}" ${modoRedondeoActa()===m.id?"selected":""}>${esc(m.label)}</option>`).join("")}
     </select>
   </div>

@@ -161,7 +161,7 @@ function renderGrupo(grupo){
       </div>
       <div class="flex">
         <button class="ghost" style="border:1px solid var(--line)" onclick="irAGrupo(null)">← Inicio</button>
-        <select class="in" style="font-weight:600;min-width:160px" onchange="irATab(this.value)">
+        <select class="in" style="font-weight:600;min-width:160px" onchange="irATab(this.value)" aria-label="Pestaña del grupo">
           ${[["alumnos","Alumnado"],["plano","Plano de aula"],["actividades","Actividades"],["calificar","Calificar"],["resultados","Resultados"],["asistencia","Asistencia"],["convivencia","Convivencia"],["familias","Familias"],["resumen","Resumen"],["diario","Diario"],["cobertura","Cobertura"],["ajustes","Ajustes"]]
             .map(([k,l])=>`<option value="${k}" ${state.ui.tab===k?"selected":""}>${l}</option>`).join("")}
         </select>
