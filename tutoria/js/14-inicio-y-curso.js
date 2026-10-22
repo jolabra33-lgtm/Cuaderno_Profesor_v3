@@ -23,7 +23,7 @@ function syncDateInputs() {
       <input type="date" id="${id}"
         style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:inherit;font-size:12px;"
         value="${val}"
-        onchange="evalDates['${nivel}']['${field}']=this.value;refreshAges()" />
+        onchange="evalDates['${jsAttr(nivel)}']['${field}']=this.value;refreshAges()" />
     </label>`;
   bar.innerHTML =
     `<span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">

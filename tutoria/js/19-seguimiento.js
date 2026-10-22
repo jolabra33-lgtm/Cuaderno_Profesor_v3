@@ -66,7 +66,7 @@ function renderSegFamiliaBody() {
     <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:12.5px;color:var(--text3);min-width:90px">${_segEsc(reg.fecha)}</div>
       <div style="flex:1;font-size:12.5px;color:var(--text2)">${(reg.materias||[]).length} materia${(reg.materias||[]).length===1?'':'s'}${reg.observaciones?' · con observaciones':''}</div>
-      <button class="btn btn-ghost btn-sm" onclick="printSegFamiliaRegistro('${nivel}','${grupo}',${idx},'${reg.id}')">🖨 Imprimir</button>
+      <button class="btn btn-ghost btn-sm" onclick="printSegFamiliaRegistro('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${reg.id}')">🖨 Imprimir</button>
       <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:rgba(247,110,110,0.3)" onclick="_segEliminarRegistro('${reg.id}')">🗑</button>
     </div>`).join('');
 
@@ -242,7 +242,7 @@ function renderSegFamiliaListado() {
       <div style="width:90px;font-size:12.5px;color:var(--text3)">${_segEsc(reg.fecha)}</div>
       <div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">${_segEsc(alumno.nombre)}</div>
       <div style="font-size:12px;color:var(--text2);min-width:140px">${(reg.materias||[]).length} materia${(reg.materias||[]).length===1?'':'s'}${reg.observaciones?' · obs.':''}</div>
-      <button class="btn btn-ghost btn-sm" onclick="printSegFamiliaRegistro('${nivel}','${grupo}',${idx},'${reg.id}')">🖨 Imprimir</button>
+      <button class="btn btn-ghost btn-sm" onclick="printSegFamiliaRegistro('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${reg.id}')">🖨 Imprimir</button>
     </div>`).join('');
 
   mc.innerHTML = `
@@ -259,7 +259,7 @@ function renderSegFamiliaListado() {
         </select>
         <span style="flex:1"></span>
         <button class="btn btn-ghost btn-sm" ${nSel?'':'disabled style="opacity:.4"'} onclick="printSegFamiliaVarios([..._segListState.seleccionados])">🖨 Imprimir seleccionados (${nSel})</button>
-        <button class="btn btn-primary btn-sm" ${registros.length?'':'disabled style="opacity:.4"'} onclick="printSegFamiliaVarios(_segTodosDelGrupo('${nivel}','${grupo}').map(r=>r.reg.id))">🖨 Imprimir todos (${registros.length})</button>
+        <button class="btn btn-primary btn-sm" ${registros.length?'':'disabled style="opacity:.4"'} onclick="printSegFamiliaVarios(_segTodosDelGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}').map(r=>r.reg.id))">🖨 Imprimir todos (${registros.length})</button>
       </div>
 
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:6px 16px">

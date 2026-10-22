@@ -23,13 +23,13 @@ function openActaOficialMenu(nivel, grupo) {
         Selecciona la evaluación para la que quieres generar el acta oficial.
       </p>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <button class="btn btn-primary" onclick="openActaOficial('${nivel}','${grupo}',1);document.getElementById('actaMenuOverlay').classList.remove('open')">
+        <button class="btn btn-primary" onclick="openActaOficial('${jsAttr(nivel)}','${jsAttr(grupo)}',1);document.getElementById('actaMenuOverlay').classList.remove('open')">
           📄 Acta I Evaluación
         </button>
-        <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--green),#1fb88a);" onclick="openActaOficial('${nivel}','${grupo}',2);document.getElementById('actaMenuOverlay').classList.remove('open')">
+        <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--green),#1fb88a);" onclick="openActaOficial('${jsAttr(nivel)}','${jsAttr(grupo)}',2);document.getElementById('actaMenuOverlay').classList.remove('open')">
           📄 Acta II Evaluación
         </button>
-        <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--purple),#6d28d9);" onclick="openActaOficial('${nivel}','${grupo}',3);document.getElementById('actaMenuOverlay').classList.remove('open')">
+        <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--purple),#6d28d9);" onclick="openActaOficial('${jsAttr(nivel)}','${jsAttr(grupo)}',3);document.getElementById('actaMenuOverlay').classList.remove('open')">
           📄 Acta Evaluación Final
         </button>
       </div>

@@ -180,16 +180,16 @@ window.papSetFilaCampo = function(nivel, grupo, idx, arrKey, rowIdx, campo, valu
 function renderPapFormHTML(nivel, grupo, idx, a) {
   const p = a.pap;
   const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const F = (id,label,value,type) => `<div class="pap-field"><label>${label}</label><input type="${type||'text'}" id="${id}" value="${esc(value)}" onchange="savePapField('${nivel}','${grupo}',${idx},'${id.split('_').slice(1).join('_')}',this.value)"></div>`;
-  const T = (id,label,value) => `<div class="pap-field"><label>${label}</label><textarea id="${id}" onchange="savePapField('${nivel}','${grupo}',${idx},'${id.split('_').slice(1).join('_')}',this.value)">${esc(value)}</textarea></div>`;
+  const F = (id,label,value,type) => `<div class="pap-field"><label>${label}</label><input type="${type||'text'}" id="${id}" value="${esc(value)}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${id.split('_').slice(1).join('_')}',this.value)"></div>`;
+  const T = (id,label,value) => `<div class="pap-field"><label>${label}</label><textarea id="${id}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${id.split('_').slice(1).join('_')}',this.value)">${esc(value)}</textarea></div>`;
 
   const medidasRows = PAP_MEDIDAS.map(m => {
     const md = p.medidas[m.key];
     return `<div class="pap-check-row">
-      <input type="checkbox" ${md.on?'checked':''} onchange="papToggleMedida('${nivel}','${grupo}',${idx},'${m.key}',this.checked)">
+      <input type="checkbox" ${md.on?'checked':''} onchange="papToggleMedida('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${m.key}',this.checked)">
       <span class="pap-check-label">${m.label}</span>
-      <input type="text" placeholder="Personal de apoyo" value="${esc(md.personal)}" onchange="papSetMedidaCampo('${nivel}','${grupo}',${idx},'${m.key}','personal',this.value)">
-      <select onchange="papSetMedidaCampo('${nivel}','${grupo}',${idx},'${m.key}','intensidad',this.value)">
+      <input type="text" placeholder="Personal de apoyo" value="${esc(md.personal)}" onchange="papSetMedidaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${m.key}','personal',this.value)">
+      <select onchange="papSetMedidaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${m.key}','intensidad',this.value)">
         <option value="" ${!md.intensidad?'selected':''}>Intensidad —</option>
         <option value="Bajo" ${md.intensidad==='Bajo'?'selected':''}>Bajo</option>
         <option value="Medio" ${md.intensidad==='Medio'?'selected':''}>Medio</option>
@@ -199,18 +199,18 @@ function renderPapFormHTML(nivel, grupo, idx, a) {
   }).join('');
 
   const tareasRows = p.tareasApoyo.map((t,ri) => `<tr>
-    <td><input value="${esc(t.personal)}" placeholder="Personal de apoyo" onchange="papSetFilaCampo('${nivel}','${grupo}',${idx},'tareasApoyo',${ri},'personal',this.value)"></td>
-    <td><input value="${esc(t.tareas)}" placeholder="Tareas" onchange="papSetFilaCampo('${nivel}','${grupo}',${idx},'tareasApoyo',${ri},'tareas',this.value)"></td>
-    <td><button class="pap-dyn-del" onclick="papDelFila('${nivel}','${grupo}',${idx},'tareasApoyo',${ri})">✕</button></td>
+    <td><input value="${esc(t.personal)}" placeholder="Personal de apoyo" onchange="papSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'tareasApoyo',${ri},'personal',this.value)"></td>
+    <td><input value="${esc(t.tareas)}" placeholder="Tareas" onchange="papSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'tareasApoyo',${ri},'tareas',this.value)"></td>
+    <td><button class="pap-dyn-del" onclick="papDelFila('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'tareasApoyo',${ri})">✕</button></td>
   </tr>`).join('');
 
   const seguimientoRows = p.seguimiento.map((s,ri) => `<tr>
-    <td><input value="${esc(s.medida)}" placeholder="Medida de respuesta" onchange="papSetFilaCampo('${nivel}','${grupo}',${idx},'seguimiento',${ri},'medida',this.value)"></td>
-    <td><input value="${esc(s.t1)}" placeholder="1r trim." onchange="papSetFilaCampo('${nivel}','${grupo}',${idx},'seguimiento',${ri},'t1',this.value)"></td>
-    <td><input value="${esc(s.t2)}" placeholder="2n trim." onchange="papSetFilaCampo('${nivel}','${grupo}',${idx},'seguimiento',${ri},'t2',this.value)"></td>
-    <td><input value="${esc(s.t3)}" placeholder="3r trim." onchange="papSetFilaCampo('${nivel}','${grupo}',${idx},'seguimiento',${ri},'t3',this.value)"></td>
-    <td><input value="${esc(s.propuesta)}" placeholder="Propuesta curso siguiente" onchange="papSetFilaCampo('${nivel}','${grupo}',${idx},'seguimiento',${ri},'propuesta',this.value)"></td>
-    <td><button class="pap-dyn-del" onclick="papDelFila('${nivel}','${grupo}',${idx},'seguimiento',${ri})">✕</button></td>
+    <td><input value="${esc(s.medida)}" placeholder="Medida de respuesta" onchange="papSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',${ri},'medida',this.value)"></td>
+    <td><input value="${esc(s.t1)}" placeholder="1r trim." onchange="papSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',${ri},'t1',this.value)"></td>
+    <td><input value="${esc(s.t2)}" placeholder="2n trim." onchange="papSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',${ri},'t2',this.value)"></td>
+    <td><input value="${esc(s.t3)}" placeholder="3r trim." onchange="papSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',${ri},'t3',this.value)"></td>
+    <td><input value="${esc(s.propuesta)}" placeholder="Propuesta curso siguiente" onchange="papSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',${ri},'propuesta',this.value)"></td>
+    <td><button class="pap-dyn-del" onclick="papDelFila('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',${ri})">✕</button></td>
   </tr>`).join('');
 
   return `
@@ -224,19 +224,19 @@ function renderPapFormHTML(nivel, grupo, idx, a) {
         <div class="pap-section-head"><span class="pap-section-letter">A</span><span class="pap-section-title">Datos de identificación</span></div>
         <div class="pap-section-body">
           <div class="pap-grid2">
-            <div class="pap-field"><label>Curso escolar</label><input id="pap_cursoEscolar" value="${esc(p.cursoEscolar)}" placeholder="2026-2027" onchange="savePapField('${nivel}','${grupo}',${idx},'cursoEscolar',this.value)"></div>
-            <div class="pap-field"><label>Fecha de inicio</label><input type="date" id="pap_fechaInicio" value="${esc(p.fechaInicio)}" onchange="savePapField('${nivel}','${grupo}',${idx},'fechaInicio',this.value)"></div>
+            <div class="pap-field"><label>Curso escolar</label><input id="pap_cursoEscolar" value="${esc(p.cursoEscolar)}" placeholder="2026-2027" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'cursoEscolar',this.value)"></div>
+            <div class="pap-field"><label>Fecha de inicio</label><input type="date" id="pap_fechaInicio" value="${esc(p.fechaInicio)}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'fechaInicio',this.value)"></div>
           </div>
           <div class="pap-grid3">
-            <div class="pap-field"><label>Código de centro</label><input id="pap_centroCodigo" value="${esc(p.centroCodigo)}" onchange="savePapField('${nivel}','${grupo}',${idx},'centroCodigo',this.value)"></div>
-            <div class="pap-field"><label>Nombre del centro</label><input id="pap_centroNombre" value="${esc(p.centroNombre)}" onchange="savePapField('${nivel}','${grupo}',${idx},'centroNombre',this.value)"></div>
-            <div class="pap-field"><label>Localidad</label><input id="pap_centroLocalidad" value="${esc(p.centroLocalidad)}" onchange="savePapField('${nivel}','${grupo}',${idx},'centroLocalidad',this.value)"></div>
+            <div class="pap-field"><label>Código de centro</label><input id="pap_centroCodigo" value="${esc(p.centroCodigo)}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'centroCodigo',this.value)"></div>
+            <div class="pap-field"><label>Nombre del centro</label><input id="pap_centroNombre" value="${esc(p.centroNombre)}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'centroNombre',this.value)"></div>
+            <div class="pap-field"><label>Localidad</label><input id="pap_centroLocalidad" value="${esc(p.centroLocalidad)}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'centroLocalidad',this.value)"></div>
           </div>
           <p class="pap-hint">Apellidos, nombre y fecha de nacimiento se toman directamente de la ficha del alumno/a (${esc(a.nombre)}${a.fecha?', nacido/a el '+esc(a.fecha):''}). Grupo actual: ${esc(nivel)} ${esc(grupo)}.</p>
           <div class="pap-grid3">
-            <div class="pap-field"><label>Curso escolar (del alumno/a)</label><input id="pap_cursoEscolarAlumno" value="${esc(p.cursoEscolarAlumno)}" placeholder="${esc(p.cursoEscolar)||'2026-2027'}" onchange="savePapField('${nivel}','${grupo}',${idx},'cursoEscolarAlumno',this.value)"></div>
-            <div class="pap-field"><label>NIA</label><input id="pap_nia" value="${esc(p.nia)}" onchange="savePapField('${nivel}','${grupo}',${idx},'nia',this.value)"></div>
-            <div class="pap-field"><label>Nivel (si difiere del grupo actual)</label><input id="pap_nivelDoc" value="${esc(p.nivelDoc)}" placeholder="${esc(nivel)}" onchange="savePapField('${nivel}','${grupo}',${idx},'nivelDoc',this.value)"></div>
+            <div class="pap-field"><label>Curso escolar (del alumno/a)</label><input id="pap_cursoEscolarAlumno" value="${esc(p.cursoEscolarAlumno)}" placeholder="${esc(p.cursoEscolar)||'2026-2027'}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'cursoEscolarAlumno',this.value)"></div>
+            <div class="pap-field"><label>NIA</label><input id="pap_nia" value="${esc(p.nia)}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'nia',this.value)"></div>
+            <div class="pap-field"><label>Nivel (si difiere del grupo actual)</label><input id="pap_nivelDoc" value="${esc(p.nivelDoc)}" placeholder="${esc(nivel)}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'nivelDoc',this.value)"></div>
           </div>
         </div>
       </div>
@@ -268,7 +268,7 @@ function renderPapFormHTML(nivel, grupo, idx, a) {
           ${medidasRows}
           <div class="pap-field" style="margin-top:12px">
             <label>Otras medidas de nivel II y III</label>
-            <textarea id="pap_otrasMedidas" onchange="savePapField('${nivel}','${grupo}',${idx},'otrasMedidas',this.value)">${esc(p.otrasMedidas)}</textarea>
+            <textarea id="pap_otrasMedidas" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'otrasMedidas',this.value)">${esc(p.otrasMedidas)}</textarea>
           </div>
           <div class="pap-grid2">
             ${T('pap_actuacionFamiliar','Actuaciones a desarrollar en el ámbito familiar',p.actuacionFamiliar)}
@@ -288,7 +288,7 @@ function renderPapFormHTML(nivel, grupo, idx, a) {
             <thead><tr><th style="width:35%">Personal de apoyo</th><th>Tareas</th><th style="width:30px"></th></tr></thead>
             <tbody>${tareasRows}</tbody>
           </table>
-          <button class="pap-add-btn" onclick="papAddFila('${nivel}','${grupo}',${idx},'tareasApoyo',{personal:'',tareas:''})">+ Añadir fila</button>
+          <button class="pap-add-btn" onclick="papAddFila('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'tareasApoyo',{personal:'',tareas:''})">+ Añadir fila</button>
         </div>
       </div>
 
@@ -322,12 +322,12 @@ function renderPapFormHTML(nivel, grupo, idx, a) {
             <thead><tr><th style="width:26%">Medida de respuesta</th><th>1r trimestre</th><th>2n trimestre</th><th>3r trimestre</th><th style="width:20%">Propuesta curso siguiente</th><th style="width:30px"></th></tr></thead>
             <tbody>${seguimientoRows}</tbody>
           </table>
-          <button class="pap-add-btn" onclick="papAddFila('${nivel}','${grupo}',${idx},'seguimiento',{medida:'',t1:'',t2:'',t3:'',propuesta:''})">+ Añadir fila</button>
+          <button class="pap-add-btn" onclick="papAddFila('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',{medida:'',t1:'',t2:'',t3:'',propuesta:''})">+ Añadir fila</button>
           <div style="margin-top:12px">${T('pap_progresoGlobal','Progreso global del alumnado',p.progresoGlobal)}</div>
           <div>${T('pap_propuestaNuevasMedidas','Propuesta de nuevas medidas y/o actuaciones para el curso siguiente',p.propuestaNuevasMedidas)}</div>
           <div class="pap-grid2">
-            <div class="pap-field"><label>Nombre y apellidos (de quien cumplimenta)</label><input id="pap_firmaNombre" value="${esc(p.firmaNombre)}" onchange="savePapField('${nivel}','${grupo}',${idx},'firmaNombre',this.value)"></div>
-            <div class="pap-field"><label>Como (cargo/relación)</label><input id="pap_firmaComo" value="${esc(p.firmaComo)}" onchange="savePapField('${nivel}','${grupo}',${idx},'firmaComo',this.value)"></div>
+            <div class="pap-field"><label>Nombre y apellidos (de quien cumplimenta)</label><input id="pap_firmaNombre" value="${esc(p.firmaNombre)}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'firmaNombre',this.value)"></div>
+            <div class="pap-field"><label>Como (cargo/relación)</label><input id="pap_firmaComo" value="${esc(p.firmaComo)}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'firmaComo',this.value)"></div>
           </div>
         </div>
       </div>
@@ -335,9 +335,9 @@ function renderPapFormHTML(nivel, grupo, idx, a) {
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closePapModal()">Cerrar</button>
-      <button class="btn btn-ghost" onclick="exportarPapHTML('${nivel}','${grupo}',${idx})">🌐 HTML</button>
-      <button class="btn btn-ghost" onclick="exportarPapWord('${nivel}','${grupo}',${idx})">📄 Word</button>
-      <button class="btn btn-primary" onclick="exportarPapPDF('${nivel}','${grupo}',${idx})">🖨️ PDF</button>
+      <button class="btn btn-ghost" onclick="exportarPapHTML('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})">🌐 HTML</button>
+      <button class="btn btn-ghost" onclick="exportarPapWord('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})">📄 Word</button>
+      <button class="btn btn-primary" onclick="exportarPapPDF('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})">🖨️ PDF</button>
     </div>
   `;
 }
@@ -648,7 +648,7 @@ function renderAcEnriquecimientoTabla(nivel, grupo, idx, p) {
     return `<tr style="${rowBg}">
       <td class="ac-enr-materia">${esc(m)}</td>
       <td>
-        <select onchange="acSetEnriquecimiento('${nivel}','${grupo}',${idx},${mi},this.value)">
+        <select onchange="acSetEnriquecimiento('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},${mi},this.value)">
           <option value="" ${tipo===''?'selected':''}>— Sin enriquecimiento —</option>
           <option value="horizontal" ${tipo==='horizontal'?'selected':''}>Enriquecimiento horizontal</option>
           <option value="vertical" ${tipo==='vertical'?'selected':''}>Enriquecimiento vertical</option>
@@ -667,29 +667,29 @@ function renderAcEnriquecimientoTabla(nivel, grupo, idx, p) {
 function renderAcFormHTML(nivel, grupo, idx, a) {
   const p = a.ac;
   const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const F = (id,label,value,type) => `<div class="pap-field"><label>${label}</label><input type="${type||'text'}" id="${id}" value="${esc(value)}" onchange="saveAcField('${nivel}','${grupo}',${idx},'${id.split('_').slice(1).join('_')}',this.value)"></div>`;
-  const T = (id,label,value) => `<div class="pap-field"><label>${label}</label><textarea id="${id}" onchange="saveAcField('${nivel}','${grupo}',${idx},'${id.split('_').slice(1).join('_')}',this.value)">${esc(value)}</textarea></div>`;
+  const F = (id,label,value,type) => `<div class="pap-field"><label>${label}</label><input type="${type||'text'}" id="${id}" value="${esc(value)}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${id.split('_').slice(1).join('_')}',this.value)"></div>`;
+  const T = (id,label,value) => `<div class="pap-field"><label>${label}</label><textarea id="${id}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${id.split('_').slice(1).join('_')}',this.value)">${esc(value)}</textarea></div>`;
 
   const estrategiasRows = AC_ESTRATEGIAS.map(e => {
     const on = !!p.estrategias[e.key];
     return `<label class="ac-check-row">
-      <input type="checkbox" ${on?'checked':''} onchange="acToggleEstrategia('${nivel}','${grupo}',${idx},'${e.key}',this.checked)">
+      <input type="checkbox" ${on?'checked':''} onchange="acToggleEstrategia('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${e.key}',this.checked)">
       <span class="ac-check-label">${e.label}</span>
     </label>`;
   }).join('');
 
   const tareasRows = p.tareasAgentes.map((t,ri) => `<tr>
-    <td><input value="${esc(t.agente)}" placeholder="Agente" onchange="acSetFilaCampo('${nivel}','${grupo}',${idx},'tareasAgentes',${ri},'agente',this.value)"></td>
-    <td><input value="${esc(t.tareas)}" placeholder="Tareas" onchange="acSetFilaCampo('${nivel}','${grupo}',${idx},'tareasAgentes',${ri},'tareas',this.value)"></td>
-    <td><button class="pap-dyn-del" onclick="acDelFila('${nivel}','${grupo}',${idx},'tareasAgentes',${ri})">✕</button></td>
+    <td><input value="${esc(t.agente)}" placeholder="Agente" onchange="acSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'tareasAgentes',${ri},'agente',this.value)"></td>
+    <td><input value="${esc(t.tareas)}" placeholder="Tareas" onchange="acSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'tareasAgentes',${ri},'tareas',this.value)"></td>
+    <td><button class="pap-dyn-del" onclick="acDelFila('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'tareasAgentes',${ri})">✕</button></td>
   </tr>`).join('');
 
   const seguimientoRows = p.seguimiento.map((s,ri) => `<tr>
-    <td><input value="${esc(s.medida)}" placeholder="Medida" onchange="acSetFilaCampo('${nivel}','${grupo}',${idx},'seguimiento',${ri},'medida',this.value)"></td>
-    <td><input value="${esc(s.t1)}" placeholder="1r trim." onchange="acSetFilaCampo('${nivel}','${grupo}',${idx},'seguimiento',${ri},'t1',this.value)"></td>
-    <td><input value="${esc(s.t2)}" placeholder="2n trim." onchange="acSetFilaCampo('${nivel}','${grupo}',${idx},'seguimiento',${ri},'t2',this.value)"></td>
-    <td><input value="${esc(s.t3)}" placeholder="3r trim." onchange="acSetFilaCampo('${nivel}','${grupo}',${idx},'seguimiento',${ri},'t3',this.value)"></td>
-    <td><button class="pap-dyn-del" onclick="acDelFila('${nivel}','${grupo}',${idx},'seguimiento',${ri})">✕</button></td>
+    <td><input value="${esc(s.medida)}" placeholder="Medida" onchange="acSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',${ri},'medida',this.value)"></td>
+    <td><input value="${esc(s.t1)}" placeholder="1r trim." onchange="acSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',${ri},'t1',this.value)"></td>
+    <td><input value="${esc(s.t2)}" placeholder="2n trim." onchange="acSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',${ri},'t2',this.value)"></td>
+    <td><input value="${esc(s.t3)}" placeholder="3r trim." onchange="acSetFilaCampo('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',${ri},'t3',this.value)"></td>
+    <td><button class="pap-dyn-del" onclick="acDelFila('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',${ri})">✕</button></td>
   </tr>`).join('');
 
   return `
@@ -703,18 +703,18 @@ function renderAcFormHTML(nivel, grupo, idx, a) {
         <div class="pap-section-head"><span class="pap-section-letter">A</span><span class="pap-section-title">Datos de identificación</span></div>
         <div class="pap-section-body">
           <div class="pap-grid2">
-            <div class="pap-field"><label>Curso escolar</label><input id="ac_cursoEscolar" value="${esc(p.cursoEscolar)}" placeholder="2026-2027" onchange="saveAcField('${nivel}','${grupo}',${idx},'cursoEscolar',this.value)"></div>
-            <div class="pap-field"><label>Fecha de inicio</label><input type="date" id="ac_fechaInicio" value="${esc(p.fechaInicio)}" onchange="saveAcField('${nivel}','${grupo}',${idx},'fechaInicio',this.value)"></div>
+            <div class="pap-field"><label>Curso escolar</label><input id="ac_cursoEscolar" value="${esc(p.cursoEscolar)}" placeholder="2026-2027" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'cursoEscolar',this.value)"></div>
+            <div class="pap-field"><label>Fecha de inicio</label><input type="date" id="ac_fechaInicio" value="${esc(p.fechaInicio)}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'fechaInicio',this.value)"></div>
           </div>
           <div class="pap-grid3">
-            <div class="pap-field"><label>Código de centro</label><input id="ac_centroCodigo" value="${esc(p.centroCodigo)}" onchange="saveAcField('${nivel}','${grupo}',${idx},'centroCodigo',this.value)"></div>
-            <div class="pap-field"><label>Nombre del centro</label><input id="ac_centroNombre" value="${esc(p.centroNombre)}" onchange="saveAcField('${nivel}','${grupo}',${idx},'centroNombre',this.value)"></div>
-            <div class="pap-field"><label>Localidad</label><input id="ac_centroLocalidad" value="${esc(p.centroLocalidad)}" onchange="saveAcField('${nivel}','${grupo}',${idx},'centroLocalidad',this.value)"></div>
+            <div class="pap-field"><label>Código de centro</label><input id="ac_centroCodigo" value="${esc(p.centroCodigo)}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'centroCodigo',this.value)"></div>
+            <div class="pap-field"><label>Nombre del centro</label><input id="ac_centroNombre" value="${esc(p.centroNombre)}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'centroNombre',this.value)"></div>
+            <div class="pap-field"><label>Localidad</label><input id="ac_centroLocalidad" value="${esc(p.centroLocalidad)}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'centroLocalidad',this.value)"></div>
           </div>
           <p class="pap-hint">Apellidos, nombre y fecha de nacimiento se toman directamente de la ficha del alumno/a (${esc(a.nombre)}${a.fecha?', nacido/a el '+esc(a.fecha):''}). Grupo actual: ${esc(nivel)} ${esc(grupo)}.</p>
           <div class="pap-grid2">
-            <div class="pap-field"><label>NIA</label><input id="ac_nia" value="${esc(p.nia)}" onchange="saveAcField('${nivel}','${grupo}',${idx},'nia',this.value)"></div>
-            <div class="pap-field"><label>Nivel y grupo (si difiere del actual)</label><input id="ac_nivelDoc" value="${esc(p.nivelDoc)}" placeholder="${esc(nivel)} ${esc(grupo)}" onchange="saveAcField('${nivel}','${grupo}',${idx},'nivelDoc',this.value)"></div>
+            <div class="pap-field"><label>NIA</label><input id="ac_nia" value="${esc(p.nia)}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'nia',this.value)"></div>
+            <div class="pap-field"><label>Nivel y grupo (si difiere del actual)</label><input id="ac_nivelDoc" value="${esc(p.nivelDoc)}" placeholder="${esc(nivel)} ${esc(grupo)}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'nivelDoc',this.value)"></div>
           </div>
         </div>
       </div>
@@ -735,7 +735,7 @@ function renderAcFormHTML(nivel, grupo, idx, a) {
           ${renderAcEnriquecimientoTabla(nivel, grupo, idx, p)}
           <div class="pap-field" style="margin-top:12px">
             <label>Observaciones adicionales sobre el ámbito (conexiones concretas, temas, saberes de curso superior…)</label>
-            <textarea id="ac_areaMateriaAmbito" onchange="saveAcField('${nivel}','${grupo}',${idx},'areaMateriaAmbito',this.value)">${esc(p.areaMateriaAmbito)}</textarea>
+            <textarea id="ac_areaMateriaAmbito" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'areaMateriaAmbito',this.value)">${esc(p.areaMateriaAmbito)}</textarea>
           </div>
         </div>
       </div>
@@ -746,7 +746,7 @@ function renderAcFormHTML(nivel, grupo, idx, a) {
           <div class="ac-check-grid">${estrategiasRows}</div>
           <div class="pap-field" style="margin-top:12px">
             <label>Otras estrategias y/o recursos</label>
-            <textarea id="ac_otrasEstrategias" onchange="saveAcField('${nivel}','${grupo}',${idx},'otrasEstrategias',this.value)">${esc(p.otrasEstrategias)}</textarea>
+            <textarea id="ac_otrasEstrategias" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'otrasEstrategias',this.value)">${esc(p.otrasEstrategias)}</textarea>
           </div>
         </div>
       </div>
@@ -758,7 +758,7 @@ function renderAcFormHTML(nivel, grupo, idx, a) {
             <thead><tr><th style="width:35%">Agentes</th><th>Tareas</th><th style="width:30px"></th></tr></thead>
             <tbody>${tareasRows}</tbody>
           </table>
-          <button class="pap-add-btn" onclick="acAddFila('${nivel}','${grupo}',${idx},'tareasAgentes',{agente:'',tareas:''})">+ Añadir fila</button>
+          <button class="pap-add-btn" onclick="acAddFila('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'tareasAgentes',{agente:'',tareas:''})">+ Añadir fila</button>
         </div>
       </div>
 
@@ -785,12 +785,12 @@ function renderAcFormHTML(nivel, grupo, idx, a) {
             <thead><tr><th style="width:34%">Medidas</th><th>1r trimestre</th><th>2n trimestre</th><th>3r trimestre</th><th style="width:30px"></th></tr></thead>
             <tbody>${seguimientoRows}</tbody>
           </table>
-          <button class="pap-add-btn" onclick="acAddFila('${nivel}','${grupo}',${idx},'seguimiento',{medida:'',t1:'',t2:'',t3:''})">+ Añadir fila</button>
+          <button class="pap-add-btn" onclick="acAddFila('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'seguimiento',{medida:'',t1:'',t2:'',t3:''})">+ Añadir fila</button>
           <div style="margin-top:12px">${T('ac_progresoGlobal','Progreso global del alumnado (nivel académico, personal y social — tener en cuenta la opinión de todos los agentes)',p.progresoGlobal)}</div>
           <div>${T('ac_propuestaNuevasMedidas','Propuesta de nuevas medidas y/o actuaciones para el curso siguiente',p.propuestaNuevasMedidas)}</div>
           <div class="pap-grid2">
-            <div class="pap-field"><label>Nombre y apellidos (de quien cumplimenta)</label><input id="ac_firmaNombre" value="${esc(p.firmaNombre)}" onchange="saveAcField('${nivel}','${grupo}',${idx},'firmaNombre',this.value)"></div>
-            <div class="pap-field"><label>Como (cargo/relación)</label><input id="ac_firmaComo" value="${esc(p.firmaComo)}" onchange="saveAcField('${nivel}','${grupo}',${idx},'firmaComo',this.value)"></div>
+            <div class="pap-field"><label>Nombre y apellidos (de quien cumplimenta)</label><input id="ac_firmaNombre" value="${esc(p.firmaNombre)}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'firmaNombre',this.value)"></div>
+            <div class="pap-field"><label>Como (cargo/relación)</label><input id="ac_firmaComo" value="${esc(p.firmaComo)}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'firmaComo',this.value)"></div>
           </div>
         </div>
       </div>
@@ -798,9 +798,9 @@ function renderAcFormHTML(nivel, grupo, idx, a) {
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeAcModal()">Cerrar</button>
-      <button class="btn btn-ghost" onclick="exportarAcHTML('${nivel}','${grupo}',${idx})">🌐 HTML</button>
-      <button class="btn btn-ghost" onclick="exportarAcWord('${nivel}','${grupo}',${idx})">📄 Word</button>
-      <button class="btn btn-primary" onclick="exportarAcPDF('${nivel}','${grupo}',${idx})">🖨️ PDF</button>
+      <button class="btn btn-ghost" onclick="exportarAcHTML('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})">🌐 HTML</button>
+      <button class="btn btn-ghost" onclick="exportarAcWord('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})">📄 Word</button>
+      <button class="btn btn-primary" onclick="exportarAcPDF('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})">🖨️ PDF</button>
     </div>
   `;
 }

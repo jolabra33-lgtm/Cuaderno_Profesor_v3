@@ -48,7 +48,7 @@ function openNotesPanel(e, nivel, grupo, idx) {
     <textarea class="notes-textarea" id="notesPanelTA" placeholder="Escribe aquí tus observaciones sobre este alumno/a…">${alumno.notas || ''}</textarea>
     <div class="notes-panel-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeNotesPanel()">Cerrar</button>
-      <button class="btn btn-primary btn-sm" onclick="saveNote('${nivel}','${grupo}',${idx})">Guardar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveNote('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})">Guardar</button>
     </div>
   `;
 
@@ -154,7 +154,7 @@ function openMovePanel(e, nivel, grupo, idx) {
     <select id="movePanelGrupo">${getGrupoOpts(nivel)}</select>
     <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
       <button class="btn btn-ghost btn-sm" onclick="closeMovePanel()">Cancelar</button>
-      <button class="btn btn-primary btn-sm" onclick="executeMoveAlumno('${nivel}','${grupo}',${idx})">↗ Mover</button>
+      <button class="btn btn-primary btn-sm" onclick="executeMoveAlumno('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})">↗ Mover</button>
     </div>
   `;
 
@@ -255,7 +255,7 @@ function openBulkMovePanel() {
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="document.getElementById('bulkMoveOverlay').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-primary" onclick="executeBulkMove('${nivel}','${grupo}')">↗ Mover seleccionados</button>
+        <button class="btn btn-primary" onclick="executeBulkMove('${jsAttr(nivel)}','${jsAttr(grupo)}')">↗ Mover seleccionados</button>
       </div>
     </div>
   `;

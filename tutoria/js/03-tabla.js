@@ -248,7 +248,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
             type="text"
             placeholder="Nombre del tutor/a…"
             value="${tutores[key] || ''}"
-            oninput="tutores['${key}']=this.value"
+            oninput="tutores['${jsAttr(key)}']=this.value"
             style="background:transparent;border:none;color:var(--text);font-family:inherit;font-size:13px;font-weight:500;width:220px;outline:none;"
           />
         </div>
@@ -272,21 +272,21 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
           <span id="searchResultCount" style="font-size:10px;color:var(--accent);font-weight:600;display:none;min-width:30px;"></span>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="openAddAlumno()">＋ Alumno</button>
-        <button class="btn btn-ghost btn-sm" onclick="abrirImportarDelCuaderno('${nivel}','${grupo}')" title="Copiar la lista de alumnado de un grupo del Cuaderno del profesor (solo nombres y fechas de nacimiento)">📥 Del Cuaderno</button>
+        <button class="btn btn-ghost btn-sm" onclick="abrirImportarDelCuaderno('${jsAttr(nivel)}','${jsAttr(grupo)}')" title="Copiar la lista de alumnado de un grupo del Cuaderno del profesor (solo nombres y fechas de nacimiento)">📥 Del Cuaderno</button>
         <button class="compact-toggle${window._compactMode?' active':''}" id="compactToggle-${nivel}-${grupo}"
           title="Modo compacto — reduce el tamaño de las filas"
-          onclick="_toggleCompact('${nivel}','${grupo}',this)">${window._compactMode?'⊡ Normal':'⊟ Compacto'}</button>
-        <button class="btn btn-ghost btn-sm" onclick="openActaOficialMenu('${nivel}','${grupo}')">📋 Acta Oficial</button>
+          onclick="_toggleCompact('${jsAttr(nivel)}','${jsAttr(grupo)}',this)">${window._compactMode?'⊡ Normal':'⊟ Compacto'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="openActaOficialMenu('${jsAttr(nivel)}','${jsAttr(grupo)}')">📋 Acta Oficial</button>
         <details class="mas-menu">
           <summary class="btn btn-ghost btn-sm" title="Más herramientas del grupo">⋯ Más${_getAsistenciaIndicator(nivel, grupo) || ((window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : '')}</summary>
           <div class="mas-menu-lista" role="menu">
             <button role="menuitem" onclick="selectNivel('__actasnooficiales__')" title="Las Actas I/II/Final de todos los grupos se gestionan en su propia pestaña">🗂️ Actas no Oficiales</button>
-            <button role="menuitem" onclick="openAsistencia('${nivel}','${grupo}')">👥 Asistencia a la sesión${_getAsistenciaIndicator(nivel, grupo)}</button>
-            <button role="menuitem" onclick="openEquipoDocente('${nivel}','${grupo}')">👨‍🏫 Equipo docente</button>
-            <button role="menuitem" onclick="openObservacionesGrupo('${nivel}','${grupo}')">📝 Observaciones del grupo${(window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : ''}</button>
-            <button role="menuitem" onclick="openPlanoGrupo('${nivel}','${grupo}')">🪑 Plano del grupo</button>
-            <button role="menuitem" onclick="openHorarioGrupo('${nivel}','${grupo}')">🗓️ Horario del grupo</button>
-            <button role="menuitem" onclick="openFotoGaleria('${nivel}','${grupo}')">🖼️ Fotos del grupo</button>
+            <button role="menuitem" onclick="openAsistencia('${jsAttr(nivel)}','${jsAttr(grupo)}')">👥 Asistencia a la sesión${_getAsistenciaIndicator(nivel, grupo)}</button>
+            <button role="menuitem" onclick="openEquipoDocente('${jsAttr(nivel)}','${jsAttr(grupo)}')">👨‍🏫 Equipo docente</button>
+            <button role="menuitem" onclick="openObservacionesGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📝 Observaciones del grupo${(window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : ''}</button>
+            <button role="menuitem" onclick="openPlanoGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">🪑 Plano del grupo</button>
+            <button role="menuitem" onclick="openHorarioGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">🗓️ Horario del grupo</button>
+            <button role="menuitem" onclick="openFotoGaleria('${jsAttr(nivel)}','${jsAttr(grupo)}')">🖼️ Fotos del grupo</button>
           </div>
         </details>
       </div>
@@ -308,13 +308,13 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
     const active = window._evalTab[key];
     evalSubtabsEl.innerHTML = `
       <button class="eval-subtab ${active==='eval1'?'active-eval1':''}"
-        onclick="selectEvalTab('${nivel}','${grupo}','eval1')">📘 I Evaluación</button>
+        onclick="selectEvalTab('${jsAttr(nivel)}','${jsAttr(grupo)}','eval1')">📘 I Evaluación</button>
       <button class="eval-subtab ${active==='eval2'?'active-eval2':''}"
-        onclick="selectEvalTab('${nivel}','${grupo}','eval2')">📗 II Evaluación</button>
+        onclick="selectEvalTab('${jsAttr(nivel)}','${jsAttr(grupo)}','eval2')">📗 II Evaluación</button>
       <button class="eval-subtab ${active==='eval3'?'active-eval3':''}"
-        onclick="selectEvalTab('${nivel}','${grupo}','eval3')">📙 Evaluación Final</button>
+        onclick="selectEvalTab('${jsAttr(nivel)}','${jsAttr(grupo)}','eval3')">📙 Evaluación Final</button>
       <button class="eval-subtab ${active==='nese'?'active-nese':''}"
-        onclick="selectEvalTab('${nivel}','${grupo}','nese')">🧩 NESE</button>
+        onclick="selectEvalTab('${jsAttr(nivel)}','${jsAttr(grupo)}','nese')">🧩 NESE</button>
     `;
   }
   buildEvalSubtabs();
@@ -451,10 +451,10 @@ function renderNeseTabPanel(nivel, grupo, tw, rawAlumnos) {
         <div class="nese-tab-sub">${codePills || 'Sin AL/PT asignado'}${a.compensatoria==='Sí' ? ' · Compensatoria' : ''}</div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-        <span class="nese-pill${hasPAP?' nese-pill-on':''}" title="¿Tiene Plan de Actuación Personalizado (PAP)?" onclick="withUndo('${nivel}','${grupo}',()=>_toggleMedidaExtra('${nivel}','${grupo}',${i},'papActivo'))">PAP</span>
-        <span class="nese-pill${hasEC?' nese-pill-on':''}" title="¿Tiene Programa de Enriquecimiento Curricular (EC)?" onclick="withUndo('${nivel}','${grupo}',()=>_toggleMedidaExtra('${nivel}','${grupo}',${i},'ecActivo'))">EC</span>
-        ${hasPAP?`<span class="pap-btn" title="Plan de Actuación Personalizado (PAP)" onclick="openPapModal('${nivel}','${grupo}',${i})">📋 Ver PAP${papDone?'<span class="nese-doc-dot"></span>':''}</span>`:''}
-        ${hasEC?`<span class="ac-btn" title="Programa de Enriquecimiento Curricular (Altas Capacidades)" onclick="openAcModal('${nivel}','${grupo}',${i})">🎓 Ver EC${acDone?'<span class="nese-doc-dot"></span>':''}</span>`:''}
+        <span class="nese-pill${hasPAP?' nese-pill-on':''}" title="¿Tiene Plan de Actuación Personalizado (PAP)?" onclick="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>_toggleMedidaExtra('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'papActivo'))">PAP</span>
+        <span class="nese-pill${hasEC?' nese-pill-on':''}" title="¿Tiene Programa de Enriquecimiento Curricular (EC)?" onclick="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>_toggleMedidaExtra('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'ecActivo'))">EC</span>
+        ${hasPAP?`<span class="pap-btn" title="Plan de Actuación Personalizado (PAP)" onclick="openPapModal('${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">📋 Ver PAP${papDone?'<span class="nese-doc-dot"></span>':''}</span>`:''}
+        ${hasEC?`<span class="ac-btn" title="Programa de Enriquecimiento Curricular (Altas Capacidades)" onclick="openAcModal('${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">🎓 Ver EC${acDone?'<span class="nese-doc-dot"></span>':''}</span>`:''}
       </div>
     </div>`;
   }).join('');
@@ -486,7 +486,7 @@ function renderFilterBar(nivel, grupo) {
   const chip = (label, field, value, color='') => {
     const on = fs[field] === value;
     return `<button class="filter-chip${on?' active'+(color?' '+color:''):''}"
-      onclick="toggleFilter('${key}','${field}','${value}')">${label}</button>`;
+      onclick="toggleFilter('${jsAttr(key)}','${field}','${value}')">${label}</button>`;
   };
 
   // Map active filters to pills for collapsed view
@@ -509,20 +509,20 @@ function renderFilterBar(nivel, grupo) {
     const label = filterLabels[field]?.[val] || val;
     const color = filterColors[field] || '';
     return `<span class="filter-active-pill ${color}"
-      onclick="toggleFilter('${key}','${field}','${val}')" title="Quitar filtro">
+      onclick="toggleFilter('${jsAttr(key)}','${field}','${val}')" title="Quitar filtro">
       ${label} ✕</span>`;
   }).join('');
 
   fb.className = 'filter-bar' + (isOpen ? ' open' : '');
   fb.innerHTML = `
     <div class="filter-bar-top">
-      <button class="filter-bar-toggle" onclick="(function(fb){fb.classList.toggle('open');renderFilterBar('${nivel.replace(/'/g,"\\'")}','${grupo}');})(this.closest('.filter-bar'))">
+      <button class="filter-bar-toggle" onclick="(function(fb){fb.classList.toggle('open');renderFilterBar('${nivel.replace(/'/g,"\\'")}','${jsAttr(grupo)}');})(this.closest('.filter-bar'))">
         ${isOpen ? '▲ Ocultar filtros' : '▼ Filtros'}${activeCount ? ` <span style="background:var(--accent);color:#fff;border-radius:8px;padding:0 6px;font-size:9px">${activeCount}</span>` : ''}
       </button>
       ${activePills || (!isOpen ? `<span style="font-size:10px;color:var(--text3)">Sin filtros activos</span>` : '')}
-      ${activeCount ? `<button class="filter-chip" style="color:var(--red);border-color:rgba(247,110,110,0.3);font-size:10px;padding:2px 7px" onclick="clearFilters('${key}')">✕ Limpiar todo</button>` : ''}
+      ${activeCount ? `<button class="filter-chip" style="color:var(--red);border-color:rgba(247,110,110,0.3);font-size:10px;padding:2px 7px" onclick="clearFilters('${jsAttr(key)}')">✕ Limpiar todo</button>` : ''}
       <span id="filterResultCount" style="margin-left:auto"></span>
-      <button class="col-manager-btn${hiddenColCount>0?' has-hidden':''}" onclick="openColManager(event,'${nivel}','${grupo}')" id="colManagerBtn-${key}">⚙ Columnas${hiddenColCount>0?` <span style="background:var(--yellow);color:#111;border-radius:8px;padding:0 5px;font-size:10px">${hiddenColCount}</span>`:''}</button>
+      <button class="col-manager-btn${hiddenColCount>0?' has-hidden':''}" onclick="openColManager(event,'${jsAttr(nivel)}','${jsAttr(grupo)}')" id="colManagerBtn-${key}">⚙ Columnas${hiddenColCount>0?` <span style="background:var(--yellow);color:#111;border-radius:8px;padding:0 5px;font-size:10px">${hiddenColCount}</span>`:''}</button>
     </div>
     <div class="filter-bar-expanded">
       <div class="filter-group">
@@ -783,14 +783,14 @@ function openColManager(e, nivel, grupo) {
         <span class="col-manager-label${!visible ? ' hidden-label' : ''}">${labelDisplay}</span>
         ${!visible ? '<span style="font-size:9px;color:var(--text3);margin-left:2px">●</span>' : ''}
         ${!required ? `<button class="col-manager-delete" title="Eliminar columna permanentemente"
-          onclick="event.preventDefault();event.stopPropagation();deleteCol('${nivel}','${grupo}',${i})">🗑</button>` : ''}
+          onclick="event.preventDefault();event.stopPropagation();deleteCol('${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">🗑</button>` : ''}
       </label>`;
     }).join('');
 
     panel.innerHTML = `
       <div class="col-manager-header">
         <span class="col-manager-title">⚙ Columnas — ${evalTabLabel}</span>
-        <button class="col-manager-reset" onclick="resetCols('${nivel}','${grupo}')">↺ Restaurar</button>
+        <button class="col-manager-reset" onclick="resetCols('${jsAttr(nivel)}','${jsAttr(grupo)}')">↺ Restaurar</button>
       </div>
       <div style="padding:0 14px 6px;font-size:10px;color:var(--text3);line-height:1.4;">
         Las columnas comunes (Lengua Base, NESE, Compensatoria, Pend. Ant.…) se ocultan igual en las tres evaluaciones. Las propias de esta pestaña (I/II/III Eval., su propuesta, asistencia y convivencia) solo afectan aquí.
@@ -803,8 +803,8 @@ function openColManager(e, nivel, grupo) {
       </div>
       <div class="col-manager-list">${items}</div>
       <div style="display:flex;gap:6px;padding:8px 14px 6px;border-top:1px solid var(--border);">
-        <button class="col-manager-act hide" style="flex:1" onclick="_cmApplyHide('${nivel}','${grupo}')">👁 Ocultar sel.</button>
-        <button class="col-manager-act show" style="flex:1" onclick="_cmApplyShow('${nivel}','${grupo}')">✓ Mostrar sel.</button>
+        <button class="col-manager-act hide" style="flex:1" onclick="_cmApplyHide('${jsAttr(nivel)}','${jsAttr(grupo)}')">👁 Ocultar sel.</button>
+        <button class="col-manager-act show" style="flex:1" onclick="_cmApplyShow('${jsAttr(nivel)}','${jsAttr(grupo)}')">✓ Mostrar sel.</button>
       </div>
       <div class="col-manager-footer">
         <span>${hiddenCount > 0 ? `${hiddenCount} oculta${hiddenCount>1?'s':''}` : 'Todas visibles'}</span>
@@ -1022,23 +1022,23 @@ function updateTable(nivel, grupo) {
   const colgroup = '<colgroup><col class="cb-col" style="width:36px">' + cols.map((w,i)=>`<col data-col="${i}" style="width:${w}px">`).join('') + '<col style="width:44px"><col style="width:44px"><col style="width:44px"><col style="width:44px"><col style="width:48px"></colgroup>';
 
   function makeResizer(colIdx) {
-    return `<div class="col-resizer" data-col="${colIdx}" onmousedown="startResize(event,'${nivel}','${grupo}',${colIdx})"></div>`;
+    return `<div class="col-resizer" data-col="${colIdx}" onmousedown="startResize(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${colIdx})"></div>`;
   }
 
   const headers = colNames.map((name, i) => {
     const sk = sortCols[i];
     const cls = (thClasses[i] ? thClasses[i] + ' resizable-th' : 'resizable-th') + (sk ? ' sortable-th' : '') + (name === 'Alumno / a' ? ' sticky-nombre' : '');
-    const sortClick = sk ? `onclick="setSortCol('${nivel}','${grupo}','${sk}')"` : '';
+    const sortClick = sk ? `onclick="setSortCol('${jsAttr(nivel)}','${jsAttr(grupo)}','${sk}')"` : '';
     const indicator = sk ? `<span class="sort-indicator${ss.col===sk?' active':''}">${ss.col===sk?(ss.dir==='asc'?'▲':'▼'):'⇅'}</span>` : '';
     // Botón de imprimir informe encima de la columna "Promociona"
     if (name === 'Promociona') {
-      const printBtn = `<button class="th-print-btn" title="Imprimir informe de promoción del grupo (PDF)" onclick="event.stopPropagation();printPromocionaGrupo('${nivel}','${grupo}')">🖨️ Imprimir</button>`;
+      const printBtn = `<button class="th-print-btn" title="Imprimir informe de promoción del grupo (PDF)" onclick="event.stopPropagation();printPromocionaGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">🖨️ Imprimir</button>`;
       return `<th class="${cls}" style="width:${cols[i]}px;min-width:${cols[i]}px;" ${sortClick}><span class="th-print-wrap">${printBtn}<span>${name}${indicator}</span></span>${makeResizer(i)}</th>`;
     }
     return `<th class="${cls}" style="width:${cols[i]}px;min-width:${cols[i]}px;" ${sortClick}>${name}${indicator}${makeResizer(i)}</th>`;
   }).join('');
 
-  const cbTh = `<th class="cb-col"><input type="checkbox" class="all-cb" title="Seleccionar todos" onchange="bulkToggleAll('${nivel}','${grupo}',this.checked)"></th>`;
+  const cbTh = `<th class="cb-col"><input type="checkbox" class="all-cb" title="Seleccionar todos" onchange="bulkToggleAll('${jsAttr(nivel)}','${jsAttr(grupo)}',this.checked)"></th>`;
   // Encabezados de las columnas de acciones: sin ellos, el navegador las
   // comprimía al mínimo y los iconos se recortaban.
   const tailHeaders = `
@@ -1088,7 +1088,7 @@ function updateTable(nivel, grupo) {
       const dispColor = val > 0 ? color : 'var(--text3)';
       return `<td style="text-align:center"><input class="num-mini" type="number" min="0" max="${max}" value="${val}"
         style="color:${dispColor}"
-        onchange="withUndo('${nivel}','${grupo}',()=>{updateField('${nivel}','${grupo}',${i},'${field}',+this.value);this.style.color=+this.value>0?'${color}':'var(--text3)';})" /></td>`;
+        onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>{updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'${field}',+this.value);this.style.color=+this.value>0?'${color}':'var(--text3)';})" /></td>`;
     }
 
     // Lengua Base + CEIP Origen — ahora columnas base, comunes a TODAS las evaluaciones
@@ -1104,10 +1104,10 @@ function updateTable(nivel, grupo) {
       <td class="td-nombre sticky-nombre">
         <div class="nombre-cell">
           <div class="nombre-cell-top">
-            <input class="cell-input" value="${a.nombre.replace(/"/g,'&quot;')}" onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'nombre',this.value))" placeholder="Apellidos, Nombre" style="min-width:0"/>
+            <input class="cell-input" value="${a.nombre.replace(/"/g,'&quot;')}" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'nombre',this.value))" placeholder="Apellidos, Nombre" style="min-width:0"/>
             ${evalTab === 'eval3' ? trendHtml : ''}
             <button class="notes-btn obs-inline${hasNote?' has-note':''}" title="${hasNote?'Ver / editar observaciones':'Añadir observaciones'}"
-              onclick="openNotesPanel(event,'${nivel}','${grupo}',${i})">📝</button>
+              onclick="openNotesPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">📝</button>
           </div>
           ${(pendiente || isCritical) && evalTab === 'eval3' ? `<div class="nombre-cell-badges">
             ${pendiente ? '<span class="pending-badge">pendiente</span>' : ''}
@@ -1117,7 +1117,7 @@ function updateTable(nivel, grupo) {
         </div>
       </td>
       <td>
-        <select class="cell-input" style="color:${lbColor}" onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'lenguaBase',this.value))">
+        <select class="cell-input" style="color:${lbColor}" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'lenguaBase',this.value))">
           <option value="" ${!lbVal?'selected':''}>— No vota</option>
           <option value="Castellano" ${lbVal==='Castellano'?'selected':''}>Castellano</option>
           <option value="Valenciano" ${lbVal==='Valenciano'?'selected':''}>Valenciano</option>
@@ -1125,26 +1125,26 @@ function updateTable(nivel, grupo) {
       </td>
       <td>
         <div style="display:flex;flex-direction:column;gap:2px;">
-          <select class="cell-input" style="color:${ceipColor}" onchange="(function(s){var td=s.closest('td');var inp=td.querySelector('.ceip-inp');if(s.value==='__otros__'){inp.style.display='';inp.focus();}else{inp.style.display='none';withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'colegioProcedencia',s.value));}})(this)">
+          <select class="cell-input" style="color:${ceipColor}" onchange="(function(s){var td=s.closest('td');var inp=td.querySelector('.ceip-inp');if(s.value==='__otros__'){inp.style.display='';inp.focus();}else{inp.style.display='none';withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'colegioProcedencia',s.value));}})(this)">
             <option value="" ${!ceipVal?'selected':''}>—</option>
             ${opts}
             <option value="__otros__" ${isOtros?'selected':''}>Otros…</option>
           </select>
-          <input class="cell-input ceip-inp" type="text" placeholder="Centro, Municipio" value="${isOtros?ceipVal.replace(/"/g,'&quot;'):''}" style="display:${isOtros?'block':'none'};font-size:11px;" onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'colegioProcedencia',this.value))" />
+          <input class="cell-input ceip-inp" type="text" placeholder="Centro, Municipio" value="${isOtros?ceipVal.replace(/"/g,'&quot;'):''}" style="display:${isOtros?'block':'none'};font-size:11px;" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'colegioProcedencia',this.value))" />
         </div>
       </td>
       <td><span class="badge badge-blue">${nivel}</span></td>
       <td><span class="badge badge-gray">${grupo}</span></td>
       <td>
-        <select class="cell-input" onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'repetidor',this.value))">
+        <select class="cell-input" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'repetidor',this.value))">
           <option ${!a.repetidor||a.repetidor==='No'?'selected':''} value="No">No</option>
           <option ${a.repetidor==='Sí'?'selected':''} value="Sí">Sí</option>
         </select>
       </td>
-      <td><input class="cell-input" type="date" value="${a.fecha}" onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'fecha',this.value))" /></td>
+      <td><input class="cell-input" type="date" value="${a.fecha}" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'fecha',this.value))" /></td>
       <td style="${ageStyle}color:var(--text2)">${calcEdad(a.fecha) !== '' ? calcEdad(a.fecha) : '—'}</td>
       <td>
-        <select class="cell-input" onchange="withUndo('${nivel}','${grupo}',()=>{updateField('${nivel}','${grupo}',${i},'nese',this.value);updateStats('${nivel}','${grupo}');updateCharts('${nivel}','${grupo}');updateTable('${nivel}','${grupo}');})" style="color:${a.nese==='Sí'?'var(--yellow)':'var(--text3)'}">
+        <select class="cell-input" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>{updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'nese',this.value);updateStats('${jsAttr(nivel)}','${jsAttr(grupo)}');updateCharts('${jsAttr(nivel)}','${jsAttr(grupo)}');updateTable('${jsAttr(nivel)}','${jsAttr(grupo)}');})" style="color:${a.nese==='Sí'?'var(--yellow)':'var(--text3)'}">
           <option value="" ${!a.nese?'selected':''}>—</option>
           <option value="Sí" ${a.nese==='Sí'?'selected':''}>Sí</option>
           <option value="No" ${a.nese==='No'?'selected':''}>No</option>
@@ -1155,23 +1155,23 @@ function updateTable(nivel, grupo) {
           const rn = _getNeseCodes(a.recursoNese);
           const hasAL = rn.includes('AL'), hasPT = rn.includes('PT');
           const hasPAP = !!a.papActivo, hasEC = !!a.ecActivo;
-          const papEditBtn = hasPAP ? `<span class="pap-btn" title="Abrir el Plan de Actuación Personalizado (PAP)" onclick="openPapModal('${nivel}','${grupo}',${i})">📋 Editar${a.pap&&a.pap._touched?'<span class="nese-doc-dot"></span>':''}</span>` : '';
-          const ecEditBtn = hasEC ? `<span class="ac-btn" title="Abrir el Programa de Enriquecimiento Curricular" onclick="openAcModal('${nivel}','${grupo}',${i})">🎓 Editar${a.ac&&a.ac._touched?'<span class="nese-doc-dot"></span>':''}</span>` : '';
+          const papEditBtn = hasPAP ? `<span class="pap-btn" title="Abrir el Plan de Actuación Personalizado (PAP)" onclick="openPapModal('${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">📋 Editar${a.pap&&a.pap._touched?'<span class="nese-doc-dot"></span>':''}</span>` : '';
+          const ecEditBtn = hasEC ? `<span class="ac-btn" title="Abrir el Programa de Enriquecimiento Curricular" onclick="openAcModal('${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">🎓 Editar${a.ac&&a.ac._touched?'<span class="nese-doc-dot"></span>':''}</span>` : '';
           const medidasBlock = a.nese==='Sí' ? `<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
-              <span class="nese-pill${hasPAP?' nese-pill-on':''}" title="¿Tiene Plan de Actuación Personalizado (PAP)?" onclick="withUndo('${nivel}','${grupo}',()=>_toggleMedidaExtra('${nivel}','${grupo}',${i},'papActivo'))">PAP</span>
-              <span class="nese-pill${hasEC?' nese-pill-on':''}" title="¿Tiene Programa de Enriquecimiento Curricular (EC)?" onclick="withUndo('${nivel}','${grupo}',()=>_toggleMedidaExtra('${nivel}','${grupo}',${i},'ecActivo'))">EC</span>
+              <span class="nese-pill${hasPAP?' nese-pill-on':''}" title="¿Tiene Plan de Actuación Personalizado (PAP)?" onclick="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>_toggleMedidaExtra('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'papActivo'))">PAP</span>
+              <span class="nese-pill${hasEC?' nese-pill-on':''}" title="¿Tiene Programa de Enriquecimiento Curricular (EC)?" onclick="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>_toggleMedidaExtra('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'ecActivo'))">EC</span>
             </div>${(papEditBtn||ecEditBtn) ? `<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">${papEditBtn}${ecEditBtn}</div>` : ''}` : '';
           return `<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
             <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
-              <span class="nese-pill${hasAL?' nese-pill-on':''}" title="Audición y Lenguaje" onclick="withUndo('${nivel}','${grupo}',()=>_toggleNeseCode('${nivel}','${grupo}',${i},'AL'))">AL</span>
-              <span class="nese-pill${hasPT?' nese-pill-on':''}" title="Pedagogía Terapéutica" onclick="withUndo('${nivel}','${grupo}',()=>_toggleNeseCode('${nivel}','${grupo}',${i},'PT'))">PT</span>
+              <span class="nese-pill${hasAL?' nese-pill-on':''}" title="Audición y Lenguaje" onclick="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>_toggleNeseCode('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'AL'))">AL</span>
+              <span class="nese-pill${hasPT?' nese-pill-on':''}" title="Pedagogía Terapéutica" onclick="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>_toggleNeseCode('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'PT'))">PT</span>
             </div>
             ${medidasBlock}
           </div>`;
         })()}
       </td>
       <td>
-        <select class="cell-input" onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'compensatoria',this.value))">
+        <select class="cell-input" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'compensatoria',this.value))">
           <option value="" ${!a.compensatoria?'selected':''}>—</option>
           <option ${a.compensatoria==='Sí'?'selected':''} value="Sí">Sí</option>
           <option ${a.compensatoria==='No'?'selected':''} value="No">No</option>
@@ -1181,7 +1181,7 @@ function updateTable(nivel, grupo) {
         ${(()=>{
           const codes = Array.isArray(a.codComp) ? a.codComp : (a.codComp ? [a.codComp] : []);
           const pills = codes.length ? codes.map(c=>`<span class="code-pill">${c}</span>`).join('') : '<span class="multicode-placeholder">—</span>';
-          return `<div class="multicode-display" onclick="openMultiCode(event,'${nivel}','${grupo}',${i})">${pills}</div>`;
+          return `<div class="multicode-display" onclick="openMultiCode(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">${pills}</div>`;
         })()}
       </td>
       <td>${buildPendientesDisplay(a.pendientesAnteriores||[], nivel, grupo, i, 'ant')}</td>`;
@@ -1191,18 +1191,18 @@ function updateTable(nivel, grupo) {
     // se recortaban mostrando puntos suspensivos.
     const tailCells = `
       <td class="accion-col" style="text-align:center;width:44px;min-width:44px">
-        <button class="hist-btn${(a.historial&&a.historial.length)?' has-hist':''}" title="Historial académico" onclick="openHistorial('${nivel}','${grupo}',${i})">📅</button>
+        <button class="hist-btn${(a.historial&&a.historial.length)?' has-hist':''}" title="Historial académico" onclick="openHistorial('${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">📅</button>
       </td>
       <td class="accion-col" style="text-align:center;width:44px;min-width:44px">
-        <button class="move-btn" title="Informe de seguimiento" onclick="printSeguimientoAlumno('${nivel}','${grupo}',${i})" style="color:var(--green)">📋</button>
+        <button class="move-btn" title="Informe de seguimiento" onclick="printSeguimientoAlumno('${jsAttr(nivel)}','${jsAttr(grupo)}',${i})" style="color:var(--green)">📋</button>
       </td>
       <td class="accion-col" style="text-align:center;width:44px;min-width:44px">
-        <button class="move-btn" title="Seguimiento con familia (reuniones a petición de los padres)" onclick="openSegFamilia('${nivel}','${grupo}',${i})" style="color:#f76ea0">📞</button>
+        <button class="move-btn" title="Seguimiento con familia (reuniones a petición de los padres)" onclick="openSegFamilia('${jsAttr(nivel)}','${jsAttr(grupo)}',${i})" style="color:#f76ea0">📞</button>
       </td>
       <td class="accion-col" style="text-align:center;width:44px;min-width:44px">
-        <button class="move-btn" title="Mover a otro grupo/nivel" onclick="openMovePanel(event,'${nivel}','${grupo}',${i})">↗</button>
+        <button class="move-btn" title="Mover a otro grupo/nivel" onclick="openMovePanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">↗</button>
       </td>
-      <td class="accion-col" style="text-align:center;width:48px;min-width:48px"><button class="btn btn-danger" onclick="(async()=>{if(await confirmar('¿Eliminar a ${a.nombre.replace(/'/g,"\\'")}?')){withUndo('${nivel}','${grupo}',()=>deleteAlumnoNoConfirm('${nivel}','${grupo}',${i}))}})()">✕</button></td>`;
+      <td class="accion-col" style="text-align:center;width:48px;min-width:48px"><button class="btn btn-danger" onclick="(async()=>{if(await confirmar('¿Eliminar a ${a.nombre.replace(/'/g,"\\'")}?')){withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>deleteAlumnoNoConfirm('${jsAttr(nivel)}','${jsAttr(grupo)}',${i}))}})()">✕</button></td>`;
 
     // Eval-specific cells
     let evalCells = '';
@@ -1212,12 +1212,12 @@ function updateTable(nivel, grupo) {
         <td style="text-align:center">
           <input class="cell-input" type="number" min="0" max="12" value="${a.eval1}"
             oninput="(function(el){var v=+el.value;el.style.color=v===0?'var(--green)':v>=4?'var(--red)':v>=1?'var(--accent)':'var(--text)';})(this)"
-            onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'eval1',+this.value))"
+            onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'eval1',+this.value))"
             style="width:60px;text-align:center;color:${e1Color};font-weight:600;font-family:inherit" />
         </td>
         <td>${buildPendientesDisplay(a.pendientes1||[], nivel, grupo, i, 'p1')}</td>
         <td>
-          <div class="propuesta-display" data-field="propuesta1" onclick="openPropuesta(event,'${nivel}','${grupo}',${i},'propuesta1')">${buildPropuestaPills(p1)}</div>
+          <div class="propuesta-display" data-field="propuesta1" onclick="openPropuesta(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'propuesta1')">${buildPropuestaPills(p1)}</div>
         </td>
         ${numCell('faltasJust1', 999, 'var(--yellow)')}
         ${numCell('faltasInjust1', 999, 'var(--red)')}
@@ -1230,12 +1230,12 @@ function updateTable(nivel, grupo) {
         <td style="text-align:center">
           <input class="cell-input" type="number" min="0" max="12" value="${a.eval2}"
             oninput="(function(el){var v=+el.value;el.style.color=v===0?'var(--green)':v>=4?'var(--red)':v>=1?'var(--accent)':'var(--text)';})(this)"
-            onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'eval2',+this.value))"
+            onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'eval2',+this.value))"
             style="width:60px;text-align:center;color:${e2Color};font-weight:600;font-family:inherit" />
         </td>
         <td>${buildPendientesDisplay(a.pendientes2||[], nivel, grupo, i, 'p2')}</td>
         <td>
-          <div class="propuesta-display" data-field="propuesta2" onclick="openPropuesta(event,'${nivel}','${grupo}',${i},'propuesta2')">${buildPropuestaPills(p2)}</div>
+          <div class="propuesta-display" data-field="propuesta2" onclick="openPropuesta(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'propuesta2')">${buildPropuestaPills(p2)}</div>
         </td>
         ${numCell('faltasJust2', 999, 'var(--yellow)')}
         ${numCell('faltasInjust2', 999, 'var(--red)')}
@@ -1248,7 +1248,7 @@ function updateTable(nivel, grupo) {
         <td style="text-align:center">
           <input class="cell-input" type="number" min="0" max="20" style="width:60px;text-align:center;font-family:inherit;font-weight:700;color:${(a.evalExtr||0)===0?'var(--green)':(a.evalExtr||0)>=4?'var(--red)':'var(--yellow)'}"
             value="${a.evalExtr||''}" placeholder="—"
-            onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'evalExtr',this.value===''?0:parseInt(this.value)))" />
+            onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'evalExtr',this.value===''?0:parseInt(this.value)))" />
         </td>
         <td>${buildPendientesDisplay(a.pendientesExtr||[], nivel, grupo, i, 'extr')}</td>` : '';
       evalCells = `
@@ -1256,13 +1256,13 @@ function updateTable(nivel, grupo) {
         <td style="text-align:center">
           <input class="cell-input" type="number" min="0" max="12" value="${a.eval3}"
             oninput="(function(el){var v=+el.value;el.style.color=v===0?'var(--green)':v>=4?'var(--red)':v>=1?'var(--accent)':'var(--text)';})(this)"
-            onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'eval3',+this.value))"
+            onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'eval3',+this.value))"
             style="width:60px;text-align:center;color:${e3Color};font-weight:600;font-family:inherit" />
         </td>
         <td>${buildPendientesDisplay(a.pendientesIII||[], nivel, grupo, i, 'iii')}</td>
         ${extrCells}
         <td>
-          <div class="propuesta-display" data-field="promociona" onclick="openPropuesta(event,'${nivel}','${grupo}',${i},'promociona')">${buildPropuestaPills(pm)}</div>
+          <div class="propuesta-display" data-field="promociona" onclick="openPropuesta(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'promociona')">${buildPropuestaPills(pm)}</div>
         </td>
         ${numCell('faltasJust3', 999, 'var(--yellow)')}
         ${numCell('faltasInjust3', 999, 'var(--red)')}
@@ -1273,7 +1273,7 @@ function updateTable(nivel, grupo) {
 
     html += `
       <tr data-idx="${i}"${(pendiente && evalTab==='eval3') ? ' class="row-pending ' + rowColorClass + '"' : rowColorClass ? ' class="' + rowColorClass + '"' : ''}>
-        <td class="cb-col"><input type="checkbox" class="row-cb" onchange="bulkToggleRow('${nivel}','${grupo}',${i},this.checked)"></td>
+        <td class="cb-col"><input type="checkbox" class="row-cb" onchange="bulkToggleRow('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},this.checked)"></td>
         ${baseCells}
         ${evalCells}
         ${tailCells}

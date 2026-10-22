@@ -446,7 +446,7 @@ function renderDashboard() {
   ${dashSection('grupos', 'Estado de grupos — semáforo', 'var(--green)', `
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;">
       ${grupoGrid.map(({n,g,tot,dec,pct,crit,tutor}) => `
-        <div onclick="selectNivel('${n.replace(/'/g,"\\'")}');currentGrupos['${n.replace(/'/g,"\\'")}']='${g}';renderAll();"
+        <div onclick="selectNivel('${n.replace(/'/g,"\\'")}');currentGrupos['${n.replace(/'/g,"\\'")}']='${jsAttr(g)}';renderAll();"
           style="background:${pctBg(pct)};border:1px solid ${pct===100?'rgba(45,212,160,0.3)':pct>=75?'rgba(245,200,66,0.3)':'rgba(247,110,110,0.3)'};
           border-radius:10px;padding:12px 14px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;"
           onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.2)'"

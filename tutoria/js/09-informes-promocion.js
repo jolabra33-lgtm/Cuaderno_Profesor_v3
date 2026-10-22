@@ -863,7 +863,7 @@ function buildPendientesDisplay(materias, nivel, grupo, idx, mode) {
   const tagCls = isExtr ? ' extr' : isAnt ? ' ant' : '';
   const field = isExtr ? 'pendientesExtr' : isP1 ? 'pendientes1' : isP2 ? 'pendientes2' : isAnt ? 'pendientesAnteriores' : 'pendientesIII';
   if (!arr.length) {
-    return `<div class="pendientes-display ${cls}" onclick="openPendientesPanel(event,'${nivel}','${grupo}',${idx},'${field}')">
+    return `<div class="pendientes-display ${cls}" onclick="openPendientesPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${field}')">
       <span class="pendientes-placeholder">—</span>
     </div>`;
   }
@@ -875,7 +875,7 @@ function buildPendientesDisplay(materias, nivel, grupo, idx, mode) {
   const pills = arr.slice(0,2).map(renderTag).join('');
   const extra = arr.length > 2
     ? `<span class="pend-count${tagCls}">+${arr.length-2}</span>` : '';
-  return `<div class="pendientes-display ${cls}" onclick="openPendientesPanel(event,'${nivel}','${grupo}',${idx},'${field}')" title="${arr.join(', ')}">
+  return `<div class="pendientes-display ${cls}" onclick="openPendientesPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${field}')" title="${arr.join(', ')}">
     ${pills}${extra}
   </div>`;
 }
@@ -896,7 +896,7 @@ function buildRecuperadasDisplay(a, nivel, grupo, idx) {
     </div>`;
   }
   if (!recValid.length && !norecValid.length) {
-    return `<div class="pendientes-display rec-mode" onclick="openRecuperadasPanel(event,'${nivel}','${grupo}',${idx})" title="Marcar materias recuperadas / no recuperadas (${pend.length} pendiente${pend.length>1?'s':''})">
+    return `<div class="pendientes-display rec-mode" onclick="openRecuperadasPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})" title="Marcar materias recuperadas / no recuperadas (${pend.length} pendiente${pend.length>1?'s':''})">
       <span class="pendientes-placeholder">— marcar</span>
     </div>`;
   }
@@ -914,7 +914,7 @@ function buildRecuperadasDisplay(a, nivel, grupo, idx) {
   const titleParts = [];
   if (recValid.length)   titleParts.push(`Recuperadas: ${recValid.join(', ')}`);
   if (norecValid.length) titleParts.push(`No recuperadas: ${norecValid.join(', ')}`);
-  return `<div class="pendientes-display rec-mode" onclick="openRecuperadasPanel(event,'${nivel}','${grupo}',${idx})" title="${titleParts.join(' · ')} · ${recValid.length+norecValid.length}/${pend.length} marcada${(recValid.length+norecValid.length)>1?'s':''}">
+  return `<div class="pendientes-display rec-mode" onclick="openRecuperadasPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})" title="${titleParts.join(' · ')} · ${recValid.length+norecValid.length}/${pend.length} marcada${(recValid.length+norecValid.length)>1?'s':''}">
     ${pills}${extra}
   </div>`;
 }

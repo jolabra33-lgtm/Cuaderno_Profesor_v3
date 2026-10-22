@@ -111,7 +111,7 @@ function renderAsistBody() {
         </div>`}
       </div>
       <div style="display:flex;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-        <button class="btn btn-primary btn-sm" onclick="closeAsistencia();openEquipoDocente('${nivel}','${grupo}')">👨‍🏫 Gestionar equipo docente</button>
+        <button class="btn btn-primary btn-sm" onclick="closeAsistencia();openEquipoDocente('${jsAttr(nivel)}','${jsAttr(grupo)}')">👨‍🏫 Gestionar equipo docente</button>
       </div>
     `;
     return;
@@ -131,7 +131,7 @@ function renderAsistBody() {
         <div style="font-size:28px;margin-bottom:10px">👥</div>
         <div style="font-size:13px;font-weight:600;margin-bottom:6px">Sin equipo docente configurado</div>
         <div style="font-size:12px;margin-bottom:16px">Añade el equipo docente desde su propio botón, fuera de este modal</div>
-        <button class="btn btn-primary btn-sm" onclick="closeAsistencia();openEquipoDocente('${nivel}','${grupo}')">👨‍🏫 Gestionar equipo docente</button>
+        <button class="btn btn-primary btn-sm" onclick="closeAsistencia();openEquipoDocente('${jsAttr(nivel)}','${jsAttr(grupo)}')">👨‍🏫 Gestionar equipo docente</button>
       </div>`;
     return;
   }

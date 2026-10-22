@@ -589,9 +589,9 @@ function renderActasNoOficiales() {
           ${tut ? `<div style="font-size:10.5px;color:var(--text3)">${esc(tut)}</div>` : ''}
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn btn-sm" style="background:rgba(79,142,247,0.15);color:var(--accent);border:1px solid var(--accent);" onclick="openInforme('${ng}','${gg}',1)">📄 Acta I${dot(n,g,1)}</button>
-          <button class="btn btn-sm" style="background:rgba(45,212,160,0.15);color:var(--green);border:1px solid var(--green);" onclick="openInforme('${ng}','${gg}',2)">📄 Acta II${dot(n,g,2)}</button>
-          <button class="btn btn-sm" style="background:rgba(124,92,252,0.15);color:var(--purple);border:1px solid var(--purple);" onclick="openInforme('${ng}','${gg}',3)">📄 Acta Final${dot(n,g,3)}</button>
+          <button class="btn btn-sm" style="background:rgba(79,142,247,0.15);color:var(--accent);border:1px solid var(--accent);" onclick="openInforme('${jsAttr(ng)}','${jsAttr(gg)}',1)">📄 Acta I${dot(n,g,1)}</button>
+          <button class="btn btn-sm" style="background:rgba(45,212,160,0.15);color:var(--green);border:1px solid var(--green);" onclick="openInforme('${jsAttr(ng)}','${jsAttr(gg)}',2)">📄 Acta II${dot(n,g,2)}</button>
+          <button class="btn btn-sm" style="background:rgba(124,92,252,0.15);color:var(--purple);border:1px solid var(--purple);" onclick="openInforme('${jsAttr(ng)}','${jsAttr(gg)}',3)">📄 Acta Final${dot(n,g,3)}</button>
         </div>
       </div>`;
     }).join('');

@@ -3,6 +3,14 @@
    tutoria/js/01-avisos-y-vista-documentos.js
    ============================================================================ */
 
+/* Texto seguro para meterlo entre comillas simples en código JavaScript que va dentro de
+   un atributo HTML (onclick="selectNivel('…')"). Sin esto, un grupo o nivel con apóstrofo
+   («PMAR d'Alt», «l'Eliana») cortaba el código y sus botones dejaban de funcionar. */
+function jsAttr(s) {
+  return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+    .replace(/"/g, '\\x22').replace(/</g, '\\x3c').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+}
+
 /* =================================================================
    v5 · AVISOS Y VISTA DE DOCUMENTOS DENTRO DE LA APP (Tutoría)
    - Avisos/confirmaciones propios en lugar de alert()/confirm() del

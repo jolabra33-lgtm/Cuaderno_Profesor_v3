@@ -65,13 +65,13 @@ function openMultiCode(e, nivel, grupo, idx) {
       </div>
       ${COMP_CODES.map(c => `
         <label class="multicode-option">
-          <input type="checkbox" value="${c.code}" ${selected.includes(c.code)?'checked':''} onchange="toggleCode(event,'${nivel}','${grupo}',${idx},'${c.code}')">
+          <input type="checkbox" value="${c.code}" ${selected.includes(c.code)?'checked':''} onchange="toggleCode(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${c.code}')">
           <span class="multicode-option-code">${c.code}</span>
           <span class="multicode-option-label">${c.label}</span>
         </label>
       `).join('')}
       <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:6px;">
-        <button class="btn btn-ghost btn-sm" onclick="clearCodes('${nivel}','${grupo}',${idx})">Limpiar</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearCodes('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})">Limpiar</button>
         <button class="btn btn-primary btn-sm" onclick="closeMultiCodePanel()">Hecho</button>
       </div>
     `;

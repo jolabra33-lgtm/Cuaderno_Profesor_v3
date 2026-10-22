@@ -827,7 +827,7 @@ function renderResumen() {
       else if (sinDecision === 0) { semaforoClass = 'verde'; semaforoLabel = '✓ Completo'; }
       else if (sinDecision < tot) { semaforoClass = 'amarillo'; semaforoLabel = `⚠ ${sinDecision} pendientes`; }
       else { semaforoClass = 'rojo'; semaforoLabel = '✕ Sin decidir'; }
-      return `<span class="grupo-link" onclick="selectNivel('${nivel}');currentGrupos['${nivel}']='${g}';renderAll();">
+      return `<span class="grupo-link" onclick="selectNivel('${jsAttr(nivel)}');currentGrupos['${jsAttr(nivel)}']='${jsAttr(g)}';renderAll();">
         ${nivel} ${g}
         <span class="semaforo ${semaforoClass}" style="margin-left:4px">${semaforoLabel}</span>
       </span>`;
@@ -1015,7 +1015,7 @@ function renderResumen() {
           <span class="badge badge-blue" style="font-size:10px">${a._nivel}</span>
           <span class="badge badge-gray" style="font-size:10px;margin-left:4px">${a._grupo}</span>
           <span style="font-size:10px;color:var(--text3);margin-left:4px;">${a.colegioProcedencia||''}</span>
-          <span class="grupo-link" style="margin-left:auto" onclick="selectNivel('${a._nivel}');currentGrupos['${a._nivel}']='${a._grupo}';renderAll();">Ver grupo</span>
+          <span class="grupo-link" style="margin-left:auto" onclick="selectNivel('${jsAttr(a._nivel)}');currentGrupos['${jsAttr(a._nivel)}']='${jsAttr(a._grupo)}';renderAll();">Ver grupo</span>
         </div>`).join('')
       : `<div class="fpb-empty">Sin alumnos propuestos para ${destino}</div>`;
     const isPrint = propField === 'promociona';
@@ -1184,7 +1184,7 @@ function renderResumen() {
           ? list.map(a => `<div class="fpb-row">
               <span class="fpb-nombre">${a.nombre || '—'}</span>
               <span class="badge badge-gray" style="font-size:10px;margin-left:4px">${a._grupo}</span>
-              <span class="grupo-link" style="margin-left:auto" onclick="selectNivel('${n4}');currentGrupos['${n4}']='${a._grupo}';renderAll();">Ver grupo</span>
+              <span class="grupo-link" style="margin-left:auto" onclick="selectNivel('${jsAttr(n4)}');currentGrupos['${jsAttr(n4)}']='${jsAttr(a._grupo)}';renderAll();">Ver grupo</span>
             </div>`).join('')
           : `<div class="fpb-empty">Sin alumnos → ${dest}</div>`;
         return `<div class="fpb-panel" style="--destino-color:${color}">
