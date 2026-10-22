@@ -95,6 +95,7 @@ Antes era un único `index.html` de casi 20.000 líneas. En la v3 está dividido
 | Archivo | Contenido |
 |---|---|
 | `css/tutoria.css` · `css/asistencia.css` | Estilos generales · estilos de la asistencia a la sesión |
+| `css/tema-cuaderno.css` | Identidad del Cuaderno (navy + latón, letra del sistema) en claro y oscuro: redefine las variables de `tutoria.css`. El tema es el mismo que el del Cuaderno (`geohist_tema`) |
 | `js/01-avisos-y-vista-documentos.js` | Avisos y confirmaciones, vista de documentos dentro de la app, accesibilidad |
 | `js/02-datos.js` | Datos: niveles, grupos, estado global y deshacer |
 | `js/03-tabla.js` | Tabla del grupo: pintado, columnas, modo compacto, teclado, selección múltiple |
@@ -157,6 +158,10 @@ clave; avisos de bloques sin nota; y redondeo de la nota mostrada y de la nota d
 - **Importar alumnado del Cuaderno en Tutoría** (botón «📥 Del Cuaderno» en cada grupo). Lee los datos del
   Cuaderno sin modificarlos; no duplica a quien ya está y se puede deshacer con Ctrl+Z.
 - **Pruebas del cálculo de notas** en `tests/calculo-notas.html`.
+- **Una sola identidad visual.** Tutoría usa la paleta, la letra y el tema (claro/oscuro, compartido) del Cuaderno
+  y se llama «Gestor de Tutoría» (los datos siguen marcados como `EvalIES` para que los archivos sean compatibles).
+  En Tutoría, «Alumno / a» es la primera columna y queda fija; las herramientas menos usadas del grupo están en
+  «⋯ Más». En el Cuaderno, Calificar (modo Tarjetas) ocupa la mitad de alto por alumno.
 - **Una sola ventana guardando a la vez** (`js/una-ventana.js`). Antes, con la app abierta en dos ventanas, la
   última en guardar borraba sin aviso los cambios de la otra. Ahora la segunda ventana queda bloqueada (no puede
   escribir en localStorage, IndexedDB ni archivos) y muestra «Usar esta ventana» para pedir el relevo: la otra

@@ -28,7 +28,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: 'Inter', sans-serif;
+    font-family: inherit;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -55,7 +55,7 @@
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif;
+    font-family: inherit;
     font-size: 15px; font-weight: 800; color: white;
     box-shadow: 0 0 20px var(--accent-glow);
     flex-shrink: 0;
@@ -63,13 +63,13 @@
   }
   .header-title-wrap { display: flex; flex-direction: column; gap: 1px; }
   .header-title {
-    font-family: 'Syne', sans-serif;
+    font-family: inherit;
     font-size: 15px; font-weight: 800; letter-spacing: -0.3px;
     color: var(--text);
   }
   .header-ies-name {
     background: transparent; border: none; outline: none;
-    font-family: 'Inter', sans-serif;
+    font-family: inherit;
     font-size: 11px; color: var(--text2); font-weight: 500;
     cursor: text; padding: 0;
     width: 320px; max-width: 45vw;
@@ -267,7 +267,7 @@
     pointer-events: none;
   }
   .donut-center-num {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: inherit;
     font-size: 30px; font-weight: 800; color: var(--text); line-height: 1;
   }
   .donut-center-lbl {
@@ -301,7 +301,7 @@
   .conviv-input {
     width: 52px; text-align: center;
     background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
-    color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 5px 4px;
+    color: var(--text); font-family: inherit; font-size: 12px; padding: 5px 4px;
     -moz-appearance: textfield;
   }
   .conviv-input::-webkit-outer-spin-button, .conviv-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -627,7 +627,7 @@
 
   /* Number inputs for faltas/AC/partes compact */
   .num-mini {
-    width: 54px; text-align: center; font-family: 'JetBrains Mono', monospace;
+    width: 54px; text-align: center; font-family: inherit;
     font-weight: 700; font-size: 12px; background: var(--surface2);
     border: 1px solid var(--border); border-radius: 5px; color: var(--text);
     padding: 3px 4px;
@@ -766,7 +766,7 @@
   .stat-card.purple { border-top-color: var(--purple); }
   .stat-card.gray   { border-top-color: #9aa3bb; }
   .stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; font-weight: 700; }
-  .stat-value { font-size: 30px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+  .stat-value { font-size: 30px; font-weight: 700; font-family: inherit; line-height: 1; }
   .stat-value.green { color: var(--green); }
   .stat-value.red { color: var(--red); }
   .stat-value.yellow { color: var(--yellow); }
@@ -937,7 +937,7 @@
   .modal-scroll { overflow-y: auto; flex: 1; padding-right: 2px; }
 
   .csv-hint { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-top: 14px; font-size: 11px; color: var(--text2); line-height: 1.7; }
-  .csv-hint code { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 11px; }
+  .csv-hint code { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-family: inherit; color: var(--accent); font-size: 11px; }
 
   .comp-code-th:hover { color: var(--accent) !important; background: var(--surface) !important; }
   /* MULTI-CODE SELECTOR */
@@ -954,7 +954,7 @@
   .code-pill {
     background: rgba(247,157,79,0.2); color: var(--orange);
     border-radius: 4px; padding: 1px 6px; font-size: 11px;
-    font-weight: 700; font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; font-family: inherit;
   }
   .multicode-placeholder { font-size: 11px; color: var(--text3); }
   .multicode-panel {
@@ -1004,7 +1004,7 @@
   }
   .multicode-option:hover { background: rgba(79,142,247,0.1); }
   .multicode-option input[type=checkbox] { margin-top: 2px; accent-color: var(--orange); cursor: pointer; flex-shrink:0; }
-  .multicode-option-code { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--orange); font-size: 12px; min-width: 16px; }
+  .multicode-option-code { font-family: inherit; font-weight: 700; color: var(--orange); font-size: 12px; min-width: 16px; }
   .multicode-option-label { font-size: 11px; color: var(--text2); line-height: 1.4; }
 
   /* PROPUESTA MULTI-SELECT */
@@ -1119,7 +1119,7 @@
     width: 54px; height: 54px; border-radius: 14px;
     background: linear-gradient(135deg, #4f8ef7, #7c5cfc);
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
+    font-family: inherit; font-size: 20px; font-weight: 800;
     color: white; box-shadow: 0 0 32px rgba(79,142,247,0.45);
     margin-bottom: 36px;
     animation: wsSlideUp 0.6s ease 0.1s both;
@@ -1145,7 +1145,7 @@
     animation: wsSlideUp 0.6s ease 0.2s both;
   }
   .ws-hero-title {
-    font-family: 'Syne', sans-serif;
+    font-family: inherit;
     font-size: clamp(42px, 5vw, 62px); font-weight: 800;
     color: #fff; line-height: 1.05; letter-spacing: -1.5px;
     margin-bottom: 20px;
@@ -1226,7 +1226,7 @@
     animation: wsSlideUp 0.6s ease 0.3s both;
   }
   .ws-actions-heading {
-    font-family: 'Syne', sans-serif;
+    font-family: inherit;
     font-size: 22px; font-weight: 800;
     color: #1a2040; margin-bottom: 6px; letter-spacing: -0.4px;
   }
@@ -1454,7 +1454,7 @@
   .kbd {
     display: inline-block; padding: 1px 5px; border-radius: 4px;
     background: var(--surface2); border: 1px solid var(--border);
-    font-size: 10px; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-family: inherit;
     color: var(--text2); vertical-align: middle;
   }
 
@@ -1485,7 +1485,7 @@
   .pendientes-display.extr-mode:hover { border-color: var(--orange); }
   .pendientes-display.extr-mode.open  { border-color: var(--orange); }
   .pend-count { font-size: 11px; font-weight: 700; color: var(--yellow);
-    font-family: 'JetBrains Mono', monospace; }
+    font-family: inherit; }
   .pend-count.extr { color: var(--orange); }
   .pend-tag { font-size: 10px; font-weight: 600;
     background: rgba(245,200,66,0.18); color: var(--yellow);
@@ -1622,7 +1622,7 @@
   .hist-dot {
     width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 800; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 800; font-family: inherit;
     border: 2px solid var(--border); background: var(--surface2);
     color: var(--text2); z-index: 1; position: relative;
   }
@@ -1703,7 +1703,7 @@
   }
   .cal-month-label {
     font-size: 16px; font-weight: 800; color: var(--text); flex: 1; text-align: center;
-    font-family: 'Syne', sans-serif;
+    font-family: inherit;
   }
   .cal-nav {
     background: var(--surface2); border: 1px solid var(--border);
@@ -1744,7 +1744,7 @@
     display: inline-block; padding: 2px 7px; border-radius: 5px; font-size: 10px;
     font-weight: 700; cursor: pointer; user-select: none; transition: all 0.15s;
     border: 1px solid var(--border); background: var(--surface3); color: var(--text3);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: inherit;
   }
   .nese-pill:hover { border-color: var(--accent); color: var(--accent); }
   .nese-pill.nese-pill-on { background: rgba(124,92,252,0.15); border-color: var(--purple); color: var(--purple); }
@@ -1914,7 +1914,7 @@
     border-left: 3px solid var(--accent);
   }
   .kpi-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
-  .kpi-value { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono',monospace; color: var(--text); }
+  .kpi-value { font-size: 24px; font-weight: 700; font-family: inherit; color: var(--text); }
   .resumen-block { margin-bottom: 28px; }
   .resumen-block-title {
     font-size: 11px; font-weight: 700; color: var(--text3);
@@ -1946,7 +1946,7 @@
   .ns-label { font-size: 12px; color: var(--text2); flex: 1; }
   .ns-bar-wrap { flex: 2; background: var(--surface2); border-radius: 4px; height: 6px; overflow: hidden; }
   .ns-bar { height: 6px; border-radius: 4px; transition: width .4s; }
-  .ns-num { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono',monospace; min-width: 26px; text-align: right; }
+  .ns-num { font-size: 13px; font-weight: 700; font-family: inherit; min-width: 26px; text-align: right; }
   .ns-pct { font-size: 10px; color: var(--text3); min-width: 32px; text-align: right; }
   .nivel-groups-row {
     display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 14px;
@@ -2391,7 +2391,7 @@
   .th-print-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 3px;
     margin: 0 0 5px 0; padding: 2px 7px;
-    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700;
+    font-family: inherit; font-size: 9px; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.4px; line-height: 1;
     color: var(--green); cursor: pointer;
     background: var(--green-glow); border: 1px solid rgba(45,212,160,0.45);

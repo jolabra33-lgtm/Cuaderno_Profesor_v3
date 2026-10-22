@@ -238,7 +238,7 @@ function openGuide() {
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
     overlay.innerHTML = `
       <div class="modal" style="width:560px;max-height:80vh;overflow-y:auto;">
-        <div class="modal-title">📖 Guía rápida — EvalIES</div>
+        <div class="modal-title">📖 Guía rápida — Gestor de Tutoría</div>
         <div style="font-size:13px;color:var(--text2);line-height:1.8;">
           <p style="margin-bottom:12px">Gestor de Tutoría: seguimiento de evaluaciones, promoción y tutoría para centros de secundaria de la Comunitat Valenciana. Tiene sus propios datos y su propio archivo <code>.json</code>. Del Cuaderno del profesor puede recibir la lista de alumnado (botón <strong>📥 Del Cuaderno</strong> de cada grupo) y los suspensos de cada materia (⚙️ Gestión del Curso → «Importar suspensos del Cuaderno»).</p>
           <div style="font-weight:700;color:var(--text);margin-bottom:4px">🏠 Pestañas principales</div>
@@ -335,6 +335,8 @@ function executeReset() {
 
 function toggleTheme() {
   const isLight = document.documentElement.classList.toggle('light');
+  // Mismo tema que el Cuaderno (geohist_tema); evalies_theme se mantiene para la v2.
+  localStorage.setItem('geohist_tema', isLight ? 'claro' : 'oscuro');
   localStorage.setItem('evalies_theme', isLight ? 'light' : 'dark');
   updateThemeBtn(isLight);
   // Rebuild charts so they pick up new colors
@@ -351,9 +353,10 @@ function updateThemeBtn(isLight) {
 }
 
 function loadTheme() {
-  const saved = localStorage.getItem('evalies_theme');
-  const isLight = saved === 'light';
-  if (isLight) document.documentElement.classList.add('light');
+  // Mismo tema que el Cuaderno: claro salvo que allí (o aquí) se haya elegido oscuro.
+  const tema = localStorage.getItem('geohist_tema');
+  const isLight = tema ? tema !== 'oscuro' : localStorage.getItem('evalies_theme') !== 'dark';
+  document.documentElement.classList.toggle('light', isLight);
   updateThemeBtn(isLight);
 }
 
@@ -448,7 +451,7 @@ function renderICStep() {
         <td><code style="background:var(--surface2);padding:1px 6px;border-radius:4px;font-size:11px">${p.csvCode}</code></td>
         <td>${p.status !== 'skip' ? `<strong>${p.nivel}</strong>` : '<span style="color:var(--text3)">—</span>'}</td>
         <td>${p.status !== 'skip' ? p.grupo : '<span style="color:var(--text3)">—</span>'}</td>
-        <td style="text-align:center;font-family:\'JetBrains Mono\',monospace;font-weight:700">${p.alumnos.length}</td>
+        <td style="text-align:center;font-family:inherit;font-weight:700">${p.alumnos.length}</td>
         <td>${statusHtml}</td>
       </tr>`;
     }).join('');
@@ -505,7 +508,7 @@ function renderICStep() {
           <thead><tr><th>Grupo</th><th style="text-align:center">Alumnos importados</th><th>Acción</th></tr></thead>
           <tbody>${lines.map(l=>`<tr>
             <td><strong>${l.nivel} ${l.grupo}</strong></td>
-            <td style="text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--green)">${l.count}</td>
+            <td style="text-align:center;font-family:inherit;font-weight:700;color:var(--green)">${l.count}</td>
             <td style="color:var(--text3);font-size:11px">${l.action}</td>
           </tr>`).join('')}</tbody>
         </table>

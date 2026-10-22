@@ -467,3 +467,16 @@
   .ex-wrap.ex-full .ex-salir{display:block;position:absolute;left:max(12px, env(safe-area-inset-left));bottom:calc(52px + env(safe-area-inset-bottom));z-index:2;font-size:12.5px;padding:7px 12px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
   html.ex-pantalla-completa #cronoFab, html.ex-pantalla-completa #cronoPanel{display:none!important}
   @media print{ body.imprimiendo .ex-pdf-nota{display:none!important} }
+
+  /* v3 · Calificar en modo Tarjetas: compacto (nombre, nota y NP/Exento en una línea) */
+  .cal-lista{display:grid;gap:8px}
+  .cal-tarjeta{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--card)}
+  .cal-cab{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+  .cal-nombre{flex:1 1 220px;min-width:0;font-size:14.5px;font-weight:600}
+  .cal-cuant{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--mut)}
+  .cal-cuant .in{width:78px;padding:6px 9px}
+  .cal-marcas{display:flex;gap:6px}
+  .cal-crit{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+  .cal-crit-id{width:40px;flex-shrink:0;font-size:12.5px;color:var(--mut)}
+  .cal-chips{display:flex;gap:6px;flex-wrap:wrap}
+  .cal-chips .chip{padding:4px 10px;font-size:12.5px}

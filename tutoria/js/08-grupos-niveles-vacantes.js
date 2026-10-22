@@ -665,20 +665,20 @@ function renderResumen() {
   ">
     <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(79,142,247,0.06) 0%,transparent 60%);pointer-events:none;"></div>
     <div style="position:relative">
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;letter-spacing:-0.5px;">${iesName}</div>
+      <div style="font-family:inherit;font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;letter-spacing:-0.5px;">${iesName}</div>
       <div style="font-size:12px;color:var(--text2);">📅 ${dateStr.charAt(0).toUpperCase()+dateStr.slice(1)}</div>
     </div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;position:relative">
       <div style="background:rgba(79,142,247,0.1);border:1px solid rgba(79,142,247,0.25);border-radius:10px;padding:10px 18px;text-align:center;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--accent)">${totalAl}</div>
+        <div style="font-family:inherit;font-size:26px;font-weight:700;color:var(--accent)">${totalAl}</div>
         <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Alumnos</div>
       </div>
       <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 18px;text-align:center;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--text)">${NIVELES.length}</div>
+        <div style="font-family:inherit;font-size:26px;font-weight:700;color:var(--text)">${NIVELES.length}</div>
         <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Niveles</div>
       </div>
       <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 18px;text-align:center;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--text)">${totalGrupos}</div>
+        <div style="font-family:inherit;font-size:26px;font-weight:700;color:var(--text)">${totalGrupos}</div>
         <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Grupos</div>
       </div>
     </div>
@@ -1072,13 +1072,13 @@ function renderResumen() {
       const isSinAsignar = ceip === '— Sin asignar';
       return `<tr style="${isSinAsignar?'opacity:0.55':''}">
         <td style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);max-width:320px;white-space:normal;word-break:break-word;">${ceip}</td>
-        <td style="padding:7px 10px;border-bottom:1px solid var(--border);text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--text2)">${tot}</td>
+        <td style="padding:7px 10px;border-bottom:1px solid var(--border);text-align:center;font-family:inherit;font-weight:700;color:var(--text2)">${tot}</td>
         <td style="padding:7px 10px;border-bottom:1px solid var(--border);">
           <div style="display:flex;align-items:center;gap:6px;">
             <div style="flex:1;background:var(--surface2);border-radius:4px;height:8px;overflow:hidden;">
               <div style="width:${pPct}%;height:8px;background:var(--green);border-radius:4px;transition:width .4s"></div>
             </div>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--green);min-width:24px;text-align:right">${d.promo.length}</span>
+            <span style="font-family:inherit;font-size:12px;font-weight:700;color:var(--green);min-width:24px;text-align:right">${d.promo.length}</span>
             <span style="font-size:10px;color:var(--text3);min-width:32px">${pPct}%</span>
           </div>
         </td>
@@ -1087,13 +1087,13 @@ function renderResumen() {
             <div style="flex:1;background:var(--surface2);border-radius:4px;height:8px;overflow:hidden;">
               <div style="width:${nPct}%;height:8px;background:var(--red);border-radius:4px;transition:width .4s"></div>
             </div>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--red);min-width:24px;text-align:right">${d.noPromo.length}</span>
+            <span style="font-family:inherit;font-size:12px;font-weight:700;color:var(--red);min-width:24px;text-align:right">${d.noPromo.length}</span>
             <span style="font-size:10px;color:var(--text3);min-width:32px">${nPct}%</span>
           </div>
         </td>
         <td style="padding:7px 10px;border-bottom:1px solid var(--border);text-align:center;">
           ${d.sinDec.length
-            ? `<span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--yellow);font-weight:700">${d.sinDec.length}</span><span style="font-size:10px;color:var(--text3);margin-left:4px">${sPct}%</span>`
+            ? `<span style="font-family:inherit;font-size:12px;color:var(--yellow);font-weight:700">${d.sinDec.length}</span><span style="font-size:10px;color:var(--text3);margin-left:4px">${sPct}%</span>`
             : `<span style="color:var(--green);font-size:12px">✓</span>`}
         </td>
       </tr>`;
@@ -1263,7 +1263,7 @@ function renderResumen() {
               <div style="flex:1;background:var(--surface2);border-radius:3px;height:6px;overflow:hidden;">
                 <div style="width:${barPct}%;height:6px;background:var(--yellow);border-radius:3px;"></div>
               </div>
-              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--yellow);min-width:20px;text-align:right">${total}</span>
+              <span style="font-family:inherit;font-size:12px;font-weight:700;color:var(--yellow);min-width:20px;text-align:right">${total}</span>
               <span style="font-size:10px;color:var(--text3);min-width:30px">${pct}%</span>
             </div>
           </td>
@@ -1452,7 +1452,7 @@ function _vacInput(label, value, onchange) {
   return `<label style="display:flex;flex-direction:column;gap:4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:700">
     ${label}
     <input type="number" min="0" value="${value}" onchange="${onchange}" onfocus="this.select()"
-      style="width:90px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:7px 10px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;text-align:center"/>
+      style="width:90px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:7px 10px;font-family:inherit;font-size:14px;font-weight:600;text-align:center"/>
   </label>`;
 }
 
@@ -1615,7 +1615,7 @@ function renderVacantes() {
   mc.innerHTML = `<div class="resumen-body">
     <div style="margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
       <div style="flex:1;min-width:300px">
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text)">🏗️ Definición de Unidades Vacantes</div>
+        <div style="font-family:inherit;font-size:22px;font-weight:800;color:var(--text)">🏗️ Definición de Unidades Vacantes</div>
         <div style="font-size:12px;color:var(--text2);margin-top:6px;max-width:900px;line-height:1.5">Previsión de grupos para el curso siguiente a partir del alumnado que promociona/titula. El alumnado que vota <strong>Castellano</strong> forma línea aparte; el resto (<strong>Valenciano</strong> y sin voto) va a la línea de Valenciano. <strong>PAC</strong> (2º ESO) y <strong>PDC</strong> (3º/4º ESO) forman grupo aparte. Cada curso suma los repetidores del propio nivel; el alumnado a FPB/CFGM no ocupa plaza en el curso ordinario.</div>
       </div>
       <button onclick="printVacantes()" class="btn btn-primary" style="white-space:nowrap;font-size:13px;padding:9px 16px">🖨 Imprimir / PDF</button>

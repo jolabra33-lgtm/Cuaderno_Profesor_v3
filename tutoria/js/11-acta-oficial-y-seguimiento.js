@@ -602,7 +602,7 @@ function openActaOficial(nivel, grupo, evalNum) {
     </div>
   </div>
   <div style="text-align:right;margin-top:10px;font-size:8.5pt;color:#888">
-    Generado el ${dateStr} · EvalIES · ${esc(iesName)}
+    Generado el ${dateStr} · Gestor de Tutoría · ${esc(iesName)}
   </div>
 
 </div><!-- /page -->
@@ -649,7 +649,7 @@ function _aoGuardar() {
       setTimeout(function(){ if (btn) btn.textContent = original; }, 1600);
     }
   } else {
-    alert('No se puede guardar: se ha perdido la conexión con la ventana principal de EvalIES. Vuelve a abrir el Acta Oficial desde allí e inténtalo de nuevo.');
+    alert('No se puede guardar: se ha perdido la conexión con la ventana principal del Gestor de Tutoría. Vuelve a abrir el Acta Oficial desde allí e inténtalo de nuevo.');
   }
 }
 
@@ -1277,7 +1277,7 @@ function printSeguimientoAlumno(nivel, grupo, idx) {
 
   <!-- PIE -->
   <div style="margin-top:20px;padding-top:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;font-size:8.5pt;color:#9ca3af">
-    <span>EvalIES · ${esc(iesName)}</span>
+    <span>Gestor de Tutoría · ${esc(iesName)}</span>
     <span>Generado el ${dateStr}</span>
     <div style="text-align:right">
       <div style="border-bottom:1px solid #555;height:24px;width:140px;margin-bottom:3px"></div>

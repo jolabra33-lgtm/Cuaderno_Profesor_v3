@@ -57,19 +57,19 @@ function renderHistBody(alumno) {
         <div class="hist-card-fields">
           <div class="hist-field">
             <label>I Evaluación</label>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${+alumno.eval1===0?'var(--green)':+alumno.eval1>=4?'var(--red)':'var(--accent)'}">
+            <div style="font-family:inherit;font-size:13px;font-weight:700;color:${+alumno.eval1===0?'var(--green)':+alumno.eval1>=4?'var(--red)':'var(--accent)'}">
               ${alumno.eval1 ?? '—'} mat. no sup.
             </div>
           </div>
           <div class="hist-field">
             <label>II Evaluación</label>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${+alumno.eval2===0?'var(--green)':+alumno.eval2>=4?'var(--red)':'var(--accent)'}">
+            <div style="font-family:inherit;font-size:13px;font-weight:700;color:${+alumno.eval2===0?'var(--green)':+alumno.eval2>=4?'var(--red)':'var(--accent)'}">
               ${alumno.eval2 ?? '—'} mat. no sup.
             </div>
           </div>
           <div class="hist-field">
             <label>III Evaluación</label>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${+alumno.eval3===0?'var(--green)':+alumno.eval3>=4?'var(--red)':'var(--accent)'}">
+            <div style="font-family:inherit;font-size:13px;font-weight:700;color:${+alumno.eval3===0?'var(--green)':+alumno.eval3>=4?'var(--red)':'var(--accent)'}">
               ${alumno.eval3 ?? '—'} mat. no sup.
             </div>
           </div>

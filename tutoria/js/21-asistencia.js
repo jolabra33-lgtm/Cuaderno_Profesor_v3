@@ -374,7 +374,7 @@ function exportAsistenciaPDF() {
       </div>
       ${tableHtml}
       <div style="margin-top:20px;padding-top:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:8.5pt;color:#9ca3af">
-        <span>EvalIES · ${esc(iesName)}</span>
+        <span>Gestor de Tutoría · ${esc(iesName)}</span>
         <span>Generado el ${dateStr}</span>
       </div>
     </div>

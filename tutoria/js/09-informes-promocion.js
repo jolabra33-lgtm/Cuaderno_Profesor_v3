@@ -153,7 +153,7 @@ function printPropuestasFinales() {
   </div>
   ${sections || '<div class="empty">No hay alumnado registrado todavía.</div>'}
   <div class="footer">
-    <span>EvalIES — ${esc(iesName)}</span>
+    <span>Gestor de Tutoría — ${esc(iesName)}</span>
     <span>Generado el ${new Date().toLocaleDateString('es-ES')}</span>
   </div>
   <script>window.onload = function(){ window.print(); }<\/script>
@@ -367,7 +367,7 @@ function _buildPromocionaGroupSection(nivel, grupo) {
   </table>
 
   <div class="footer">
-    <span>EvalIES — ${esc(iesName)}</span>
+    <span>Gestor de Tutoría — ${esc(iesName)}</span>
     <span>Generado el ${new Date().toLocaleDateString('es-ES')} · ${total} alumno${total!==1?'s':''}</span>
   </div>
   </section>`;
@@ -494,7 +494,7 @@ function printDestinoList(propField, destino, icon, label, color) {
     <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#888;padding:20px">Sin alumnos propuestos</td></tr>'}</tbody>
   </table>
   <div class="footer">
-    <span>EvalIES — ${iesName}</span>
+    <span>Gestor de Tutoría — ${iesName}</span>
     <span>${dateStr}</span>
   </div>
   <script>window.onload = function(){ window.print(); }<\/script>
@@ -833,7 +833,7 @@ function printPendientesReport() {
   </div>
 
   <div class="footer">
-    <span>EvalIES — ${iesName.replace(/</g,'&lt;')}</span>
+    <span>Gestor de Tutoría — ${iesName.replace(/</g,'&lt;')}</span>
     <span>Generado el ${dateStr}</span>
   </div>
 </div>

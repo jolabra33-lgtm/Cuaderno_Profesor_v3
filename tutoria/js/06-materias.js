@@ -504,7 +504,7 @@ function renderMaterias() {
     <div class="main dash-wrap">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
         <div>
-          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.5px;">⚙ Plantilla de Materias</div>
+          <div style="font-family:inherit;font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.5px;">⚙ Plantilla de Materias</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px;">Personaliza las materias disponibles por nivel para tu centro. Los cambios afectan a los selectores de materias pendientes. <span style="color:var(--text3)">○ = nivel no creado todavía como pestaña, pero su plantilla está disponible como referencia para "Pend. Ant.".</span></div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="(async()=>{if(await confirmar('¿Restaurar TODAS las materias a los valores por defecto?')){_materiasCustom={};saveMateriaCustom();renderMaterias();showToast('↺ Todas las materias restauradas');}})()">↺ Restaurar todo</button>

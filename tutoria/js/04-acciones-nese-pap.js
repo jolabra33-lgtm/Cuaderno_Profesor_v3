@@ -75,10 +75,10 @@ function updateField(nivel, grupo, idx, field, value) {
   const key = `${nivel}-${grupo}`;
   const tw = document.getElementById(`table-${key}`);
   if (tw) {
-    const sh = tw.previousElementSibling;
+    const sh = tw.parentElement;
     if (sh) {
       const meta = sh.querySelector('.section-meta');
-      if (meta) meta.textContent = `${data[nivel][grupo].length} alumnos registrados`;
+      if (meta) meta.textContent = `${data[nivel][grupo].length} alumno${data[nivel][grupo].length===1?'':'s'} registrado${data[nivel][grupo].length===1?'':'s'}`;
     }
   }
   // Re-render table rows for visual fields (row color, badges, trend)
@@ -423,7 +423,7 @@ function _papDocBodyHTML(nivel, grupo, idx) {
   <p style="font-size:8pt;color:#999;margin-top:16px">Datos personales tratados conforme al Reglamento (UE) 2016/679 y la Ley Orgánica 3/2018, en cumplimiento de la Ley 26/2018 de la Generalitat y la Orden 20/2019 de medidas de respuesta a la inclusión. Tratamiento confidencial; puede ejercer sus derechos de acceso, rectificación, cancelación y oposición según el aviso legal de la Conselleria d'Educació, Cultura i Esport.</p>
 
   <div class="footer">
-    <span>EvalIES — ${esc(iesName)}</span>
+    <span>Gestor de Tutoría — ${esc(iesName)}</span>
     <span>Documento 7 · PAP</span>
   </div>`;
 }
@@ -878,7 +878,7 @@ function _acDocBodyHTML(nivel, grupo, idx) {
   <p style="font-size:8pt;color:#999;margin-top:16px">La Conselleria d'Educació, Universitats i Ocupació es responsable del tratamiento de los datos personales recogidos a través de este formulario, con la finalidad de gestionar la escolarización de alumnado con NEE, conforme al Reglamento (UE) 2016/679 y la Ley Orgánica 3/2018. Puede ejercer sus derechos de acceso, rectificación, supresión y portabilidad, así como la limitación y oposición al tratamiento, según lo indicado en http://sede.gva.es/es/proc19970.</p>
 
   <div class="footer">
-    <span>EvalIES — ${esc(iesName)}</span>
+    <span>Gestor de Tutoría — ${esc(iesName)}</span>
     <span>Altas Capacidades · Enriquecimiento Curricular</span>
   </div>`;
 }

@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <script src="../js/una-ventana.js" data-app="tutoria" data-nombre="El Gestor de Tutoría"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EvalIES — Control de Evaluaciones</title>
+<title>Gestor de Tutoría · Cuaderno del profesor</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4f8ef7">
+<meta name="theme-color" content="#0a1120">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="EvalIES">
+<meta name="apple-mobile-web-app-title" content="Tutoría v3">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <script src="../js/registro-sw.js"></script>
@@ -21,13 +21,14 @@
 <!-- ^ Copia local (ver vendor/LEEME.txt). Si el archivo no está ahí, los
      gráficos simplemente no se dibujan; el resto de la app sigue funcionando. -->
 <link rel="stylesheet" href="css/tutoria.css">
+<link rel="stylesheet" href="css/tema-cuaderno.css">
 </head>
 <body>
 
 <!-- PWA INSTALL BANNER -->
 <div id="installBanner">
   <div class="install-banner-text">
-    📲 <strong>Instalar EvalIES</strong> como aplicación en tu escritorio
+    📲 <strong>Instalar el Gestor de Tutoría</strong> como aplicación en tu escritorio
   </div>
   <button class="install-banner-btn" onclick="pwaInstall()">Instalar</button>
   <button class="install-banner-close" onclick="document.getElementById('installBanner').classList.remove('show')">✕</button>
@@ -70,7 +71,7 @@
       <div class="ws-hero-footer-sep"></div>
       <div class="ws-hero-footer-badge">Archivos .json</div>
       <div class="ws-hero-footer-sep"></div>
-      <div class="ws-hero-footer-badge">EvalIES v2025</div>
+      <div class="ws-hero-footer-badge">Gestor de Tutoría · v3</div>
     </div>
   </div>
 
@@ -128,12 +129,12 @@
 </div>
 <div class="header">
   <div class="header-left">
-    <div class="logo">IE</div>
+    <div class="logo" aria-hidden="true">👥</div>
     <div class="header-title-wrap">
-      <div class="header-title">EvalIES</div>
+      <div class="header-title">Gestor de Tutoría</div>
       <input class="header-ies-name" id="headerIesName" type="text"
         placeholder="Nombre del centro educativo…"
-        value="Gestor de Tutoría"
+        value=""
         oninput="saveIesName(this.value)" />
     </div>
     <div class="header-divider"></div>
@@ -201,7 +202,7 @@
         <div class="dropdown-section-label">Fin de Curso</div>
         <button class="dropdown-item install-app-btn" onclick="closeCourseMenu();pwaInstall()" style="display:none">
           <span class="di-icon">📲</span>
-          <div><div class="di-title">Instalar app</div><div class="di-desc">Instala EvalIES en tu escritorio o móvil</div></div>
+          <div><div class="di-title">Instalar app</div><div class="di-desc">Instala el Gestor de Tutoría en tu escritorio o móvil</div></div>
         </button>
         <button class="dropdown-item di-danger" onclick="closeCourseMenu();openResetModal()">
           <span class="di-icon">🗑</span>
@@ -351,15 +352,15 @@
         </tr>
       </thead>
       <tbody>
-        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">1</td><td style="padding:9px 14px;color:var(--text);">Acogida en instituciones de protección social del menor o acogida familiar</td></tr>
-        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">2</td><td style="padding:9px 14px;color:var(--text);">Condiciones económicas o sociales desfavorecidas</td></tr>
-        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">3</td><td style="padding:9px 14px;color:var(--text);">Condiciones sociales que comportan posibles situaciones de desprotección y abandono</td></tr>
-        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">4</td><td style="padding:9px 14px;color:var(--text);">Cumplimiento de medidas judiciales</td></tr>
-        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">5</td><td style="padding:9px 14px;color:var(--text);">Informe del equipo de intervención social APB</td></tr>
-        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">6</td><td style="padding:9px 14px;color:var(--text);">Dolencias crónicas que requieren una atención específica</td></tr>
-        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">7</td><td style="padding:9px 14px;color:var(--text);">Escolarización irregular por abandonos educativos reiterados y periódicos y absentismo</td></tr>
-        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">8</td><td style="padding:9px 14px;color:var(--text);">Escolarización irregular por itinerancia familiar</td></tr>
-        <tr><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);">9</td><td style="padding:9px 14px;color:var(--text);">Pertenencia a minorías étnicas o culturales y alumnado recién llegado en situación de desventaja social y económico</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:inherit;color:var(--accent);">1</td><td style="padding:9px 14px;color:var(--text);">Acogida en instituciones de protección social del menor o acogida familiar</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:inherit;color:var(--accent);">2</td><td style="padding:9px 14px;color:var(--text);">Condiciones económicas o sociales desfavorecidas</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:inherit;color:var(--accent);">3</td><td style="padding:9px 14px;color:var(--text);">Condiciones sociales que comportan posibles situaciones de desprotección y abandono</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:inherit;color:var(--accent);">4</td><td style="padding:9px 14px;color:var(--text);">Cumplimiento de medidas judiciales</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:inherit;color:var(--accent);">5</td><td style="padding:9px 14px;color:var(--text);">Informe del equipo de intervención social APB</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:inherit;color:var(--accent);">6</td><td style="padding:9px 14px;color:var(--text);">Dolencias crónicas que requieren una atención específica</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:inherit;color:var(--accent);">7</td><td style="padding:9px 14px;color:var(--text);">Escolarización irregular por abandonos educativos reiterados y periódicos y absentismo</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)"><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:inherit;color:var(--accent);">8</td><td style="padding:9px 14px;color:var(--text);">Escolarización irregular por itinerancia familiar</td></tr>
+        <tr><td style="padding:9px 14px;text-align:center;font-weight:700;font-family:inherit;color:var(--accent);">9</td><td style="padding:9px 14px;color:var(--text);">Pertenencia a minorías étnicas o culturales y alumnado recién llegado en situación de desventaja social y económico</td></tr>
       </tbody>
     </table>
     <div style="margin-top:16px;text-align:right;">

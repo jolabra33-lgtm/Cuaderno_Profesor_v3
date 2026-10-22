@@ -17,27 +17,25 @@ function renderCalificar(grupo){
 
   let htmlEditor = '';
   if(!isTable){
-    htmlEditor = `<div class="grid" style="gap:14px">
-      ${grupo.alumnos.map(al=>`
-        <div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px">
-          <div class="flex" style="justify-content:space-between;margin-bottom:8px"><div style="font-size:14.5px;font-weight:500">${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}</div>${marcaBotonesHTML(grupo,al.id,act.id)}</div>
-          <div class="grid">
-            ${act.esExamen? (()=>{
-              const vc=grupo.notasCuant?.[al.id]?.[act.id];
-              return `<div class="flex" style="padding-bottom:6px;margin-bottom:2px;border-bottom:1px dashed var(--line)">
-                <span style="font-size:12.5px;color:var(--mut);font-weight:600">Nota cuantitativa del examen</span>
-                <input class="in" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" data-cal-col="cuant" data-cal-al="${al.id}" placeholder="0–10" style="width:90px" value="${vc==null?"":String(vc).replace(".",",")}" onchange="setNotaCuantExamen('${al.id}','${act.id}',this.value)">
-                <span style="font-size:11.5px;color:var(--mut)">cuenta para la nota numérica</span>
-              </div>`;
-            })():""}
-            ${act.criterios.map(l=>{
-              const val=grupo.notas?.[al.id]?.[act.id]?.[l.critId];
-              return `<div class="flex">
-                <span style="font-size:12.5px;color:var(--mut);width:44px">${critLinkHTML(grupo.catalogoKey,l.critId)}</span>
-                <div class="flex">${ESCALA.map(o=>`<button class="chip ${val===o.v?"on":""}" onclick="setNota('${al.id}','${act.id}','${l.critId}',${val===o.v?"''":o.v},true)">${o.etq} (${String(o.v).replace('.',',')})</button>`).join("")}</div>
-              </div>`;}).join("")}
+    /* v3: tarjeta compacta: nombre, nota del examen y NP/Exento en una línea; criterios debajo. */
+    htmlEditor = `<div class="cal-lista">
+      ${grupo.alumnos.map(al=>{
+        const vc=act.esExamen? grupo.notasCuant?.[al.id]?.[act.id] : null;
+        return `
+        <div class="cal-tarjeta">
+          <div class="cal-cab">
+            <div class="cal-nombre">${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}</div>
+            ${act.esExamen?`<label class="cal-cuant" title="Nota cuantitativa del examen: es la que cuenta para la nota numérica">Nota
+              <input class="in" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" data-cal-col="cuant" data-cal-al="${al.id}" placeholder="0–10" value="${vc==null?"":String(vc).replace(".",",")}" onchange="setNotaCuantExamen('${al.id}','${act.id}',this.value)"></label>`:""}
+            <div class="cal-marcas">${marcaBotonesHTML(grupo,al.id,act.id)}</div>
           </div>
-        </div>`).join("")}
+          ${act.criterios.map(l=>{
+            const val=grupo.notas?.[al.id]?.[act.id]?.[l.critId];
+            return `<div class="cal-crit">
+              <span class="cal-crit-id">${critLinkHTML(grupo.catalogoKey,l.critId)}</span>
+              <div class="cal-chips">${ESCALA.map(o=>`<button class="chip ${val===o.v?"on":""}" onclick="setNota('${al.id}','${act.id}','${l.critId}',${val===o.v?"''":o.v},true)">${o.etq} (${String(o.v).replace('.',',')})</button>`).join("")}</div>
+            </div>`;}).join("")}
+        </div>`;}).join("")}
     </div>`;
   } else {
     htmlEditor = `<div style="overflow-x:auto"><table>

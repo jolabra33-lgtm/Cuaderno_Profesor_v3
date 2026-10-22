@@ -1,0 +1,133 @@
+/* Gestor de Tutoría · Identidad del Cuaderno del profesor — tutoria/css/tema-cuaderno.css
+   Se carga DESPUÉS de tutoria.css y redefine sus variables con la paleta del Cuaderno
+   (navy + latón, tipografía del sistema), en claro y en oscuro. No cambia la estructura:
+   todo el CSS de Tutoría sigue usando las mismas variables (--bg, --surface, --accent…).
+   El tema (claro/oscuro) es el mismo que el del Cuaderno (preferencia «geohist_tema»). */
+
+/* Oscuro (en Tutoría es el que no lleva la clase .light) */
+:root {
+  --bg: #0a0e16;
+  --surface: #121a27;
+  --surface2: #141d2c;
+  --surface3: #1a2537;
+  --border: #232f42;
+  --border2: #37455c;
+  --accent: #8fb3e0;
+  --accent2: #d7b463;
+  --accent-glow: rgba(215,180,99,0.22);
+  --green: #5cc9a0;
+  --green-glow: rgba(92,201,160,0.18);
+  --yellow: #e2ac57;
+  --red: #f0707f;
+  --orange: #f0a060;
+  --purple: #b49cf5;
+  --text: #eef1f2;
+  --text2: #8d97ab;
+  --text3: #5f6b80;
+  --shadow: 0 6px 16px -4px rgba(0,0,0,.4), 0 3px 6px -2px rgba(0,0,0,.3);
+  --shadow-lg: 0 24px 48px -10px rgba(0,0,0,.55), 0 8px 16px -6px rgba(0,0,0,.4);
+  --oro-1: #d7b463; --oro-2: #b3893a; --oro-tinta: #1c1408;
+  --marca-1: #0a1120; --marca-2: #152a44; --marca-3: #25456b;
+  --fuente: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+/* Claro («papel de día» del Cuaderno) */
+:root.light {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --surface2: #f3f6fa;
+  --surface3: #e8edf4;
+  --border: #dde3ec;
+  --border2: #c7d1de;
+  --accent: #25456b;
+  --accent2: #b3893a;
+  --accent-glow: rgba(183,137,58,0.20);
+  --green: #15803d;
+  --green-glow: rgba(21,128,61,0.14);
+  --yellow: #a3620a;
+  --red: #c62839;
+  --orange: #c2410c;
+  --purple: #6d28d9;
+  --text: #141b28;
+  --text2: #5b6b82;
+  --text3: #8a97ab;
+  --shadow: 0 1px 2px rgba(10,17,32,.05), 0 1px 3px rgba(10,17,32,.07);
+  --shadow-lg: 0 20px 40px -8px rgba(10,17,32,.20), 0 6px 12px -4px rgba(10,17,32,.10);
+}
+
+:root body, :root.light body {
+  font-family: var(--fuente);
+  font-variant-numeric: tabular-nums;
+  background:
+    radial-gradient(1100px 620px at 100% -8%, rgba(183,137,58,.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 0%, rgba(37,69,107,.14), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+/* Cabecera: el «chasis» navy del Cuaderno, igual en claro y en oscuro */
+:root .header, :root.light .header {
+  background: linear-gradient(120deg, var(--marca-1) 0%, var(--marca-2) 55%, var(--marca-3) 100%);
+  border-bottom: 1px solid rgba(215,180,99,.18);
+  box-shadow: 0 6px 20px -10px rgba(10,17,32,.5);
+  color: #f7f2e4;
+}
+:root .header .logo, :root.light .header .logo {
+  background: linear-gradient(135deg, var(--oro-1), var(--oro-2));
+  color: var(--oro-tinta); box-shadow: none; font-size: 18px;
+}
+:root .header .header-title, :root.light .header .header-title { color: #f7f2e4; font-weight: 800; letter-spacing: -.02em; }
+:root .header .header-ies-name, :root.light .header .header-ies-name { color: rgba(247,242,228,.72); }
+:root .header .header-ies-name::placeholder, :root.light .header .header-ies-name::placeholder { color: rgba(247,242,228,.45); }
+:root .header .header-divider, :root.light .header .header-divider { background: rgba(255,255,255,.14); }
+:root .header .autosave-indicator, :root.light .header .autosave-indicator { color: rgba(247,242,228,.7); }
+:root .header .file-indicator, :root.light .header .file-indicator {
+  background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); color: #f7f2e4;
+}
+:root .header .file-name, :root.light .header .file-name { color: rgba(247,242,228,.85); }
+:root .header .theme-toggle, :root .header .btn-ghost,
+:root.light .header .theme-toggle, :root.light .header .btn-ghost {
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); color: #f7f2e4;
+}
+:root .header .theme-toggle:hover, :root .header .btn-ghost:hover,
+:root.light .header .theme-toggle:hover, :root.light .header .btn-ghost:hover { background: rgba(255,255,255,.16); }
+
+/* Botón principal: latón con tinta oscura, como en el Cuaderno */
+:root .btn-primary, :root.light .btn-primary {
+  background: linear-gradient(135deg, var(--oro-1), var(--oro-2));
+  color: var(--oro-tinta);
+  box-shadow: 0 8px 22px -8px rgba(183,137,58,.55);
+  font-weight: 700;
+}
+:root .btn-primary:hover, :root.light .btn-primary:hover { box-shadow: 0 10px 26px -8px rgba(183,137,58,.7); }
+
+/* Tarjetas y bloques: bordes suaves y sombra del Cuaderno */
+:root.light .grupo-block, :root.light .stat-card, :root.light .card { box-shadow: var(--shadow); }
+
+/* Foco visible y coherente */
+:root :focus-visible { outline: 2px solid var(--accent2); outline-offset: 2px; }
+
+/* Pestaña del grupo activo: como los grupos del Cuaderno (navy en claro, latón en oscuro) */
+:root .grupo-tab.active { background: linear-gradient(135deg, var(--oro-1), var(--oro-2)); color: var(--oro-tinta); border-color: var(--oro-2); box-shadow: 0 6px 18px -8px rgba(183,137,58,.6); }
+:root.light .grupo-tab.active { background: linear-gradient(135deg, var(--marca-1), var(--marca-3)); color: #f7f2e4; border-color: var(--marca-2); box-shadow: 0 6px 18px -8px rgba(10,17,32,.45); }
+:root .grupo-tab.active .tab-pct { color: inherit; opacity: .8; }
+:root .grupo-tab:hover:not(.active) { border-color: var(--accent2); color: var(--text); background: var(--surface3); }
+/* Pestañas generales: mismo color de texto; la activa, subrayada en latón */
+:root .nivel-tab.active, :root.light .nivel-tab.active { color: var(--text); border-bottom-color: var(--accent2); background: rgba(183,137,58,.08); }
+
+/* Barra del grupo: «⋯ Más» agrupa las herramientas menos usadas (antes, 12 botones de colores) */
+.mas-menu { position: relative; display: inline-block; }
+.mas-menu > summary { list-style: none; cursor: pointer; }
+.mas-menu > summary::-webkit-details-marker { display: none; }
+.mas-menu[open] > summary { border-color: var(--accent2); color: var(--text); }
+.mas-menu-lista {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 50; min-width: 240px;
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 12px;
+  box-shadow: var(--shadow-lg); padding: 6px; display: flex; flex-direction: column; gap: 2px;
+}
+.mas-menu-lista > button {
+  text-align: left; background: transparent; border: 0; border-radius: 8px; padding: 9px 12px;
+  font: inherit; font-size: 13.5px; color: var(--text); cursor: pointer;
+}
+.mas-menu-lista > button:hover, .mas-menu-lista > button:focus-visible { background: var(--surface3); }
+.mas-punto { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); vertical-align: middle; margin-left: 3px; }
+@media (max-width: 760px) { .mas-menu-lista { right: auto; left: 0; } }

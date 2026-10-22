@@ -1,6 +1,6 @@
 {
-  "name": "EvalIES v3 — Control de Evaluaciones",
-  "short_name": "EvalIES v3",
+  "name": "Gestor de Tutoría v3 · Cuaderno del profesor",
+  "short_name": "Tutoría v3",
   "description": "Gestión de tutoría, seguimiento y control de evaluaciones.",
   "start_url": "./index.html",
   "scope": "./",
@@ -8,8 +8,8 @@
   "display": "standalone",
   "orientation": "any",
   "lang": "es",
-  "background_color": "#080b14",
-  "theme_color": "#4f8ef7",
+  "background_color": "#0a1120",
+  "theme_color": "#0a1120",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

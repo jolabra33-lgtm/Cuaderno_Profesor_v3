@@ -247,7 +247,7 @@ function renderSegFamiliaListado() {
 
   mc.innerHTML = `
     <div style="max-width:980px;margin:0 auto;padding:24px 20px">
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px;margin-bottom:4px">📞 Seguimientos con familia</div>
+      <div style="font-family:inherit;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px;margin-bottom:4px">📞 Seguimientos con familia</div>
       <div style="font-size:12.5px;color:var(--text2);margin-bottom:18px">Todos los registros de "Seguimiento con familia" del grupo, para consulta o para imprimir juntos (por ejemplo, si inspección los pide).</div>
 
       <div style="display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap">

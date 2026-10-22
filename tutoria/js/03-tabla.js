@@ -27,16 +27,16 @@ function renderAll() {
 function renderNivelTabs() {
   const c = document.getElementById('nivelTabs');
   const homeTab = `<div class="nivel-tab ${currentNivel === '__home__' ? 'active' : ''}" onclick="selectNivel('__home__')">🏠 Inicio</div>`;
-  const calendarioTab = `<div class="nivel-tab ${currentNivel === '__calendario__' ? 'active' : ''}" onclick="selectNivel('__calendario__')" style="color:var(--accent)">📅 Calendario</div>`;
-  const informeTab = `<div class="nivel-tab ${currentNivel === '__informe__' ? 'active' : ''}" onclick="selectNivel('__informe__')" style="color:#22d3ee">🎓 Informe Académico</div>`;
-  const segFamTab = `<div class="nivel-tab ${currentNivel === '__segfam__' ? 'active' : ''}" onclick="selectNivel('__segfam__')" style="color:#f76ea0">📞 Seguimientos</div>`;
-  const convivenciaTab = `<div class="nivel-tab ${currentNivel === '__convivencia__' ? 'active' : ''}" onclick="selectNivel('__convivencia__')" style="color:var(--orange)">🤝 Informe Convivencia</div>`;
+  const calendarioTab = `<div class="nivel-tab ${currentNivel === '__calendario__' ? 'active' : ''}" onclick="selectNivel('__calendario__')">📅 Calendario</div>`;
+  const informeTab = `<div class="nivel-tab ${currentNivel === '__informe__' ? 'active' : ''}" onclick="selectNivel('__informe__')">🎓 Informe Académico</div>`;
+  const segFamTab = `<div class="nivel-tab ${currentNivel === '__segfam__' ? 'active' : ''}" onclick="selectNivel('__segfam__')">📞 Seguimientos</div>`;
+  const convivenciaTab = `<div class="nivel-tab ${currentNivel === '__convivencia__' ? 'active' : ''}" onclick="selectNivel('__convivencia__')">🤝 Informe Convivencia</div>`;
   const actasNoOficialesTab = _actasNoOficialesTabVisible
-    ? `<div class="nivel-tab ${currentNivel === '__actasnooficiales__' ? 'active' : ''}" onclick="selectNivel('__actasnooficiales__')" style="color:#f5a623">🗂️ Actas no Oficiales</div>`
+    ? `<div class="nivel-tab ${currentNivel === '__actasnooficiales__' ? 'active' : ''}" onclick="selectNivel('__actasnooficiales__')">🗂️ Actas no Oficiales</div>`
     : '';
-  const vacantesTab = `<div class="nivel-tab ${currentNivel === '__vacantes__' ? 'active' : ''}" onclick="selectNivel('__vacantes__')" style="color:var(--accent2)">🏗️ Unidades Vacantes</div>`;
-  const materiasTab = `<div class="nivel-tab ${currentNivel === '__materias__' ? 'active' : ''}" onclick="selectNivel('__materias__')" style="color:var(--yellow)">⚙ Materias</div>`;
-  const addNivelTab = `<div class="nivel-tab nivel-tab-add" onclick="openAddNivelModal()" title="Crear un nuevo nivel" style="color:var(--green);font-weight:700;">＋ Nivel</div>`;
+  const vacantesTab = `<div class="nivel-tab ${currentNivel === '__vacantes__' ? 'active' : ''}" onclick="selectNivel('__vacantes__')">🏗️ Unidades Vacantes</div>`;
+  const materiasTab = `<div class="nivel-tab ${currentNivel === '__materias__' ? 'active' : ''}" onclick="selectNivel('__materias__')">⚙ Materias</div>`;
+  const addNivelTab = `<div class="nivel-tab nivel-tab-add" onclick="openAddNivelModal()" title="Crear un nuevo nivel" style="font-weight:700;">＋ Nivel</div>`;
   const actasNoOficialesToggle = `<div class="nivel-tab" onclick="toggleActasNoOficialesTab()" title="${_actasNoOficialesTabVisible ? 'Ocultar' : 'Mostrar'} la pestaña «Actas no Oficiales»" style="opacity:0.55;font-weight:400;">${_actasNoOficialesTabVisible ? '🗂️🙈' : '🗂️👁️'}</div>`;
   c.innerHTML = homeTab + calendarioTab + informeTab + segFamTab + convivenciaTab + actasNoOficialesTab + NIVELES.map(n => {
     // Count pending decisions for this nivel
@@ -236,7 +236,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
   sh.innerHTML = `
     <div>
       <div class="section-title">📋 Tabla de Evaluación — ${nivel} ${grupo}</div>
-      <div class="section-meta">${alumnos.length} alumnos registrados</div>
+      <div class="section-meta">${alumnos.length} alumno${alumnos.length===1?'':'s'} registrado${alumnos.length===1?'':'s'}</div>
     </div>
     <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 14px;">
@@ -276,14 +276,19 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
         <button class="compact-toggle${window._compactMode?' active':''}" id="compactToggle-${nivel}-${grupo}"
           title="Modo compacto — reduce el tamaño de las filas"
           onclick="_toggleCompact('${nivel}','${grupo}',this)">${window._compactMode?'⊡ Normal':'⊟ Compacto'}</button>
-        <button class="btn btn-sm" style="background:rgba(245,166,35,0.15);color:#f5a623;border:1px solid #f5a623;" onclick="selectNivel('__actasnooficiales__')" title="Las Actas I/II/Final de todos los grupos se gestionan en su propia pestaña">🗂️ Actas no Oficiales</button>
-        <button class="btn btn-sm" style="background:rgba(220,38,38,0.12);color:#f87171;border:1px solid rgba(220,38,38,0.4);" onclick="openActaOficialMenu('${nivel}','${grupo}')">📋 Acta Oficial</button>
-        <button class="btn btn-sm" style="background:rgba(167,139,250,0.15);color:var(--purple);border:1px solid var(--purple);" onclick="openFotoGaleria('${nivel}','${grupo}')">🖼️ Fotos del grupo</button>
-        <button class="btn btn-sm" style="background:rgba(45,212,160,0.15);color:var(--green);border:1px solid var(--green);" onclick="openPlanoGrupo('${nivel}','${grupo}')">🪑 Plano del grupo</button>
-        <button class="btn btn-sm" style="background:rgba(45,212,160,0.15);color:var(--green);border:1px solid var(--green);" onclick="openHorarioGrupo('${nivel}','${grupo}')">🗓️ Horario del grupo</button>
-        <button class="btn btn-sm" style="background:rgba(247,157,79,0.15);color:var(--orange);border:1px solid var(--orange);" onclick="openAsistencia('${nivel}','${grupo}')">👥 Asistencia sesión${_getAsistenciaIndicator('${nivel}','${grupo}')}</button>
-        <button class="btn btn-sm" style="background:rgba(79,142,247,0.15);color:var(--accent);border:1px solid var(--accent);" onclick="openEquipoDocente('${nivel}','${grupo}')">👨‍🏫 Equipo docente</button>
-        <button class="btn btn-sm" style="background:rgba(79,142,247,0.15);color:var(--accent);border:1px solid var(--accent);" onclick="openObservacionesGrupo('${nivel}','${grupo}')">📝 Observaciones del grupo${(window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);vertical-align:middle;margin-left:2px;"></span>' : ''}</button>
+        <button class="btn btn-ghost btn-sm" onclick="openActaOficialMenu('${nivel}','${grupo}')">📋 Acta Oficial</button>
+        <details class="mas-menu">
+          <summary class="btn btn-ghost btn-sm" title="Más herramientas del grupo">⋯ Más${_getAsistenciaIndicator(nivel, grupo) || ((window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : '')}</summary>
+          <div class="mas-menu-lista" role="menu">
+            <button role="menuitem" onclick="selectNivel('__actasnooficiales__')" title="Las Actas I/II/Final de todos los grupos se gestionan en su propia pestaña">🗂️ Actas no Oficiales</button>
+            <button role="menuitem" onclick="openAsistencia('${nivel}','${grupo}')">👥 Asistencia a la sesión${_getAsistenciaIndicator(nivel, grupo)}</button>
+            <button role="menuitem" onclick="openEquipoDocente('${nivel}','${grupo}')">👨‍🏫 Equipo docente</button>
+            <button role="menuitem" onclick="openObservacionesGrupo('${nivel}','${grupo}')">📝 Observaciones del grupo${(window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : ''}</button>
+            <button role="menuitem" onclick="openPlanoGrupo('${nivel}','${grupo}')">🪑 Plano del grupo</button>
+            <button role="menuitem" onclick="openHorarioGrupo('${nivel}','${grupo}')">🗓️ Horario del grupo</button>
+            <button role="menuitem" onclick="openFotoGaleria('${nivel}','${grupo}')">🖼️ Fotos del grupo</button>
+          </div>
+        </details>
       </div>
     </div>
   `;
@@ -939,8 +944,8 @@ function updateTable(nivel, grupo) {
   if (!tw) return;
   const rawAlumnos = data[nivel][grupo];
   // Contador de la cabecera de la sección («N alumnos registrados»), también al añadir o quitar.
-  const _meta = tw.previousElementSibling && tw.previousElementSibling.querySelector('.section-meta');
-  if (_meta) _meta.textContent = `${rawAlumnos.length} alumnos registrados`;
+  const _meta = tw.parentElement && tw.parentElement.querySelector('.section-meta');
+  if (_meta) _meta.textContent = `${rawAlumnos.length} alumno${rawAlumnos.length===1?'':'s'} registrado${rawAlumnos.length===1?'':'s'}`;
 
   // Render filter bar
   renderFilterBar(nivel, grupo);
@@ -1055,7 +1060,7 @@ function updateTable(nivel, grupo) {
   alumnos.forEach((a, _i) => {
     // Use real index in data array for mutations
     const i = rawAlumnos.indexOf(a);
-    const ageStyle = 'text-align:center;font-family:\'JetBrains Mono\',monospace;font-weight:600;font-size:13px;';
+    const ageStyle = 'text-align:center;font-family:inherit;font-weight:600;font-size:13px;';
     const promoTipo = (a.promociona && typeof a.promociona === 'object') ? a.promociona.tipo : a.promociona;
     const promoBadge = promoTipo === 'Promoción' || promoTipo === 'Titulación' ? 'badge-green' : promoTipo === 'Repetición' || promoTipo === 'No Titula' || promoTipo === 'No Promociona' ? 'badge-red' : 'badge-yellow';
 
@@ -1208,7 +1213,7 @@ function updateTable(nivel, grupo) {
           <input class="cell-input" type="number" min="0" max="12" value="${a.eval1}"
             oninput="(function(el){var v=+el.value;el.style.color=v===0?'var(--green)':v>=4?'var(--red)':v>=1?'var(--accent)':'var(--text)';})(this)"
             onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'eval1',+this.value))"
-            style="width:60px;text-align:center;color:${e1Color};font-weight:600;font-family:'JetBrains Mono',monospace" />
+            style="width:60px;text-align:center;color:${e1Color};font-weight:600;font-family:inherit" />
         </td>
         <td>${buildPendientesDisplay(a.pendientes1||[], nivel, grupo, i, 'p1')}</td>
         <td>
@@ -1226,7 +1231,7 @@ function updateTable(nivel, grupo) {
           <input class="cell-input" type="number" min="0" max="12" value="${a.eval2}"
             oninput="(function(el){var v=+el.value;el.style.color=v===0?'var(--green)':v>=4?'var(--red)':v>=1?'var(--accent)':'var(--text)';})(this)"
             onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'eval2',+this.value))"
-            style="width:60px;text-align:center;color:${e2Color};font-weight:600;font-family:'JetBrains Mono',monospace" />
+            style="width:60px;text-align:center;color:${e2Color};font-weight:600;font-family:inherit" />
         </td>
         <td>${buildPendientesDisplay(a.pendientes2||[], nivel, grupo, i, 'p2')}</td>
         <td>
@@ -1241,7 +1246,7 @@ function updateTable(nivel, grupo) {
       const pm = a.promociona && typeof a.promociona==='object' ? a.promociona : {tipo:'',destino:''};
       const extrCells = bach ? `
         <td style="text-align:center">
-          <input class="cell-input" type="number" min="0" max="20" style="width:60px;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;color:${(a.evalExtr||0)===0?'var(--green)':(a.evalExtr||0)>=4?'var(--red)':'var(--yellow)'}"
+          <input class="cell-input" type="number" min="0" max="20" style="width:60px;text-align:center;font-family:inherit;font-weight:700;color:${(a.evalExtr||0)===0?'var(--green)':(a.evalExtr||0)>=4?'var(--red)':'var(--yellow)'}"
             value="${a.evalExtr||''}" placeholder="—"
             onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'evalExtr',this.value===''?0:parseInt(this.value)))" />
         </td>
@@ -1252,7 +1257,7 @@ function updateTable(nivel, grupo) {
           <input class="cell-input" type="number" min="0" max="12" value="${a.eval3}"
             oninput="(function(el){var v=+el.value;el.style.color=v===0?'var(--green)':v>=4?'var(--red)':v>=1?'var(--accent)':'var(--text)';})(this)"
             onchange="withUndo('${nivel}','${grupo}',()=>updateField('${nivel}','${grupo}',${i},'eval3',+this.value))"
-            style="width:60px;text-align:center;color:${e3Color};font-weight:600;font-family:'JetBrains Mono',monospace" />
+            style="width:60px;text-align:center;color:${e3Color};font-weight:600;font-family:inherit" />
         </td>
         <td>${buildPendientesDisplay(a.pendientesIII||[], nivel, grupo, i, 'iii')}</td>
         ${extrCells}
@@ -2226,3 +2231,13 @@ function _updateChartsInner(nivel, grupo) {
     });
   }
 }
+
+// «⋯ Más» de la barra del grupo: se cierra al elegir una opción, al pulsar fuera o con Esc.
+document.addEventListener('click', e => {
+  document.querySelectorAll('details.mas-menu[open]').forEach(d => {
+    if (!d.contains(e.target) || e.target.closest('.mas-menu-lista > button')) d.removeAttribute('open');
+  });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('details.mas-menu[open]').forEach(d => { d.removeAttribute('open'); d.querySelector('summary')?.focus(); });
+});

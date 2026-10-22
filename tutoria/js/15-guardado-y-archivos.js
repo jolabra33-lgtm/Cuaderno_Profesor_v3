@@ -177,7 +177,8 @@ function loadFromLocalStorage() {
       NIVELES.forEach(n => { if ((!currentGrupos[n] || !GRUPOS_POR_NIVEL[n]?.includes(currentGrupos[n])) && GRUPOS_POR_NIVEL[n]) currentGrupos[n] = GRUPOS_POR_NIVEL[n][0]; });
     }
     const iesname = localStorage.getItem('evalies_iesname');
-    if (iesname) {
+    // «Gestor de Tutoría» era el texto por defecto, no el nombre de un centro.
+    if (iesname && iesname !== 'Gestor de Tutoría') {
       const el = document.getElementById('headerIesName');
       if (el) el.value = iesname;
     }
@@ -445,7 +446,7 @@ function updateFileIndicator(name, unsaved) {
       status.className = 'file-status ' + (isUnsaved ? 'unsaved' : 'saved');
     }
     if (wrap) wrap.className = 'file-indicator ' + (isUnsaved ? 'is-unsaved' : 'is-saved');
-    document.title = (isUnsaved ? '● ' : '') + n + ' — EvalIES';
+    document.title = (isUnsaved ? '● ' : '') + n + ' — Gestor de Tutoría';
   } else {
     label.textContent = 'Sin archivo abierto';
     label.title = escrituraDirecta
@@ -457,7 +458,7 @@ function updateFileIndicator(name, unsaved) {
       else { status.textContent = '⤓ Guardar = descarga'; status.className = 'file-status download'; }
     }
     if (wrap) wrap.className = 'file-indicator';
-    document.title = 'EvalIES — Control de Evaluaciones';
+    document.title = 'Gestor de Tutoría · Cuaderno del profesor';
   }
 }
 
@@ -688,7 +689,7 @@ async function fsNewFile() {
   try {
     const handle = await window.showSaveFilePicker({
       suggestedName: 'MiCentro_' + new Date().getFullYear() + '-' + String(new Date().getFullYear()+1).slice(2) + '.json',
-      types: [{ description: 'Archivo EvalIES (JSON)', accept: { 'application/json': ['.json'] } }]
+      types: [{ description: 'Archivo del Gestor de Tutoría (JSON)', accept: { 'application/json': ['.json'] } }]
     });
     _fileHandle = handle;
     _tutEstadoEnBlanco();
@@ -733,7 +734,7 @@ async function fsOpenFile() {
   }
   try {
     const [handle] = await window.showOpenFilePicker({
-      types: [{ description: 'Archivo EvalIES (JSON)', accept: { 'application/json': ['.json', '.evalies'] } }],
+      types: [{ description: 'Archivo del Gestor de Tutoría (JSON)', accept: { 'application/json': ['.json', '.evalies'] } }],
       multiple: false
     });
     _fileHandle = handle;
@@ -836,7 +837,7 @@ async function fsSaveAs() {
   try {
     const handle = await window.showSaveFilePicker({
       suggestedName: (_fileHandle?.name || 'MiCentro').replace(/\.(evalies|json)$/i,'') + '.json',
-      types: [{ description: 'Archivo EvalIES (JSON)', accept: { 'application/json': ['.json'] } }]
+      types: [{ description: 'Archivo del Gestor de Tutoría (JSON)', accept: { 'application/json': ['.json'] } }]
     });
     _fileHandle = handle;
     await fsSave();
@@ -973,7 +974,7 @@ async function pwaInstall() {
   _pwaInstallPrompt.prompt();
   const result = await _pwaInstallPrompt.userChoice;
   if (result.outcome === 'accepted') {
-    showToast('✅ EvalIES instalada. ¡Ya puedes abrirla desde el escritorio!');
+    showToast('✅ Gestor de Tutoría instalado. ¡Ya puedes abrirla desde el escritorio!');
     document.getElementById('installBanner')?.classList.remove('show');
   }
   _pwaInstallPrompt = null;

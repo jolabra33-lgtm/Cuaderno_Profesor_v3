@@ -160,7 +160,7 @@ function renderCalendario() {
     <div class="main dash-wrap" style="padding-bottom:40px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
         <div>
-          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px;">📅 Calendario</div>
+          <div style="font-family:inherit;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px;">📅 Calendario</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px;">${sessions.length} sesión${sessions.length===1?'':'es'} de evaluación · ${calEventos.length} evento${calEventos.length===1?'':'s'} · pulsa un día para añadir</div>
         </div>
         <div style="display:flex;gap:8px;">
@@ -412,11 +412,11 @@ function drawConvivCharts() {
       ${CONVIV_EVALS.map((ev, i) => `
         <div style="flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid ${ev.color};border-radius:10px;padding:10px 14px;">
           <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px">${ev.label}</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:${ev.color};line-height:1.15">${totalsPerEval[i]}</div>
+          <div style="font-family:inherit;font-size:22px;font-weight:800;color:${ev.color};line-height:1.15">${totalsPerEval[i]}</div>
         </div>`).join('')}
       <div style="flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid ${m.color};border-radius:10px;padding:10px 14px;">
         <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px">Total curso</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:${m.color};line-height:1.15">${grand}</div>
+        <div style="font-family:inherit;font-size:22px;font-weight:800;color:${m.color};line-height:1.15">${grand}</div>
       </div>
     </div>
 
@@ -606,7 +606,7 @@ function renderActasNoOficiales() {
     <div class="main dash-wrap" style="padding-bottom:40px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:12px;">
         <div>
-          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px">🗂️ Actas no Oficiales</div>
+          <div style="font-family:inherit;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px">🗂️ Actas no Oficiales</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px">Actas de sesión editables (I, II y Evaluación Final) de todos los grupos, en un único lugar · <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#2dd4a0;vertical-align:middle;"></span> = ya guardada</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="toggleActasNoOficialesTab()" title="Oculta esta pestaña de la barra superior (se puede volver a mostrar con el icono 🗂️👁️)">🙈 Ocultar esta pestaña</button>
@@ -663,7 +663,7 @@ function renderConvivencia() {
     <div class="main dash-wrap" style="padding-bottom:40px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:12px;">
         <div>
-          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px">🤝 Informe Convivencia</div>
+          <div style="font-family:inherit;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px">🤝 Informe Convivencia</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px">Amonestaciones (AC), Partes, Expedientes y Faltas de Asistencia — calculado a partir de las tablas de cada evaluación</div>
         </div>
       </div>
@@ -837,7 +837,7 @@ function renderInformeAcademico() {
   const kpi = (label, val, color, sub) => `
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:13px 16px;min-width:150px;flex:1;">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;font-weight:600">${label}</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:${typeof val === 'string' && val.length > 10 ? '15px' : '22px'};font-weight:800;color:${color};line-height:1.2;margin-top:3px">${val}</div>
+      <div style="font-family:inherit;font-size:${typeof val === 'string' && val.length > 10 ? '15px' : '22px'};font-weight:800;color:${color};line-height:1.2;margin-top:3px">${val}</div>
       ${sub ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${sub}</div>` : ''}
     </div>`;
 
@@ -849,8 +849,8 @@ function renderInformeAcademico() {
         <div style="width:${st.pctAprob}%;background:#2dd4a0;transition:width .4s ease;"></div>
         <div style="width:${st.pctSusp}%;background:#f76e6e;transition:width .4s ease;"></div>
       </div>
-      <span style="font-size:11px;color:var(--green);min-width:96px;text-align:right;font-family:'JetBrains Mono',monospace">${st.aprob} <span style="color:var(--text3)">(${st.pctAprob}%)</span></span>
-      <span style="font-size:11px;color:${st.susp > 0 ? 'var(--red)' : 'var(--text3)'};min-width:90px;text-align:right;font-family:'JetBrains Mono',monospace">${st.susp} <span style="color:var(--text3)">(${st.pctSusp}%)</span></span>
+      <span style="font-size:11px;color:var(--green);min-width:96px;text-align:right;font-family:inherit">${st.aprob} <span style="color:var(--text3)">(${st.pctAprob}%)</span></span>
+      <span style="font-size:11px;color:${st.susp > 0 ? 'var(--red)' : 'var(--text3)'};min-width:90px;text-align:right;font-family:inherit">${st.susp} <span style="color:var(--text3)">(${st.pctSusp}%)</span></span>
     </div>`;
 
   const nivelCards = allStats.map(s => {
@@ -861,7 +861,7 @@ function renderInformeAcademico() {
     return `
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow)">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
-          <div style="font-size:16px;font-weight:800;color:var(--text);font-family:'Syne',sans-serif">${esc(s.nivel)}</div>
+          <div style="font-size:16px;font-weight:800;color:var(--text);font-family:inherit">${esc(s.nivel)}</div>
           <div style="font-size:11px;color:var(--text3)">${s.N} alumno${s.N !== 1 ? 's' : ''} · ${s.subjects.length} materias</div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
@@ -875,7 +875,7 @@ function renderInformeAcademico() {
           ${INFORME_BUCKETS.map((b, i) => `
             <div style="flex:1;min-width:108px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid ${b.color};border-radius:9px;padding:8px 12px;">
               <div style="font-size:10px;color:var(--text3)">${b.label}</div>
-              <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:${b.color};line-height:1.2">${s.dist[i]}<span style="font-size:10px;color:var(--text3);font-weight:500"> · ${s.N ? Math.round(s.dist[i] / s.N * 100) : 0}%</span></div>
+              <div style="font-family:inherit;font-size:18px;font-weight:800;color:${b.color};line-height:1.2">${s.dist[i]}<span style="font-size:10px;color:var(--text3);font-weight:500"> · ${s.N ? Math.round(s.dist[i] / s.N * 100) : 0}%</span></div>
             </div>`).join('')}
         </div>
         <div style="display:flex;align-items:center;gap:10px;font-size:10px;color:var(--text3);margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed var(--border2)">
@@ -897,7 +897,7 @@ function renderInformeAcademico() {
     <div class="main dash-wrap" style="padding-bottom:40px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:12px;">
         <div>
-          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px">🎓 Informe Académico</div>
+          <div style="font-family:inherit;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px">🎓 Informe Académico</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px">Aprobados y suspensos por materia y nivel · ${fuenteLabel}${filtroActivo ? ` · <strong style="color:#22d3ee">${esc(filtroNivel)} ${esc(filtroGrupo)}</strong>` : ''}</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -952,10 +952,10 @@ function renderInformeAcademico() {
             const maxR = top[0] ? top[0].susp : 1;
             return top.length ? top.map((x, i) => `
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                <span style="font-size:11px;color:var(--text3);width:18px;text-align:right;font-family:'JetBrains Mono',monospace">${i + 1}.</span>
+                <span style="font-size:11px;color:var(--text3);width:18px;text-align:right;font-family:inherit">${i + 1}.</span>
                 <span style="font-size:12px;color:var(--text);min-width:150px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500" title="${esc(x.materia)}">${esc(x.materia)}</span>
                 <div style="flex:1;background:var(--border);border-radius:4px;height:13px;overflow:hidden;"><div style="width:${Math.round(x.susp / maxR * 100)}%;height:13px;background:#f76e6e;border-radius:4px"></div></div>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--red);min-width:28px;text-align:right">${x.susp}</span>
+                <span style="font-family:inherit;font-size:12px;font-weight:700;color:var(--red);min-width:28px;text-align:right">${x.susp}</span>
               </div>`).join('') : '<div style="color:var(--text3);font-size:12px;padding:8px 0">Sin suspensos registrados.</div>';
           })()}
         </div>

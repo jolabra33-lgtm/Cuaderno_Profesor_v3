@@ -188,7 +188,7 @@ function _barRow(label, c, tot, color, labelW) {
       <div style="flex:1;background:var(--border);border-radius:4px;height:13px;overflow:hidden;">
         <div style="width:${pct}%;height:13px;background:${color};border-radius:4px;"></div>
       </div>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${color};min-width:28px;text-align:right">${c}</span>
+      <span style="font-family:inherit;font-size:12px;font-weight:700;color:${color};min-width:28px;text-align:right">${c}</span>
       <span style="font-size:10px;color:var(--text3);min-width:34px;text-align:right">${tot ? pct + '%' : '—'}</span>
     </div>`;
 }
@@ -228,7 +228,7 @@ function buildDistEtapa(alist, field, sectionId, canvasPrefix, sinLabel) {
             <span style="font-size:10px;color:var(--text3)">${tot} alumno${tot !== 1 ? 's' : ''}</span>
           </div>
           <div style="display:flex;align-items:baseline;gap:6px;">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;color:var(--green);line-height:1">${pctProm}%</span>
+            <span style="font-family:inherit;font-size:20px;font-weight:800;color:var(--green);line-height:1">${pctProm}%</span>
             <span style="font-size:10px;color:var(--text3)">${passN}/${tot} promo./titulan</span>
           </div>
         </div>
@@ -307,7 +307,7 @@ function renderDashboard() {
   <!-- TITLE BAR -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
     <div>
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px;">
+      <div style="font-family:inherit;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px;">
         📈 Dashboard de Dirección
       </div>
       <div style="font-size:12px;color:var(--text2);margin-top:4px;">${iesName} · ${dateStr.charAt(0).toUpperCase()+dateStr.slice(1)}</div>
@@ -405,7 +405,7 @@ function renderDashboard() {
     ].map(({label,val,color,bg,icon}) => `
       <div style="background:${bg};border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
         <div style="font-size:20px;margin-bottom:6px">${icon}</div>
-        <div style="font-size:22px;font-weight:800;color:${color};font-family:'JetBrains Mono',monospace;line-height:1">${val}</div>
+        <div style="font-size:22px;font-weight:800;color:${color};font-family:inherit;line-height:1">${val}</div>
         <div style="font-size:10px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">${label}</div>
       </div>`).join('')}
     </div>
