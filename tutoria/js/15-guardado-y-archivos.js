@@ -137,6 +137,9 @@ function markDirty() {
   }, 800);
 }
 
+// Si se pasa a trabajar en otra ventana, antes de ceder se guarda al momento (ver js/una-ventana.js).
+if (window.UnaVentana) UnaVentana.antesDeCeder(() => { clearTimeout(_autosaveTimer); persistLocal(); });
+
 function loadFromLocalStorage() {
   // Skip entirely in snapshot exports — data is already injected via __SNAPSHOT__
   if (window.__IS_SNAPSHOT_EXPORT__) return;

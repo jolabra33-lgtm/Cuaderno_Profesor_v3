@@ -21,6 +21,7 @@ La aplicación es **estática**: no necesita compilar nada. Se publica tal cual 
 | `sw.js` | Service worker: lista de archivos para el uso sin conexión y versión de la caché |
 | `guia_mejorada.html` | Guía de uso |
 
+| `js/una-ventana.js` | Solo una ventana guarda a la vez: si la app ya está abierta en otra (o en la otra versión, v2/v3), esta se bloquea con un aviso y «Usar esta ventana». Es el **primer** script de `index.html` y de `tutoria/index.html` |
 | `js/registro-sw.js` | Registro del service worker y aviso «Hay una versión nueva · Actualizar» (lo usan el Cuaderno y Tutoría) |
 | `tutoria/` | Gestor de Tutoría, aplicación independiente (ver más abajo) |
 | `tests/calculo-notas.html` | Pruebas del motor de cálculo de notas (ver más abajo) |
@@ -156,6 +157,14 @@ clave; avisos de bloques sin nota; y redondeo de la nota mostrada y de la nota d
 - **Importar alumnado del Cuaderno en Tutoría** (botón «📥 Del Cuaderno» en cada grupo). Lee los datos del
   Cuaderno sin modificarlos; no duplica a quien ya está y se puede deshacer con Ctrl+Z.
 - **Pruebas del cálculo de notas** en `tests/calculo-notas.html`.
+- **Una sola ventana guardando a la vez** (`js/una-ventana.js`). Antes, con la app abierta en dos ventanas, la
+  última en guardar borraba sin aviso los cambios de la otra. Ahora la segunda ventana queda bloqueada (no puede
+  escribir en localStorage, IndexedDB ni archivos) y muestra «Usar esta ventana» para pedir el relevo: la otra
+  guarda lo pendiente y se bloquea. Una ventana dormida que despierta después de un relevo se bloquea sola.
+  Para que cubra también la v2, la v2 lleva el mismo archivo.
+- **«Guardar versión del curso» en Tutoría** mete dentro del .html el código, los estilos y la librería de
+  gráficos (`_htmlAutocontenido` en `tutoria/js/14-inicio-y-curso.js`), así que se abre sin servidor y ahora
+  también con gráficos.
 - **Accesibilidad.** En Tutoría, los campos de la tabla y los desplegables tienen nombre para los lectores de
   pantalla (la cabecera de su columna); en el editor de exámenes, las pestañas se anuncian como pestañas. Las
   29 pantallas revisadas con axe-core (WCAG 2 A/AA) no dan ningún error (no se ha revisado el contraste de color).

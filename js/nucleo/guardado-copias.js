@@ -153,6 +153,8 @@ function volcarEspejoIDB(){
 // Al ocultar/cerrar la app se vuelca de inmediato lo pendiente.
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") volcarEspejoIDB(); });
 window.addEventListener("pagehide",()=>{ volcarEspejoIDB(); });
+// Si se pasa a trabajar en otra ventana, antes de ceder se vuelca lo pendiente (ver js/una-ventana.js).
+if(window.UnaVentana) UnaVentana.antesDeCeder(()=>volcarEspejoIDB());
 
 /* ---- Copias automáticas (instantáneas) ---- */
 const COPIA_AUTO_INTERVALO_MS=3*60*60*1000; // como mucho una cada 3 h de trabajo

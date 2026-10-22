@@ -66,13 +66,46 @@ document.addEventListener('click', function(e) {
 
 // ===================== GUARDAR VERSIÓN DEL CURSO =====================
 
-function guardarVersionCurso() {
+/* La app está repartida en archivos (css/, js/, vendor/). La versión del curso
+   es un único .html que se abre desde el correo, sin servidor: aquí se mete
+   dentro el contenido de cada archivo, en el mismo orden y en el mismo sitio.
+   No se incluyen el aviso de versión nueva ni el bloqueo de ventanas, que
+   solo tienen sentido en la app instalada. */
+const _VERSION_SIN = ['../js/registro-sw.js', '../js/una-ventana.js'];
+async function _htmlAutocontenido() {
+  const raiz = document.documentElement.cloneNode(true);
+  raiz.querySelectorAll('#avisoVersionNueva, #unaVentanaOverlay').forEach(n => n.remove());
+  const leer = async (src) => {
+    const r = await fetch(new URL(src, location.href).href);
+    if (!r.ok) throw new Error('No se ha podido leer ' + src);
+    return r.text();
+  };
+  for (const sc of [...raiz.querySelectorAll('script[src]')]) {
+    const src = sc.getAttribute('src');
+    if (_VERSION_SIN.includes(src)) { sc.remove(); continue; }
+    const nuevo = document.createElement('script');
+    // Un cierre de etiqueta dentro del código cortaría el script: se neutraliza.
+    nuevo.textContent = '\n' + (await leer(src)).replace(/<\/(script)/gi, '<\\/$1') + '\n';
+    sc.replaceWith(nuevo);
+  }
+  for (const ln of [...raiz.querySelectorAll('link[rel="stylesheet"]')]) {
+    const st = document.createElement('style');
+    st.textContent = '\n' + (await leer(ln.getAttribute('href'))) + '\n';
+    ln.replaceWith(st);
+  }
+  raiz.querySelectorAll('link[rel="manifest"]').forEach(n => n.remove());
+  return raiz.outerHTML;
+}
+
+async function guardarVersionCurso() {
   const year  = new Date().getFullYear();
   const month = String(new Date().getMonth()+1).padStart(2,'0');
   const day   = String(new Date().getDate()).padStart(2,'0');
   const filename = `evaluaciones_IES_${year}-${month}-${day}.html`;
 
-  let html = document.documentElement.outerHTML;
+  let html;
+  try { html = await _htmlAutocontenido(); }
+  catch (e) { mostrarAviso('No se ha podido generar la versión del curso: ' + (e.message || e) + '. Ábrela con conexión e inténtalo de nuevo.'); return; }
 
   // Construimos las etiquetas de apertura y cierre por CONCATENACION para que
   // el texto fuente de esta funcion no contenga nunca, de forma literal, la

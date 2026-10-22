@@ -110,9 +110,12 @@ Actualizar los archivos no toca tus datos: viven en el navegador, no en GitHub.
   copia» para pasarlos de uno a otro.
 - El almacenamiento va ligado a tu usuario de GitHub (`TU-USUARIO.github.io`), no al
   repositorio. Por eso **la v2 y la v3 comparten los datos** si las usas en el mismo
-  navegador: la v3 se abre con lo que ya tenías. No las tengas abiertas las dos a la vez
-  (una podría sobrescribir lo que guarda la otra); cuando estés a gusto con la v3,
-  desinstala la v2. Cambiar de usuario de GitHub sí cambia la dirección y el
+  navegador: la v3 se abre con lo que ya tenías. Cuando estés a gusto con la v3,
+  desinstala la v2.
+- **Solo una ventana guarda a la vez.** Si abres la app en una segunda ventana (otra
+  pestaña, Split View en el iPad, o la v2 y la v3 a la vez), la nueva muestra un aviso y
+  no guarda nada. Con «Usar esta ventana» pasas a trabajar en ella: la otra guarda lo
+  pendiente y se bloquea. Así nunca se pisan los cambios de una ventana con los de otra. Cambiar de usuario de GitHub sí cambia la dirección y el
   almacenamiento (haz copia antes).
 - Del Cuaderno a Tutoría se pasan datos de dos formas:
   - **👥 Para la tutoría** (Resultados de cada grupo, en el Cuaderno) crea un archivo con la nota de
