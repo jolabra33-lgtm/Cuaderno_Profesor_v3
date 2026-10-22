@@ -34,6 +34,7 @@ function _alumnoNuevo(campos) {
   return Object.assign({
     id: _ultimoIdAlumno,
     nombre: '', fecha: '', repetidor: '', nese: '', compensatoria: '',
+    idsCuaderno: [],   // identificadores del alumno/a en los Cuadernos del profesorado (uno por Cuaderno)
     recursoNese: [], codComp: [],
     papActivo: false, ecActivo: false,
     eval1: 0, propuesta1: {tipo:'', destino:''}, eval2: 0, propuesta2: {tipo:'', destino:''},

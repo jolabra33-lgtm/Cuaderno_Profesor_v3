@@ -190,12 +190,13 @@ function _tImpCuadernoModal(o,nombreArchivo){
 function _tImpCuadernoPlan(o,nivel,grupo,materia,confirmados){
   const lista=(data[nivel]&&data[nivel][grupo])||[];
   const idx={}; lista.forEach((a,i)=>{ idx[_tNorm(a.nombre)]=i; });
+  const porId={}; lista.forEach((a,i)=>{ (a.idsCuaderno||[]).forEach(id=>{ porId[id]=i; }); });
   const emparejados=[], noEncontrados=[], propuestas=[]; let cambios=0;
   // Alumnado de Tutoría que ya tiene pareja exacta: no se propone a nadie más.
-  const usados=new Set(o.alumnos.map(x=>idx[_tNorm(x.nombre)] ?? (x.apellidos?idx[_tNorm(x.apellidos+', '+x.nombrePropio)]:undefined)).filter(i=>i!=null));
+  const usados=new Set(o.alumnos.map(x=>(x.id!=null?porId[x.id]:undefined) ?? idx[_tNorm(x.nombre)] ?? (x.apellidos?idx[_tNorm(x.apellidos+', '+x.nombrePropio)]:undefined)).filter(i=>i!=null));
   const CAMPOS={1:['pendientes1','eval1'],2:['pendientes2','eval2'],final:['pendientesIII','eval3']};
   o.alumnos.forEach(x=>{
-    let i=idx[_tNorm(x.nombre)];
+    let i=(x.id!=null && porId[x.id]!=null) ? porId[x.id] : idx[_tNorm(x.nombre)];   // primero, el identificador del Cuaderno
     if(i==null && x.apellidos) i=idx[_tNorm(x.apellidos+', '+x.nombrePropio)];
     if(i==null){
       // Nombre que no coincide exactamente: se propone el más parecido del grupo.
@@ -216,11 +217,12 @@ function _tImpCuadernoPlan(o,nivel,grupo,materia,confirmados){
       if(nota<5 && !tiene){ ops.push({campo,evalCampo,accion:'add'}); cambios++; }
       else if(nota>=5 && tiene){ ops.push({campo,evalCampo,accion:'del'}); cambios++; }
     });
-    emparejados.push({a,ops});
+    emparejados.push({a,ops,idCuaderno:x.id});
   });
   return {nivel,grupo,materia,emparejados,noEncontrados,propuestas,cambios};
 }
 function _tImpCuadernoAplicar(p){
+  p.emparejados.forEach(({a,idCuaderno})=>{ if(idCuaderno!=null && !(a.idsCuaderno||[]).includes(idCuaderno)) a.idsCuaderno=(a.idsCuaderno||[]).concat(idCuaderno); });
   p.emparejados.forEach(({a,ops})=>ops.forEach(op=>{
     if(!Array.isArray(a[op.campo])) a[op.campo]=[];
     if(op.accion==='add') a[op.campo].push(p.materia);

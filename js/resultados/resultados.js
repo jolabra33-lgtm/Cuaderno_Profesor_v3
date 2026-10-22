@@ -79,7 +79,7 @@ window.exportarParaTutoria=async()=>{
     const n={};
     [0,1,2].forEach(t=>{ const v=notaTrimestre(grupo,al.id,t); if(v!=null) n[t+1]=notaActa(v,grupo); });
     const f=notaFinal(grupo,al.id); if(f!=null && notaTrimestre(grupo,al.id,2)!=null) n.final=notaActa(f,grupo);
-    return {nombre:al.nombre, apellidos:al.apellidos||"", nombrePropio:al.nombreP||"", notas:n};
+    return {id:al.id, nombre:al.nombre, apellidos:al.apellidos||"", nombrePropio:al.nombreP||"", notas:n};   // id: Tutoría empareja por él antes que por el nombre
   });
   const conNota=alumnos.filter(a=>Object.keys(a.notas).length).length;
   if(!conNota){ mostrarAviso("Todavía no hay notas en este grupo."); return; }

@@ -103,17 +103,24 @@ async function abrirImportarDelCuaderno(nivel, grupo) {
 
 function _importarAlumnadoCuaderno(nivel, grupo, grupoCuaderno) {
   const lista = data[nivel][grupo];
-  const yaEstan = new Set(lista.map(a => _nombreClave(a.nombre)));
-  const nuevos = [];
+  const porNombre = new Map(lista.map(a => [_nombreClave(a.nombre), a]));
+  const nuevos = [], vincular = [];
   (grupoCuaderno.alumnos || []).forEach(a => {
     const nombre = String(a.nombre || '').trim();
-    if (!nombre || yaEstan.has(_nombreClave(nombre))) return;
-    yaEstan.add(_nombreClave(nombre));
+    if (!nombre) return;
+    const ya = porNombre.get(_nombreClave(nombre));
+    // Quien ya estaba no se duplica, pero se le apunta su identificador del Cuaderno
+    // para que luego los suspensos («Para la tutoría») casen aunque cambie el nombre.
+    if (ya) { if (a.id && !(ya.idsCuaderno || []).includes(a.id)) vincular.push([ya, a.id]); return; }
     const fecha = /^\d{4}-\d{2}-\d{2}$/.test(a.fechaNacimiento || '') ? a.fechaNacimiento : '';
-    nuevos.push(_alumnoNuevo({ nombre, fecha }));
+    const nuevo = _alumnoNuevo({ nombre, fecha, idsCuaderno: a.id ? [a.id] : [] });
+    porNombre.set(_nombreClave(nombre), nuevo);
+    nuevos.push(nuevo);
   });
-  if (!nuevos.length) { showToast('ℹ️ Todo el alumnado de ese grupo ya estaba en ' + nivel + ' ' + grupo); return; }
+  if (!nuevos.length && !vincular.length) { showToast('ℹ️ Todo el alumnado de ese grupo ya estaba en ' + nivel + ' ' + grupo); return; }
   _undoPush(nivel, grupo);
+  vincular.forEach(([al, id]) => { al.idsCuaderno = (al.idsCuaderno || []).concat(id); });
+  if (!nuevos.length) { markDirty(); showToast('✅ Todo el alumnado ya estaba; queda vinculado con el Cuaderno'); return; }
   nuevos.forEach(a => lista.push(a));
   updateStats(nivel, grupo);
   updateStats2(nivel, grupo);
