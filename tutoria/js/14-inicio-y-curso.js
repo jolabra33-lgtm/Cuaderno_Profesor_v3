@@ -207,7 +207,7 @@ function openGuide() {
       <div class="modal" style="width:560px;max-height:80vh;overflow-y:auto;">
         <div class="modal-title">📖 Guía rápida — EvalIES</div>
         <div style="font-size:13px;color:var(--text2);line-height:1.8;">
-          <p style="margin-bottom:12px">Gestor de Tutoría: seguimiento de evaluaciones, promoción y tutoría para centros de secundaria de la Comunitat Valenciana. Es una aplicación <strong>independiente</strong>, con sus propios datos y su propio archivo <code>.json</code> — no comparte alumnado ni notas con las demás herramientas de la suite.</p>
+          <p style="margin-bottom:12px">Gestor de Tutoría: seguimiento de evaluaciones, promoción y tutoría para centros de secundaria de la Comunitat Valenciana. Tiene sus propios datos y su propio archivo <code>.json</code>. Del Cuaderno del profesor puede recibir la lista de alumnado (botón <strong>📥 Del Cuaderno</strong> de cada grupo) y los suspensos de cada materia (⚙️ Gestión del Curso → «Importar suspensos del Cuaderno»).</p>
           <div style="font-weight:700;color:var(--text);margin-bottom:4px">🏠 Pestañas principales</div>
           <ul style="margin:0 0 12px 16px">
             <li><strong>Inicio</strong> — Resumen global con propuestas por nivel, FPB, PDC y Titulación</li>

@@ -5,7 +5,8 @@ iPad, el móvil o el ordenador: sin cuenta, sin servidor y **sin datos dentro**.
 publicarla se abre vacía; todo lo que se escribe se guarda solo en el navegador del
 dispositivo.
 
-Contiene dos aplicaciones independientes (no comparten alumnado ni notas):
+Contiene dos aplicaciones, cada una con sus propios datos. El Cuaderno puede pasar a Tutoría
+la lista de alumnado y los suspensos de cada evaluación (ver «Cosas importantes»):
 
 - **Cuaderno del profesor** (`index.html`): evaluación por competencias, Corrector de
   exámenes con diseño de examen y rúbrica, programación de aula, calendario, planes…
@@ -113,5 +114,10 @@ Actualizar los archivos no toca tus datos: viven en el navegador, no en GitHub.
   (una podría sobrescribir lo que guarda la otra); cuando estés a gusto con la v3,
   desinstala la v2. Cambiar de usuario de GitHub sí cambia la dirección y el
   almacenamiento (haz copia antes).
-- Tutoría puede copiar la lista de alumnado de un grupo del Cuaderno con el botón
-  **📥 Del Cuaderno** de cada grupo (solo nombres y fechas de nacimiento).
+- Del Cuaderno a Tutoría se pasan datos de dos formas:
+  - **👥 Para la tutoría** (Resultados de cada grupo, en el Cuaderno) crea un archivo con la nota de
+    acta de cada alumno/a por evaluación. El tutor/a lo carga en Tutoría → ⚙️ Gestión del Curso →
+    «Importar suspensos del Cuaderno», y las materias suspensas se marcan como pendientes.
+    Funciona entre profesores y dispositivos distintos. Empareja por nombre («Apellidos, Nombre»).
+  - **📥 Del Cuaderno** (en cada grupo de Tutoría) copia la lista de alumnado (nombres y fechas
+    de nacimiento) de un grupo del Cuaderno. Solo en el mismo dispositivo y navegador.

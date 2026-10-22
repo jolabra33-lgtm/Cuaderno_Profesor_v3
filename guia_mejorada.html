@@ -209,11 +209,11 @@
 <div class="tip">¿Ya usabas la app en otro dispositivo? No hace falta empezar de cero: <strong>Importar copia</strong> con tu último archivo y lo tienes todo, diseños de examen incluidos.</div>
 
 <h2 id="vision">1. Qué es esta suite y cómo se organiza</h2>
-<p>Al abrir la aplicación aparece la pantalla de <strong>Inicio</strong>, con nueve tarjetas agrupadas en tres bloques — todas comparten los mismos grupos, alumnado y notas, salvo Gestor de Tutoría, que es independiente:</p>
+<p>Al abrir la aplicación aparece la pantalla de <strong>Inicio</strong>, con nueve tarjetas agrupadas en tres bloques — todas comparten los mismos grupos, alumnado y notas, salvo Gestor de Tutoría, que tiene sus propios datos:</p>
 <ul>
   <li><strong>Evaluación y corrección</strong>: 📊 Evaluación por Competencias (alumnado, plano de aula, actividades, calificación por criterios LOMLOE, competencias específicas y clave, informes por trimestre), 📘 Programación de Aula (el plan de Situaciones de Aprendizaje del curso, reutilizable año a año) y 🖊️ Corrector de Exámenes (corrige pregunta a pregunta con rúbrica; la nota se guarda sola en Competencias).</li>
   <li><strong>Seguimiento y apoyo al alumnado</strong>: 📈 Plan de Refuerzo, 🔁 Plan de Repetición y 🧩 Alumnos NESE.</li>
-  <li><strong>Organización</strong>: 🗂️ Reuniones (actas con familias, alumnado y equipo directivo), 📄 Memoria de curso (todos tus grupos juntos, por evaluación o curso completo) y 👥 Gestor de Tutoría (control de sesiones de evaluación, promoción y estadísticas de grupos — <strong>sus propios datos</strong>, no comparte nada con las demás).</li>
+  <li><strong>Organización</strong>: 🗂️ Reuniones (actas con familias, alumnado y equipo directivo), 📄 Memoria de curso (todos tus grupos juntos, por evaluación o curso completo) y 👥 Gestor de Tutoría (control de sesiones de evaluación, promoción y estadísticas de grupos — <strong>sus propios datos</strong>; puede recibir del Cuaderno la lista de alumnado y los suspensos).</li>
 </ul>
 <p>Si en los últimos 30 días hay algo digno de atención en cualquiera de tus grupos (faltas no justificadas, incidencias de convivencia), justo debajo de la cabecera aparece una tarjeta <strong>"⚠️ Últimos 30 días, todos los grupos"</strong> con las cifras de un vistazo — pulsando en cualquiera de ellas vas directo a revisarlo. Si no hay nada que destacar, la tarjeta ni siquiera aparece.</p>
 <p>En cualquier pantalla de la aplicación tienes, abajo a la derecha, un <strong>⏱️ cronómetro flotante</strong> — duraciones rápidas (1 a 45 min) o un tiempo a medida, con aviso sonoro y parpadeo al acabar. Sigue corriendo aunque cierres su panel o cambies de sección; no se guarda entre sesiones, como un cronómetro físico.</p>
@@ -465,7 +465,13 @@
 <div class="warn">Los exámenes creados <em>a mano</em> en Competencias (sin rúbrica) siguen funcionando como siempre: nota 0–10 y escala de 4 niveles por criterio, editables directamente. Ambos tipos de examen pueden convivir en el mismo trimestre.</div>
 
 <h2 id="tutoria">8. Gestor de Tutoría</h2>
-<p>Se abre desde su tarjeta en Inicio. Es una aplicación <strong>independiente</strong>: gestiona sesiones de evaluación, actas, decisiones de promoción y estadísticas de grupos, con sus propios archivos y su propio sistema de guardado y exportación (.ev). No comparte alumnado ni notas con las otras dos aplicaciones.</p>
+<p>Se abre desde su tarjeta en Inicio. Es una aplicación <strong>independiente</strong>: gestiona sesiones de evaluación, actas, decisiones de promoción y estadísticas de grupos, con sus propios archivos y su propio sistema de guardado y exportación (.ev). Lo que cambies en Tutoría no modifica el Cuaderno.</p>
+<p>Del Cuaderno a Tutoría se pueden pasar datos de dos formas:</p>
+<ul>
+  <li><strong>Suspensos de cada evaluación.</strong> Cada profesor/a pulsa <strong>👥 Para la tutoría</strong> en Resultados de su grupo: se guarda un archivo con la nota de acta de cada alumno/a en la 1.ª y 2.ª evaluación y en la final. Se lo envía al tutor/a, que lo carga en Tutoría → ⚙️ Gestión del Curso → <strong>Importar suspensos del Cuaderno</strong>. Las materias suspensas (acta menor que 5) se añaden a «Pendientes» de esa evaluación y las aprobadas se quitan. Funciona entre profesores y dispositivos distintos.</li>
+  <li><strong>Lista de alumnado.</strong> En cada grupo de Tutoría, el botón <strong>📥 Del Cuaderno</strong> copia los nombres y fechas de nacimiento de un grupo de tu Cuaderno (sin notas). No duplica a quien ya está y se deshace con Ctrl+Z. Solo funciona en el mismo dispositivo y navegador donde tienes el Cuaderno.</li>
+</ul>
+<div class="tip">Los suspensos se emparejan por nombre («Apellidos, Nombre»). Si el tutor/a crea la lista con <strong>📥 Del Cuaderno</strong>, los nombres coinciden exactamente y no queda nadie «sin encontrar».</div>
 <div class="tip">Para que sus gráficos y la vista previa de PDF funcionen sin conexión, sigue una única vez las instrucciones de <code>tutoria/vendor/LEEME.txt</code> (descargar 3 archivos). Sin ese paso, todo lo demás funciona igual.</div>
 <p>Su sección <strong>📅 Calendario</strong> tiene dos cosas a la vez:</p>
 <ul>

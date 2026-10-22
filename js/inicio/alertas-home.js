@@ -163,7 +163,7 @@ function renderHome(){
     <div class="gcard">
       <div style="font-size:28px;margin-bottom:4px">👥</div>
       <div class="gcard-title">Gestor de Tutoría</div>
-      <div class="gcard-meta">Aplicación independiente (sus propios datos). Ábrela desde aquí como acceso rápido.</div>
+      <div class="gcard-meta">Aplicación aparte, con sus propios datos. Puede recibir tu lista de alumnado y tus suspensos.</div>
       <div class="gcard-count">Se abre en su propia carpeta</div>
       <div class="gcard-actions"><a class="btn" href="tutoria/index.html" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center">Abrir</a></div>
     </div>
@@ -197,7 +197,7 @@ function renderHome(){
       <div class="row" style="align-items:flex-start">
         <div>
           <div style="font-weight:700;font-size:13.5px">Nota sobre el Gestor de Tutoría</div>
-          <p class="sub" style="margin:2px 0 0">Vive en la subcarpeta <code>tutoria/</code>, junto a este archivo. No comparte alumnado ni notas con las otras dos aplicaciones: es una pieza independiente con sus propios datos.</p>
+          <p class="sub" style="margin:2px 0 0">Vive en la subcarpeta <code>tutoria/</code> y guarda sus propios datos: lo que cambies en Tutoría no modifica el Cuaderno. Se pueden pasar datos de aquí a Tutoría de dos formas: <strong>👥 Para la tutoría</strong> (en Resultados de cada grupo) crea un archivo con tus suspensos por evaluación, que el tutor/a carga en Tutoría → Gestión del Curso → «Importar suspensos del Cuaderno»; y el botón <strong>📥 Del Cuaderno</strong> de cada grupo de Tutoría copia la lista de alumnado (nombres y fechas de nacimiento) de un grupo de este Cuaderno, si los dos se usan en el mismo dispositivo y navegador.</p>
         </div>
       </div>
     </div>
