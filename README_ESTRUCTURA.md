@@ -42,6 +42,7 @@ Completan el repositorio: `manifest.json` e `icons/` (instalación como app), `.
 | `js/nucleo/estado-migraciones.js` | Estado global de la app y migraciones de datos antiguos |
 | `js/nucleo/guardado-copias.js` | Guardado a prueba de pérdidas, deshacer/rehacer y copias automáticas |
 | `js/nucleo/cifrado.js` | Copias cifradas con contraseña |
+| `js/nucleo/copia-carpeta.js` | Copia automática en una carpeta elegida (ordenador, Chrome/Edge): un archivo por día y dispositivo; avisa si otro dispositivo ha dejado una copia más reciente |
 | `js/curriculo/catalogos-importador.js` | Autocarga del currículo e importador de materias propias |
 | `js/evaluacion/calculo-notas.js` | Motor de cálculo de notas (criterios, CE, CC, bloques, trimestres, final) y recuperaciones |
 | `js/ui/barra-superior.js` | Barra superior y navegación entre las aplicaciones |
@@ -158,6 +159,14 @@ clave; avisos de bloques sin nota; y redondeo de la nota mostrada y de la nota d
 - **Importar alumnado del Cuaderno en Tutoría** (botón «📥 Del Cuaderno» en cada grupo). Lee los datos del
   Cuaderno sin modificarlos; no duplica a quien ya está y se puede deshacer con Ctrl+Z.
 - **Pruebas del cálculo de notas** en `tests/calculo-notas.html`.
+- **Copia automática en una carpeta** (`js/nucleo/copia-carpeta.js`): 🛟 Copias → «Elegir carpeta». Guarda
+  `copia-cuaderno-auto-AAAA-MM-DD-<dispositivo>.json` unos minutos después de cada cambio y al ocultar la app;
+  conserva 10 por dispositivo. Al abrir, si otro dispositivo dejó una copia más reciente, Inicio ofrece cargarla.
+  En iPad/Safari (sin esta función del navegador) se ofrece «Compartir copia».
+- **Qué me falta** (Inicio, `queMeFaltaHTML` en `js/inicio/alertas-home.js`): actividades corregidas a medias y
+  comentarios de evaluación vacíos (solo en grupos que ya los usan) del periodo elegido.
+- **Importar suspensos en Tutoría**: si un nombre no coincide exactamente, se propone el más parecido
+  (`_tSimilitud` en `tutoria/js/01-avisos-y-vista-documentos.js`): marcado si el parecido es muy alto, desmarcado si es dudoso.
 - **Una sola identidad visual.** Tutoría usa la paleta, la letra y el tema (claro/oscuro, compartido) del Cuaderno
   y se llama «Gestor de Tutoría» (los datos siguen marcados como `EvalIES` para que los archivos sean compatibles).
   En Tutoría, «Alumno / a» es la primera columna y queda fija; las herramientas menos usadas del grupo están en

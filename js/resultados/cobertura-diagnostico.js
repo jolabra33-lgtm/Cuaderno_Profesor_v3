@@ -141,11 +141,13 @@ window.aplicarArreglosDiagnostico=async()=>{
 };
 
 /* v3 · Tarjeta de novedades: se ve una vez tras actualizar, y se cierra. */
-const NOVEDADES_VERSION="v3-1";
+const NOVEDADES_VERSION="v3-2";
 window.cerrarNovedades=()=>{ state.novedadesVistas=NOVEDADES_VERSION; save(); render(); };
 const NOVEDADES_V3=[
   ["✨ Aviso de versión nueva","al publicar cambios aparece «Actualizar»; ya no hace falta cerrar la app del todo."],
   ["🔒 Una sola ventana guarda","si abres la app dos veces (o la v2 y la v3), la segunda avisa y no pisa tus cambios."],
+  ["☁️ Copia automática","en el ordenador, 🛟 Copias → «Elegir carpeta» (Drive, OneDrive, iCloud) y llega sola a tus otros equipos."],
+  ["📝 Qué me falta","aquí mismo, las notas y comentarios pendientes del periodo, con un botón para resolverlos."],
   ["📥 Del Cuaderno a Tutoría","la lista de alumnado se copia con un botón; los suspensos, con «👥 Para la tutoría»."]
 ];
 function novedadesHTML(){

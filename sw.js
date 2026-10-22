@@ -17,7 +17,7 @@
 // Cuaderno_Profesor_v2), que comparte el mismo almacenamiento del navegador.
 
 const CACHE_PREFIJO = 'cuaderno-v3-';
-const CACHE_NAME = CACHE_PREFIJO + '5';
+const CACHE_NAME = CACHE_PREFIJO + '6';
 
 // El "esqueleto" de las dos apps: HTML, manifest e iconos.
 const APP_SHELL = [
@@ -35,6 +35,7 @@ const APP_SHELL = [
   './js/nucleo/estado-migraciones.js',
   './js/nucleo/guardado-copias.js',
   './js/nucleo/cifrado.js',
+  './js/nucleo/copia-carpeta.js',
   './js/curriculo/catalogos-importador.js',
   './js/evaluacion/calculo-notas.js',
   './js/ui/barra-superior.js',

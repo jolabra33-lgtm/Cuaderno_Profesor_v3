@@ -139,6 +139,7 @@ function save(){
   clearTimeout(_idbEspejoTimer);
   _idbEspejoTimer=setTimeout(volcarEspejoIDB, saveState.ok?700:0);
   if(cambio) programarCopiaAuto();
+  if(cambio && typeof ccProgramar==="function") ccProgramar();   // copia en la carpeta elegida (js/nucleo/copia-carpeta.js)
 }
 function volcarEspejoIDB(){
   clearTimeout(_idbEspejoTimer); _idbEspejoTimer=null;
@@ -259,6 +260,7 @@ async function pintarCopias(){
     ${avisoPersist}
     ${uso&&uso.usage?`<p class="sub" style="margin:0 0 8px">Espacio usado por la app en este dispositivo: ${_fmtBytes(uso.usage)}.</p>`:""}
     ${(()=>{ const b=saveState.bytesLS||0; const pct=Math.round(b/5e6*100); return `<p class="sub" style="margin:0 0 8px">Almacenamiento principal: ${_fmtBytes(b)} de unos 5 MB (${pct} %)${pct>=80?' — <strong style="color:#b45309">casi lleno</strong>: no pasa nada, la copia interna no tiene ese límite, pero conviene exportar copias.':"."}</p>`; })()}
+    ${typeof ccSeccionHTML==="function"?ccSeccionHTML():""}
     <div class="flex" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn" onclick="exportarTodo()">⬇ Exportar copia a un archivo</button>
       ${cifradoDisponible()?'<button class="btn" onclick="exportarCifrada()" title="Recomendado si la copia va a salir del dispositivo (correo, pendrive, nube)">🔒 Exportar copia cifrada</button>':""}

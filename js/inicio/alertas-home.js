@@ -55,6 +55,58 @@ function homeAlertasHTML(){
   </div>`;
 }
 
+/* =================================================================
+   v3 · QUÉ ME FALTA (periodo seleccionado, todos los grupos)
+   - Actividades corregidas a medias: alguien tiene nota y a otros les
+     falta (sin contar NP/Exento ni las recuperaciones).
+   - Comentarios de evaluación vacíos de alumnado con nota, solo en los
+     grupos donde ya se ha escrito alguno (quien no los usa no recibe aviso).
+   Cada aviso lleva al sitio donde se resuelve.
+   ================================================================= */
+function queMeFaltaCalcular(){
+  const t=state.ui.trim, out=[];
+  (state.grupos||[]).forEach(g=>{
+    if(!(g.alumnos||[]).length) return;
+    g.actividades.filter(a=>a.trimestre===t && !a.recupera).forEach(a=>{
+      let con=0; const faltan=[];
+      g.alumnos.forEach(al=>{
+        if(notaActividadBase(g,al.id,a)!=null) con++;
+        else if(!marcaDe(g,al.id,a.id)) faltan.push(al);
+      });
+      if(con>0 && faltan.length) out.push({g,tipo:"notas",act:a,n:faltan.length,quien:faltan});
+    });
+    const conNota=g.alumnos.filter(al=>notaTrimestre(g,al.id,t)!=null);
+    const escritos=conNota.filter(al=>((al.comentariosEval||[])[t]||"").trim()).length;
+    const vacios=conNota.length-escritos;
+    if(escritos>0 && vacios>0) out.push({g,tipo:"comentarios",n:vacios});
+  });
+  return out;
+}
+window.queMeFaltaIr=(gid,tipo,actId)=>{
+  if(tipo==="notas"){ state.ui.calAct=actId; hoyIr(gid,"calificar"); }
+  else hoyIr(gid,"resultados");
+};
+function queMeFaltaHTML(){
+  const items=queMeFaltaCalcular(); if(!items.length) return "";
+  const MAX=6, vis=items.slice(0,MAX);
+  const nombres=l=>l.slice(0,3).map(al=>esc(al.nombre)).join("; ")+(l.length>3?` y ${l.length-3} más`:"");
+  return `<div class="card que-falta" style="margin-bottom:14px">
+    <div class="flex" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <strong style="font-size:14px">📝 Qué me falta · ${TRIMESTRES[state.ui.trim]}</strong>
+      <span class="sub" style="margin:0">${items.length} pendiente${items.length===1?"":"s"} en tus grupos</span>
+    </div>
+    <div style="display:grid;gap:6px;margin-top:8px">
+      ${vis.map(it=>`<div class="flex" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <span style="font-size:13px"><strong>${esc(it.g.nombre)}</strong> · ${it.tipo==="notas"
+          ?`«${esc(it.act.nombre)}»: falta${it.n===1?"":"n"} ${it.n} nota${it.n===1?"":"s"} <span style="color:var(--mut)">(${nombres(it.quien)})</span>`
+          :`${it.n} alumno${it.n===1?"":"s"} con nota y sin comentario de evaluación`}</span>
+        <button class="ghost small" style="border:1px solid var(--line)" onclick="queMeFaltaIr('${it.g.id}','${it.tipo}','${it.act?it.act.id:""}')">${it.tipo==="notas"?"Calificar":"Ver resultados"}</button>
+      </div>`).join("")}
+      ${items.length>MAX?`<div class="sub" style="margin:0">y ${items.length-MAX} más en otros grupos o actividades.</div>`:""}
+    </div>
+  </div>`;
+}
+
 function renderHome(){
   const app=document.getElementById("app");
   const nGrupos=state.grupos.length;
@@ -92,6 +144,8 @@ function renderHome(){
   ${novedadesHTML()}
   ${hoyTarjetaHTML()}
   ${coberturaAvisosInicioHTML()}
+  ${typeof ccAvisoInicioHTML==="function"?ccAvisoInicioHTML():""}
+  ${queMeFaltaHTML()}
   ${homeAlertasHTML()}
 
   ${homeSeccionHeaderHTML("evaluacion","Evaluación y corrección")}

@@ -104,6 +104,22 @@ document.addEventListener('keydown',e=>{
    evaluación se sube si queda por debajo de las materias marcadas.
    ================================================================= */
 function _tNorm(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+/* Parecido entre dos nombres (0 a 1): el mayor entre «contiene todas las palabras del
+   más corto» (Ana ↔ Ana María) y la coincidencia de pares de letras (Lopes ↔ López). */
+function _tPalabras(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().split(/[^a-z0-9ñ]+/).filter(w=>w.length>1); }
+function _tSimilitud(a,b){
+  const A=new Set(_tPalabras(a)), B=new Set(_tPalabras(b));
+  if(!A.size||!B.size) return 0;
+  let comunes=0; A.forEach(w=>{ if(B.has(w)) comunes++; });
+  const contiene=comunes/Math.min(A.size,B.size);
+  const pares=t=>{ const m=new Map(); for(let i=0;i<t.length-1;i++){ const k=t.slice(i,i+2); m.set(k,(m.get(k)||0)+1); } return m; };
+  const x=_tNorm(a), y=_tNorm(b); const px=pares(x), py=pares(y); let inter=0;
+  px.forEach((n,k)=>{ inter+=Math.min(n,py.get(k)||0); });
+  const dice=(x.length>1&&y.length>1)? 2*inter/((x.length-1)+(y.length-1)) : 0;
+  // Si solo coincide una palabra (p. ej. el nombre de pila), no basta para proponerlo.
+  return Math.max(comunes>=2||A.size===1||B.size===1 ? contiene : 0, dice);
+}
+const _T_SIM_PROPONER=0.75, _T_SIM_MARCAR=0.9;
 function _tNivelDeCurso(curso){
   const c=_tNorm(curso).replace(/o(?=eso|bach)/,'');
   return NIVELES.find(n=>{ const k=_tNorm(n).replace(/o(?=eso|bach)/,''); return k===c || c.startsWith(k) || k.startsWith(c); }) || '';
@@ -134,13 +150,25 @@ function _tImpCuadernoModal(o,nombreArchivo){
   document.body.appendChild(ov);
   const selN=ov.querySelector('#impCNivel'), selG=ov.querySelector('#impCGrupo'), inM=ov.querySelector('#impCMateria');
   const pintarGrupos=()=>{ const gs=GRUPOS_POR_NIVEL[selN.value]||[]; selG.innerHTML=gs.map(g=>`<option ${_tNorm(g)===_tNorm(letra)?'selected':''}>${_tEsc(g)}</option>`).join(''); const mats=getMateriasParaNivel(selN.value, selG.value)||[]; ov.querySelector('#impCMatList').innerHTML=mats.map(m=>`<option value="${_tEsc(m)}">`).join(''); const exacta=mats.find(m=>_tNorm(m)===_tNorm(o.materia)); if(exacta) inM.value=exacta; };
-  const plan=()=>_tImpCuadernoPlan(o,selN.value,selG.value,inM.value.trim());
+  // Propuestas de nombre parecido: marcadas de entrada si el parecido es muy alto.
+  let confirmados=new Map(), grupoDePropuestas='';
+  const plan=()=>{
+    const clave=selN.value+'|'+selG.value;
+    if(clave!==grupoDePropuestas){
+      grupoDePropuestas=clave; confirmados=new Map();
+      _tImpCuadernoPlan(o,selN.value,selG.value,inM.value.trim(),null).propuestas.forEach(pr=>{ if(pr.parecido>=_T_SIM_MARCAR) confirmados.set(pr.nombre,pr.idx); });
+    }
+    return _tImpCuadernoPlan(o,selN.value,selG.value,inM.value.trim(),confirmados);
+  };
   const pintarResumen=()=>{
     const p=plan(); const mats=getMateriasParaNivel(selN.value, selG.value)||[];
     ov.querySelector('#impCResumen').innerHTML=
       (mats.length && !mats.some(m=>_tNorm(m)===_tNorm(inM.value))?`<div style="color:#f59e0b">⚠️ «${_tEsc(inM.value)}» no está en la lista de materias de ${_tEsc(selN.value)}. Elige la equivalente en el desplegable.</div>`:'')+
       `<div>✓ ${p.emparejados.length} alumnos encontrados en ${_tEsc(selN.value)} ${_tEsc(selG.value)} · ${p.cambios} cambios en sus pendientes.</div>`+
-      (p.noEncontrados.length?`<div style="color:#f59e0b;margin-top:4px">⚠️ Sin encontrar (${p.noEncontrados.length}): ${p.noEncontrados.map(_tEsc).join(', ')}. Comprueba que el nombre coincide («Apellidos, Nombre»).</div>`:'');
+      (p.propuestas.length?`<div style="margin-top:8px"><strong>¿Son la misma persona?</strong> El nombre no coincide exactamente:</div>`+
+        p.propuestas.map((pr,k)=>`<label style="display:flex;gap:8px;align-items:center;margin-top:4px;cursor:pointer"><input type="checkbox" data-prop="${k}" ${confirmados.get(pr.nombre)===pr.idx?'checked':''}> <span>«${_tEsc(pr.nombre)}» (Cuaderno) → «${_tEsc(pr.nombreTutoria)}» (Tutoría)</span></label>`).join(''):'')+
+      (p.noEncontrados.filter(n=>!p.propuestas.some(pr=>pr.nombre===n)).length?`<div style="color:#f59e0b;margin-top:6px">⚠️ Sin encontrar: ${p.noEncontrados.filter(n=>!p.propuestas.some(pr=>pr.nombre===n)).map(_tEsc).join(', ')}. Comprueba que el nombre coincide («Apellidos, Nombre»).</div>`:'');
+    ov.querySelectorAll('#impCResumen input[data-prop]').forEach(cb=>{ cb.onchange=()=>{ const pr=p.propuestas[+cb.dataset.prop]; if(cb.checked) confirmados.set(pr.nombre,pr.idx); else confirmados.delete(pr.nombre); pintarResumen(); }; });
   };
   selN.onchange=()=>{ pintarGrupos(); pintarResumen(); }; selG.onchange=pintarResumen; inM.oninput=pintarResumen;
   pintarGrupos(); pintarResumen();
@@ -151,15 +179,27 @@ function _tImpCuadernoModal(o,nombreArchivo){
   ov.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.stopPropagation(); cerrar(); } });
   setTimeout(()=>selN.focus(),20);
 }
-function _tImpCuadernoPlan(o,nivel,grupo,materia){
+function _tImpCuadernoPlan(o,nivel,grupo,materia,confirmados){
   const lista=(data[nivel]&&data[nivel][grupo])||[];
   const idx={}; lista.forEach((a,i)=>{ idx[_tNorm(a.nombre)]=i; });
-  const emparejados=[], noEncontrados=[]; let cambios=0;
+  const emparejados=[], noEncontrados=[], propuestas=[]; let cambios=0;
+  // Alumnado de Tutoría que ya tiene pareja exacta: no se propone a nadie más.
+  const usados=new Set(o.alumnos.map(x=>idx[_tNorm(x.nombre)] ?? (x.apellidos?idx[_tNorm(x.apellidos+', '+x.nombrePropio)]:undefined)).filter(i=>i!=null));
   const CAMPOS={1:['pendientes1','eval1'],2:['pendientes2','eval2'],final:['pendientesIII','eval3']};
   o.alumnos.forEach(x=>{
     let i=idx[_tNorm(x.nombre)];
     if(i==null && x.apellidos) i=idx[_tNorm(x.apellidos+', '+x.nombrePropio)];
-    if(i==null){ noEncontrados.push(x.nombre); return; }
+    if(i==null){
+      // Nombre que no coincide exactamente: se propone el más parecido del grupo.
+      let mejor=-1, nota=0;
+      lista.forEach((a,j)=>{ if(usados.has(j)) return; const v=_tSimilitud(x.nombre,a.nombre); if(v>nota){ nota=v; mejor=j; } });
+      if(mejor>=0 && nota>=_T_SIM_PROPONER){
+        propuestas.push({nombre:x.nombre, idx:mejor, nombreTutoria:lista[mejor].nombre, parecido:nota});
+        usados.add(mejor);
+        if(confirmados && confirmados.get(x.nombre)===mejor) i=mejor;
+      }
+      if(i==null){ noEncontrados.push(x.nombre); return; }
+    }
     const a=lista[i]; const ops=[];
     Object.keys(CAMPOS).forEach(k=>{
       const nota=x.notas[k]; if(nota==null) return;
@@ -170,7 +210,7 @@ function _tImpCuadernoPlan(o,nivel,grupo,materia){
     });
     emparejados.push({a,ops});
   });
-  return {nivel,grupo,materia,emparejados,noEncontrados,cambios};
+  return {nivel,grupo,materia,emparejados,noEncontrados,propuestas,cambios};
 }
 function _tImpCuadernoAplicar(p){
   p.emparejados.forEach(({a,ops})=>ops.forEach(op=>{

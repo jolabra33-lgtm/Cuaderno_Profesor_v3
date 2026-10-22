@@ -104,6 +104,9 @@ Actualizar los archivos no toca tus datos: viven en el navegador, no en GitHub.
 
 - **Los datos no salen del dispositivo.** Se guardan en el almacenamiento del navegador
   (localStorage e IndexedDB), ligados a la dirección de GitHub Pages. Nadie más los ve.
+- **Copia automática (ordenador).** En 🛟 Copias → «Elegir carpeta»: si es una carpeta de
+  Drive, OneDrive o iCloud, la copia llega sola a tus otros equipos y la app ofrece cargarla al
+  abrirla allí. La copia va sin cifrar: usa una carpeta de tu cuenta, no una compartida.
 - **Exporta copias de seguridad con regularidad.** La app avisa si llevas tiempo sin hacerlo.
   Si borras los datos del sitio o desinstalas la app sin copia, se pierden.
 - **Cada navegador y cada dispositivo tienen sus propios datos.** Usa «Exportar/Importar
