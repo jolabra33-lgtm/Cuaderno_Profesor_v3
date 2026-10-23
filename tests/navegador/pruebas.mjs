@@ -45,6 +45,19 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'las pestañas generales se abren sin errores', p.errores.join('; '));
   } },
 
+  { nombre: 'tutoria-manifiesto', descripcion: 'Tutoría solo declara su manifiesto fuera de la app instalada del Cuaderno', async fn(t) {
+    // Dentro de la ventana de la app del Cuaderno, un manifiesto distinto hacía que Chrome
+    // mostrara sin fin «Actualización de aplicación disponible».
+    const contar = async (enApp) => {
+      const ctx = await t.navegador.newContext();
+      if (enApp) await ctx.addInitScript(() => { const o = window.matchMedia.bind(window); window.matchMedia = q => /display-mode: standalone/.test(q) ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} } : o(q); });
+      const p = await nuevaPagina(ctx); await p.goto(t.url + '/tutoria/'); await esperar(800);
+      const n = await p.evaluate(() => document.querySelectorAll('link[rel="manifest"]').length); await ctx.close(); return n;
+    };
+    t.ok(await contar(false) === 1, 'en una pestaña normal se puede instalar (tiene manifiesto)');
+    t.ok(await contar(true) === 0, 'dentro de la app del Cuaderno no declara manifiesto propio');
+  } },
+
   { nombre: 'tutoria-apostrofo', descripcion: 'Tutoría: grupos y niveles con apóstrofo («PMAR d\'Alt», «FPB l\'Horta»)', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await tutoriaConAlumnos(p, t.url, '1º ESO', "PMAR d'Alt", ["D'Amico Ruiz, Pau"]);

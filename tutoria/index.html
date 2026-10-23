@@ -5,7 +5,17 @@
 <script src="../js/una-ventana.js" data-app="tutoria" data-nombre="El Gestor de Tutoría"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gestor de Tutoría · Cuaderno del profesor</title>
-<link rel="manifest" href="manifest.json">
+<script>
+/* Manifiesto de Tutoría solo en una pestaña normal del navegador (para poder instalarla aparte).
+   Dentro de la app instalada del Cuaderno (ventana de app), Tutoría está en su ámbito: si declarara
+   aquí su propio manifiesto (otro nombre y colores), Chrome mostraría sin fin «Actualización de
+   aplicación disponible», como si la app del Cuaderno hubiera cambiado de identidad. */
+(function () {
+  var enApp = window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: minimal-ui)').matches || matchMedia('(display-mode: window-controls-overlay)').matches);
+  if (enApp || navigator.standalone) return;
+  var l = document.createElement('link'); l.rel = 'manifest'; l.href = 'manifest.json'; document.head.appendChild(l);
+})();
+</script>
 <meta name="theme-color" content="#0a1120">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">

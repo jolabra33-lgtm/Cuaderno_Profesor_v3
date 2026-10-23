@@ -18,6 +18,7 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `calculo-notas` | Las de arriba, automáticamente |
 | `carga` | Las cinco páginas cargan sin errores ni archivos que falten |
 | `tutoria-guardado` | Alta de alumnado en Tutoría, contador, columna del nombre, recarga |
+| `tutoria-manifiesto` | Tutoría no provoca «Actualización de aplicación disponible» dentro de la app del Cuaderno |
 | `tutoria-apostrofo` | Grupos y niveles con apóstrofo («PMAR d'Alt», «FPB l'Horta») |
 | `del-cuaderno` | «📥 Del Cuaderno»: sin duplicar, vinculando identificadores, deshacer |
 | `suspensos` | Importar suspensos por identificador y por nombre parecido |
