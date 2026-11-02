@@ -129,7 +129,11 @@ window.exPregScore=(alId,actId,itemId,inp)=>{
   const r0=render; render=function(){};
   try{ cxSetItemScore(alId,actId,itemId,inp.value); } finally{ render=r0; }
   const g=grupoActual(), v=g&&g.rubricScores&&g.rubricScores[alId]&&g.rubricScores[alId][actId]&&g.rubricScores[alId][actId][itemId];
-  inp.value=v==null?"":String(v).replace(".",",");
+  if(inp.tagName==="SELECT"){
+    const s=v==null?"":String(v);
+    if(s!==""&&![...inp.options].some(o=>o.value===s)){ const o=document.createElement("option"); o.value=s; o.textContent=cxFmtPts(v); inp.appendChild(o); }
+    inp.value=s;
+  } else inp.value=v==null?"":String(v).replace(".",",");
 };
 window.exEnter=(ev,inp)=>{ if(ev.key!=="Enter") return; ev.preventDefault(); const all=[...document.querySelectorAll(".ex-preg-in")], i=all.indexOf(inp); inp.blur(); const nx=all[i+1]||inp; nx.focus(); if(nx.select) nx.select(); };
 function exRenderPorPregunta(grupo,act){
@@ -140,7 +144,7 @@ function exRenderPorPregunta(grupo,act){
     const it=cxItemsFlat(cxRubricaDe(act,al.id)).find(x=>keyOf(x)===k);
     const v=grupo.rubricScores&&grupo.rubricScores[al.id]&&grupo.rubricScores[al.id][act.id]&&it? grupo.rubricScores[al.id][act.id][it.id] : null;
     const celda= marcaDe(grupo,al.id,act.id)? '<span class="badge">NP / Exento</span>'
-      : it? `<input class="in miniw ex-preg-in" type="text" inputmode="decimal" autocomplete="off" style="width:76px" value="${v==null?"":String(v).replace(".",",")}" onchange="exPregScore('${al.id}','${act.id}','${it.id}',this)" onkeydown="exEnter(event,this)"> <span style="font-size:12px;color:var(--mut)">/ ${cxFmtPts(it.max)}</span>`
+      : it? `${cxSelectPuntuacionHTML(it.max,v,"ex-preg-in",`onchange="exPregScore('${al.id}','${act.id}','${it.id}',this)" onkeydown="exEnter(event,this)"`)} <span style="font-size:12px;color:var(--mut)">/ ${cxFmtPts(it.max)}</span>`
       : '<span style="color:var(--mut);font-size:12.5px">— su rúbrica adaptada no incluye esta pregunta</span>';
     return `<tr><td style="padding:5px 8px 5px 0">${esc(al.nombre)}${neseBadgeHTML(al)}</td><td>${celda}</td></tr>`;
   }).join("");
@@ -148,7 +152,7 @@ function exRenderPorPregunta(grupo,act){
     <button class="ghost" style="border:1px solid var(--line)" onclick="exTogglePreg()">← Corregir por alumno/a</button></div>
     <label style="font-size:12.5px;color:var(--mut);display:block;margin-top:8px">Pregunta<select class="in" style="width:100%;margin-top:4px" onchange="exElegirPreg(this.value)">${gen.map(it=>`<option value="${esc(keyOf(it))}" ${keyOf(it)===k?"selected":""}>${esc(exEtiquetaItem(act.rubrica,it).slice(0,110))} · ${cxFmtPts(it.max)} pts</option>`).join("")}</select></label>
     <div data-fuente="${esc(sel.fuenteId||"")}" style="margin-top:6px"></div>
-    <p class="sub" style="margin:8px 0 0;font-size:12px">Intro pasa al siguiente alumno/a. Vacío = sin puntuar.</p></div>
+    <p class="sub" style="margin:8px 0 0;font-size:12px">Elige la puntuación en el desplegable (Intro pasa al siguiente alumno/a). «—» = sin puntuar.</p></div>
     <div class="card"><table style="width:100%"><tbody>${filas}</tbody></table></div>`;
 }
 /* Fase 3 · Paquete reutilizable: examen + rúbrica + variantes NESE + versión B (sin alumnado ni notas) */

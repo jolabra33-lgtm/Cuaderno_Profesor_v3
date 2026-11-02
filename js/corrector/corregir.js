@@ -110,6 +110,20 @@ function cxEstadisticasItemsHTML(grupo,act){
     <p class="sub" style="margin:4px 0 0;font-size:11px">Media de acierto de cada ítem (puntos obtenidos / puntos máximos) sobre el alumnado ya corregido, de peor a mejor.</p>`;
 }
 window.cxToggleEstadisticas=()=>{ state.ui.cxVerEstadisticas=!state.ui.cxVerEstadisticas; save(); render(); };
+/* Desplegable de puntuación de un ítem (de 0,1 en 0,1 hasta el máximo) para poder corregir solo con el ratón.
+   Los valores van con punto (cxSetItemScore los acepta) y se muestran con coma. Si la nota guardada
+   no cae en la rejilla de 0,1 (p. ej. 0,25 de antes), se añade como opción para no perderla. */
+function cxSelectPuntuacionHTML(max,v,clase,attrs){
+  max=Number(max)||0;
+  const pasos=Math.round(max*10);
+  if(pasos>1000) return `<input class="in miniw ${clase||""}" type="text" inputmode="decimal" autocomplete="off" style="width:70px" value="${v==null?'':String(v).replace('.',',')}" ${attrs}>`;
+  const vals=[]; for(let i=0;i<=pasos;i++){ const x=Math.round(i)/10; if(x<=max+1e-9) vals.push(x); }
+  if(!vals.length||Math.abs(vals[vals.length-1]-max)>1e-9) vals.push(max);
+  const actual=v==null||v===""?null:Number(v);
+  if(actual!=null&&isFinite(actual)&&!vals.some(x=>Math.abs(x-actual)<1e-9)){ vals.push(actual); vals.sort((a,b)=>a-b); }
+  const opts=vals.map(x=>`<option value="${x}"${actual!=null&&Math.abs(x-actual)<1e-9?" selected":""}>${cxFmtPts(x)}</option>`).join("");
+  return `<select class="in miniw ${clase||""}" style="width:76px" aria-label="Puntuación (máximo ${cxFmtPts(max)})" ${attrs}><option value=""${actual==null?" selected":""}>—</option>${opts}</select>`;
+}
 function cxNodoCorregirHTML(sec,depth,sc,alId,actId){
   const k=cxElegirEf(sec);
   const ev=cxEvalNodo(sec,sc);
@@ -123,7 +137,7 @@ function cxNodoCorregirHTML(sec,depth,sc,alId,actId){
             ${exComentHTML(alId,actId,it.id)}
           </div>
           <span class="flex" style="align-items:center;flex-shrink:0">
-            <input class="in miniw" type="text" inputmode="decimal" autocomplete="off" style="width:70px" value="${sc[it.id]==null?'':String(sc[it.id]).replace('.',',')}" onchange="cxSetItemScore('${alId}','${actId}','${it.id}',this.value)">
+            ${cxSelectPuntuacionHTML(it.max,sc[it.id],"",`onchange="cxSetItemScore('${alId}','${actId}','${it.id}',this.value)"`)}
             <span style="font-size:12px;color:var(--mut)">/ ${cxFmtPts(it.max)}</span>
           </span>
         </div>`).join("");

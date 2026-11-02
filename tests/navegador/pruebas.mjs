@@ -198,6 +198,33 @@ export const PRUEBAS = [
     t.ok(JSON.stringify(notas) === '[7.5,4,null]', 'las notas se guardan', JSON.stringify(notas));
   } },
 
+  { nombre: 'corregir-desplegable', descripcion: 'Corregir: la puntuación de cada ítem se elige en un desplegable de 0,1 en 0,1', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url);
+    await p.evaluate(() => { const g = state.grupos[0], A = g.alumnos[0].id;
+      g.actividades = [{ id: 'e1', nombre: 'Examen', trimestre: state.ui.trim, bloqueId: 'b0', esExamen: true, criterios: [],
+        rubrica: [{ id: 's1', title: 'Pregunta 1', items: [{ id: 'i1', label: 'Ítem 1', max: 2, links: [] }, { id: 'i2', label: 'Ítem 2', max: 0.25, links: [] }], subs: [] }] }];
+      g.rubricScores = { [A]: { e1: { i2: 0.25 } } };
+      state.ui.appMode = 'corrector'; state.ui.corTab = 'corregir'; state.ui.corExamId = 'e1'; state.ui.corAlId = A; state.ui.corModoPreg = false; save(); render(); });
+    await esperar(300);
+    const sel = p.locator('select[aria-label^="Puntuación"]');
+    t.ok(await sel.count() === 2, 'hay un desplegable por ítem', String(await sel.count()));
+    const ops = await sel.first().evaluate(s => [...s.options].map(o => o.textContent));
+    t.ok(ops.length === 22 && ops[0] === '—' && ops[1] === '0' && ops[2] === '0,1' && ops[21] === '2', 'va de 0 a 2 de 0,1 en 0,1', ops.join(' '));
+    t.ok(await sel.nth(1).inputValue() === '0.25', 'conserva una nota guardada que no cae en la rejilla (0,25)');
+    await sel.first().selectOption('1.7'); await esperar(200);
+    t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.rubricScores[g.alumnos[0].id].e1.i1; }) === 1.7, 'guarda la puntuación elegida');
+    t.ok(await p.locator('select[aria-label^="Puntuación"]').first().inputValue() === '1.7', 'el desplegable muestra lo elegido tras redibujar');
+    await p.evaluate(() => { state.ui.corAlId = ''; state.ui.corModoPreg = true; state.ui.corPregSel = 'i1'; save(); render(); });
+    await esperar(300);
+    const filas = p.locator('select.ex-preg-in');
+    t.ok(await filas.count() === 3, 'por pregunta: un desplegable por alumno/a');
+    await filas.nth(1).selectOption('0.4'); await esperar(200);
+    t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.rubricScores[g.alumnos[1].id].e1.i1; }) === 0.4, 'por pregunta: guarda la puntuación');
+    await filas.nth(1).selectOption(''); await esperar(200);
+    t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.rubricScores[g.alumnos[1].id].e1.i1; }) === undefined, '«—» deja el ítem sin puntuar');
+  } },
+
   { nombre: 'accesibilidad', descripcion: 'Accesibilidad WCAG 2 A/AA (axe-core) en las pantallas principales', async fn(t) {
     const axe = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
     const p = await nuevaPagina(t.contexto);
