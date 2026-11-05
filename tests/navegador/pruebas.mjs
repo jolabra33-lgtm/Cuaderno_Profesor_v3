@@ -198,29 +198,37 @@ export const PRUEBAS = [
     t.ok(JSON.stringify(notas) === '[7.5,4,null]', 'las notas se guardan', JSON.stringify(notas));
   } },
 
-  { nombre: 'corregir-desplegable', descripcion: 'Corregir: la puntuación de cada ítem se elige en un desplegable de 0,1 en 0,1', async fn(t) {
+  { nombre: 'corregir-desplegable', descripcion: 'Corregir: la puntuación de cada ítem se elige en un desplegable de 0,05 en 0,05 y permite «No presentado»', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url);
     await p.evaluate(() => { const g = state.grupos[0], A = g.alumnos[0].id;
       g.actividades = [{ id: 'e1', nombre: 'Examen', trimestre: state.ui.trim, bloqueId: 'b0', esExamen: true, criterios: [],
-        rubrica: [{ id: 's1', title: 'Pregunta 1', items: [{ id: 'i1', label: 'Ítem 1', max: 2, links: [] }, { id: 'i2', label: 'Ítem 2', max: 0.25, links: [] }], subs: [] }] }];
-      g.rubricScores = { [A]: { e1: { i2: 0.25 } } };
+        rubrica: [{ id: 's1', title: 'Pregunta 1', items: [{ id: 'i1', label: 'Ítem 1', max: 2, links: [] }, { id: 'i2', label: 'Ítem 2', max: 0.5, links: [] }], subs: [] }] }];
+      g.rubricScores = { [A]: { e1: { i2: 0.33 } } };
       state.ui.appMode = 'corrector'; state.ui.corTab = 'corregir'; state.ui.corExamId = 'e1'; state.ui.corAlId = A; state.ui.corModoPreg = false; save(); render(); });
     await esperar(300);
     const sel = p.locator('select[aria-label^="Puntuación"]');
     t.ok(await sel.count() === 2, 'hay un desplegable por ítem', String(await sel.count()));
     const ops = await sel.first().evaluate(s => [...s.options].map(o => o.textContent));
-    t.ok(ops.length === 22 && ops[0] === '—' && ops[1] === '0' && ops[2] === '0,1' && ops[21] === '2', 'va de 0 a 2 de 0,1 en 0,1', ops.join(' '));
-    t.ok(await sel.nth(1).inputValue() === '0.25', 'conserva una nota guardada que no cae en la rejilla (0,25)');
-    await sel.first().selectOption('1.7'); await esperar(200);
-    t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.rubricScores[g.alumnos[0].id].e1.i1; }) === 1.7, 'guarda la puntuación elegida');
-    t.ok(await p.locator('select[aria-label^="Puntuación"]').first().inputValue() === '1.7', 'el desplegable muestra lo elegido tras redibujar');
+    t.ok(ops.length === 43 && ops[0] === '—' && ops[1] === 'NP' && ops[2] === '0' && ops[3] === '0,05' && ops[4] === '0,1' && ops[42] === '2', 'va de 0 a 2 de 0,05 en 0,05 y tiene NP', ops.join(' '));
+    t.ok(await sel.nth(1).inputValue() === '0.33', 'conserva una nota guardada que no cae en la rejilla (0,33)');
+    await sel.first().selectOption('1.75'); await esperar(200);
+    t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.rubricScores[g.alumnos[0].id].e1.i1; }) === 1.75, 'guarda la puntuación elegida (1,75)');
+    t.ok(await p.locator('select[aria-label^="Puntuación"]').first().inputValue() === '1.75', 'el desplegable muestra lo elegido tras redibujar');
+    await p.locator('select[aria-label^="Puntuación"]').first().selectOption('NP'); await esperar(200);
+    t.ok(await p.evaluate(() => { const g = state.grupos[0], A = g.alumnos[0].id; return g.marcas[A].e1 === 'NP' && g.notasCuant[A].e1 === 0; }), '«NP» marca No presentado y la nota del examen es 0');
+    t.ok(await p.locator('select[aria-label^="Puntuación"]').first().inputValue() === 'NP', 'con NP marcado el desplegable muestra NP');
+    await p.locator('select[aria-label^="Puntuación"]').first().selectOption('1.5'); await esperar(200);
+    t.ok(await p.evaluate(() => { const g = state.grupos[0], A = g.alumnos[0].id; return !(g.marcas[A] || {}).e1 && g.rubricScores[A].e1.i1 === 1.5; }), 'elegir una puntuación quita la marca NP');
     await p.evaluate(() => { state.ui.corAlId = ''; state.ui.corModoPreg = true; state.ui.corPregSel = 'i1'; save(); render(); });
     await esperar(300);
     const filas = p.locator('select.ex-preg-in');
     t.ok(await filas.count() === 3, 'por pregunta: un desplegable por alumno/a');
-    await filas.nth(1).selectOption('0.4'); await esperar(200);
-    t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.rubricScores[g.alumnos[1].id].e1.i1; }) === 0.4, 'por pregunta: guarda la puntuación');
+    await filas.nth(1).selectOption('0.45'); await esperar(200);
+    t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.rubricScores[g.alumnos[1].id].e1.i1; }) === 0.45, 'por pregunta: guarda la puntuación');
+    await p.locator('select.ex-preg-in').nth(2).selectOption('NP'); await esperar(200);
+    t.ok(await p.evaluate(() => { const g = state.grupos[0], C = g.alumnos[2].id; return g.marcas[C].e1 === 'NP' && g.notasCuant[C].e1 === 0; }), 'por pregunta: NP marca No presentado (nota 0)');
+    t.ok(await p.locator('select.ex-preg-in').nth(2).inputValue() === 'NP', 'por pregunta: la fila muestra NP');
     await filas.nth(1).selectOption(''); await esperar(200);
     t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.rubricScores[g.alumnos[1].id].e1.i1; }) === undefined, '«—» deja el ítem sin puntuar');
   } },

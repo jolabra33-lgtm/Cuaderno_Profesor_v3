@@ -126,6 +126,7 @@ async function exPintarEnunciados(){
 window.exTogglePreg=()=>{ state.ui.corModoPreg=!state.ui.corModoPreg; save(); render(); };
 window.exElegirPreg=k=>{ state.ui.corPregSel=k; save(); render(); };
 window.exPregScore=(alId,actId,itemId,inp)=>{
+  if(inp.value==="NP"){ setMarca(alId,actId,"NP"); return; }
   const r0=render; render=function(){};
   try{ cxSetItemScore(alId,actId,itemId,inp.value); } finally{ render=r0; }
   const g=grupoActual(), v=g&&g.rubricScores&&g.rubricScores[alId]&&g.rubricScores[alId][actId]&&g.rubricScores[alId][actId][itemId];
@@ -143,8 +144,8 @@ function exRenderPorPregunta(grupo,act){
   const filas=grupo.alumnos.map(al=>{
     const it=cxItemsFlat(cxRubricaDe(act,al.id)).find(x=>keyOf(x)===k);
     const v=grupo.rubricScores&&grupo.rubricScores[al.id]&&grupo.rubricScores[al.id][act.id]&&it? grupo.rubricScores[al.id][act.id][it.id] : null;
-    const celda= marcaDe(grupo,al.id,act.id)? '<span class="badge">NP / Exento</span>'
-      : it? `${cxSelectPuntuacionHTML(it.max,v,"ex-preg-in",`onchange="exPregScore('${al.id}','${act.id}','${it.id}',this)" onkeydown="exEnter(event,this)"`)} <span style="font-size:12px;color:var(--mut)">/ ${cxFmtPts(it.max)}</span>`
+    const celda= marcaDe(grupo,al.id,act.id)==="EX"? '<span class="badge">Exento</span>'
+      : it? `${cxSelectPuntuacionHTML(it.max,v,"ex-preg-in",`onchange="exPregScore('${al.id}','${act.id}','${it.id}',this)" onkeydown="exEnter(event,this)"`,marcaDe(grupo,al.id,act.id)==="NP")} <span style="font-size:12px;color:var(--mut)">/ ${cxFmtPts(it.max)}</span>`
       : '<span style="color:var(--mut);font-size:12.5px">— su rúbrica adaptada no incluye esta pregunta</span>';
     return `<tr><td style="padding:5px 8px 5px 0">${esc(al.nombre)}${neseBadgeHTML(al)}</td><td>${celda}</td></tr>`;
   }).join("");
