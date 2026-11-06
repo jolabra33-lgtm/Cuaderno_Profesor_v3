@@ -78,7 +78,8 @@ function renderCorLista(grupo){
           <button class="btn small" onclick="cxIrCorregir('${act.id}')">Corregir</button>
           <button class="ghost" style="border:1px solid var(--line)" onclick="cxIrDiseno('${act.id}')">✏️ Diseño</button>
           <button class="ghost" style="border:1px solid var(--line)" onclick="cxIrEditor('${act.id}')">Rúbrica</button>
-          ${notas.length?`<button class="ghost" style="border:1px solid var(--line)" title="Imprimir juntas y ordenadas por alumno/a todas las rúbricas ya corregidas de este examen" onclick="cxImprimirRubricasTodos('${act.id}')">🖨️ Imprimir</button>`:""}
+          ${notas.length?`<button class="ghost" style="border:1px solid var(--line)" title="Imprimir juntas y ordenadas por alumno/a todas las rúbricas ya corregidas de este examen" onclick="cxImprimirRubricasTodos('${act.id}')">🖨️ Imprimir</button>
+          <button class="ghost" style="border:1px solid var(--line)" title="Rúbricas resumidas de todo el alumnado corregido: solo puntuaciones y anotaciones, para gastar menos papel" onclick="cxImprimirRubricasTodos('${act.id}',true)">📄 Resumidas</button>`:""}
           <button class="ghost" style="border:1px solid var(--line)" onclick="cxExportarCSV('${act.id}')">CSV</button>
           <button class="ghost danger" onclick="delActividad('${act.id}')">Eliminar</button>
         </div>

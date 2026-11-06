@@ -24,7 +24,7 @@ function renderCorCorregir(grupo){
       <td>${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}${cxVarianteDeAlumno(act,al.id)?` <span class="badge" title="Se corrige con una rúbrica adaptada">${esc(cxVarianteDeAlumno(act,al.id).nombre||"Adaptada")}</span>`:""}</td>
       <td style="font-weight:600">${hecho?fmt(vc):"—"}</td>
       <td>${hecho?pillCuant(vc):'<span class="badge">Sin corregir</span>'}</td>
-      <td><button class="btn small" onclick="cxIrAlumno('${al.id}')">${hecho?"Revisar":"Corregir"}</button>${hecho?` <button class="ghost small" style="border:1px solid var(--line)" title="Imprimir la rúbrica de este alumno/a" onclick="cxImprimirRubrica('${al.id}','${act.id}')">🖨️</button>`:""}</td>
+      <td><button class="btn small" onclick="cxIrAlumno('${al.id}')">${hecho?"Revisar":"Corregir"}</button>${hecho?` <button class="ghost small" style="border:1px solid var(--line)" title="Imprimir la rúbrica de este alumno/a" onclick="cxImprimirRubrica('${al.id}','${act.id}')">🖨️</button> <button class="ghost small" style="border:1px solid var(--line)" title="Imprimir la rúbrica resumida de este alumno/a: solo puntuaciones y anotaciones, para gastar menos papel" onclick="cxImprimirRubrica('${al.id}','${act.id}',true)">📄 Resumida</button>`:""}</td>
     </tr>`;
   }).join("");
   // Las marcas NP/Exento no entran en la media ni en las estadísticas del examen.
@@ -42,7 +42,8 @@ function renderCorCorregir(grupo){
         <button class="ghost" style="border:1px solid var(--line)" title="Corregir una pregunta de todo el grupo seguida (opcional)" onclick="exTogglePreg()">↕ Por pregunta</button>
         <select class="in" id="cxExamSel">${exams.map(a=>`<option value="${a.id}" ${a.id===act.id?"selected":""}>${esc(a.nombre)}</option>`).join("")}</select>
         <button class="ghost" style="border:1px solid var(--line)" onclick="cxIrEditor('${act.id}')">✏️ Editar rúbrica</button>
-        ${notas.length?`<button class="ghost" style="border:1px solid var(--line)" onclick="cxImprimirRubricasTodos('${act.id}')">🖨️ Imprimir rúbricas</button>`:""}
+        ${notas.length?`<button class="ghost" style="border:1px solid var(--line)" onclick="cxImprimirRubricasTodos('${act.id}')">🖨️ Imprimir rúbricas</button>
+        <button class="ghost" style="border:1px solid var(--line)" title="Rúbricas resumidas de todo el alumnado corregido: solo puntuaciones y anotaciones, para gastar menos papel" onclick="cxImprimirRubricasTodos('${act.id}',true)">📄 Rúbricas resumidas</button>`:""}
         <button class="ghost" style="border:1px solid var(--line)" onclick="cxExportarCSV('${act.id}')">⬇ CSV</button>
       </div>
     </div>
@@ -175,7 +176,8 @@ function renderCxGradingAlumno(grupo,act,al){
     <div class="flex" style="justify-content:space-between;flex-wrap:wrap">
       <div><h2>${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}</h2><p class="sub" style="margin:0">${esc(act.nombre)} · ${marcaBotonesHTML(grupo,al.id,act.id)}</p></div>
       <div class="flex">
-        ${vc!=null?`<button class="ghost" style="border:1px solid var(--line)" onclick="cxImprimirRubrica('${al.id}','${act.id}')">🖨️ Imprimir rúbrica</button>`:""}
+        ${vc!=null?`<button class="ghost" style="border:1px solid var(--line)" onclick="cxImprimirRubrica('${al.id}','${act.id}')">🖨️ Imprimir rúbrica</button>
+        <button class="ghost" style="border:1px solid var(--line)" title="Solo puntuaciones y anotaciones, sin el detalle de lo que había que contestar: gasta menos papel" onclick="cxImprimirRubrica('${al.id}','${act.id}',true)">📄 Rúbrica resumida</button>`:""}
         <button class="ghost" style="border:1px solid var(--line)" onclick="cxVolverLista()">← Lista</button>
         <button class="ghost" style="border:1px solid var(--line)" ${i<=0?"disabled":""} onclick="cxIrAlumno('${i>0?alumnos[i-1].id:al.id}')">← Anterior</button>
         <button class="ghost" style="border:1px solid var(--line)" ${i>=alumnos.length-1?"disabled":""} onclick="cxIrAlumno('${i<alumnos.length-1?alumnos[i+1].id:al.id}')">Siguiente →</button>
@@ -276,6 +278,26 @@ function cxRubricaPrintCSS(){
     .cx-portada-table td, .cx-portada-table th{ padding:10px 13px; }
   </style>`;
 }
+/* Retoques de la versión resumida: mismos estilos, pero más compacta para ocupar menos hojas. */
+function cxRubricaResumidaCSS(){
+  return `<style>
+    @page{ margin:1.6cm 1.6cm; }
+    body{ padding:20px 30px 30px; line-height:1.35; }
+    .cx-letterhead{ margin:0 0 8px; padding-bottom:6px; }
+    .cx-eyebrow{ margin:0 0 4px; }
+    .cx-alumno{ font-size:21px; margin:0 0 5px; }
+    .cx-meta-line{ font-size:12.5px; margin:0 0 14px; }
+    .cx-sec{ margin:0 0 10px; }
+    .cx-sec h2{ padding-bottom:4px; }
+    .cx-sec td{ padding:5px 10px; }
+    .cx-item-label{ font-size:13px; }
+    .cx-item-desc{ font-size:12px; margin-top:2px; line-height:1.4; }
+    .cx-item-score{ font-size:14.5px; }
+    .cx-total-box{ margin:14px 0; padding:9px 16px; }
+    .cx-total-value{ font-size:22px; }
+    .cx-comentario{ padding:9px 13px; }
+  </style>`;
+}
 function cxRubricaBodyHTML(grupo,act,al,opts){
   opts=opts||{};
   const cat=getCatalogo(grupo.catalogoKey);
@@ -288,7 +310,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
   const filaItem=it=>{
       const val=sc[it.id];
       const max=Number(it.max)||0;
-      const desc=(it.desc&&it.desc.length)?`<div class="cx-item-desc">${it.desc.map(d=>"• "+esc(d)).join("<br>")}</div>`:"";
+      const desc=(!opts.resumida&&it.desc&&it.desc.length)?`<div class="cx-item-desc">${it.desc.map(d=>"• "+esc(d)).join("<br>")}</div>`:"";
       return `<tr><td>
           ${it.unico&&!it.label?"":`<div class="cx-item-label">${esc(it.label||"(sin enunciado)")}</div>`}
           ${desc}
@@ -314,7 +336,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
   return `
     <div${opts.pageBreak?' style="page-break-before:always;break-before:page"':''}>
     ${state.centroNombre?`<div class="cx-letterhead">${esc(state.centroNombre)}</div>`:""}
-    <div class="cx-eyebrow">Rúbrica de corrección</div>
+    <div class="cx-eyebrow">${opts.resumida?"Rúbrica de corrección · resumen":"Rúbrica de corrección"}</div>
     <h1 class="cx-alumno">${esc(al.nombre)}</h1>
     <div class="cx-meta-line">${esc(act.nombre)}<span class="sep">·</span>${esc(cat.materia)} ${esc(cat.curso)}<span class="sep">·</span>Grupo ${esc(grupo.nombre)}<span class="sep">·</span><b>${fechaLarga}</b></div>
     ${seccionesHtml}
@@ -325,11 +347,11 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
     ${comentario?`<div class="cx-comentario"><h2>Comentario del profesor/a</h2><p style="white-space:pre-wrap">${esc(comentario)}</p></div>`:""}
     </div>`;
 }
-window.cxImprimirRubrica=(alId,actId)=>{
+window.cxImprimirRubrica=(alId,actId,resumida)=>{
   const grupo=grupoActual(); if(!grupo) return;
   const act=grupo.actividades.find(a=>a.id===actId); if(!act||!act.rubrica) return;
   const al=grupo.alumnos.find(a=>a.id===alId); if(!al) return;
-  abrirVentanaInforme(`Rúbrica · ${al.nombre} · ${act.nombre}`, cxRubricaPrintCSS()+cxRubricaBodyHTML(grupo,act,al));
+  abrirVentanaInforme(`Rúbrica${resumida?" resumida":""} · ${al.nombre} · ${act.nombre}`, cxRubricaPrintCSS()+(resumida?cxRubricaResumidaCSS():"")+cxRubricaBodyHTML(grupo,act,al,{resumida:!!resumida}));
 };
 function cxRubricasPortadaHTML(grupo,act,alumnos){
   const cat=getCatalogo(grupo.catalogoKey);
@@ -348,11 +370,17 @@ function cxRubricasPortadaHTML(grupo,act,alumnos){
     <table class="cx-portada-table"><thead><tr><th>Alumno/a</th><th style="width:70px;text-align:right">Nota</th><th style="width:150px">Calificación</th></tr></thead><tbody>${filas}</tbody></table>
     </div>`;
 }
-window.cxImprimirRubricasTodos=actId=>{
+window.cxImprimirRubricasTodos=(actId,resumida)=>{
   const grupo=grupoActual(); if(!grupo) return;
   const act=grupo.actividades.find(a=>a.id===actId); if(!act||!act.rubrica) return;
   const corregidos=grupo.alumnos.filter(al=>grupo.notasCuant?.[al.id]?.[act.id]!=null);
   if(!corregidos.length){ mostrarAviso("Todavía no hay ningún alumno o alumna corregido en este examen."); return; }
+  if(resumida){
+    // Resumida: sin hoja de portada (no se reparte al alumnado) y cada alumno/a en su propia hoja.
+    const partes=corregidos.map((al,i)=>cxRubricaBodyHTML(grupo,act,al,{resumida:true,pageBreak:i>0}));
+    abrirVentanaInforme(`Rúbricas resumidas · ${act.nombre}`, cxRubricaPrintCSS()+cxRubricaResumidaCSS()+partes.join(""));
+    return;
+  }
   const portada=cxRubricasPortadaHTML(grupo,act,corregidos);
   const partes=corregidos.map(al=>cxRubricaBodyHTML(grupo,act,al,{pageBreak:true}));
   abrirVentanaInforme(`Rúbricas · ${act.nombre}`, cxRubricaPrintCSS()+portada+partes.join(""));
