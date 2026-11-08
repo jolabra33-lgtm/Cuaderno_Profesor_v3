@@ -203,11 +203,17 @@ function renderCxItemHTML(grupo,sec,it,iIdx){
       <button class="ghost small" ${iIdx===(sec.items||[]).length-1?"disabled":""} onclick="cxMoveItem('${sec.id}','${it.id}',1)">↓</button>
       <button class="ghost danger" onclick="cxDelItem('${sec.id}','${it.id}')">Eliminar</button>
     </div>
-    <textarea id="cxd_${it.id}" class="in cx-autogrow" style="width:100%;box-sizing:border-box;margin-top:6px;min-height:44px;resize:vertical;font-size:13px;text-align:justify" placeholder="Descriptores (opcional, una línea por cada uno, cada una con su viñeta: p. ej. «Identifica el tipo de fuente y su autor (0,5)»). Con Tab o con «Subviñeta» una línea pasa a subviñeta." oninput="cxAutoGrow(this)" onkeydown="cxDescKey(event,this)" onchange="cxSetItemDesc('${sec.id}','${it.id}',this.value)">${esc((it.desc||[]).join("\n"))}</textarea>
-    <div class="flex" style="gap:4px;margin-top:4px;align-items:center">
-      <button type="button" class="ghost small" style="border:1px solid var(--line)" title="Convierte las líneas seleccionadas en subviñeta (Tab al principio de la línea)" onclick="cxDescIndent(document.getElementById('cxd_${it.id}'),1)">↳ Subviñeta</button>
-      <button type="button" class="ghost small" style="border:1px solid var(--line)" title="Quita un nivel de sangría a las líneas seleccionadas (Mayús+Tab)" onclick="cxDescIndent(document.getElementById('cxd_${it.id}'),-1)">↰ Quitar sangría</button>
+    <textarea id="cxd_${it.id}" class="in cx-autogrow" style="width:100%;box-sizing:border-box;margin-top:6px;min-height:44px;resize:vertical;font-size:13px;text-align:justify" placeholder="Descriptores (opcional). Una línea por cada uno, p. ej. «• Identifica el tipo de fuente y su autor (0,5)». Usa los botones de abajo para viñeta, subviñeta, negrita, cursiva y subrayado." oninput="cxAutoGrow(this);cxDescPreview(this)" onkeydown="cxDescKey(event,this)" onchange="cxSetItemDesc('${sec.id}','${it.id}',this.value)">${esc(cxDescATexto(it))}</textarea>
+    <div class="flex" style="gap:4px;margin-top:4px;align-items:center;flex-wrap:wrap" role="toolbar" aria-label="Formato de los descriptores">
+      <button type="button" class="ghost small" style="border:1px solid var(--line)" title="Convierte las líneas seleccionadas en viñeta (punto negro)" onclick="cxDescNivelSel(document.getElementById('cxd_${it.id}'),0)">• Viñeta</button>
+      <button type="button" class="ghost small" style="border:1px solid var(--line)" title="Convierte las líneas seleccionadas en subviñeta (punto sin relleno) · Tab al principio de la línea" onclick="cxDescNivelSel(document.getElementById('cxd_${it.id}'),1)">◦ Subviñeta</button>
+      <button type="button" class="ghost small" style="border:1px solid var(--line)" title="Quita la viñeta y deja las líneas seleccionadas como texto normal" onclick="cxDescNivelSel(document.getElementById('cxd_${it.id}'),-1)">Sin viñeta</button>
+      <span style="width:1px;align-self:stretch;background:var(--line);margin:0 2px"></span>
+      <button type="button" class="ghost small" style="border:1px solid var(--line);min-width:30px" title="Negrita (Ctrl+B)" onclick="cxDescFmt(document.getElementById('cxd_${it.id}'),'b')"><b>N</b></button>
+      <button type="button" class="ghost small" style="border:1px solid var(--line);min-width:30px" title="Cursiva (Ctrl+I)" onclick="cxDescFmt(document.getElementById('cxd_${it.id}'),'i')"><i>C</i></button>
+      <button type="button" class="ghost small" style="border:1px solid var(--line);min-width:30px" title="Subrayado (Ctrl+U)" onclick="cxDescFmt(document.getElementById('cxd_${it.id}'),'u')"><u>S</u></button>
     </div>
+    <div id="cxdp_${it.id}" class="sub" style="margin:4px 0 0;font-size:12px;${cxDescATexto(it).trim()?"":"display:none"}"><span style="color:var(--mut)">Así se verá:</span>${cxDescHTML(cxDescLineas(cxDescATexto(it)),"var(--mut)","var(--ink)")}</div>
     <button class="ghost" style="border:1px solid var(--line);margin-top:6px" onclick="cxToggleItemCriterios('${it.id}')">${abierto?"Ocultar":"Vincular"} criterios${nCrit?` (${nCrit})`:""}</button>
     ${abierto?(()=>{
       const linkados=new Set((it.links||[]).map(l=>l.critId));
@@ -304,49 +310,124 @@ window.cxSetItemMax=(secId,itemId,v)=>{
   cxRecalcTodosLosAlumnos(x.grupo,x.act);
   save(); render();
 };
-/* Descriptores con viñetas y subviñetas. Cada línea de it.desc es una viñeta; la sangría inicial
-   (2 espacios por nivel) la convierte en subviñeta. Los datos antiguos (sin sangría) siguen siendo viñetas simples. */
+/* Descriptores de la rúbrica. Cada línea de it.desc puede ser:
+     «• texto»      → viñeta (punto negro)
+     «  ◦ texto»    → subviñeta (punto sin relleno; la sangría marca el nivel, 2 espacios por nivel)
+     «texto»        → texto normal, sin viñeta
+   Dentro del texto: **negrita**, *cursiva*, __subrayado__.
+   Compatibilidad: los descriptores guardados antes (it.descFmt distinto de 2) eran todos viñetas, así que
+   se muestran como viñeta; al editarlos se les escribe el «•» y se marcan como formato 2. */
+const CX_MARC=/^[•◦○▪▫·\-–*](\s+|$)/;
 function cxDescNivel(l){ const m=/^[ \t]*/.exec(l)[0].replace(/\t/g,"  ").length; return Math.min(3,Math.floor(m/2)); }
-function cxDescTexto(l){ return l.trim().replace(/^[-*•–◦▪]\s+/,""); }
-function cxDescHTML(desc){
-  const ls=(desc||[]).filter(l=>String(l).trim()); if(!ls.length) return "";
-  const ul='<ul style="margin:2px 0 0;padding-left:18px;text-align:justify;text-justify:inter-word;hyphens:auto">';
-  let out="", d=0;
-  ls.forEach(l=>{ const L=Math.min(cxDescNivel(l),d);
-    if(L+1>d){ out+=ul; d++; } else { out+="</li>"; while(d>L+1){ out+="</ul></li>"; d--; } }
-    out+="<li>"+esc(cxDescTexto(l)); });
-  out+="</li>"; while(d>1){ out+="</ul></li>"; d--; }
-  return out+"</ul>";
+function cxDescParse(l,antiguo){
+  const t=String(l).trim(), m=CX_MARC.exec(t);
+  return { nivel:cxDescNivel(String(l)), vineta:!!antiguo||!!m, texto:m?t.slice(m[0].length):t };
 }
-window.cxDescIndent=(ta,dir)=>{ if(!ta) return;
+const cxDescMarca=nivel=>nivel>0?"◦":"•";
+function cxDescATexto(it){
+  const ls=Array.isArray(it.desc)?it.desc:[];
+  if(it.descFmt===2) return ls.join("\n");
+  return ls.map(l=>{ const d=cxDescParse(l,true); return "  ".repeat(d.nivel)+cxDescMarca(d.nivel)+" "+d.texto; }).join("\n");
+}
+function cxDescLineas(v){ return String(v||"").split("\n").map(s=>s.replace(/\t/g,"  ").replace(/\s+$/,"")).filter(l=>cxDescParse(l,false).texto); }
+function cxDescInline(t){
+  return esc(t).replace(/\*\*(\S(?:.*?\S)?)\*\*/g,"<b>$1</b>").replace(/__(\S(?:.*?\S)?)__/g,"<u>$1</u>").replace(/\*(\S(?:.*?\S)?)\*/g,"<i>$1</i>");
+}
+/* colorTexto: color del texto; marcador: color del punto de la viñeta (negro en papel). */
+function cxDescHTML(desc,colorTexto,marcador,antiguo){
+  const ls=(desc||[]).filter(l=>String(l).trim()); if(!ls.length) return "";
+  const col=colorTexto?`color:${colorTexto}`:"", mk=marcador||"#000";
+  const ul=n=>`<ul style="margin:2px 0 0;padding-left:18px;list-style-type:${n===0?"disc":"circle"};color:${mk};text-align:justify;text-justify:inter-word;hyphens:auto">`;
+  const txt=t=>`<span style="${col}">${cxDescInline(t)}</span>`;
+  let out="", d=0;
+  const cerrar=()=>{ if(d){ out+="</li>"; while(d>1){ out+="</ul></li>"; d--; } out+="</ul>"; d=0; } };
+  ls.forEach(l=>{
+    const x=cxDescParse(l,antiguo);
+    if(!x.vineta){ cerrar(); out+=`<div style="margin-top:2px;text-align:justify;text-justify:inter-word;hyphens:auto;${col}">${cxDescInline(x.texto)}</div>`; return; }
+    const L=Math.min(x.nivel,d);
+    if(L+1>d){ out+=ul(d); d++; } else { out+="</li>"; while(d>L+1){ out+="</ul></li>"; d--; } }
+    out+="<li>"+txt(x.texto); });
+  cerrar();
+  return out;
+}
+window.cxDescPreview=ta=>{ const box=document.getElementById(ta.id.replace("cxd_","cxdp_")); if(!box) return;
+  const ls=cxDescLineas(ta.value);
+  box.style.display=ls.length?"":"none";
+  box.innerHTML='<span style="color:var(--mut)">Así se verá:</span>'+cxDescHTML(ls,"var(--mut)","var(--ink)");
+};
+function cxDescNotificar(ta){ ta.dispatchEvent(new Event("input",{bubbles:true})); ta.dispatchEvent(new Event("change",{bubbles:true})); }
+/* Líneas afectadas por la selección (si hay selección que termina justo al inicio de una línea, esa no cuenta). */
+function cxDescRango(ta){
   const v=ta.value, s=ta.selectionStart; let e=ta.selectionEnd;
   if(e>s && v[e-1]==="\n") e--;
   const ini=v.lastIndexOf("\n",s-1)+1; let fin=v.indexOf("\n",e); if(fin<0) fin=v.length;
-  let dS=0, dT=0;
-  const lineas=v.slice(ini,fin).split("\n");
+  return { v, s, e, ini, fin };
+}
+function cxDescAplicar(ta,r,nuevo,dS,dT){
+  ta.value=r.v.slice(0,r.ini)+nuevo.join("\n")+r.v.slice(r.fin);
+  ta.focus(); ta.selectionStart=Math.max(r.ini,r.s+dS); ta.selectionEnd=Math.max(ta.selectionStart,r.e+dT);
+  cxDescNotificar(ta);
+}
+/* nivel 0 = viñeta, 1 = subviñeta, -1 = sin viñeta. */
+window.cxDescNivelSel=(ta,nivel)=>{ if(!ta) return;
+  const r=cxDescRango(ta); let dS=0, dT=0;
+  const lineas=r.v.slice(r.ini,r.fin).split("\n");
   const nuevo=lineas.map((l,i)=>{
-    const r= dir>0 ? ((l.trim()||lineas.length===1)?"  "+l:l) : l.replace(/^( {1,2}|\t)/,"");
-    const dl=r.length-l.length; if(i===0) dS=dl; dT+=dl; return r; });
-  ta.value=v.slice(0,ini)+nuevo.join("\n")+v.slice(fin);
-  ta.focus(); ta.selectionStart=Math.max(ini,s+dS); ta.selectionEnd=Math.max(ta.selectionStart,e+dT);
-  ta.dispatchEvent(new Event("input",{bubbles:true})); ta.dispatchEvent(new Event("change",{bubbles:true}));
+    const x=cxDescParse(l,false); if(!x.texto && lineas.length>1) return l;
+    const r2= nivel<0 ? x.texto : "  ".repeat(nivel)+cxDescMarca(nivel)+" "+x.texto;
+    const dl=r2.length-l.length; if(i===0) dS=dl; dT+=dl; return r2; });
+  cxDescAplicar(ta,r,nuevo,dS,dT);
 };
-/* Tab / Mayús+Tab sangran solo cuando el cursor está en el comienzo de la línea (o hay varias líneas seleccionadas);
-   en cualquier otro caso Tab sigue moviendo el foco, para no atrapar el teclado. */
+/* Cambia un nivel de sangría (Tab / Mayús+Tab) conservando si la línea tiene o no viñeta. */
+function cxDescSangrar(ta,dir){
+  const r=cxDescRango(ta); let dS=0, dT=0;
+  const lineas=r.v.slice(r.ini,r.fin).split("\n");
+  const nuevo=lineas.map((l,i)=>{
+    const x=cxDescParse(l,false); if(!x.texto && lineas.length>1) return l;
+    const niv=Math.max(0,Math.min(3,x.nivel+dir));
+    const r2= x.vineta||!x.texto ? "  ".repeat(niv)+cxDescMarca(niv)+" "+x.texto : x.texto;
+    const dl=r2.length-l.length; if(i===0) dS=dl; dT+=dl; return r2; });
+  cxDescAplicar(ta,r,nuevo,dS,dT);
+}
+/* Negrita / cursiva / subrayado: envuelve (o desenvuelve) la selección con las marcas. */
+window.cxDescFmt=(ta,tipo)=>{ if(!ta) return;
+  const m={b:"**",i:"*",u:"__"}[tipo]; if(!m) return;
+  const v=ta.value, s=ta.selectionStart, e=ta.selectionEnd, n=m.length;
+  ta.focus();
+  if(s===e && v.slice(e,e+n)===m && !(m==="*"&&v[e+1]==="*") && !(s>=n && v.slice(s-n,s)===m)){   // cursor justo antes de la marca de cierre: la salta
+    ta.selectionStart=ta.selectionEnd=e+n; return;
+  }
+  if(s>=n && v.slice(s-n,s)===m && v.slice(e,e+n)===m){        // ya está: quitar marcas
+    ta.value=v.slice(0,s-n)+v.slice(s,e)+v.slice(e+n); ta.selectionStart=s-n; ta.selectionEnd=e-n;
+  } else if(e-s>=2*n && v.slice(s,s+n)===m && v.slice(e-n,e)===m){   // la selección ya incluye las marcas
+    ta.value=v.slice(0,s)+v.slice(s+n,e-n)+v.slice(e); ta.selectionStart=s; ta.selectionEnd=e-2*n;
+  } else {
+    ta.value=v.slice(0,s)+m+v.slice(s,e)+m+v.slice(e);
+    if(s===e){ ta.selectionStart=ta.selectionEnd=s+n; } else { ta.selectionStart=s+n; ta.selectionEnd=e+n; }
+  }
+  cxDescNotificar(ta);
+};
+/* Teclado: Intro mantiene sangría y viñeta (Intro en una viñeta vacía la termina); Tab / Mayús+Tab cambian de nivel solo
+   cuando el cursor está al comienzo de la línea (o hay varias líneas seleccionadas), para no atrapar el teclado;
+   Ctrl+B / Ctrl+I / Ctrl+U aplican negrita, cursiva y subrayado. */
 window.cxDescKey=(ev,ta)=>{
-  // Intro mantiene la sangría de la línea anterior (se sigue en la misma subviñeta).
+  if((ev.ctrlKey||ev.metaKey)&&!ev.altKey&&!ev.shiftKey){
+    const t={b:"b",i:"i",u:"u"}[ev.key.toLowerCase()]; if(t){ ev.preventDefault(); cxDescFmt(ta,t); } return; }
   if(ev.key==="Enter"&&!ev.ctrlKey&&!ev.altKey&&!ev.metaKey&&!ev.shiftKey&&!ev.isComposing){
-    const v=ta.value, s=ta.selectionStart, ini=v.lastIndexOf("\n",s-1)+1, sang=/^[ \t]*/.exec(v.slice(ini,s))[0];
-    if(sang){ ev.preventDefault(); ta.setRangeText("\n"+sang,s,ta.selectionEnd,"end"); ta.dispatchEvent(new Event("input",{bubbles:true})); }
-    return; }
+    const v=ta.value, s=ta.selectionStart, ini=v.lastIndexOf("\n",s-1)+1, ant=v.slice(ini,s), x=cxDescParse(ant,false);
+    if(!x.vineta) return;
+    ev.preventDefault();
+    if(!x.texto){ ta.setRangeText("",ini,ta.selectionEnd,"end"); }   // viñeta vacía: se acaba la lista
+    else ta.setRangeText("\n"+"  ".repeat(x.nivel)+cxDescMarca(x.nivel)+" ",s,ta.selectionEnd,"end");
+    cxDescNotificar(ta); return; }
   if(ev.key!=="Tab"||ev.ctrlKey||ev.altKey||ev.metaKey) return;
-  const v=ta.value, s=ta.selectionStart, e=ta.selectionEnd;
-  const ini=v.lastIndexOf("\n",s-1)+1;
-  const alInicio= s!==e && v.slice(s,e).includes("\n") || /^[ \t]*$/.test(v.slice(ini,s));
-  if(ev.shiftKey){ if(!alInicio || !/^( |\t)/.test(v.slice(ini))) return; ev.preventDefault(); cxDescIndent(ta,-1); }
-  else { if(!alInicio) return; ev.preventDefault(); cxDescIndent(ta,1); }
+  const v=ta.value, s=ta.selectionStart, e=ta.selectionEnd, ini=v.lastIndexOf("\n",s-1)+1, antes=v.slice(ini,s);
+  const alInicio= (s!==e && v.slice(s,e).includes("\n")) || /^[ \t]*([•◦○▪▫·\-–*]\s*)?$/.test(antes);
+  if(!alInicio) return;
+  if(ev.shiftKey && cxDescNivel(v.slice(ini))===0) return;
+  ev.preventDefault(); cxDescSangrar(ta,ev.shiftKey?-1:1);
 };
-window.cxSetItemDesc=(secId,itemId,v)=>{ const it=cxFindItem(secId,itemId); if(it){ it.desc=String(v||"").split("\n").map(s=>s.replace(/\t/g,"  ").replace(/\s+$/,"")).filter(l=>l.trim()); save(); } };
+window.cxSetItemDesc=(secId,itemId,v)=>{ const it=cxFindItem(secId,itemId); if(it){ it.desc=cxDescLineas(v); it.descFmt=2; save(); } };
 window.cxToggleItemCriterios=itemId=>{ state.ui.corItemAbierto = state.ui.corItemAbierto===itemId? "" : itemId; save(); render(); };
 window.cxToggleItemLink=(secId,itemId,critId)=>{
   const x=cxCtxEd(); if(!x) return;

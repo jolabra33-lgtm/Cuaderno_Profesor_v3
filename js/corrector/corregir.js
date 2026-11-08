@@ -135,7 +135,7 @@ function cxNodoCorregirHTML(sec,depth,sc,alId,actId){
         <div class="row" style="justify-content:space-between;margin-bottom:6px;align-items:flex-start;${atenuar(it.id)?"opacity:.5":""}">
           <div style="flex:1" data-fuente="${it.fuenteId||""}"${it.unico?' data-unico="1"':""}>
             ${it.unico&&!it.label?"":`<div style="font-size:13.5px">${esc(it.label||"(sin enunciado)")}</div>`}
-            ${it.desc&&it.desc.length?`<div style="font-size:11.5px;color:var(--mut);margin-top:2px;text-align:justify">${cxDescHTML(it.desc)}</div>`:""}
+            ${it.desc&&it.desc.length?`<div style="font-size:11.5px;margin-top:2px;text-align:justify">${cxDescHTML(it.desc,"var(--mut)","var(--ink)",it.descFmt!==2)}</div>`:""}
             ${exComentHTML(alId,actId,it.id)}
           </div>
           <span class="flex" style="align-items:center;flex-shrink:0">
@@ -310,7 +310,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
   const filaItem=it=>{
       const val=sc[it.id];
       const max=Number(it.max)||0;
-      const desc=(!opts.resumida&&it.desc&&it.desc.length)?`<div class="cx-item-desc">${cxDescHTML(it.desc)}</div>`:"";
+      const desc=(!opts.resumida&&it.desc&&it.desc.length)?`<div class="cx-item-desc">${cxDescHTML(it.desc,"#5b6b82","#000",it.descFmt!==2)}</div>`:"";
       return `<tr><td>
           ${it.unico&&!it.label?"":`<div class="cx-item-label">${esc(it.label||"(sin enunciado)")}</div>`}
           ${desc}
