@@ -53,6 +53,16 @@ function renderCorSinGrupo(){
 }
 
 /* ---------- Lista de exámenes ---------- */
+/* Cambia el nombre de un examen desde la lista (el mismo cambio que el campo «Nombre» del editor de la rúbrica):
+   si estaba vinculado a un evento del calendario, también se actualiza su título. Un nombre vacío no se admite. */
+window.cxRenombrarExamen=(id,valor)=>{
+  const grupo=grupoActual(), act=grupo&&grupo.actividades.find(a=>a.id===id); if(!act) return;
+  const nombre=String(valor||"").trim();
+  if(!nombre){ render(); return; }
+  act.nombre=nombre;
+  const evVinc=(state.eventos||[]).find(ev=>ev.examId===act.id); if(evVinc) evVinc.titulo=act.nombre;
+  save(); render();
+};
 function renderCorLista(grupo){
   const c=document.getElementById("tabContent");
   const exams=cxExamenesRubrica(grupo);
@@ -70,7 +80,10 @@ function renderCorLista(grupo){
     return `<div class="card" style="padding:14px 16px">
       <div class="flex" style="justify-content:space-between;align-items:flex-start">
         <div>
-          <div style="font-size:15px;font-weight:600">${esc(act.nombre)} ${act.sda?`<span class="badge" style="vertical-align:middle;margin-left:6px">${esc(act.sda)}</span>`:''}</div>
+          <div class="flex" style="align-items:center;gap:6px;flex-wrap:wrap">
+            <input class="in" value="${esc(act.nombre)}" aria-label="Nombre del examen (se puede cambiar)" title="Pulsa para cambiar el nombre del examen" style="font-size:15px;font-weight:600;min-width:240px;max-width:100%" onchange="cxRenombrarExamen('${act.id}',this.value)">
+            ${act.sda?`<span class="badge" style="vertical-align:middle">${esc(act.sda)}</span>`:''}
+          </div>
           <div style="font-size:12.5px;color:var(--mut);margin-top:2px">${b?esc(b.label):""} · ${notas.length}/${grupo.alumnos.length} corregido${notas.length===1?"":"s"}${media!=null?` · media ${fmt(media)}`:""}</div>
           ${cxAvisoCriteriosBadgeHTML(grupo,act)}
         </div>
