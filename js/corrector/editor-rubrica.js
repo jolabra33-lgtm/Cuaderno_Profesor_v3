@@ -97,8 +97,10 @@ function renderCorEditor(grupo){
   document.getElementById("cxBloque").addEventListener("change",e=>{ act.bloqueId=e.target.value; save(); });
   document.getElementById("cxSda").addEventListener("change",e=>{ act.sda=e.target.value.trim(); save(); });
   c.querySelectorAll("textarea.cx-autogrow").forEach(cxAutoGrow);
+  // Tras el primer pintado (fuentes y anchos ya aplicados) se reajusta para que no quede texto cortado.
+  requestAnimationFrame(()=>c.querySelectorAll("textarea.cx-autogrow").forEach(cxAutoGrow));
 }
-function cxAutoGrow(t){ t.style.height="auto"; t.style.height=(t.scrollHeight+2)+"px"; }
+function cxAutoGrow(t){ if(!t.offsetParent) return; t.style.height="auto"; t.style.height=(t.scrollHeight+2)+"px"; }
 function renderCxPlanoHTML(grupo,sec){
   const items=sec.items||[], subs=sec.subs||[];
   return `<div class="card" data-cxnodo="${sec.id}">
@@ -152,7 +154,7 @@ function renderCxNodoHTML(grupo,sec,depth,sIdx,nHermanos){
         <button class="ghost danger small" onclick="cxDelSeccion('${sec.id}')">Eliminar ${nivel.toLowerCase()}</button>
       </div>
     </div>
-    <textarea class="in cx-autogrow" rows="1" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;font-weight:600;resize:none;overflow:hidden;line-height:1.45;font-size:${depth===0?"14.5px":"13.5px"}" placeholder="${sec.tipo==="pregunta"||sec.tipo==="subpregunta"?"Enunciado de la "+sec.tipo:depth===0?"Título y enunciado del apartado (p. ej. II. Comentario de fuente histórica — elija UNA de las dos fuentes)":"Título y enunciado del subapartado (p. ej. 2.1. Describa el tipo de fuente, analice el contenido…)"}" oninput="cxAutoGrow(this)" onchange="cxSetSeccionTitle('${sec.id}',this.value)">${esc(sec.title||"")}</textarea>
+    <textarea class="in cx-autogrow" rows="1" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;font-weight:600;resize:vertical;overflow:auto;min-height:38px;line-height:1.45;font-size:${depth===0?"14.5px":"13.5px"}" placeholder="${sec.tipo==="pregunta"||sec.tipo==="subpregunta"?"Enunciado de la "+sec.tipo:depth===0?"Título y enunciado del apartado (p. ej. II. Comentario de fuente histórica — elija UNA de las dos fuentes)":"Título y enunciado del subapartado (p. ej. 2.1. Describa el tipo de fuente, analice el contenido…)"}" oninput="cxAutoGrow(this)" onchange="cxSetSeccionTitle('${sec.id}',this.value)">${esc(sec.title||"")}</textarea>
     ${nHijos>=2?`<label style="font-size:12.5px;color:var(--mut);display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap">El alumnado responde
       <select class="in" style="padding:4px 8px" onchange="cxSetNodoElegir('${sec.id}',this.value)">
         <option value="0" ${!k?"selected":""}>todo (${nHijos} de ${nHijos})</option>
@@ -192,7 +194,7 @@ function renderCxItemHTML(grupo,sec,it,iIdx){
   const nCrit=(it.links||[]).length;
   return `<div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface,#fff)">
     <div class="flex" style="align-items:flex-start">
-      ${it.unico?`<span style="flex:1;min-width:180px;font-size:12.5px;color:var(--mut)">Puntuación de la pregunta</span>`:`<input class="in" placeholder="Pregunta / enunciado / criterio de corrección" value="${esc(it.label)}" style="flex:1;min-width:180px" onchange="cxSetItemLabel('${sec.id}','${it.id}',this.value)">`}
+      ${it.unico?`<span style="flex:1;min-width:180px;font-size:12.5px;color:var(--mut)">Puntuación de la pregunta</span>`:`<textarea class="in cx-autogrow" rows="1" placeholder="Pregunta / enunciado / criterio de corrección" style="flex:1;min-width:180px;box-sizing:border-box;resize:vertical;overflow:auto;min-height:38px;line-height:1.45;font-family:inherit" oninput="cxAutoGrow(this)" onchange="cxSetItemLabel('${sec.id}','${it.id}',this.value)">${esc(it.label)}</textarea>`}
       <span class="flex" style="gap:4px;align-items:center">
         <input class="in miniw" type="text" inputmode="decimal" autocomplete="off" value="${String(it.max).replace('.',',')}" style="width:70px" onchange="cxSetItemMax('${sec.id}','${it.id}',this.value)">
         <span style="font-size:12.5px;color:var(--mut)">pts</span>
