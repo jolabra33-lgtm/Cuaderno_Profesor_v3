@@ -203,7 +203,11 @@ function renderCxItemHTML(grupo,sec,it,iIdx){
       <button class="ghost small" ${iIdx===(sec.items||[]).length-1?"disabled":""} onclick="cxMoveItem('${sec.id}','${it.id}',1)">↓</button>
       <button class="ghost danger" onclick="cxDelItem('${sec.id}','${it.id}')">Eliminar</button>
     </div>
-    <textarea class="in cx-autogrow" style="width:100%;box-sizing:border-box;margin-top:6px;min-height:44px;resize:vertical;font-size:13px" placeholder="Descriptores (opcional, una línea por cada uno: p. ej. «Identifica el tipo de fuente y su autor (0,5)»)" oninput="cxAutoGrow(this)" onchange="cxSetItemDesc('${sec.id}','${it.id}',this.value)">${esc((it.desc||[]).join("\n"))}</textarea>
+    <textarea id="cxd_${it.id}" class="in cx-autogrow" style="width:100%;box-sizing:border-box;margin-top:6px;min-height:44px;resize:vertical;font-size:13px;text-align:justify" placeholder="Descriptores (opcional, una línea por cada uno, cada una con su viñeta: p. ej. «Identifica el tipo de fuente y su autor (0,5)»). Con Tab o con «Subviñeta» una línea pasa a subviñeta." oninput="cxAutoGrow(this)" onkeydown="cxDescKey(event,this)" onchange="cxSetItemDesc('${sec.id}','${it.id}',this.value)">${esc((it.desc||[]).join("\n"))}</textarea>
+    <div class="flex" style="gap:4px;margin-top:4px;align-items:center">
+      <button type="button" class="ghost small" style="border:1px solid var(--line)" title="Convierte las líneas seleccionadas en subviñeta (Tab al principio de la línea)" onclick="cxDescIndent(document.getElementById('cxd_${it.id}'),1)">↳ Subviñeta</button>
+      <button type="button" class="ghost small" style="border:1px solid var(--line)" title="Quita un nivel de sangría a las líneas seleccionadas (Mayús+Tab)" onclick="cxDescIndent(document.getElementById('cxd_${it.id}'),-1)">↰ Quitar sangría</button>
+    </div>
     <button class="ghost" style="border:1px solid var(--line);margin-top:6px" onclick="cxToggleItemCriterios('${it.id}')">${abierto?"Ocultar":"Vincular"} criterios${nCrit?` (${nCrit})`:""}</button>
     ${abierto?(()=>{
       const linkados=new Set((it.links||[]).map(l=>l.critId));
@@ -300,7 +304,49 @@ window.cxSetItemMax=(secId,itemId,v)=>{
   cxRecalcTodosLosAlumnos(x.grupo,x.act);
   save(); render();
 };
-window.cxSetItemDesc=(secId,itemId,v)=>{ const it=cxFindItem(secId,itemId); if(it){ it.desc=String(v||"").split("\n").map(s=>s.trim()).filter(Boolean); save(); } };
+/* Descriptores con viñetas y subviñetas. Cada línea de it.desc es una viñeta; la sangría inicial
+   (2 espacios por nivel) la convierte en subviñeta. Los datos antiguos (sin sangría) siguen siendo viñetas simples. */
+function cxDescNivel(l){ const m=/^[ \t]*/.exec(l)[0].replace(/\t/g,"  ").length; return Math.min(3,Math.floor(m/2)); }
+function cxDescTexto(l){ return l.trim().replace(/^[-*•–◦▪]\s+/,""); }
+function cxDescHTML(desc){
+  const ls=(desc||[]).filter(l=>String(l).trim()); if(!ls.length) return "";
+  const ul='<ul style="margin:2px 0 0;padding-left:18px;text-align:justify;text-justify:inter-word;hyphens:auto">';
+  let out="", d=0;
+  ls.forEach(l=>{ const L=Math.min(cxDescNivel(l),d);
+    if(L+1>d){ out+=ul; d++; } else { out+="</li>"; while(d>L+1){ out+="</ul></li>"; d--; } }
+    out+="<li>"+esc(cxDescTexto(l)); });
+  out+="</li>"; while(d>1){ out+="</ul></li>"; d--; }
+  return out+"</ul>";
+}
+window.cxDescIndent=(ta,dir)=>{ if(!ta) return;
+  const v=ta.value, s=ta.selectionStart; let e=ta.selectionEnd;
+  if(e>s && v[e-1]==="\n") e--;
+  const ini=v.lastIndexOf("\n",s-1)+1; let fin=v.indexOf("\n",e); if(fin<0) fin=v.length;
+  let dS=0, dT=0;
+  const lineas=v.slice(ini,fin).split("\n");
+  const nuevo=lineas.map((l,i)=>{
+    const r= dir>0 ? ((l.trim()||lineas.length===1)?"  "+l:l) : l.replace(/^( {1,2}|\t)/,"");
+    const dl=r.length-l.length; if(i===0) dS=dl; dT+=dl; return r; });
+  ta.value=v.slice(0,ini)+nuevo.join("\n")+v.slice(fin);
+  ta.focus(); ta.selectionStart=Math.max(ini,s+dS); ta.selectionEnd=Math.max(ta.selectionStart,e+dT);
+  ta.dispatchEvent(new Event("input",{bubbles:true})); ta.dispatchEvent(new Event("change",{bubbles:true}));
+};
+/* Tab / Mayús+Tab sangran solo cuando el cursor está en el comienzo de la línea (o hay varias líneas seleccionadas);
+   en cualquier otro caso Tab sigue moviendo el foco, para no atrapar el teclado. */
+window.cxDescKey=(ev,ta)=>{
+  // Intro mantiene la sangría de la línea anterior (se sigue en la misma subviñeta).
+  if(ev.key==="Enter"&&!ev.ctrlKey&&!ev.altKey&&!ev.metaKey&&!ev.shiftKey&&!ev.isComposing){
+    const v=ta.value, s=ta.selectionStart, ini=v.lastIndexOf("\n",s-1)+1, sang=/^[ \t]*/.exec(v.slice(ini,s))[0];
+    if(sang){ ev.preventDefault(); ta.setRangeText("\n"+sang,s,ta.selectionEnd,"end"); ta.dispatchEvent(new Event("input",{bubbles:true})); }
+    return; }
+  if(ev.key!=="Tab"||ev.ctrlKey||ev.altKey||ev.metaKey) return;
+  const v=ta.value, s=ta.selectionStart, e=ta.selectionEnd;
+  const ini=v.lastIndexOf("\n",s-1)+1;
+  const alInicio= s!==e && v.slice(s,e).includes("\n") || /^[ \t]*$/.test(v.slice(ini,s));
+  if(ev.shiftKey){ if(!alInicio || !/^( |\t)/.test(v.slice(ini))) return; ev.preventDefault(); cxDescIndent(ta,-1); }
+  else { if(!alInicio) return; ev.preventDefault(); cxDescIndent(ta,1); }
+};
+window.cxSetItemDesc=(secId,itemId,v)=>{ const it=cxFindItem(secId,itemId); if(it){ it.desc=String(v||"").split("\n").map(s=>s.replace(/\t/g,"  ").replace(/\s+$/,"")).filter(l=>l.trim()); save(); } };
 window.cxToggleItemCriterios=itemId=>{ state.ui.corItemAbierto = state.ui.corItemAbierto===itemId? "" : itemId; save(); render(); };
 window.cxToggleItemLink=(secId,itemId,critId)=>{
   const x=cxCtxEd(); if(!x) return;
