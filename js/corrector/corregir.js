@@ -135,7 +135,7 @@ function cxNodoCorregirHTML(sec,depth,sc,alId,actId){
         <div class="row" style="justify-content:space-between;margin-bottom:6px;align-items:flex-start;${atenuar(it.id)?"opacity:.5":""}">
           <div style="flex:1" data-fuente="${it.fuenteId||""}"${it.unico?' data-unico="1"':""}>
             ${it.unico&&!it.label?"":`<div style="font-size:13.5px">${esc(it.label||"(sin enunciado)")}</div>`}
-            ${it.desc&&it.desc.length?`<div style="font-size:11.5px;color:var(--mut);margin-top:2px">${it.desc.map(d=>`• ${esc(d)}`).join("<br>")}</div>`:""}
+            ${it.desc&&it.desc.length?`<div style="font-size:11.5px;color:var(--mut);margin-top:2px;text-align:justify">${cxDescHTML(it.desc)}</div>`:""}
             ${exComentHTML(alId,actId,it.id)}
           </div>
           <span class="flex" style="align-items:center;flex-shrink:0">
@@ -265,7 +265,7 @@ function cxRubricaPrintCSS(){
     .cx-sec table{ border:1px solid #e6e9ef; }
     .cx-sec td{ padding:11px 13px; }
     .cx-item-label{ font-size:14px; font-weight:600; color:#141b28; }
-    .cx-item-desc{ font-size:12.5px; color:#5b6b82; margin-top:4px; line-height:1.6; }
+    .cx-item-desc{ font-size:12.5px; color:#5b6b82; margin-top:4px; line-height:1.6; text-align:justify; }
     .cx-item-score{ font-size:16px; font-weight:700; color:#141b28; }
     .cx-item-score small{ font-weight:400; color:#8d97ab; font-size:12px; }
     .cx-total-box{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin:26px 0; padding:16px 20px; background:rgba(183,137,58,.12); border:1px solid rgba(183,137,58,.35); border-radius:10px; page-break-inside:avoid; }
@@ -291,7 +291,7 @@ function cxRubricaResumidaCSS(){
     .cx-sec h2{ padding-bottom:4px; }
     .cx-sec td{ padding:5px 10px; }
     .cx-item-label{ font-size:13px; }
-    .cx-item-desc{ font-size:12px; margin-top:2px; line-height:1.4; }
+    .cx-item-desc{ font-size:12px; margin-top:2px; line-height:1.4; text-align:justify; }
     .cx-item-score{ font-size:14.5px; }
     .cx-total-box{ margin:14px 0; padding:9px 16px; }
     .cx-total-value{ font-size:22px; }
@@ -310,7 +310,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
   const filaItem=it=>{
       const val=sc[it.id];
       const max=Number(it.max)||0;
-      const desc=(!opts.resumida&&it.desc&&it.desc.length)?`<div class="cx-item-desc">${it.desc.map(d=>"• "+esc(d)).join("<br>")}</div>`:"";
+      const desc=(!opts.resumida&&it.desc&&it.desc.length)?`<div class="cx-item-desc">${cxDescHTML(it.desc)}</div>`:"";
       return `<tr><td>
           ${it.unico&&!it.label?"":`<div class="cx-item-label">${esc(it.label||"(sin enunciado)")}</div>`}
           ${desc}
