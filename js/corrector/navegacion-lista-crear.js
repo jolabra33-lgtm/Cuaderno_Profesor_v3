@@ -53,6 +53,37 @@ function renderCorSinGrupo(){
 }
 
 /* ---------- Lista de exámenes ---------- */
+/* Vínculo de un examen con una actividad de la Programación de Aula del grupo (act.progActId).
+   Permite vincular a posteriori un examen creado a mano, o desvincularlo. */
+function cxVinculoProgHTML(grupo,act){
+  if(act.recupera) return "";
+  const ref=cxProgActDe(grupo,act);
+  const estilo="font-size:12.5px;color:var(--mut);margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap";
+  if(ref) return `<div style="${estilo}">📘 Vinculado a la Programación «${esc(ref.prog.nombre)}» · ${esc(ref.progAct.nombre||"actividad sin nombre")}
+    <button class="ghost small" style="border:1px solid var(--line)" onclick="cxDesvincularDeProgramacion('${act.id}')">Desvincular</button></div>`;
+  return `<div style="${estilo}"><button class="ghost small" style="border:1px solid var(--line)" title="Asocia este examen a una actividad de la Programación de Aula del grupo, sin crear otro examen" onclick="cxVincularAProgramacion('${act.id}')">🔗 Vincular a una actividad de la Programación…</button></div>`;
+}
+window.cxVincularAProgramacion=async actId=>{
+  const grupo=grupoActual(), act=grupo&&grupo.actividades.find(a=>a.id===actId); if(!act) return;
+  const prog=progDeGrupo(grupo);
+  if(!prog){ mostrarAviso("Este grupo no tiene ninguna Programación de Aula vinculada.\n\nVincúlala en Ajustes del grupo (tarjeta «Programación de Aula vinculada») y vuelve a pulsar aquí."); return; }
+  // Solo exámenes con nombre y que no estén ya asociados a otro examen del grupo.
+  const ocupadas=new Set(grupo.actividades.filter(a=>a.id!==act.id && !a.recupera && a.progActId).map(a=>a.progActId));
+  const libres=(prog.actividades||[]).filter(pa=>pa.esExamen && (pa.nombre||"").trim() && !ocupadas.has(pa.id));
+  if(!libres.length){ mostrarAviso(`La Programación «${prog.nombre}» no tiene ninguna actividad de tipo examen libre para vincular.\n\nCrea el examen en la Programación de Aula (marcado como examen) y vuelve a pulsar aquí.`); return; }
+  const id=await elegirOpcion("🔗 Vincular a la Programación",`¿A qué actividad de «${prog.nombre}» corresponde «${act.nombre}»?\n\nEl examen no se duplica: conserva su rúbrica y sus notas.`,
+    libres.map(pa=>({value:pa.id,label:pa.nombre})));
+  if(!id) return;
+  const pa=libres.find(x=>x.id===id); if(!pa) return;
+  act.progActId=pa.id;
+  save(); render();
+  mostrarToast(`✓ «${act.nombre}» vinculado a «${pa.nombre}» de la Programación`);
+};
+window.cxDesvincularDeProgramacion=async actId=>{
+  const grupo=grupoActual(), act=grupo&&grupo.actividades.find(a=>a.id===actId); if(!act) return;
+  if(!await confirmar(`¿Desvincular «${act.nombre}» de la Programación? El examen, su rúbrica y sus notas se quedan como están; solo se rompe la asociación con la actividad planificada.`,{ok:"Desvincular"})) return;
+  delete act.progActId; save(); render();
+};
 /* Cambia el nombre de un examen desde la lista (el mismo cambio que el campo «Nombre» del editor de la rúbrica):
    si estaba vinculado a un evento del calendario, también se actualiza su título. Un nombre vacío no se admite. */
 window.cxRenombrarExamen=(id,valor)=>{
@@ -86,6 +117,7 @@ function renderCorLista(grupo){
           </div>
           <div style="font-size:12.5px;color:var(--mut);margin-top:2px">${b?esc(b.label):""} · ${notas.length}/${grupo.alumnos.length} corregido${notas.length===1?"":"s"}${media!=null?` · media ${fmt(media)}`:""}</div>
           ${cxAvisoCriteriosBadgeHTML(grupo,act)}
+          ${cxVinculoProgHTML(grupo,act)}
         </div>
         <div class="flex">
           <button class="btn small" onclick="cxIrCorregir('${act.id}')">Corregir</button>
