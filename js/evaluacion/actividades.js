@@ -85,10 +85,10 @@ function renderActividades(grupo){
       const tipoDesc = a.rubrica ? "examen con rúbrica: nota cuantitativa + % por criterio (gestionado desde el Corrector)"
         : a.esExamen ? "examen: nota cuantitativa + escala de 4 niveles por criterio" : "escala de 4 niveles";
       const nAct=lista.length;
-      return `<div class="act-row" ${nAct>1?`draggable="true" ondragstart="actDragStart(event,'${a.id}')" ondragend="actDragEnd()" ondragover="actDragOver(event,this)" ondragleave="this.classList.remove('act-drop')" ondrop="actDrop(event,'${a.id}')"`:""} data-actid="${a.id}" style="border:1px solid var(--line);border-radius:8px;padding:10px 12px">
+      return `<div class="act-row" ${nAct>1?`ondragstart="actDragStart(event,'${a.id}')" ondragend="actDragEnd()" ondragover="actDragOver(event,this)" ondragleave="this.classList.remove('act-drop')" ondrop="actDrop(event,'${a.id}')"`:""} data-actid="${a.id}" style="border:1px solid var(--line);border-radius:8px;padding:10px 12px">
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:start">
           ${nAct>1?`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
-            <span style="cursor:grab;color:var(--mut);font-size:17px;user-select:none;line-height:1" title="Arrastra para reordenar">⠿</span>
+            <span draggable="true" style="cursor:grab;color:var(--mut);font-size:17px;user-select:none;line-height:1" title="Arrastra para reordenar">⠿</span>
             <button class="ghost" style="padding:2px 8px;min-width:0" title="Subir un puesto" aria-label="Subir ${esc(a.nombre)}" ${iAct===0?"disabled":""} onclick="moverActividad('${a.id}',-1)">▲</button>
             <button class="ghost" style="padding:2px 8px;min-width:0" title="Bajar un puesto" aria-label="Bajar ${esc(a.nombre)}" ${iAct===nAct-1?"disabled":""} onclick="moverActividad('${a.id}',1)">▼</button>
           </div>`:""}
@@ -187,7 +187,7 @@ window.moverActividad=(id,dir)=>{
 let actArrastrando=null;
 window.actDragStart=(ev,id)=>{
   actArrastrando=id;
-  try{ ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setData("text/plain",id); }catch(_){}
+  try{ ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setData("text/plain",id); if(ev.currentTarget) ev.dataTransfer.setDragImage(ev.currentTarget,20,20); }catch(_){}
   ev.currentTarget.classList.add("act-arrastrando");
 };
 window.actDragEnd=()=>{
