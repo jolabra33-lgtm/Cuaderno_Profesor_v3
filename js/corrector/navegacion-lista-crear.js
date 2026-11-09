@@ -110,9 +110,9 @@ function renderCorLista(grupo){
     const b=grupo.bloques.find(x=>x.id===act.bloqueId);
     return `<div class="card" style="padding:14px 16px">
       <div class="flex" style="justify-content:space-between;align-items:flex-start">
-        <div>
-          <div class="flex" style="align-items:center;gap:6px;flex-wrap:wrap">
-            <input class="in" value="${esc(act.nombre)}" aria-label="Nombre del examen (se puede cambiar)" title="Pulsa para cambiar el nombre del examen" style="font-size:15px;font-weight:600;min-width:240px;max-width:100%" onchange="cxRenombrarExamen('${act.id}',this.value)">
+        <div style="flex:1 1 100%;min-width:0">
+          <div class="flex" style="align-items:center;gap:6px;flex-wrap:nowrap">
+            <input class="in" value="${esc(act.nombre)}" aria-label="Nombre del examen (se puede cambiar)" title="Pulsa para cambiar el nombre del examen" style="font-size:15px;font-weight:600;flex:1;min-width:0;width:100%" onchange="cxRenombrarExamen('${act.id}',this.value)">
             ${act.sda?`<span class="badge" style="vertical-align:middle">${esc(act.sda)}</span>`:''}
           </div>
           <div style="font-size:12.5px;color:var(--mut);margin-top:2px">${b?esc(b.label):""} · ${notas.length}/${grupo.alumnos.length} corregido${notas.length===1?"":"s"}${media!=null?` · media ${fmt(media)}`:""}</div>

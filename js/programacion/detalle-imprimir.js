@@ -89,9 +89,9 @@ function progDetalleHTML(root){
     ${porTrim[t].map((s,iSub)=>{
       const reales=progSesionesReales_todosGrupos(p,s.id);
       const abierta=!!progSdaAbiertas[s.id];
-      return `<div class="card" draggable="true" data-sda-id="${s.id}" ondragstart="progSdaDragStart(event,'${s.id}')" ondragover="event.preventDefault();event.stopPropagation()" ondrop="event.stopPropagation();progSdaDrop(event,${t},'${s.id}')">
+      return `<div class="card" data-sda-id="${s.id}" ondragstart="progSdaDragStart(event,'${s.id}')" ondragover="event.preventDefault();event.stopPropagation()" ondrop="event.stopPropagation();progSdaDrop(event,${t},'${s.id}')">
         <div class="flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center">
-          <span style="cursor:grab;color:var(--mut);font-size:17px;user-select:none" title="Arrastra para reordenar o cambiar de trimestre">⠿</span>
+          <span draggable="true" style="cursor:grab;color:var(--mut);font-size:17px;user-select:none" title="Arrastra para reordenar o cambiar de trimestre">⠿</span>
           <button class="ghost" style="padding:2px 8px;min-width:0" title="Subir un puesto" ${iSub===0?"disabled":""} onclick="progMoverSda('${s.id}',-1)">▲</button>
           <button class="ghost" style="padding:2px 8px;min-width:0" title="Bajar un puesto" ${iSub===porTrim[t].length-1?"disabled":""} onclick="progMoverSda('${s.id}',1)">▼</button>
           <button class="ghost" style="padding:2px 8px;min-width:0" title="${abierta?"Contraer":"Expandir"}" onclick="progToggleSdaAbierta('${s.id}')">${abierta?"▾":"▸"}</button>

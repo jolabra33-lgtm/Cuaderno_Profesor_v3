@@ -256,7 +256,7 @@ window.progMoverSda=(sdaId,dir)=>{
 let __progDragSdaId=null;
 window.progSdaDragStart=(ev,sdaId)=>{
   __progDragSdaId=sdaId;
-  try{ ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setData("text/plain",sdaId); }catch(e){}
+  try{ ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setData("text/plain",sdaId); if(ev.currentTarget) ev.dataTransfer.setDragImage(ev.currentTarget,20,20); }catch(e){}
 };
 window.progSdaDrop=(ev,trimestreDestino,antesDeId)=>{
   ev.preventDefault();
