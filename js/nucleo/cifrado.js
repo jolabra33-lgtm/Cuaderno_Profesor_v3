@@ -25,6 +25,15 @@ async function cifrarTexto(texto,pass){
   return JSON.stringify({formato:CIFRADO_FORMATO,version:1,kdf:"PBKDF2-SHA256",iteraciones:iter,sal:_b64(salt),iv:_b64(iv),datos:_b64(ct),creado:new Date().toISOString(),
     aviso:"Copia cifrada del Cuaderno del Profesor. Solo se puede abrir desde la app (Importar copia) con su contraseña."});
 }
+/* v3: cifra con una clave ya derivada (la copia automática en carpeta la guarda en el dispositivo para no
+   pedir la contraseña cada vez). El archivo tiene el mismo formato que «Exportar copia cifrada»: en cualquier
+   otro dispositivo se abre con «Importar copia» y la contraseña. */
+async function cifrarConClave(texto,clave,salt,iter,extra){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},clave,new TextEncoder().encode(texto));
+  return JSON.stringify(Object.assign({formato:CIFRADO_FORMATO,version:1,kdf:"PBKDF2-SHA256",iteraciones:iter,sal:_b64(salt),iv:_b64(iv),datos:_b64(ct),creado:new Date().toISOString(),
+    aviso:"Copia cifrada del Cuaderno del Profesor. Solo se puede abrir desde la app (Importar copia) con su contraseña."},extra||{}));
+}
 async function descifrarTexto(obj,pass){
   const k=await _claveDe(pass,_unb64(obj.sal),obj.iteraciones||310000);
   const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:_unb64(obj.iv)},k,_unb64(obj.datos));
@@ -87,6 +96,8 @@ window.exportarCifrada=async()=>{
 async function descifrarSiHaceFalta(s,nombreArchivo){
   if(!s || s.formato!==CIFRADO_FORMATO) return s;
   if(!cifradoDisponible()){ mostrarAviso("Esta copia está cifrada y este navegador no permite descifrarla aquí."); return null; }
+  // Copia de la carpeta cifrada con la clave que guarda este mismo dispositivo: se abre sin pedir la contraseña.
+  if(typeof ccIntentarDescifrar==="function"){ const r=await ccIntentarDescifrar(s); if(r) return r; }
   for(let intento=0;intento<5;intento++){
     const pass=await pedirContrasena({titulo:"🔒 Copia cifrada",texto:`«${esc(nombreArchivo||"copia")}» está protegida con contraseña.${intento?' <strong style="color:var(--danger,#b91c1c)">Contraseña incorrecta, prueba de nuevo.</strong>':""}`,boton:"Abrir"});
     if(pass==null) return null;
