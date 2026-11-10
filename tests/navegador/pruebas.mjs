@@ -378,6 +378,53 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
+  { nombre: 'nuevo-curso', descripcion: 'Empezar curso nuevo: archiva el curso entero y deja los grupos, las programaciones y el horario listos', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const ids = await cuadernoConGrupo(p, t.url);
+    await p.evaluate(() => { const g = state.grupos[0], cr = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
+      g.actividades = [{ id: 'e1', nombre: 'Examen', trimestre: 0, bloqueId: 'b0', esExamen: true, criterios: [{ critId: cr, peso: 100 }] }];
+      g.notasCuant = { [g.alumnos[0].id]: { e1: 7 } }; g.bloques[0].peso = 70; g.bloques[1].peso = 30; g.umbrales.excelente = 90;
+      g.diario['2026-10-01'] = { nota: 'Clase', incidencias: '', unidadId: '' }; g.asistencia['2026-10-01'] = { [g.alumnos[1].id]: { estado: 'retraso', nota: '' } };
+      g.alumnos[0].observaciones = 'Observación del curso pasado'; g.alumnos[0].nese = true; g.alumnos[0].fechaNacimiento = '2013-05-02';
+      state.programaciones = [{ id: 'p1', nombre: 'Prog 1º', catalogoKey: 'GeH_1ESO', sdas: [{ id: 's1', titulo: 'SdA 1', trimestre: 0, sesionesPrevistas: 6 }], actividades: [] }]; g.programacionId = 'p1';
+      state.horario.celdas['0-lun'] = { tipo: 'clase', materia: 'GeH', nivelGrupo: '1º A', aula: '12', nota: '', grupoId: g.id };
+      state.eventos = [{ id: 'ev1', fecha: '2026-11-02', titulo: 'Examen', tipo: 'examen', grupoIds: [g.id] }]; state.festivos = [{ id: 'f1', fechaInicio: '2026-10-09', fechaFin: '2026-10-09', etiqueta: '9 d\'Octubre' }];
+      state.reuniones = [{ id: 'r1', fecha: '2026-10-05', tipo: 'familia', titulo: 'Reunión' }]; state.planesRefuerzo = [{ id: 'pr1', alumnoId: g.alumnos[0].id, estado: 'activo' }];
+      state.cursoEscolarGlobal = '2026-2027'; _mostrarBienvenida = false; migrarEstado(); state.ui.grupoId = null; save(); render(); });
+    await p.evaluate(() => exPut({ key: 'e1', exam: { titulo: 'Diseño del examen' } })); await p.evaluate(() => exPut({ key: 'prog:pa1', exam: { titulo: 'Plantilla' } }));
+    await p.click('button:has-text("Empezar curso nuevo")'); await esperar(300);
+    t.ok(await p.inputValue('#ncCurso') === '2027-2028', 'propone el curso siguiente');
+    await p.click('button:has-text("Preparar el archivo")'); await esperar(600);
+    const antes = await p.evaluate(() => state.grupos[0].alumnos.length);
+    const [descarga] = await Promise.all([p.waitForEvent('download'), p.click('#ncConfirmar')]);
+    const archivo = JSON.parse(fs.readFileSync(await descarga.path(), 'utf8'));
+    t.ok(/^curso-2026-2027-cuaderno-\d{4}-\d\d-\d\d\.json$/.test(descarga.suggestedFilename()) && archivo.grupos[0].alumnos.length === 3 && archivo.grupos[0].notasCuant[ids[0]].e1 === 7 && archivo._examenesDiseno.length === 2,
+      'el archivo descargado contiene el curso completo (alumnado, notas y diseños de examen)', descarga.suggestedFilename());
+    await esperar(1200);
+    const r = await p.evaluate(async () => { const g = state.grupos[0]; return { antes: 0, curso: state.cursoEscolarGlobal, grupo: g.nombre, alumnos: g.alumnos.length, acts: g.actividades.length, notas: Object.keys(g.notasCuant).length, diario: Object.keys(g.diario).length, asist: Object.keys(g.asistencia).length,
+      pesos: g.bloques.map(b => b.peso).join('/'), umbral: g.umbrales.excelente, prog: g.programacionId, progs: state.programaciones.length, cursoProg: state.programaciones[0].cursoEscolar, horario: (state.horario.celdas['0-lun'] || {}).grupoId === g.id,
+      eventos: state.eventos.length, festivos: state.festivos.length, reuniones: state.reuniones.length, planes: state.planesRefuerzo.length, disenos: (await exLeerTodos()).map(x => x.key).join(','), copias: (await idbAll('copias')).map(c => c.motivo).join(' | ') }; });
+    t.ok(antes === 3 && r.curso === '2027-2028' && r.alumnos === 0 && r.acts === 0 && r.notas === 0 && r.diario === 0 && r.asist === 0 && r.eventos === 0 && r.festivos === 0 && r.reuniones === 0 && r.planes === 0,
+      'se vacía lo que es de un solo curso', JSON.stringify(r));
+    t.ok(r.grupo === '1º ESO A' && r.pesos === '70/30' && r.umbral === 90 && r.prog === 'p1' && r.progs === 1 && r.cursoProg === '2027-2028' && r.horario,
+      'se conservan el grupo con su configuración, la programación y el horario', JSON.stringify(r));
+    t.ok(r.disenos === 'prog:pa1' && /Antes de empezar el curso 2027-2028/.test(r.copias), 'quedan las plantillas de examen y una copia interna del curso anterior', JSON.stringify(r));
+    // Deshacer devuelve el curso anterior.
+    await p.evaluate(() => deshacer()); await esperar(400);
+    t.ok(await p.evaluate(() => state.grupos[0].alumnos.length === 3 && state.cursoEscolarGlobal === '2026-2027'), '↶ Deshacer devuelve el curso anterior');
+    await p.evaluate(() => rehacer()); await esperar(300);
+    // Con «también su alumnado»: nombres sí, datos del curso no. Y si se cancela la descarga, no cambia nada.
+    await p.evaluate(arch => { delete arch._examenesDiseno; cargarEstadoCompleto(arch); _mostrarBienvenida = false; render(); }, archivo); await esperar(300);
+    await p.evaluate(() => { window.__guardarArchivoReal = guardarArchivo; guardarArchivo = async () => false; abrirNuevoCurso(); document.getElementById('ncAlumnado').checked = true; });
+    await p.click('button:has-text("Preparar el archivo")'); await esperar(500);
+    await p.click('#ncConfirmar'); await esperar(600);
+    t.ok(await p.evaluate(() => state.grupos[0].actividades.length === 1 && state.cursoEscolarGlobal === '2026-2027'), 'si el archivo no se guarda, no se cambia nada');
+    await p.evaluate(() => { guardarArchivo = async () => true; }); await p.click('#ncConfirmar'); await esperar(1200);
+    const c = await p.evaluate(() => { const g = state.grupos[0], a = g.alumnos.find(x => x.fechaNacimiento); return { alumnos: g.alumnos.length, nac: a && a.fechaNacimiento, nese: a && a.nese, obs: g.alumnos.map(x => x.observaciones).join(''), notas: Object.keys(g.notasCuant).length }; });
+    t.ok(c.alumnos === 3 && c.nac === '2013-05-02' && c.nese === true && c.obs === '' && c.notas === 0, 'con «también su alumnado» quedan los nombres, sin observaciones ni notas', JSON.stringify(c));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
   { nombre: 'que-me-falta', descripcion: 'Inicio: «Qué me falta» detecta notas a medias y comentarios pendientes', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url, { nombres: ['A, Uno', 'B, Dos', 'C, Tres', 'D, Cuatro'] });

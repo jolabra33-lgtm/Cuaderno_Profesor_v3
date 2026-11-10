@@ -138,7 +138,7 @@ function renderHome(){
       </label>
     </div>
     <p class="hero-tag" style="margin-top:8px;font-size:12px;max-width:none;opacity:.75">Estos datos se usan en las portadas de todos los documentos imprimibles. Cada Programación de Aula puede tener su propio curso escolar y profesor/a si lo necesitas; si los deja en blanco, usa estos.</p>
-    <div class="flex" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="ghost small" style="color:#fff;border:1px solid rgba(255,255,255,.35)" onclick="abrirDiagnostico()">🩺 Revisar mis datos</button><button class="ghost small" style="color:#fff;border:1px solid rgba(255,255,255,.35)" onclick="abrirCopias()">🛟 Copias de seguridad</button></div>
+    <div class="flex" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="ghost small" style="color:#fff;border:1px solid rgba(255,255,255,.35)" onclick="abrirDiagnostico()">🩺 Revisar mis datos</button><button class="ghost small" style="color:#fff;border:1px solid rgba(255,255,255,.35)" onclick="abrirCopias()">🛟 Copias de seguridad</button><button class="ghost small" style="color:#fff;border:1px solid rgba(255,255,255,.35)" onclick="abrirNuevoCurso()" title="Archiva el curso que termina y prepara el siguiente conservando grupos, programaciones y horario">🎓 Empezar curso nuevo</button></div>
     <p class="hero-tag" style="margin-top:6px;font-size:12.5px;max-width:none;opacity:.85">📶 Añádela a la pantalla de inicio del iPad (Safari → compartir → "Añadir a inicio"). Tras abrirla una vez con conexión, sigue funcionando sin wifi.</p>
   </div>
   ${novedadesHTML()}
