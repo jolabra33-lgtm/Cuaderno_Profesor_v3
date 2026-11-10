@@ -8,7 +8,7 @@
 function printPropuestasFinales() {
   const iesName = document.getElementById('headerIesName')?.value || 'Centro Educativo';
   const dateStr = new Date().toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const esc = s => String(s==null?'':s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = _tEsc;
 
   // Decision style mapping (tipo -> {label,color})
   const tipoMeta = {
@@ -232,7 +232,7 @@ function _promocionaReportStyles() {
 function _buildPromocionaGroupSection(nivel, grupo) {
   const iesName = document.getElementById('headerIesName')?.value || 'Centro Educativo';
   const dateStr = new Date().toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const esc = s => String(s==null?'':s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = _tEsc;
   const bach = isBach(nivel);
 
   const alumnos = (data[nivel]?.[grupo] || [])
@@ -379,12 +379,12 @@ function _openPromocionaReport(title, barLabel, innerHTML) {
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>${title}</title>
+<title>${_tEsc(title)}</title>
 <style>${_promocionaReportStyles()}</style>
 </head>
 <body>
   <div id="print-bar">
-    <span>${barLabel}</span>
+    <span>${_tEsc(barLabel)}</span>
     <button onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
   </div>
   ${innerHTML}
@@ -447,18 +447,18 @@ function printDestinoList(propField, destino, icon, label, color) {
   const rows = list.map((a,i)=>`
     <tr>
       <td style="text-align:center">${i+1}</td>
-      <td>${(a.nombre||'—').replace(/</g,'&lt;')}</td>
-      <td style="text-align:center">${a._nivel}</td>
-      <td style="text-align:center">${a._grupo}</td>
-      <td>${(a.colegioProcedencia||'—').replace(/</g,'&lt;')}</td>
-      <td>${(a.notas||'').replace(/</g,'&lt;')}</td>
+      <td>${_tEsc((a.nombre||'—'))}</td>
+      <td style="text-align:center">${_tEsc(a._nivel)}</td>
+      <td style="text-align:center">${_tEsc(a._grupo)}</td>
+      <td>${_tEsc((a.colegioProcedencia||'—'))}</td>
+      <td>${_tEsc((a.notas||''))}</td>
     </tr>`).join('');
 
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>${label} — ${destino}</title>
+<title>${label} — ${_tEsc(destino)}</title>
 <style>
   body { font-family: Arial, sans-serif; font-size: 11pt; color: #111; margin: 20mm 18mm; }
   h1 { font-size: 14pt; color: #1a3a6b; margin-bottom: 4px; }
@@ -476,9 +476,9 @@ function printDestinoList(propField, destino, icon, label, color) {
 </style>
 </head>
 <body>
-  <h1>${icon} ${label} → ${destino}</h1>
+  <h1>${icon} ${label} → ${_tEsc(destino)}</h1>
   <div class="meta">
-    ${iesName} &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; <strong>${list.length} alumno${list.length!==1?'s':''}</strong>
+    ${_tEsc(iesName)} &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; <strong>${list.length} alumno${list.length!==1?'s':''}</strong>
   </div>
   <table>
     <thead>
@@ -494,7 +494,7 @@ function printDestinoList(propField, destino, icon, label, color) {
     <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#888;padding:20px">Sin alumnos propuestos</td></tr>'}</tbody>
   </table>
   <div class="footer">
-    <span>Gestor de Tutoría — ${iesName}</span>
+    <span>Gestor de Tutoría — ${_tEsc(iesName)}</span>
     <span>${dateStr}</span>
   </div>
   <script>window.onload = function(){ window.print(); }<\/script>
@@ -543,14 +543,14 @@ function printPendientesNivel(nivel) {
     const color = total >= 4 ? '#dc2626' : total >= 2 ? '#b45309' : '#166534';
 
     const pendCell = bach
-      ? `<td>${pIII.length  ? pIII.join('<br>')  : '<span style="color:#aaa">—</span>'}</td>
-         <td>${pExtr.length ? pExtr.join('<br>') : '<span style="color:#aaa">—</span>'}</td>`
-      : `<td>${pIII.length  ? pIII.join('<br>')  : '<span style="color:#aaa">—</span>'}</td>`;
+      ? `<td>${pIII.length  ? pIII.map(_tEsc).join('<br>')  : '<span style="color:#aaa">—</span>'}</td>
+         <td>${pExtr.length ? pExtr.map(_tEsc).join('<br>') : '<span style="color:#aaa">—</span>'}</td>`
+      : `<td>${pIII.length  ? pIII.map(_tEsc).join('<br>')  : '<span style="color:#aaa">—</span>'}</td>`;
 
     return `<tr>
       <td style="text-align:center;color:#888;font-size:9pt">${idx+1}</td>
-      <td style="font-weight:600">${(a.nombre||'—').replace(/</g,'&lt;')}</td>
-      <td style="text-align:center"><span style="background:#e8ecf5;border-radius:4px;padding:1px 7px;font-weight:600">${a._grupo}</span></td>
+      <td style="font-weight:600">${_tEsc((a.nombre||'—'))}</td>
+      <td style="text-align:center"><span style="background:#e8ecf5;border-radius:4px;padding:1px 7px;font-weight:600">${_tEsc(a._grupo)}</span></td>
       ${pendCell}
       <td style="text-align:center;font-weight:800;color:${color};font-size:11pt">${total}</td>
     </tr>`;
@@ -563,15 +563,15 @@ function printPendientesNivel(nivel) {
   // Ranking mini-table
   const rankRows = rankSorted.map(([m,c],i) =>
     `<tr><td style="text-align:center;color:#888;font-size:9pt">${i+1}</td>
-     <td>${m}</td>
-     <td style="text-align:center;font-weight:700;color:#b45309">${c} alumno${c!==1?'s':''}</td></tr>`
+     <td>${_tEsc(m)}</td>
+     <td style="text-align:center;font-weight:700;color:#b45309">${_tEsc(c)} alumno${c!==1?'s':''}</td></tr>`
   ).join('');
 
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Pendientes ${nivel} — ${iesName}</title>
+<title>Pendientes ${_tEsc(nivel)} — ${_tEsc(iesName)}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Arial, sans-serif; font-size: 10.5pt; color: #111; }
@@ -597,7 +597,7 @@ function printPendientesNivel(nivel) {
 <body>
 <div class="page">
   <div class="doc-title">📚 Materias Pendientes</div>
-  <div class="doc-sub">${nivel} — ${iesName.replace(/</g,'&lt;')}</div>
+  <div class="doc-sub">${_tEsc(nivel)} — ${_tEsc(iesName)}</div>
 
   <table>
     <thead>
@@ -612,7 +612,7 @@ function printPendientesNivel(nivel) {
     <tbody>${rows}</tbody>
   </table>
 
-  <div class="ranking-title">🏆 Ranking de materias con más alumnos pendientes — ${nivel}</div>
+  <div class="ranking-title">🏆 Ranking de materias con más alumnos pendientes — ${_tEsc(nivel)}</div>
   <table style="margin-top:0;border-top:none;">
     <thead>
       <tr style="background:#854d0e;">
@@ -656,13 +656,13 @@ function printPendientesReport() {
     todosAlumnos.sort((a,b) => (a.nombre||'').localeCompare(b.nombre||'', 'es'));
 
     const rows = todosAlumnos.map((a, idx) => {
-      const pIII  = (a.pendientesIII  || []).join(' · ') || '—';
-      const pExtr = (a.pendientesExtr || []).join(' · ') || '—';
+      const pIII  = _tEsc((a.pendientesIII  || []).join(' · ') || '—');
+      const pExtr = _tEsc((a.pendientesExtr || []).join(' · ') || '—');
       const totalPend = (a.pendientesIII||[]).length + (a.pendientesExtr||[]).length;
       return `<tr>
         <td style="text-align:center;color:#888;font-size:9pt">${idx+1}</td>
-        <td style="font-weight:600">${(a.nombre||'—').replace(/</g,'&lt;')}</td>
-        <td style="text-align:center">${a._grupo}</td>
+        <td style="font-weight:600">${_tEsc((a.nombre||'—'))}</td>
+        <td style="text-align:center">${_tEsc(a._grupo)}</td>
         ${bach
           ? `<td style="color:#b45309">${pIII}</td>
              <td style="color:#c2410c">${pExtr}</td>`
@@ -679,7 +679,7 @@ function printPendientesReport() {
     bodyHtml += `
       <div class="nivel-section">
         <div class="nivel-header">
-          <span>${n}</span>
+          <span>${_tEsc(n)}</span>
           <span class="nivel-count">${todosAlumnos.length} alumno${todosAlumnos.length!==1?'s':''} con materias pendientes</span>
         </div>
         <table>
@@ -717,14 +717,14 @@ function printPendientesReport() {
   });
   const rankingSorted = Object.entries(rankingMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
   const rankingRows = rankingSorted.map(([m,c],i) =>
-    `<tr><td style="text-align:center;color:#888">${i+1}</td><td>${m}</td><td style="text-align:center;font-weight:700;color:#b45309">${c}</td></tr>`
+    `<tr><td style="text-align:center;color:#888">${i+1}</td><td>${_tEsc(m)}</td><td style="text-align:center;font-weight:700;color:#b45309">${_tEsc(c)}</td></tr>`
   ).join('');
 
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Informe Materias Pendientes — ${iesName}</title>
+<title>Informe Materias Pendientes — ${_tEsc(iesName)}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Arial, sans-serif; font-size: 10.5pt; color: #111; }
@@ -810,7 +810,7 @@ function printPendientesReport() {
   <div class="doc-header">
     <div class="doc-title">📚 Informe de Materias Pendientes</div>
     <div class="doc-meta">
-      <span>🏫 ${iesName.replace(/</g,'&lt;')}</span>
+      <span>🏫 ${_tEsc(iesName)}</span>
       <span>📅 ${dateStr}</span>
       <span>👥 ${totalAlumnosConPend} alumnos con materias pendientes</span>
     </div>
@@ -833,7 +833,7 @@ function printPendientesReport() {
   </div>
 
   <div class="footer">
-    <span>Gestor de Tutoría — ${iesName.replace(/</g,'&lt;')}</span>
+    <span>Gestor de Tutoría — ${_tEsc(iesName)}</span>
     <span>Generado el ${dateStr}</span>
   </div>
 </div>
@@ -868,14 +868,14 @@ function buildPendientesDisplay(materias, nivel, grupo, idx, mode) {
     </div>`;
   }
   const renderTag = (m) => {
-    if (!isAnt) return `<span class="pend-tag${tagCls}" title="${m}">${m}</span>`;
+    if (!isAnt) return `<span class="pend-tag${tagCls}" title="${_tEsc(m)}">${_tEsc(m)}</span>`;
     const { materia, curso } = _splitMateriaCurso(m);
-    return `<span class="pend-tag${tagCls}" title="${m}">${materia}${curso ? `<span class="pend-tag-curso">${curso}</span>` : ''}</span>`;
+    return `<span class="pend-tag${tagCls}" title="${_tEsc(m)}">${_tEsc(materia)}${curso ? `<span class="pend-tag-curso">${_tEsc(curso)}</span>` : ''}</span>`;
   };
   const pills = arr.slice(0,2).map(renderTag).join('');
   const extra = arr.length > 2
     ? `<span class="pend-count${tagCls}">+${arr.length-2}</span>` : '';
-  return `<div class="pendientes-display ${cls}" onclick="openPendientesPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${field}')" title="${arr.join(', ')}">
+  return `<div class="pendientes-display ${cls}" onclick="openPendientesPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${field}')" title="${_tEsc(arr.join(', '))}">
     ${pills}${extra}
   </div>`;
 }
@@ -905,7 +905,7 @@ function buildRecuperadasDisplay(a, nivel, grupo, idx) {
     const cls  = recuperada ? 'rec' : 'norec';
     const icon = recuperada ? '✓' : '✗';
     const tip  = recuperada ? 'Recuperada' : 'No recuperada';
-    return `<span class="pend-tag ${cls}" title="${tip}: ${m}">${icon} ${materia}${curso ? `<span class="pend-tag-curso">${curso}</span>` : ''}</span>`;
+    return `<span class="pend-tag ${cls}" title="${tip}: ${_tEsc(m)}">${icon} ${_tEsc(materia)}${curso ? `<span class="pend-tag-curso">${_tEsc(curso)}</span>` : ''}</span>`;
   };
   // Etiquetas combinadas: primero recuperadas (verde), luego no recuperadas (rojo)
   const items = [...recValid.map(m => [m, true]), ...norecValid.map(m => [m, false])];
@@ -914,7 +914,7 @@ function buildRecuperadasDisplay(a, nivel, grupo, idx) {
   const titleParts = [];
   if (recValid.length)   titleParts.push(`Recuperadas: ${recValid.join(', ')}`);
   if (norecValid.length) titleParts.push(`No recuperadas: ${norecValid.join(', ')}`);
-  return `<div class="pendientes-display rec-mode" onclick="openRecuperadasPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})" title="${titleParts.join(' · ')} · ${recValid.length+norecValid.length}/${pend.length} marcada${(recValid.length+norecValid.length)>1?'s':''}">
+  return `<div class="pendientes-display rec-mode" onclick="openRecuperadasPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})" title="${_tEsc(titleParts.join(' · '))} · ${recValid.length+norecValid.length}/${pend.length} marcada${(recValid.length+norecValid.length)>1?'s':''}">
     ${pills}${extra}
   </div>`;
 }
@@ -1038,7 +1038,7 @@ function openPendientesPanel(e, nivel, grupo, idx, field) {
         ${(() => {
           if (!isAnt) {
             return materias.map(m => {
-              const mSafe = m.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+              const mSafe = _tEsc(m);
               return `
               <label class="pendientes-option" data-label="${mSafe}">
                 <input type="checkbox" value="${mSafe}" ${selected.includes(m)?'checked':''}
@@ -1048,7 +1048,7 @@ function openPendientesPanel(e, nivel, grupo, idx, field) {
                     panel.querySelector('.pendientes-panel-title span:last-child').textContent=
                       sel.length?sel.length+' seleccionada'+(sel.length>1?'s':''):'ninguna';
                   })(this)" />
-                <span class="pendientes-option-label">${m}</span>
+                <span class="pendientes-option-label">${_tEsc(m)}</span>
               </label>`;
             }).join('');
           }
@@ -1056,8 +1056,8 @@ function openPendientesPanel(e, nivel, grupo, idx, field) {
           let lastCurso = null;
           return materias.map(m => {
             const { materia, curso } = _splitMateriaCurso(m);
-            const mSafe = m.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-            const header = curso !== lastCurso ? `<div class="pendientes-group-header">${curso}</div>` : '';
+            const mSafe = _tEsc(m);
+            const header = curso !== lastCurso ? `<div class="pendientes-group-header">${_tEsc(curso)}</div>` : '';
             lastCurso = curso;
             return `${header}
               <label class="pendientes-option" data-label="${mSafe}">
@@ -1068,7 +1068,7 @@ function openPendientesPanel(e, nivel, grupo, idx, field) {
                     panel.querySelector('.pendientes-panel-title span:last-child').textContent=
                       sel.length?sel.length+' seleccionada'+(sel.length>1?'s':''):'ninguna';
                   })(this)" />
-                <span class="pendientes-option-label">${materia}</span>
+                <span class="pendientes-option-label">${_tEsc(materia)}</span>
               </label>`;
           }).join('');
         })()}
@@ -1187,7 +1187,7 @@ function openRecuperadasPanel(e, nivel, grupo, idx) {
           const mAttr = encodeURIComponent(m);
           return `
           <div class="recnorec-row" style="display:flex;align-items:center;gap:6px;padding:5px 4px;border-bottom:1px solid var(--border);">
-            <span class="pendientes-option-label" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.replace(/"/g,'&quot;')}">${m}</span>
+            <span class="pendientes-option-label" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_tEsc(m)}">${_tEsc(m)}</span>
             <button type="button" class="recnorec-btn" data-m="${mAttr}" data-set="rec"
               style="border:1px solid ${st==='rec'?'var(--green)':'var(--border2)'};background:${st==='rec'?'var(--green)':'transparent'};color:${st==='rec'?'#08231a':'var(--text2)'};border-radius:5px;padding:3px 7px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">✓</button>
             <button type="button" class="recnorec-btn" data-m="${mAttr}" data-set="norec"

@@ -7,8 +7,10 @@
    un atributo HTML (onclick="selectNivel('…')"). Sin esto, un grupo o nivel con apóstrofo
    («PMAR d'Alt», «l'Eliana») cortaba el código y sus botones dejaban de funcionar. */
 function jsAttr(s) {
+  // «&» también: dentro de un atributo, el navegador convierte «&#39;» en un apóstrofo ANTES de ejecutar el código.
   return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
-    .replace(/"/g, '\\x22').replace(/</g, '\\x3c').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+    .replace(/"/g, '\\x22').replace(/</g, '\\x3c').replace(/>/g, '\\x3e').replace(/&/g, '\\x26')
+    .replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 }
 
 /* =================================================================
@@ -26,7 +28,10 @@ function jsAttr(s) {
 function _tCursoActual(sep,corto){ const d=new Date(); const y=d.getMonth()>=8?d.getFullYear():d.getFullYear()-1; return y+(sep||"-")+(corto?String(y+1).slice(2):(y+1)); }
 /* Fecha local AAAA-MM-DD. Con toISOString() (UTC), entre medianoche y la 1–2 h «hoy» era el día anterior. */
 function _hoyLocal(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function _tEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+/* ÚNICA función para meter texto en HTML (contenido o valor de un atributo, con comillas dobles o simples).
+   Todo lo que escribe una persona o llega en un archivo (nombres, observaciones, grupos, materias…) pasa por aquí;
+   si además va dentro de código (onclick="f('…')"), por jsAttr(). */
+function _tEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 (function(){
   const css=document.createElement('style');
   css.textContent=`
@@ -82,7 +87,9 @@ async function _tGuardarArchivo(blob,nombre){
 window.__cerrarVistaDocT=function(){ const o=document.getElementById('tdocOverlay'); if(o) o.remove(); };
 function _mostrarDocumentoT(html){
   window.__cerrarVistaDocT();
-  const m=/<title>([\s\S]*?)<\/title>/i.exec(html); const titulo=m?m[1].replace(/<[^>]+>/g,'').trim():'Documento';
+  const m=/<title>([\s\S]*?)<\/title>/i.exec(html);
+  // El título viene ya escrito para HTML («d&#39;Alt», «&amp;»): se devuelve a texto normal antes de volver a usarlo.
+  const _ta=document.createElement('textarea'); _ta.innerHTML=m?m[1].replace(/<[^>]+>/g,''):''; const titulo=_ta.value.trim()||'Documento';
   const shim='<script>try{window.opener=window.parent;}catch(e){}window.close=function(){try{parent.__cerrarVistaDocT();}catch(e){}};<\/script>';
   const doc=/<head[^>]*>/i.test(html)?html.replace(/<head[^>]*>/i,x=>x+shim):shim+html;
   const ov=document.createElement('div'); ov.id='tdocOverlay'; ov.className='tdoc-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Vista previa: '+titulo);

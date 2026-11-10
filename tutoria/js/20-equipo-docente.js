@@ -40,19 +40,19 @@ function renderEquipoDocenteBody() {
       <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
         <label style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Nombre y apellidos</label>
         <input style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;font-weight:600;"
-          placeholder="Nombre y apellidos" value="${(p.nombre||'').replace(/"/g,'&quot;')}"
+          placeholder="Nombre y apellidos" value="${_tEsc((p.nombre||''))}"
           oninput="_eqUpdateProf('${p.id}','nombre',this.value)">
       </div>
       <div style="width:170px;display:flex;flex-direction:column;gap:3px;">
         <label style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Materia</label>
         <input style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;"
-          placeholder="Materia" value="${(p.materia||'').replace(/"/g,'&quot;')}"
+          placeholder="Materia" value="${_tEsc((p.materia||''))}"
           oninput="_eqUpdateProf('${p.id}','materia',this.value)">
       </div>
       <div style="width:220px;display:flex;flex-direction:column;gap:3px;">
         <label style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Correo corporativo</label>
         <input type="email" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;"
-          placeholder="nombre@gva.es" value="${(p.correo||'').replace(/"/g,'&quot;')}"
+          placeholder="nombre@gva.es" value="${_tEsc((p.correo||''))}"
           oninput="_eqUpdateProf('${p.id}','correo',this.value)">
       </div>
       <div style="display:flex;flex-direction:column;gap:3px;padding-top:16px;">
@@ -67,7 +67,7 @@ function renderEquipoDocenteBody() {
 
   document.getElementById('eqDocenteBody').innerHTML = `
     <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6;background:var(--surface2);border-radius:8px;padding:10px 14px;border:1px solid var(--border)">
-      📋 Equipo docente de <strong>${nivel} ${grupo}</strong>. Se usa aquí y en "👥 Asistencia sesión" para pasar lista en las juntas de evaluación.
+      📋 Equipo docente de <strong>${_tEsc(nivel)} ${_tEsc(grupo)}</strong>. Se usa aquí y en "👥 Asistencia sesión" para pasar lista en las juntas de evaluación.
     </div>
     <div id="eqDocenteList">${rows || `
       <div style="text-align:center;padding:28px;color:var(--text3);font-size:13px">

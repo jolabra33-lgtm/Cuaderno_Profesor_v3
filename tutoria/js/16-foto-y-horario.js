@@ -248,7 +248,7 @@ function printHorario() {
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Horario ${nivel} ${grupo}</title>
+<title>Horario ${_tEsc(nivel)} ${_tEsc(grupo)}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:Arial,sans-serif; }
@@ -264,11 +264,11 @@ function printHorario() {
   <div class="header">
     <div>
       <div class="header-title">🗓️ Horario del grupo</div>
-      <div class="header-sub">${nivel} ${grupo} — ${iesName.replace(/</g,'&lt;')}</div>
+      <div class="header-sub">${_tEsc(nivel)} ${_tEsc(grupo)} — ${_tEsc(iesName)}</div>
     </div>
   </div>
   <div class="img-wrap">
-    <img src="${horario.src}" alt="Horario ${nivel} ${grupo}">
+    <img src="${horario.src}" alt="Horario ${_tEsc(nivel)} ${_tEsc(grupo)}">
   </div>
   <script>window.onload=function(){window.print();}<\/script>
 </body>
@@ -336,9 +336,7 @@ function printObservacionesGrupo() {
   }
 
   // Escape and convert line breaks to <br>
-  const textoHtml = texto
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\n/g,'<br>');
+  const textoHtml = _tEsc(texto).replace(/\n/g,'<br>');
 
   const alumnos  = (GRUPOS_POR_NIVEL[nivel] || []).flatMap(g => g === grupo ? (data[nivel]?.[g] || []) : []);
   const total    = alumnos.length;
@@ -349,7 +347,7 @@ function printObservacionesGrupo() {
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Observaciones ${nivel} ${grupo}</title>
+<title>Observaciones ${_tEsc(nivel)} ${_tEsc(grupo)}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Arial, sans-serif; font-size: 11pt; color: #111; }
@@ -392,10 +390,10 @@ function printObservacionesGrupo() {
 <div class="page">
   <div class="header">
     <div class="title">📝 Observaciones del Grupo</div>
-    <div class="sub">${nivel} — Grupo ${grupo}</div>
+    <div class="sub">${_tEsc(nivel)} — Grupo ${_tEsc(grupo)}</div>
     <div class="meta">
-      <span>🏫 ${iesName.replace(/</g,'&lt;')}</span>
-      <span>👤 Tutor/a: ${tutor.replace(/</g,'&lt;')}</span>
+      <span>🏫 ${_tEsc(iesName)}</span>
+      <span>👤 Tutor/a: ${_tEsc(tutor)}</span>
       <span>📅 ${dateStr}</span>
     </div>
   </div>

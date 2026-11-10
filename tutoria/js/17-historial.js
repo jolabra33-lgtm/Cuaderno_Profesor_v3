@@ -36,7 +36,7 @@ function renderHistBody(alumno) {
   const p2  = getPropObj(alumno.propuesta2);
   const p3  = getPropObj(alumno.propuesta3);
   const pFinal = getPropObj(alumno.promociona);
-  const decFinal = pFinal.tipo ? `${pFinal.tipo}${pFinal.destino?' → '+pFinal.destino:''}` : '—';
+  const decFinal = pFinal.tipo ? _tEsc(`${pFinal.tipo}${pFinal.destino?' → '+pFinal.destino:''}`) : '—';
   const decColor = pFinal.tipo==='Promoción'||pFinal.tipo==='Titulación' ? 'var(--green)'
     : pFinal.tipo==='Repetición' ? 'var(--red)'
     : pFinal.tipo==='Abandono' ? '#9aa3bb' : 'var(--text3)';
@@ -50,7 +50,7 @@ function renderHistBody(alumno) {
       <div class="hist-dot ${dotClass}" title="Curso actual">25-26</div>
       <div class="hist-card" style="border-color:rgba(79,142,247,0.3);background:rgba(79,142,247,0.04)">
         <div class="hist-card-top">
-          <span class="hist-card-nivel">${nivel} — Grupo ${grupo}</span>
+          <span class="hist-card-nivel">${_tEsc(nivel)} — Grupo ${_tEsc(grupo)}</span>
           <span class="hist-card-year">Curso actual ${_tCursoActual("-",true)}</span>
           <span style="margin-left:auto;font-size:11px;color:var(--accent);font-weight:600">📌 Año en curso</span>
         </div>
@@ -75,7 +75,7 @@ function renderHistBody(alumno) {
           </div>
           <div class="hist-field">
             <label>II Propuesta</label>
-            <div style="font-size:12px;font-weight:600;color:var(--text2)">${p2.tipo||'—'}${p2.destino?' → '+p2.destino:''}</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text2)">${_tEsc(p2.tipo||'—')}${p2.destino?' → '+_tEsc(p2.destino):''}</div>
           </div>
           <div class="hist-field">
             <label>Decisión final</label>
@@ -83,14 +83,14 @@ function renderHistBody(alumno) {
           </div>
           <div class="hist-field">
             <label>NESE / Recurso</label>
-            <div style="font-size:12px;color:var(--text2)">${alumno.nese==='Sí'?(_getNeseCodes(alumno.recursoNese).join(' / ') || 'Sí'):'No'}</div>
+            <div style="font-size:12px;color:var(--text2)">${alumno.nese==='Sí'?(_tEsc(_getNeseCodes(alumno.recursoNese).join(' / ')) || 'Sí'):'No'}</div>
           </div>
         </div>
         ${(alumno.pendientesIII&&alumno.pendientesIII.length)?`
         <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">
           <span style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:700;letter-spacing:0.5px">Materias pendientes:</span>
           <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;">
-            ${alumno.pendientesIII.map(m=>`<span style="background:rgba(245,200,66,0.15);border:1px solid rgba(245,200,66,0.3);border-radius:4px;padding:1px 7px;font-size:11px;color:var(--yellow)">${m}</span>`).join('')}
+            ${alumno.pendientesIII.map(m=>`<span style="background:rgba(245,200,66,0.15);border:1px solid rgba(245,200,66,0.3);border-radius:4px;padding:1px 7px;font-size:11px;color:var(--yellow)">${_tEsc(m)}</span>`).join('')}
           </div>
         </div>` : ''}
       </div>
@@ -105,14 +105,14 @@ function renderHistBody(alumno) {
     const shortYear = h.curso ? h.curso.replace('20','').replace('-20','-') : '—';
     return `
     <div class="hist-entry" data-hi="${hi}">
-      <div class="hist-dot ${hDotClass}">${shortYear}</div>
+      <div class="hist-dot ${hDotClass}">${_tEsc(shortYear)}</div>
       <div class="hist-card">
         <div class="hist-card-top">
           <input class="hist-field input" style="font-size:13px;font-weight:700;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:inherit;padding:2px 4px;flex:1;min-width:120px;"
-            placeholder="Nivel (ej: 1º ESO)" value="${(h.nivel||'').replace(/"/g,'&quot;')}"
+            placeholder="Nivel (ej: 1º ESO)" value="${_tEsc((h.nivel||''))}"
             onchange="_histUpdate(${hi},'nivel',this.value)">
           <input class="hist-field input" style="font-size:11px;background:var(--surface3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-family:inherit;padding:3px 8px;width:110px;"
-            placeholder="Curso (ej: 2023-24)" value="${(h.curso||'').replace(/"/g,'&quot;')}"
+            placeholder="Curso (ej: 2023-24)" value="${_tEsc((h.curso||''))}"
             onchange="_histUpdate(${hi},'curso',this.value)">
         </div>
         <div class="hist-card-fields">
@@ -143,17 +143,17 @@ function renderHistBody(alumno) {
           </div>
           <div class="hist-field">
             <label>Destino</label>
-            <input placeholder="Ej: 2º ESO, FPB, Bach…" value="${(h.destino||'').replace(/"/g,'&quot;')}"
+            <input placeholder="Ej: 2º ESO, FPB, Bach…" value="${_tEsc((h.destino||''))}"
               onchange="_histUpdate(${hi},'destino',this.value)">
           </div>
           <div class="hist-field">
             <label>Centro</label>
-            <input placeholder="Centro educativo" value="${(h.centro||'').replace(/"/g,'&quot;')}"
+            <input placeholder="Centro educativo" value="${_tEsc((h.centro||''))}"
               onchange="_histUpdate(${hi},'centro',this.value)">
           </div>
           <div class="hist-field" style="grid-column:1/-1">
             <label>Observaciones</label>
-            <textarea placeholder="Notas sobre este curso…" onchange="_histUpdate(${hi},'obs',this.value)">${(h.obs||'').replace(/</g,'&lt;')}</textarea>
+            <textarea placeholder="Notas sobre este curso…" onchange="_histUpdate(${hi},'obs',this.value)">${_tEsc((h.obs||''))}</textarea>
           </div>
         </div>
         <div class="hist-card-actions">

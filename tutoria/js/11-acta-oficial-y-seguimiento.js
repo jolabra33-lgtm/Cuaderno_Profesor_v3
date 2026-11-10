@@ -73,10 +73,11 @@ function openActaOficial(nivel, grupo, evalNum) {
   const nextSec = () => ++_secN;
 
   // ── HELPERS ──
-  const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = s => _tEsc(s||'');
   // Escapado para incrustar nivel/grupo dentro de literales JS de comillas
   // simples en el script de la ventana emergente (ver más abajo).
-  const jsEsc = s => String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  // Texto dentro de comillas simples en el código del propio documento (también corta un «</script>» en el nombre).
+  const jsEsc = s => jsAttr(s||'');
   const propTipo = a => {
     if (!propField) return '—';
     const p = getPropObj(a[propField]);
@@ -265,7 +266,7 @@ function openActaOficial(nivel, grupo, evalNum) {
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Acta ${evalOrdinal[evalNum]} Evaluación — ${nivel} ${grupo}</title>
+<title>Acta ${evalOrdinal[evalNum]} Evaluación — ${_tEsc(nivel)} ${_tEsc(grupo)}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; color: #111; background:#fff; }
@@ -572,7 +573,7 @@ function openActaOficial(nivel, grupo, evalNum) {
   <!-- SECCIÓN ACUERDOS -->
   <div class="section-title" style="margin-top:32px"><span>${nextSec()}</span>Acuerdos de la sesión de evaluación</div>
   <div class="acuerdos-box" id="acuerdosBox" contenteditable="true"
-    data-placeholder="Escribe aquí los acuerdos adoptados en la sesión: medidas de mejora, compromisos del equipo docente, actuaciones con familias, etc.">${guardada.acuerdos || ''}</div>
+    data-placeholder="Escribe aquí los acuerdos adoptados en la sesión: medidas de mejora, compromisos del equipo docente, actuaciones con familias, etc.">${_tEsc(guardada.acuerdos || '')}</div>
   <div class="no-print" style="font-size:8pt;color:#9aa3bb;margin-top:4px;">Pulsa «💾 Guardar» para no perder este texto, las firmas y las decisiones sobre pendientes — la ventana no lo guarda solo al cerrarla.</div>
 
   <!-- SECCIÓN PROFESORES ASISTENTES -->
@@ -680,7 +681,7 @@ function _aoExportarHTML() {
   var clone = _aoCleanClone();
   var styleEl = document.querySelector('style');
   var css = styleEl ? styleEl.textContent : '';
-  var html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Acta ${jsEsc(evalLabel)} Evaluación — ${jsEsc(nivel)} ${jsEsc(grupo)}</title><style>' + css + '</style></head><body>' + clone.outerHTML + '</body></html>';
+  var html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Acta ${jsEsc(esc(evalLabel))} Evaluación — ${jsEsc(esc(nivel))} ${jsEsc(esc(grupo))}</title><style>' + css + '</style></head><body>' + clone.outerHTML + '</body></html>';
   var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   _aoDownload(blob, _aoFileBase() + '.html');
 }
@@ -733,7 +734,7 @@ function _aoExportarWord() {
   _aoWordifyGrid(clone.querySelector('.firmas-grid'), '.firma-block', 3);
   var styleEl = document.querySelector('style');
   var css = styleEl ? styleEl.textContent : '';
-  var titulo = 'Acta ${jsEsc(evalLabel)} Evaluación — ${jsEsc(nivel)} ${jsEsc(grupo)}';
+  var titulo = 'Acta ${jsEsc(esc(evalLabel))} Evaluación — ${jsEsc(esc(nivel))} ${jsEsc(esc(grupo))}';
   var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + titulo + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]--><style>@page Section1 { size: 21cm 29.7cm; margin: 1.2cm 1.4cm 1.8cm 1.4cm; } div.Section1 { page: Section1; } table { border-collapse: collapse; } ' + css + '</style></head><body><div class="Section1">' + clone.outerHTML + '</div></body></html>';
   var blob = new Blob(['\ufeff', html], { type: 'application/msword' });
   _aoDownload(blob, _aoFileBase() + '.doc');
@@ -784,7 +785,7 @@ function exportStatsPDF(fuente) {
 
   const dateStr = new Date().toLocaleDateString('es-ES',{year:'numeric',month:'long',day:'numeric'});
   const iesName = document.getElementById('headerIesName')?.value || 'Centro Educativo';
-  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = s => _tEsc(s||'');
 
   const bar = (v, max, color) => {
     const pct = max ? Math.round(v/max*100) : 0;
@@ -834,7 +835,7 @@ function exportStatsPDF(fuente) {
         <div class="kpi"><div class="kpi-val">${g.avgEval}</div><div class="kpi-lab">Nota media</div></div>
         <div class="kpi"><div class="kpi-val" style="color:#27ae60">${g.todoAprobado}</div><div class="kpi-lab">Todo aprobado</div></div>
         <div class="kpi"><div class="kpi-val" style="color:#e74c3c">${g.totalSusp}</div><div class="kpi-lab">Suspensos (materias)</div></div>
-        <div class="kpi"><div class="kpi-val" style="color:#8e44ad">${g.nese}</div><div class="kpi-lab">NESE</div></div>
+        <div class="kpi"><div class="kpi-val" style="color:#8e44ad">${_tEsc(g.nese)}</div><div class="kpi-lab">NESE</div></div>
         <div class="kpi"><div class="kpi-val" style="color:#e67e22">${g.comp}</div><div class="kpi-lab">Compensatoria</div></div>
         <div class="kpi"><div class="kpi-val" style="color:#f39c12">${g.rep}</div><div class="kpi-lab">Repetidores</div></div>
       </div>
@@ -901,7 +902,7 @@ function printSeguimientoAlumno(nivel, grupo, idx) {
   const iesName  = document.getElementById('headerIesName')?.value || 'IES —';
   const tutor    = tutores[`${nivel}-${grupo}`] || '—';
   const dateStr  = new Date().toLocaleDateString('es-ES', {year:'numeric', month:'long', day:'numeric'});
-  const esc      = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = s => _tEsc(s||'');
 
   // ── Helpers ──
   const evalBar = (v, max=12) => {
@@ -914,7 +915,7 @@ function printSeguimientoAlumno(nivel, grupo, idx) {
       <div style="flex:1;background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden;min-width:40px">
         <div style="width:${pct}%;height:8px;background:${col};border-radius:4px"></div>
       </div>
-      <span style="font-family:monospace;font-size:10pt;font-weight:700;color:${col};min-width:18px">${n}</span>
+      <span style="font-family:monospace;font-size:10pt;font-weight:700;color:${col};min-width:18px">${_tEsc(n)}</span>
     </div>`;
   };
 
@@ -971,7 +972,7 @@ function printSeguimientoAlumno(nivel, grupo, idx) {
   </div>` : '';
 
   const neseLine = alumno.nese === 'Sí'
-    ? `<span style="background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;border-radius:4px;padding:1px 8px;font-size:9pt;font-weight:700">NESE${_getNeseCodes(alumno.recursoNese).length?' — '+_getNeseCodes(alumno.recursoNese).join(' / '):''}</span>`
+    ? `<span style="background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;border-radius:4px;padding:1px 8px;font-size:9pt;font-weight:700">NESE${_getNeseCodes(alumno.recursoNese).length?' — '+esc(_getNeseCodes(alumno.recursoNese).join(' / ')):''}</span>`
     : '<span style="color:#6b7280;font-size:9pt">No</span>';
 
   const codigosComp = Array.isArray(alumno.codComp) ? alumno.codComp : (alumno.codComp ? [alumno.codComp] : []);
@@ -1158,7 +1159,7 @@ function printSeguimientoAlumno(nivel, grupo, idx) {
 
   <!-- FICHA DEL ALUMNO -->
   <div class="alumno-card">
-    <div class="alumno-avatar">${(alumno.nombre||'?').charAt(0).toUpperCase()}</div>
+    <div class="alumno-avatar">${esc((alumno.nombre||'?').charAt(0).toUpperCase())}</div>
     <div style="flex:1">
       <div class="alumno-name">${esc(alumno.nombre||'Sin nombre')}</div>
       <div class="alumno-info-grid">

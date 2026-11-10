@@ -55,13 +55,13 @@ function openMultiCode(e, nivel, grupo, idx) {
           <div class="multicode-drag-dots">
             ${Array(6).fill('<span></span>').join('')}
           </div>
-          📚 ${alumName}
+          📚 ${_tEsc(alumName)}
         </div>
         <button class="multicode-drag-close" onclick="closeMultiCodePanel()" title="Cerrar">✕</button>
       </div>
       <div class="multicode-panel-title">
         <span>Códigos compensatorios</span>
-        <span style="color:var(--orange);font-weight:700">${selected.length ? selected.join(', ') : 'ninguno'}</span>
+        <span style="color:var(--orange);font-weight:700">${selected.length ? _tEsc(selected.join(', ')) : 'ninguno'}</span>
       </div>
       ${COMP_CODES.map(c => `
         <label class="multicode-option">
@@ -149,7 +149,7 @@ function toggleCode(e, nivel, grupo, idx, code) {
     const display = row ? row.querySelector('.multicode-display') : null;
     if (display) {
       display.innerHTML = codes.length
-        ? codes.map(c=>`<span class="code-pill">${c}</span>`).join('')
+        ? codes.map(c=>`<span class="code-pill">${_tEsc(c)}</span>`).join('')
         : '<span class="multicode-placeholder">—</span>';
     }
   }
@@ -439,12 +439,12 @@ function renderMaterias() {
         <span class="mat-drag-handle" title="Arrastrar para reordenar">⠿</span>
         <span class="mat-name" id="matName-${nivel.replace(/[^a-zA-Z0-9]/g,'_')}-${i}"
           style="flex:1;cursor:text;" title="Doble clic para renombrar"
-          ondblclick="_matStartRename('${nivel.replace(/'/g,"\\'")}',${i},this)">${m.replace(/</g,'&lt;')}</span>
+          ondblclick="_matStartRename('${jsAttr(nivel)}',${i},this)">${_tEsc(m)}</span>
         <div class="mat-row-actions">
-          <button class="mat-btn" title="Renombrar" onclick="_matStartRename('${nivel.replace(/'/g,"\\'")}',${i},document.getElementById('matName-${nivel.replace(/[^a-zA-Z0-9]/g,'_')}-${i}'))">✏</button>
-          <button class="mat-btn mat-btn-up"   title="Subir"    onclick="_matMove('${nivel.replace(/'/g,"\\'")}',${i},-1)">↑</button>
-          <button class="mat-btn mat-btn-down" title="Bajar"    onclick="_matMove('${nivel.replace(/'/g,"\\'")}',${i},+1)">↓</button>
-          <button class="mat-btn mat-btn-del"  title="Eliminar" onclick="_matDel('${nivel.replace(/'/g,"\\'")}',${i})">✕</button>
+          <button class="mat-btn" title="Renombrar" onclick="_matStartRename('${jsAttr(nivel)}',${i},document.getElementById('matName-${nivel.replace(/[^a-zA-Z0-9]/g,'_')}-${i}'))">✏</button>
+          <button class="mat-btn mat-btn-up"   title="Subir"    onclick="_matMove('${jsAttr(nivel)}',${i},-1)">↑</button>
+          <button class="mat-btn mat-btn-down" title="Bajar"    onclick="_matMove('${jsAttr(nivel)}',${i},+1)">↓</button>
+          <button class="mat-btn mat-btn-del"  title="Eliminar" onclick="_matDel('${jsAttr(nivel)}',${i})">✕</button>
         </div>
       </div>`).join('');
 
@@ -453,7 +453,7 @@ function renderMaterias() {
       <div class="mat-editor">
         <div class="mat-editor-header">
           <div>
-            <div style="font-size:15px;font-weight:700;color:var(--text)">${nivel}</div>
+            <div style="font-size:15px;font-weight:700;color:var(--text)">${_tEsc(nivel)}</div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px">
               ${mats.length} materias ·
               ${custom
@@ -462,23 +462,23 @@ function renderMaterias() {
             </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <button class="btn btn-ghost btn-sm" title="Exportar esta plantilla como JSON" onclick="_matExport('${nivel.replace(/'/g,"\\'")}')">⬇ Exportar</button>
-            <button class="btn btn-ghost btn-sm" title="Importar plantilla desde JSON" onclick="_matImportClick('${nivel.replace(/'/g,"\\'")}')">⬆ Importar</button>
-            ${custom ? `<button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:rgba(247,110,110,0.4)" onclick="resetMateriaCustom('${nivel.replace(/'/g,"\\'")}')">↺ Restaurar defecto</button>` : ''}
+            <button class="btn btn-ghost btn-sm" title="Exportar esta plantilla como JSON" onclick="_matExport('${jsAttr(nivel)}')">⬇ Exportar</button>
+            <button class="btn btn-ghost btn-sm" title="Importar plantilla desde JSON" onclick="_matImportClick('${jsAttr(nivel)}')">⬆ Importar</button>
+            ${custom ? `<button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:rgba(247,110,110,0.4)" onclick="resetMateriaCustom('${jsAttr(nivel)}')">↺ Restaurar defecto</button>` : ''}
           </div>
         </div>
 
         <input type="file" id="matImportFile-${idSafe}" accept=".json" style="display:none"
-          onchange="_matImportFile('${nivel.replace(/'/g,"\\'")}',this)">
+          onchange="_matImportFile('${jsAttr(nivel)}',this)">
 
         <div class="mat-list" id="matList-${idSafe}">${rows}</div>
 
         <div class="mat-add-row">
           <input type="text" class="mat-add-input" id="matAddInput-${idSafe}"
             placeholder="Nueva materia… (Enter para añadir)"
-            onkeydown="if(event.key==='Enter'){_matAdd('${nivel.replace(/'/g,"\\'")}');event.preventDefault();}">
-          <button class="btn btn-primary btn-sm" onclick="_matAdd('${nivel.replace(/'/g,"\\'")}')">＋ Añadir</button>
-          ${!custom ? `<button class="btn btn-ghost btn-sm" onclick="_matDuplFromDefault('${nivel.replace(/'/g,"\\'")}')">📋 Editar copia</button>` : ''}
+            onkeydown="if(event.key==='Enter'){_matAdd('${jsAttr(nivel)}');event.preventDefault();}">
+          <button class="btn btn-primary btn-sm" onclick="_matAdd('${jsAttr(nivel)}')">＋ Añadir</button>
+          ${!custom ? `<button class="btn btn-ghost btn-sm" onclick="_matDuplFromDefault('${jsAttr(nivel)}')">📋 Editar copia</button>` : ''}
         </div>
 
         <div style="font-size:10px;color:var(--text3);padding:8px 14px;border-top:1px solid var(--border);margin-top:4px;">
@@ -495,8 +495,8 @@ function renderMaterias() {
     <button class="mat-level-tab ${n === currentEditLevel ? 'active' : ''}"
       id="matLevelTab-${n.replace(/[^a-zA-Z0-9]/g,'_')}"
       title="${noCreado ? 'Este nivel no está creado como pestaña, pero su plantilla de materias sigue disponible como referencia (p. ej. para marcar "Pend. Ant." en niveles posteriores)' : ''}"
-      onclick="document.querySelectorAll('.mat-level-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('matEditorArea').innerHTML=window._buildMatEditor('${n.replace(/'/g,"\\'")}');window._initMatDrag('${n.replace(/'/g,"\\'")}');">
-      ${n}${isCustom(n) ? ' <span style="color:var(--yellow);font-size:10px">⚙</span>' : ''}${noCreado ? ' <span style="color:var(--text3);font-size:10px">○</span>' : ''}
+      onclick="document.querySelectorAll('.mat-level-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('matEditorArea').innerHTML=window._buildMatEditor('${jsAttr(n)}');window._initMatDrag('${jsAttr(n)}');">
+      ${_tEsc(n)}${isCustom(n) ? ' <span style="color:var(--yellow);font-size:10px">⚙</span>' : ''}${noCreado ? ' <span style="color:var(--text3);font-size:10px">○</span>' : ''}
     </button>`;
   }).join('');
 
@@ -675,7 +675,7 @@ function buildPropuestaPills(p) {
     const cls = t ? t.cls : 'promo';
     html += `<span class="propuesta-pill-tipo ${cls}">${p.tipo}</span>`;
   }
-  if (p.destino) html += `<span class="propuesta-pill-destino">${p.destino}</span>`;
+  if (p.destino) html += `<span class="propuesta-pill-destino">${_tEsc(p.destino)}</span>`;
   return html || '<span class="propuesta-placeholder">—</span>';
 }
 

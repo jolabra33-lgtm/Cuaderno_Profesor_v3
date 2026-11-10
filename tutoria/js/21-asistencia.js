@@ -94,15 +94,15 @@ function renderAsistBody() {
     // resumen y un acceso directo, para no duplicar la edición en dos sitios.
     const rows = d.profesores.map(p => `
       <div class="asist-prof-row" style="align-items:center;gap:10px;padding:8px 0;">
-        <div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">${(p.nombre||'—').replace(/</g,'&lt;')}</div>
-        <div style="width:160px;font-size:12.5px;color:var(--text2)">${(p.materia||'—').replace(/</g,'&lt;')}</div>
-        <div style="width:220px;font-size:12.5px;color:var(--text2)">${(p.correo||'—').replace(/</g,'&lt;')}</div>
+        <div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">${_tEsc((p.nombre||'—'))}</div>
+        <div style="width:160px;font-size:12.5px;color:var(--text2)">${_tEsc((p.materia||'—'))}</div>
+        <div style="width:220px;font-size:12.5px;color:var(--text2)">${_tEsc((p.correo||'—'))}</div>
       </div>
       <div style="height:1px;background:var(--border);opacity:0.5"></div>`).join('');
 
     body.innerHTML = `
       <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6;background:var(--surface2);border-radius:8px;padding:10px 14px;border:1px solid var(--border)">
-        📋 El equipo docente de <strong>${nivel} ${grupo}</strong> se gestiona ahora desde su propio botón, fuera de este modal — aquí solo se muestra para consulta.
+        📋 El equipo docente de <strong>${_tEsc(nivel)} ${_tEsc(grupo)}</strong> se gestiona ahora desde su propio botón, fuera de este modal — aquí solo se muestra para consulta.
       </div>
       <div id="asistProfList">${rows || `
         <div style="text-align:center;padding:28px;color:var(--text3);font-size:13px">
@@ -153,8 +153,8 @@ function renderAsistBody() {
             onclick="_asistToggle(${i})">
             <span>${stateIcon}</span>
           </div>
-          <div class="asist-prof-name">${(p.nombre||'—').replace(/</g,'&lt;')}</div>
-          <div class="asist-prof-mat" style="margin-left:auto">${(p.materia||'—').replace(/</g,'&lt;')}</div>
+          <div class="asist-prof-name">${_tEsc((p.nombre||'—'))}</div>
+          <div class="asist-prof-mat" style="margin-left:auto">${_tEsc((p.materia||'—'))}</div>
           <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;flex-shrink:0;
             background:${s.asistio===true?'rgba(45,212,160,0.12)':s.asistio===false?'rgba(247,110,110,0.12)':'var(--surface3)'};
             color:${s.asistio===true?'var(--green)':s.asistio===false?'var(--red)':'var(--text3)'}">
@@ -169,13 +169,13 @@ function renderAsistBody() {
               background:${(s.justificacion||'')==='${pre}'?'rgba(247,110,110,0.2)':'var(--surface2)'};
               border:1px solid ${(s.justificacion||'')==='${pre}'?'rgba(247,110,110,0.5)':'var(--border)'};
               color:${(s.justificacion||'')==='${pre}'?'var(--red)':'var(--text2)'}"
-              onclick="_asistSetJust(${i},'${pre.replace(/'/g,"\\'")}')">
+              onclick="_asistSetJust(${i},'${jsAttr(pre)}')">
               ${pre}
             </button>`).join('')}
           </div>
           <input class="asist-just-input visible" id="asistJust-${i}"
             placeholder="O escribe el motivo aquí…"
-            value="${(s.justificacion||'').replace(/"/g,'&quot;')}"
+            value="${_tEsc((s.justificacion||''))}"
             onchange="_asistUpdateJust(${i},this.value)"
             style="width:100%">
         </div>` : ''}
@@ -198,7 +198,7 @@ function renderAsistBody() {
       </div>
     </div>
     <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">
-      ${evalLabels[evalKey]} — ${nivel} ${grupo}
+      ${evalLabels[evalKey]} — ${_tEsc(nivel)} ${_tEsc(grupo)}
     </div>
     <div id="asistProfRows">${cleanRows}</div>
   `;
@@ -301,7 +301,7 @@ function exportAsistenciaPDF() {
   const iesName = document.getElementById('headerIesName')?.value || 'IES —';
   const tutor   = tutores[`${nivel}-${grupo}`] || '—';
   const dateStr = new Date().toLocaleDateString('es-ES', {year:'numeric', month:'long', day:'numeric'});
-  const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = s => _tEsc(s||'');
 
   const evalKeys  = ['eval1','eval2','eval3'];
   const evalNames = ['I Evaluación','II Evaluación','Evaluación Final'];

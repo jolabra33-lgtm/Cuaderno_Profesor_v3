@@ -31,7 +31,7 @@ function _planoOcupante(plano, fila, col) {
     return p.fila === fila && p.col === col;
   }) || null;
 }
-function _planoEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _planoEsc(s){ return _tEsc(s); }
 
 window.openPlanoGrupo = function(nivel, grupo) {
   _planoCtx = { nivel, grupo, seleccionado: null };
@@ -84,7 +84,7 @@ function renderPlanoGrupoBody() {
       <div style="width:200px;flex-shrink:0">
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;font-weight:700;margin-bottom:6px">Sin colocar (${sinColocar.length})</div>
         <div style="display:flex;flex-direction:column;gap:5px;max-height:400px;overflow-y:auto">
-          ${sinColocar.length ? sinColocar.map(a=>`<div class="tplano-chip ${seleccionado===a.nombre?'sel':''}" onclick="_planoSeleccionar('${_planoEsc(a.nombre).replace(/'/g,"\\'")}')">${_planoEsc(a.nombre)}</div>`).join('') : '<div style="font-size:12px;color:var(--text3)">Todos colocados.</div>'}
+          ${sinColocar.length ? sinColocar.map(a=>`<div class="tplano-chip ${seleccionado===a.nombre?'sel':''}" onclick="_planoSeleccionar('${jsAttr(a.nombre)}')">${_planoEsc(a.nombre)}</div>`).join('') : '<div style="font-size:12px;color:var(--text3)">Todos colocados.</div>'}
         </div>
         ${seleccionado && colocados.has(seleccionado) ? `<button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%" onclick="_planoQuitar()">🗑 Quitar de su mesa</button>` : ''}
       </div>

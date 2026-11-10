@@ -454,10 +454,10 @@ function importJSON(input) {
       if (parsed.vacantesCfg) extras.push('configuración de vacantes');
 
       document.getElementById('jsonImportInfo').innerHTML =
-        `<strong>Archivo:</strong> ${file.name}<br>` +
+        `<strong>Archivo:</strong> ${_tEsc(file.name)}<br>` +
         `<strong>Exportado el:</strong> ${fechaExport ? new Date(fechaExport).toLocaleString('es-ES') : '—'}<br>` +
-        `<strong>Centro:</strong> ${parsed.iesName ? parsed.iesName : '—'}<br>` +
-        `<strong>Niveles:</strong> ${niveles || '—'}<br>` +
+        `<strong>Centro:</strong> ${parsed.iesName ? _tEsc(parsed.iesName) : '—'}<br>` +
+        `<strong>Niveles:</strong> ${_tEsc(niveles || '—')}<br>` +
         `<strong>Grupos:</strong> ${totalGrupos}<br>` +
         `<strong>Total alumnos:</strong> ${totalAl}` +
         (extras.length ? `<br><strong>Incluye además:</strong> ${extras.join(', ')}` : '') +
@@ -665,7 +665,7 @@ function renderResumen() {
   ">
     <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(79,142,247,0.06) 0%,transparent 60%);pointer-events:none;"></div>
     <div style="position:relative">
-      <div style="font-family:inherit;font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;letter-spacing:-0.5px;">${iesName}</div>
+      <div style="font-family:inherit;font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;letter-spacing:-0.5px;">${_tEsc(iesName)}</div>
       <div style="font-size:12px;color:var(--text2);">📅 ${dateStr.charAt(0).toUpperCase()+dateStr.slice(1)}</div>
     </div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;position:relative">
@@ -785,9 +785,9 @@ function renderResumen() {
           if (!n) return;
           const subPct = Math.round(n/tot*100);
           rows += `<div class="nivel-summary-row" style="padding-left:18px;opacity:0.85">
-            <span class="ns-label" style="color:${color};font-size:10px">${icon} ${dest}</span>
+            <span class="ns-label" style="color:${color};font-size:10px">${icon} ${_tEsc(dest)}</span>
             <div class="ns-bar-wrap"><div class="ns-bar" style="width:${subPct}%;background:${color};opacity:0.6"></div></div>
-            <span class="ns-num" style="color:${color};font-size:11px">${n}</span>
+            <span class="ns-num" style="color:${color};font-size:11px">${_tEsc(n)}</span>
             <span class="ns-pct" style="font-size:10px">${subPct}%</span>
           </div>`;
         });
@@ -806,9 +806,9 @@ function renderResumen() {
           if (!n) return;
           const subPct = Math.round(n/tot*100);
           rows += `<div class="nivel-summary-row" style="padding-left:18px;opacity:0.85">
-            <span class="ns-label" style="color:${colors[k]};font-size:10px">↳ ${g}</span>
+            <span class="ns-label" style="color:${colors[k]};font-size:10px">↳ ${_tEsc(g)}</span>
             <div class="ns-bar-wrap"><div class="ns-bar" style="width:${subPct}%;background:${colors[k]};opacity:0.6"></div></div>
-            <span class="ns-num" style="color:${colors[k]};font-size:11px">${n}</span>
+            <span class="ns-num" style="color:${colors[k]};font-size:11px">${_tEsc(n)}</span>
             <span class="ns-pct" style="font-size:10px">${subPct}%</span>
           </div>`;
         });
@@ -828,7 +828,7 @@ function renderResumen() {
       else if (sinDecision < tot) { semaforoClass = 'amarillo'; semaforoLabel = `⚠ ${sinDecision} pendientes`; }
       else { semaforoClass = 'rojo'; semaforoLabel = '✕ Sin decidir'; }
       return `<span class="grupo-link" onclick="selectNivel('${jsAttr(nivel)}');currentGrupos['${jsAttr(nivel)}']='${jsAttr(g)}';renderAll();">
-        ${nivel} ${g}
+        ${_tEsc(nivel)} ${_tEsc(g)}
         <span class="semaforo ${semaforoClass}" style="margin-left:4px">${semaforoLabel}</span>
       </span>`;
     }).join('');
@@ -857,7 +857,7 @@ function renderResumen() {
 
     return `<div class="nivel-summary-card">
       <div class="nivel-summary-header">
-        <span class="nivel-summary-name">${nivel}</span>
+        <span class="nivel-summary-name">${_tEsc(nivel)}</span>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           ${positiveStat}
           <span class="semaforo ${nivSemClass}">${nivSemLabel}</span>
@@ -919,7 +919,7 @@ function renderResumen() {
     };
     return `<div class="nivel-summary-card">
       <div class="nivel-summary-header">
-        <span class="nivel-summary-name">${nivel}</span>
+        <span class="nivel-summary-name">${_tEsc(nivel)}</span>
         <span class="nivel-summary-meta">${tot} alumnos · ${cast+val} votos emitidos</span>
       </div>
       <div class="nivel-summary-rows">
@@ -1011,21 +1011,21 @@ function renderResumen() {
     ));
     const rows = list.length
       ? list.map(a=>`<div class="fpb-row">
-          <span class="fpb-nombre">${a.nombre||'—'}</span>
-          <span class="badge badge-blue" style="font-size:10px">${a._nivel}</span>
-          <span class="badge badge-gray" style="font-size:10px;margin-left:4px">${a._grupo}</span>
-          <span style="font-size:10px;color:var(--text3);margin-left:4px;">${a.colegioProcedencia||''}</span>
+          <span class="fpb-nombre">${_tEsc(a.nombre||'—')}</span>
+          <span class="badge badge-blue" style="font-size:10px">${_tEsc(a._nivel)}</span>
+          <span class="badge badge-gray" style="font-size:10px;margin-left:4px">${_tEsc(a._grupo)}</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:4px;">${_tEsc(a.colegioProcedencia||'')}</span>
           <span class="grupo-link" style="margin-left:auto" onclick="selectNivel('${jsAttr(a._nivel)}');currentGrupos['${jsAttr(a._nivel)}']='${jsAttr(a._grupo)}';renderAll();">Ver grupo</span>
         </div>`).join('')
-      : `<div class="fpb-empty">Sin alumnos propuestos para ${destino}</div>`;
+      : `<div class="fpb-empty">Sin alumnos propuestos para ${_tEsc(destino)}</div>`;
     const isPrint = propField === 'promociona';
     const printBtn = isPrint && list.length
-      ? `<button onclick="printDestinoList('${propField}','${destino.replace(/'/g,"\\'")}','${icon.replace(/'/g,"\\'")}','${label.replace(/'/g,"\\'")}','${color.replace(/'/g,"\\'")}')" title="Imprimir lista de ${destino}"
+      ? `<button onclick="printDestinoList('${propField}','${jsAttr(destino)}','${jsAttr(icon)}','${jsAttr(label)}','${jsAttr(color)}')" title="Imprimir lista de ${_tEsc(destino)}"
            style="margin-left:10px;padding:3px 10px;border-radius:6px;border:1px solid ${color};background:transparent;color:${color};font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">🖨 Imprimir</button>`
       : '';
     return `<div class="fpb-panel" style="--destino-color:${color}">
       <div class="fpb-panel-header" style="background:${color}18;border-color:${color}4d;color:${color};flex-wrap:wrap;gap:6px;">
-        <span>${icon} ${destino} — ${label}</span>
+        <span>${icon} ${_tEsc(destino)} — ${label}</span>
         <span style="display:flex;align-items:center;gap:6px;margin-left:auto;">
           <span style="font-size:11px;font-weight:400;color:var(--text2)">${list.length} alumno${list.length!==1?'s':''}</span>
           ${printBtn}
@@ -1071,7 +1071,7 @@ function renderResumen() {
       const sPct = tot ? Math.round(d.sinDec.length/tot*100) : 0;
       const isSinAsignar = ceip === '— Sin asignar';
       return `<tr style="${isSinAsignar?'opacity:0.55':''}">
-        <td style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);max-width:320px;white-space:normal;word-break:break-word;">${ceip}</td>
+        <td style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);max-width:320px;white-space:normal;word-break:break-word;">${_tEsc(ceip)}</td>
         <td style="padding:7px 10px;border-bottom:1px solid var(--border);text-align:center;font-family:inherit;font-weight:700;color:var(--text2)">${tot}</td>
         <td style="padding:7px 10px;border-bottom:1px solid var(--border);">
           <div style="display:flex;align-items:center;gap:6px;">
@@ -1182,14 +1182,14 @@ function renderResumen() {
         const icon  = icons[dest];
         const rows = list.length
           ? list.map(a => `<div class="fpb-row">
-              <span class="fpb-nombre">${a.nombre || '—'}</span>
-              <span class="badge badge-gray" style="font-size:10px;margin-left:4px">${a._grupo}</span>
+              <span class="fpb-nombre">${_tEsc(a.nombre || '—')}</span>
+              <span class="badge badge-gray" style="font-size:10px;margin-left:4px">${_tEsc(a._grupo)}</span>
               <span class="grupo-link" style="margin-left:auto" onclick="selectNivel('${jsAttr(n4)}');currentGrupos['${jsAttr(n4)}']='${jsAttr(a._grupo)}';renderAll();">Ver grupo</span>
             </div>`).join('')
-          : `<div class="fpb-empty">Sin alumnos → ${dest}</div>`;
+          : `<div class="fpb-empty">Sin alumnos → ${_tEsc(dest)}</div>`;
         return `<div class="fpb-panel" style="--destino-color:${color}">
           <div class="fpb-panel-header" style="background:${color}18;border-color:${color}4d;color:${color}">
-            <span>${icon} ${dest} — ${evalLabel}</span>
+            <span>${icon} ${_tEsc(dest)} — ${evalLabel}</span>
             <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:auto">${list.length} alumno${list.length!==1?'s':''}</span>
           </div>
           <div class="fpb-list">${rows}</div>
@@ -1241,7 +1241,7 @@ function renderResumen() {
       if (!allMaterias.length) {
         return `<div style="margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
           <div style="padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:13px;font-weight:700;color:var(--text)">${n}</span>
+            <span style="font-size:13px;font-weight:700;color:var(--text)">${_tEsc(n)}</span>
             <span style="font-size:11px;color:var(--green)">✓ Sin materias pendientes registradas</span>
           </div>
         </div>`;
@@ -1257,7 +1257,7 @@ function renderResumen() {
         const pct    = Math.round(total / alumnos.length * 100);
         const barPct = Math.round(total / maxTotal * 100);
         return `<tr>
-          <td style="padding:6px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text)">${m}</td>
+          <td style="padding:6px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text)">${_tEsc(m)}</td>
           <td style="padding:6px 10px;border-bottom:1px solid var(--border);min-width:160px;">
             <div style="display:flex;align-items:center;gap:6px;">
               <div style="flex:1;background:var(--surface2);border-radius:3px;height:6px;overflow:hidden;">
@@ -1276,10 +1276,10 @@ function renderResumen() {
 
       return `<div style="margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
         <div style="padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
-          <span style="font-size:13px;font-weight:700;color:var(--text)">${n}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--text)">${_tEsc(n)}</span>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <span style="font-size:11px;color:var(--text3)">${conPend} alumno${conPend!==1?'s':''} con pendientes · ${sorted.length} materia${sorted.length!==1?'s':''}</span>
-            <button onclick="printPendientesNivel('${n.replace(/'/g,"\\'")}')" style="padding:3px 12px;border-radius:6px;border:1px solid var(--yellow);background:rgba(245,200,66,0.1);color:var(--yellow);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">🖨 Informe ${n}</button>
+            <button onclick="printPendientesNivel('${jsAttr(n)}')" style="padding:3px 12px;border-radius:6px;border:1px solid var(--yellow);background:rgba(245,200,66,0.1);color:var(--yellow);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">🖨 Informe ${_tEsc(n)}</button>
           </div>
         </div>
         <table style="width:100%;border-collapse:collapse;">
@@ -1482,11 +1482,11 @@ function renderVacantes() {
       const pctBar = (n) => r.total ? Math.round(n / r.total * 100) : 0;
       return `<div class="nivel-summary-card">
         <div class="nivel-summary-header">
-          <span class="nivel-summary-name">${r.target}</span>
+          <span class="nivel-summary-name">${_tEsc(r.target)}</span>
           <span class="nivel-summary-meta">${r.total} alumnos · <strong style="color:${color}">${unidades} unidad${unidades!==1?'es':''}</strong>${r.divUnits?` (+1 ${r.divLabel})`:''}</span>
         </div>
         <div style="padding:7px 14px 2px;font-size:11px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap">
-          <span>↑ ${r.promueven} promocionan de ${r.prevNivel}</span>
+          <span>↑ ${r.promueven} promocionan de ${_tEsc(r.prevNivel)}</span>
           <span style="color:var(--red)">↻ ${r.repiten} repiten</span>
           ${r.fueraFPB?`<span style="color:var(--orange)">→ ${r.fueraFPB} a FPB (no computan)</span>`:''}
         </div>
@@ -1504,7 +1504,7 @@ function renderVacantes() {
             <span class="ns-pct" style="min-width:60px;color:var(--green);font-weight:700">${r.valU} unid.</span>
           </div>
           ${r.divTot?`<div class="nivel-summary-row">
-            <span class="ns-label" style="color:var(--purple)">🎯 ${r.divLabel}</span>
+            <span class="ns-label" style="color:var(--purple)">🎯 ${_tEsc(r.divLabel)}</span>
             <div class="ns-bar-wrap"><div class="ns-bar" style="width:100%;background:var(--purple);opacity:0.5"></div></div>
             <span class="ns-num" style="color:var(--purple)">${r.divTot}</span>
             <span class="ns-pct" style="min-width:60px;color:var(--purple);font-weight:700">1 grupo</span>
@@ -1518,7 +1518,7 @@ function renderVacantes() {
     const u1 = p.castU + p.valU;
     const primCard = `<div class="nivel-summary-card">
       <div class="nivel-summary-header">
-        <span class="nivel-summary-name">${p.target}</span>
+        <span class="nivel-summary-name">${_tEsc(p.target)}</span>
         <span class="nivel-summary-meta">${p.total} alumnos · <strong style="color:${color}">${u1} unidad${u1!==1?'es':''}</strong></span>
       </div>
       <div style="padding:7px 14px 2px;font-size:11px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap">
@@ -1629,7 +1629,7 @@ function renderVacantes() {
 function printVacantes() {
   const iesName = document.getElementById('headerIesName')?.value || 'Centro Educativo';
   const dateStr = new Date().toLocaleDateString('es-ES',{year:'numeric',month:'long',day:'numeric'});
-  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = _tEsc;
 
   const sectionHtml = (propField, titulo) => {
     const v = computeVacantes(propField);

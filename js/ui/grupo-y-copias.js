@@ -132,6 +132,7 @@ function _procesarArchivoCopiaJSON(file,limpiar){
       mostrarAviso(s && s.grupo ? "Este archivo es un grupo suelto: cárgalo con «Importar grupo…» (junto a las pestañas de grupos)." : "El archivo no parece una copia de seguridad de esta app (le falta la lista de grupos).");
       return;
     }
+    if(idsNoValidos(s).length){ mostrarAviso(AVISO_IDS_NO_VALIDOS); return; }
     const nuevo=resumenEstado(s), actual=resumenEstado(state);
     const hayDatos=actual.total>0;
     const msg=`Vas a cargar la copia «${file.name}»:\n• ${nuevo.texto}`+

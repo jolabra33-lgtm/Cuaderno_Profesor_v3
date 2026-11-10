@@ -51,13 +51,13 @@ function renderNivelTabs() {
     const progressLabel = !totalAl ? '—' : pendAl === 0 ? '✓' : `${pendAl}⚠`;
     const progressBadge = `<span class="tab-progress ${progressClass}" title="${pendAl === 0 ? 'Todas las decisiones tomadas' : pendAl + ' pendientes'}">${progressLabel}</span>`;
     return `
-    <div class="nivel-tab ${n === currentNivel ? 'active' : ''}" onclick="selectNivel('${n.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:6px;">
-      <span>${n}</span>
+    <div class="nivel-tab ${n === currentNivel ? 'active' : ''}" onclick="selectNivel('${jsAttr(n)}')" style="display:flex;align-items:center;gap:6px;">
+      <span>${_tEsc(n)}</span>
       ${progressBadge}
-      <button class="grupo-tab-del" title="Renombrar nivel ${n}" data-nivel-rename="${n}"
+      <button class="grupo-tab-del" title="Renombrar nivel ${_tEsc(n)}" data-nivel-rename="${_tEsc(n)}"
         style="opacity:0.4;transition:opacity 0.15s;"
         onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.4'">✏️</button>
-      <button class="grupo-tab-del" title="Eliminar nivel ${n}" data-nivel="${n}"
+      <button class="grupo-tab-del" title="Eliminar nivel ${_tEsc(n)}" data-nivel="${_tEsc(n)}"
         style="opacity:0.4;transition:opacity 0.15s;"
         onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.4'">✕</button>
     </div>
@@ -116,7 +116,7 @@ function renderMain() {
 
     tab.innerHTML = `
       <div class="tab-top-row">
-        <span class="tab-drag-handle" title="Arrastrar">⠿</span>${nivel} ${g}
+        <span class="tab-drag-handle" title="Arrastrar">⠿</span>${_tEsc(nivel)} ${_tEsc(g)}
         <span class="tab-pct">${pctLabel}</span>
       </div>
       <div class="tab-progress-wrap">
@@ -235,7 +235,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
   sh.style.cssText = 'flex-wrap:wrap;gap:12px;';
   sh.innerHTML = `
     <div>
-      <div class="section-title">📋 Tabla de Evaluación — ${nivel} ${grupo}</div>
+      <div class="section-title">📋 Tabla de Evaluación — ${_tEsc(nivel)} ${_tEsc(grupo)}</div>
       <div class="section-meta">${alumnos.length} alumno${alumnos.length===1?'':'s'} registrado${alumnos.length===1?'':'s'}</div>
     </div>
     <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
@@ -244,10 +244,10 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
         <div>
           <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Tutor/a del grupo</div>
           <input
-            id="tutor-${nivel}-${grupo}"
+            id="tutor-${_tEsc(nivel)}-${_tEsc(grupo)}"
             type="text"
             placeholder="Nombre del tutor/a…"
-            value="${tutores[key] || ''}"
+            value="${_tEsc(tutores[key] || '')}"
             oninput="tutores['${jsAttr(key)}']=this.value"
             style="background:transparent;border:none;color:var(--text);font-family:inherit;font-size:13px;font-weight:500;width:220px;outline:none;"
           />
@@ -273,7 +273,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
         </div>
         <button class="btn btn-ghost btn-sm" onclick="openAddAlumno()">＋ Alumno</button>
         <button class="btn btn-ghost btn-sm" onclick="abrirImportarDelCuaderno('${jsAttr(nivel)}','${jsAttr(grupo)}')" title="Copiar la lista de alumnado de un grupo del Cuaderno del profesor (solo nombres y fechas de nacimiento)">📥 Del Cuaderno</button>
-        <button class="compact-toggle${window._compactMode?' active':''}" id="compactToggle-${nivel}-${grupo}"
+        <button class="compact-toggle${window._compactMode?' active':''}" id="compactToggle-${_tEsc(nivel)}-${_tEsc(grupo)}"
           title="Modo compacto — reduce el tamaño de las filas"
           onclick="_toggleCompact('${jsAttr(nivel)}','${jsAttr(grupo)}',this)">${window._compactMode?'⊡ Normal':'⊟ Compacto'}</button>
         <button class="btn btn-ghost btn-sm" onclick="openActaOficialMenu('${jsAttr(nivel)}','${jsAttr(grupo)}')">📋 Acta Oficial</button>
@@ -365,18 +365,18 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
   cg.innerHTML = `
     <div class="chart-card">
       <div class="chart-title">Materias No Superadas por Evaluación</div>
-      <div class="chart-container"><canvas id="chart-eval-${key}"></canvas></div>
+      <div class="chart-container"><canvas id="chart-eval-${_tEsc(key)}"></canvas></div>
     </div>
     <div class="chart-card chart-card-split">
       <div class="chart-split-inner">
         <div class="chart-split-half">
           <div class="chart-title">I Eval Propuesta</div>
-          <div class="chart-container"><canvas id="chart-prop1-${key}"></canvas></div>
+          <div class="chart-container"><canvas id="chart-prop1-${_tEsc(key)}"></canvas></div>
         </div>
         <div class="chart-split-sep"></div>
         <div class="chart-split-half">
           <div class="chart-title">II Eval Propuesta</div>
-          <div class="chart-container"><canvas id="chart-prop2-${key}"></canvas></div>
+          <div class="chart-container"><canvas id="chart-prop2-${_tEsc(key)}"></canvas></div>
         </div>
       </div>
     </div>
@@ -384,12 +384,12 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
       <div class="chart-split-inner">
         <div class="chart-split-half">
           <div class="chart-title">NESE</div>
-          <div class="chart-container"><canvas id="chart-nese-${key}"></canvas></div>
+          <div class="chart-container"><canvas id="chart-nese-${_tEsc(key)}"></canvas></div>
         </div>
         <div class="chart-split-sep"></div>
         <div class="chart-split-half">
           <div class="chart-title">Compensatoria</div>
-          <div class="chart-container"><canvas id="chart-comp-${key}"></canvas></div>
+          <div class="chart-container"><canvas id="chart-comp-${_tEsc(key)}"></canvas></div>
         </div>
       </div>
     </div>
@@ -397,12 +397,12 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
       <div class="chart-split-inner">
         <div class="chart-split-half">
           <div class="chart-title">Promoción Final</div>
-          <div class="chart-container"><canvas id="chart-promo-${key}"></canvas></div>
+          <div class="chart-container"><canvas id="chart-promo-${_tEsc(key)}"></canvas></div>
         </div>
         <div class="chart-split-sep"></div>
         <div class="chart-split-half">
           <div class="chart-title">🗣️ Voto Lengua Base</div>
-          <div class="chart-container"><canvas id="chart-lengua-${key}"></canvas></div>
+          <div class="chart-container"><canvas id="chart-lengua-${_tEsc(key)}"></canvas></div>
         </div>
       </div>
     </div>
@@ -428,7 +428,7 @@ function selectEvalTab(nivel, grupo, tab) {
 // alumnado marcado como NESE de este grupo, con acceso directo a su PAP y,
 // si procede, a su Programa de Enriquecimiento Curricular (EC).
 function renderNeseTabPanel(nivel, grupo, tw, rawAlumnos) {
-  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = _tEsc;
   const neseAlumnos = rawAlumnos
     .map((a, i) => ({ a, i }))
     .filter(({a}) => a.nombre && a.nombre.trim() && a.nese === 'Sí');
@@ -441,7 +441,7 @@ function renderNeseTabPanel(nivel, grupo, tw, rawAlumnos) {
   const rows = neseAlumnos.map(({a, i}) => {
     const rn = _getNeseCodes(a.recursoNese);
     const codePills = ['AL','PT'].filter(c => rn.includes(c))
-      .map(c => `<span class="nese-pill nese-pill-on" style="cursor:default">${c}</span>`).join('');
+      .map(c => `<span class="nese-pill nese-pill-on" style="cursor:default">${_tEsc(c)}</span>`).join('');
     const hasPAP = !!a.papActivo, hasEC = !!a.ecActivo;
     const papDone = !!(a.pap && a.pap._touched);
     const acDone = !!(a.ac && a.ac._touched);
@@ -516,13 +516,13 @@ function renderFilterBar(nivel, grupo) {
   fb.className = 'filter-bar' + (isOpen ? ' open' : '');
   fb.innerHTML = `
     <div class="filter-bar-top">
-      <button class="filter-bar-toggle" onclick="(function(fb){fb.classList.toggle('open');renderFilterBar('${nivel.replace(/'/g,"\\'")}','${jsAttr(grupo)}');})(this.closest('.filter-bar'))">
+      <button class="filter-bar-toggle" onclick="(function(fb){fb.classList.toggle('open');renderFilterBar('${jsAttr(nivel)}','${jsAttr(grupo)}');})(this.closest('.filter-bar'))">
         ${isOpen ? '▲ Ocultar filtros' : '▼ Filtros'}${activeCount ? ` <span style="background:var(--accent);color:#fff;border-radius:8px;padding:0 6px;font-size:9px">${activeCount}</span>` : ''}
       </button>
       ${activePills || (!isOpen ? `<span style="font-size:10px;color:var(--text3)">Sin filtros activos</span>` : '')}
       ${activeCount ? `<button class="filter-chip" style="color:var(--red);border-color:rgba(247,110,110,0.3);font-size:10px;padding:2px 7px" onclick="clearFilters('${jsAttr(key)}')">✕ Limpiar todo</button>` : ''}
       <span id="filterResultCount" style="margin-left:auto"></span>
-      <button class="col-manager-btn${hiddenColCount>0?' has-hidden':''}" onclick="openColManager(event,'${jsAttr(nivel)}','${jsAttr(grupo)}')" id="colManagerBtn-${key}">⚙ Columnas${hiddenColCount>0?` <span style="background:var(--yellow);color:#111;border-radius:8px;padding:0 5px;font-size:10px">${hiddenColCount}</span>`:''}</button>
+      <button class="col-manager-btn${hiddenColCount>0?' has-hidden':''}" onclick="openColManager(event,'${jsAttr(nivel)}','${jsAttr(grupo)}')" id="colManagerBtn-${_tEsc(key)}">⚙ Columnas${hiddenColCount>0?` <span style="background:var(--yellow);color:#111;border-radius:8px;padding:0 5px;font-size:10px">${hiddenColCount}</span>`:''}</button>
     </div>
     <div class="filter-bar-expanded">
       <div class="filter-group">
@@ -1051,7 +1051,7 @@ function updateTable(nivel, grupo) {
 
   let html = `
     <div class="table-scroll">
-    <table id="tbl-${key}" class="${window._compactMode?'tbl-compact':''}" style="width:${cols.reduce((a,b)=>a+b,0)+36+tailWidth}px;">
+    <table id="tbl-${_tEsc(key)}" class="${window._compactMode?'tbl-compact':''}" style="width:${cols.reduce((a,b)=>a+b,0)+36+tailWidth}px;">
       ${colgroup}
       <thead><tr>${cbTh}${headers}${tailHeaders}</tr></thead>
       <tbody>
@@ -1077,7 +1077,7 @@ function updateTable(nivel, grupo) {
       trendVal < 0 ? `<span class="trend-up" title="Mejora: ${Math.abs(trendVal)} mat. menos">↑</span>` :
       trendVal > 0 ? `<span class="trend-down" title="Empeora: ${trendVal} mat. más">↓</span>` :
       `<span class="trend-flat" title="Sin cambio entre II y III Eval.">→</span>`;
-    const tooltipHtml = hasNote ? `<div class="nombre-tooltip">📝 ${a.notas.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : '';
+    const tooltipHtml = hasNote ? `<div class="nombre-tooltip">📝 ${_tEsc(a.notas)}</div>` : '';
     const isCritical = (+a.eval3 >= 5) && !getPropObj(a.promociona).tipo;
     const criticalBadge = isCritical ? `<span class="critical-badge" title="≥5 suspensos sin decisión">🚨 CRÍTICO</span>` : '';
     const rowColorClass = promoTipo === 'Promoción' ? 'row-promo' : promoTipo === 'Titulación' ? 'row-titula' : promoTipo === 'Repetición' || promoTipo === 'No Promociona' ? 'row-repite' : promoTipo === 'Abandono' ? 'row-abandono' : '';
@@ -1097,14 +1097,14 @@ function updateTable(nivel, grupo) {
     const ceipVal = a.colegioProcedencia||'';
     const isOtros = !!(ceipVal && !CEIP_KNOWN.includes(ceipVal));
     const ceipColor = ceipVal&&!isOtros?'var(--green)':isOtros?'var(--yellow)':'var(--text3)';
-    const opts = CEIP_KNOWN.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${ceipVal===c?'selected':''}>${c}</option>`).join('');
+    const opts = CEIP_KNOWN.map(c=>`<option value="${_tEsc(c)}" ${ceipVal===c?'selected':''}>${_tEsc(c)}</option>`).join('');
 
     // Base shared cells (always present in all eval tabs)
     const baseCells = `
       <td class="td-nombre sticky-nombre">
         <div class="nombre-cell">
           <div class="nombre-cell-top">
-            <input class="cell-input" value="${a.nombre.replace(/"/g,'&quot;')}" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'nombre',this.value))" placeholder="Apellidos, Nombre" style="min-width:0"/>
+            <input class="cell-input" value="${_tEsc(a.nombre)}" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'nombre',this.value))" placeholder="Apellidos, Nombre" style="min-width:0"/>
             ${evalTab === 'eval3' ? trendHtml : ''}
             <button class="notes-btn obs-inline${hasNote?' has-note':''}" title="${hasNote?'Ver / editar observaciones':'Añadir observaciones'}"
               onclick="openNotesPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">📝</button>
@@ -1130,18 +1130,18 @@ function updateTable(nivel, grupo) {
             ${opts}
             <option value="__otros__" ${isOtros?'selected':''}>Otros…</option>
           </select>
-          <input class="cell-input ceip-inp" type="text" placeholder="Centro, Municipio" value="${isOtros?ceipVal.replace(/"/g,'&quot;'):''}" style="display:${isOtros?'block':'none'};font-size:11px;" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'colegioProcedencia',this.value))" />
+          <input class="cell-input ceip-inp" type="text" placeholder="Centro, Municipio" value="${isOtros?_tEsc(ceipVal):''}" style="display:${isOtros?'block':'none'};font-size:11px;" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'colegioProcedencia',this.value))" />
         </div>
       </td>
-      <td><span class="badge badge-blue">${nivel}</span></td>
-      <td><span class="badge badge-gray">${grupo}</span></td>
+      <td><span class="badge badge-blue">${_tEsc(nivel)}</span></td>
+      <td><span class="badge badge-gray">${_tEsc(grupo)}</span></td>
       <td>
         <select class="cell-input" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'repetidor',this.value))">
           <option ${!a.repetidor||a.repetidor==='No'?'selected':''} value="No">No</option>
           <option ${a.repetidor==='Sí'?'selected':''} value="Sí">Sí</option>
         </select>
       </td>
-      <td><input class="cell-input" type="date" value="${a.fecha}" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'fecha',this.value))" /></td>
+      <td><input class="cell-input" type="date" value="${_tEsc(a.fecha)}" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'fecha',this.value))" /></td>
       <td style="${ageStyle}color:var(--text2)">${calcEdad(a.fecha) !== '' ? calcEdad(a.fecha) : '—'}</td>
       <td>
         <select class="cell-input" onchange="withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>{updateField('${jsAttr(nivel)}','${jsAttr(grupo)}',${i},'nese',this.value);updateStats('${jsAttr(nivel)}','${jsAttr(grupo)}');updateCharts('${jsAttr(nivel)}','${jsAttr(grupo)}');updateTable('${jsAttr(nivel)}','${jsAttr(grupo)}');})" style="color:${a.nese==='Sí'?'var(--yellow)':'var(--text3)'}">
@@ -1180,7 +1180,7 @@ function updateTable(nivel, grupo) {
       <td class="multicode-cell">
         ${(()=>{
           const codes = Array.isArray(a.codComp) ? a.codComp : (a.codComp ? [a.codComp] : []);
-          const pills = codes.length ? codes.map(c=>`<span class="code-pill">${c}</span>`).join('') : '<span class="multicode-placeholder">—</span>';
+          const pills = codes.length ? codes.map(c=>`<span class="code-pill">${_tEsc(c)}</span>`).join('') : '<span class="multicode-placeholder">—</span>';
           return `<div class="multicode-display" onclick="openMultiCode(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">${pills}</div>`;
         })()}
       </td>
@@ -1202,7 +1202,7 @@ function updateTable(nivel, grupo) {
       <td class="accion-col" style="text-align:center;width:44px;min-width:44px">
         <button class="move-btn" title="Mover a otro grupo/nivel" onclick="openMovePanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">↗</button>
       </td>
-      <td class="accion-col" style="text-align:center;width:48px;min-width:48px"><button class="btn btn-danger" onclick="(async()=>{if(await confirmar('¿Eliminar a ${a.nombre.replace(/'/g,"\\'")}?')){withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>deleteAlumnoNoConfirm('${jsAttr(nivel)}','${jsAttr(grupo)}',${i}))}})()">✕</button></td>`;
+      <td class="accion-col" style="text-align:center;width:48px;min-width:48px"><button class="btn btn-danger" onclick="(async()=>{if(await confirmar('¿Eliminar a ${jsAttr(a.nombre)}?')){withUndo('${jsAttr(nivel)}','${jsAttr(grupo)}',()=>deleteAlumnoNoConfirm('${jsAttr(nivel)}','${jsAttr(grupo)}',${i}))}})()">✕</button></td>`;
 
     // Eval-specific cells
     let evalCells = '';
@@ -1835,7 +1835,7 @@ function updateStats(nivel, grupo) {
   // Stat card helper
   const card = (label, value, color, subtitle='', subtitleColor='var(--text3)') => `
     <div class="stat-card ${color}">
-      <div class="stat-label">${label}</div>
+      <div class="stat-label">${_tEsc(label)}</div>
       <div class="stat-value ${color}">${value}</div>
       ${subtitle ? `<div style="font-size:10px;color:${subtitleColor};margin-top:4px;">${subtitle}</div>` : ''}
     </div>`;
@@ -1931,7 +1931,7 @@ function updateStats2(nivel, grupo) {
   const card = (label, value, color, subtitle='') => {
     const cssVar = colorMap[color] || 'accent';
     const subHtml = subtitle ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;">${subtitle}</div>` : '';
-    return `<div class="stat-card" style="border-left:3px solid var(--${cssVar})"><div class="stat-label">${label}</div><div class="stat-value ${color}">${value}</div>${subHtml}</div>`;
+    return `<div class="stat-card" style="border-left:3px solid var(--${cssVar})"><div class="stat-label">${_tEsc(label)}</div><div class="stat-value ${color}">${value}</div>${subHtml}</div>`;
   };
 
   // Vacantes preview: destinos sorted

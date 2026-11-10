@@ -219,7 +219,7 @@ const CAL_EV_TIPOS = [
   { id:'otro',     label:'Otro',             color:'#64748b' }
 ];
 function calEvTipoInfo(id){ return CAL_EV_TIPOS.find(t=>t.id===id) || CAL_EV_TIPOS[4]; }
-function _calEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _calEsc(s){ return _tEsc(s); }
 NIVELES.forEach(n => { evalDates[n] = { eval1: _today, eval2: _today, eval3: _today }; });
 // Helper: get dates for the active nivel (or a specific one)
 function getDates(nivel) { return evalDates[nivel] || { eval1: _today, eval2: _today, eval3: _today }; }

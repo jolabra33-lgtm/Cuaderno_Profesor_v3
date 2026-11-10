@@ -445,7 +445,7 @@ function rfModalElegirCEHTML(){
     return `<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)">
       <div class="flex" style="justify-content:space-between;align-items:center;gap:8px">
         <div style="font-weight:700;font-size:13.5px">${esc(ce.id)} · ${esc(ce.titulo)}</div>
-        <button type="button" class="ghost small" style="border:1px solid var(--line);flex-shrink:0" onclick="rfToggleTodosCE('${esc(ce.id)}')">Marcar/desmarcar</button>
+        <button type="button" class="ghost small" style="border:1px solid var(--line);flex-shrink:0" onclick="rfToggleTodosCE('${escJS(ce.id)}')">Marcar/desmarcar</button>
       </div>
       <div class="sub" style="margin:2px 0 6px">Competencias clave: ${(ce.cc||[]).join(", ")||"—"}</div>
       ${sab.length?`<details style="margin:0 0 8px"><summary class="sub" style="cursor:pointer">Saberes básicos (${sab.length})</summary><ul style="margin:4px 0 0 18px;font-size:12px">${sab.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></details>`:""}

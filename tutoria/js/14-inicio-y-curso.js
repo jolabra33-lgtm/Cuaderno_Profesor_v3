@@ -27,7 +27,7 @@ function syncDateInputs() {
     </label>`;
   bar.innerHTML =
     `<span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">
-       📅 ${nivel} — Fechas de evaluación:
+       📅 ${_tEsc(nivel)} — Fechas de evaluación:
      </span>` +
     inp('dateEval1', d.eval1, 'var(--accent)', 'I Evaluación',  'eval1') +
     inp('dateEval2', d.eval2, 'var(--green)',  'II Evaluación', 'eval2') +
@@ -450,8 +450,8 @@ function renderICStep() {
       }[p.status];
       return `<tr>
         <td><code style="background:var(--surface2);padding:1px 6px;border-radius:4px;font-size:11px">${p.csvCode}</code></td>
-        <td>${p.status !== 'skip' ? `<strong>${p.nivel}</strong>` : '<span style="color:var(--text3)">—</span>'}</td>
-        <td>${p.status !== 'skip' ? p.grupo : '<span style="color:var(--text3)">—</span>'}</td>
+        <td>${p.status !== 'skip' ? `<strong>${_tEsc(p.nivel)}</strong>` : '<span style="color:var(--text3)">—</span>'}</td>
+        <td>${p.status !== 'skip' ? _tEsc(p.grupo) : '<span style="color:var(--text3)">—</span>'}</td>
         <td style="text-align:center;font-family:inherit;font-weight:700">${p.alumnos.length}</td>
         <td>${statusHtml}</td>
       </tr>`;
@@ -508,7 +508,7 @@ function renderICStep() {
         <table class="ic-group-table">
           <thead><tr><th>Grupo</th><th style="text-align:center">Alumnos importados</th><th>Acción</th></tr></thead>
           <tbody>${lines.map(l=>`<tr>
-            <td><strong>${l.nivel} ${l.grupo}</strong></td>
+            <td><strong>${_tEsc(l.nivel)} ${_tEsc(l.grupo)}</strong></td>
             <td style="text-align:center;font-family:inherit;font-weight:700;color:var(--green)">${l.count}</td>
             <td style="color:var(--text3);font-size:11px">${l.action}</td>
           </tr>`).join('')}</tbody>

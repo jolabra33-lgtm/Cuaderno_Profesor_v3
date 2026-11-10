@@ -158,6 +158,7 @@ window.importarGrupoArchivo=inp=>{
     catch(e){ mostrarAviso("El archivo no es un JSON válido."); inp.value=""; return; }
     const original = datos && Array.isArray(datos.grupos) && datos.grupos[0] ? datos.grupos[0] : null;
     if(!original){ mostrarAviso("Este archivo no parece ser un grupo exportado desde esta aplicación."); inp.value=""; return; }
+    if(idsNoValidos(original).length){ mostrarAviso(AVISO_IDS_NO_VALIDOS); inp.value=""; return; }
     if(!CATALOGOS[original.catalogoKey] && !(state.catalogosPersonalizados||{})[original.catalogoKey]){
       mostrarAviso("Este grupo es de una materia/curso que no existe en tu catálogo — no se puede importar.");
       inp.value=""; return;

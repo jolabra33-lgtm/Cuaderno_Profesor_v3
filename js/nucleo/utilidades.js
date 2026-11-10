@@ -55,6 +55,31 @@ const OLD_KEY="hmc_eval_local_v1";
 function fechaISOLocal(d){ d=d||new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 const uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+/* Texto que va entre comillas simples dentro del código de un botón (onclick="f('…')"). Ahí esc() no basta:
+   el navegador convierte «&#39;» en un apóstrofo antes de ejecutar el código. */
+function escJS(s){ return String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"\\x22").replace(/</g,"\\x3c").replace(/>/g,"\\x3e").replace(/&/g,"\\x26").replace(/\n/g,"\\n").replace(/\r/g,"\\r"); }
+/* v3 · IDENTIFICADORES SEGUROS AL IMPORTAR
+   Los identificadores (de grupo, alumno, actividad, criterio, materia…) los genera la app y van dentro del código
+   de los botones. Un archivo cuyos identificadores lleven comillas, <, >, & o \ no lo ha creado la app: está
+   dañado o manipulado. Antes de cargar una copia, un grupo o una programación de un archivo se comprueba, y si
+   aparece alguno, no se carga nada. Devuelve la lista de los que no valen (vacía si todo está bien). */
+function idsNoValidos(obj){
+  const malos=[], RE=/['"<>&\\`\n\r]/, visto=new WeakSet();
+  const esId=k=>k==="id"||/Id$/.test(k)||k==="catalogoKey"||k==="recurrenciaId";
+  (function rec(o,ruta,prof){
+    if(!o||typeof o!=="object"||prof>14||visto.has(o)) return; visto.add(o);
+    for(const k of Object.keys(o)){
+      const v=o[k];
+      if(typeof v==="string"){ if(esId(k)&&RE.test(v)) malos.push((ruta+"."+k).slice(1)); }
+      else if(Array.isArray(v)&&/Ids$/.test(k)){ if(v.some(x=>typeof x==="string"&&RE.test(x))) malos.push((ruta+"."+k).slice(1)); }
+      if(v&&typeof v==="object") rec(v,ruta+"."+(Array.isArray(o)?"":k),prof+1);
+    }
+  })(obj,"",0);
+  // Las materias propias se guardan por su clave y sus CE por su identificador.
+  Object.keys((obj&&obj.catalogosPersonalizados)||{}).forEach(k=>{ if(RE.test(k)) malos.push("catalogosPersonalizados"); });
+  return malos;
+}
+const AVISO_IDS_NO_VALIDOS="Este archivo no se puede cargar: contiene identificadores que la aplicación no genera (con comillas, <, > o &). Está dañado o ha sido modificado a mano. No se ha cambiado nada de lo que tenías.";
 /* Notificación breve no bloqueante (sustituye a mostrarAviso() en confirmaciones que
    no necesitan respuesta del usuario, p. ej. "Guardado", "Copiado al portapapeles…"). */
 let _toastTimer=null;

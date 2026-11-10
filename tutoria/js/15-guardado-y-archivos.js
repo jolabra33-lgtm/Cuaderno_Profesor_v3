@@ -345,7 +345,7 @@ async function openBackupsModal() {
   const rows = backups.length ? backups.map(b => {
     const label = new Date(b.savedAt).toLocaleString('es-ES');
     return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
-        <div><div style="font-weight:600;color:var(--text)">${(b.iesName || 'Centro')}</div>
+        <div><div style="font-weight:600;color:var(--text)">${_tEsc(b.iesName || 'Centro')}</div>
         <div style="color:var(--text2);font-size:12px">${label}</div></div>
         <button class="btn btn-sm btn-primary" onclick="restoreBackup(${b.id})">Restaurar</button>
       </div>`;
@@ -484,7 +484,7 @@ function renderRecentsList() {
   if (!container || !list) return;
   if (!recents.length) { container.style.display = 'none'; return; }
   container.style.display = 'block';
-  const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const escHtml = _tEsc;
   list.innerHTML = recents.map((r, i) => `
     <div class="ws-recent-item" data-recent-idx="${i}">
       <div class="ws-recent-icon">📄</div>

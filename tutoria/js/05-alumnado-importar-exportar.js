@@ -424,7 +424,7 @@ function renderImportStep() {
 
   } else if (importState.step === 2) {
     // Mapping step
-    const opts = importState.headers.map((h, i) => `<option value="${i}">${h}</option>`).join('');
+    const opts = importState.headers.map((h, i) => `<option value="${i}">${_tEsc(h)}</option>`).join('');
     const noOpt = `<option value="-1">— No importar —</option>`;
 
     let mapRows = FIELD_DEFS.map(f => {
@@ -434,7 +434,7 @@ function renderImportStep() {
         <div class="mapping-arrow">→</div>
         <select class="mapping-select" data-field="${f.key}" onchange="importState.mapping[this.dataset.field]=+this.value">
           ${noOpt}
-          ${importState.headers.map((h, i) => `<option value="${i}" ${sel==i?'selected':''}>${h}</option>`).join('')}
+          ${importState.headers.map((h, i) => `<option value="${i}" ${sel==i?'selected':''}>${_tEsc(h)}</option>`).join('')}
         </select>
       `;
     }).join('');
@@ -483,12 +483,12 @@ function renderImportStep() {
         const destInfo = selEq && !selEq.missing
           ? `<div style="font-size:11px;color:var(--green);margin-top:8px;display:flex;align-items:center;gap:6px;">
                <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>
-               Destino automático: <strong>${selEq.nivel} — Grupo ${selEq.grupo}</strong>
+               Destino automático: <strong>${_tEsc(selEq.nivel)} — Grupo ${_tEsc(selEq.grupo)}</strong>
              </div>`
           : selEq && selEq.missing
-          ? `<div style="font-size:11px;color:var(--yellow);margin-top:8px;">⚠ El grupo <strong>${selEq.nivel} ${selEq.grupo}</strong> no está creado aún en la app. Créalo primero o elige destino manualmente en el paso 3.</div>`
+          ? `<div style="font-size:11px;color:var(--yellow);margin-top:8px;">⚠ El grupo <strong>${_tEsc(selEq.nivel)} ${_tEsc(selEq.grupo)}</strong> no está creado aún en la app. Créalo primero o elige destino manualmente en el paso 3.</div>`
           : importState.grupoFilter
-          ? `<div style="font-size:11px;color:var(--text3);margin-top:8px;">Sin equivalencia conocida para <code>${importState.grupoFilter}</code>. Podrás elegir destino manualmente en el paso 3.</div>`
+          ? `<div style="font-size:11px;color:var(--text3);margin-top:8px;">Sin equivalencia conocida para <code>${_tEsc(importState.grupoFilter)}</code>. Podrás elegir destino manualmente en el paso 3.</div>`
           : '';
 
         return `
@@ -519,8 +519,8 @@ function renderImportStep() {
 
   } else if (importState.step === 3) {
     // Target step
-    const nivelOpts = NIVELES.map(n => `<option value="${n}" ${n===importState.targetNivel?'selected':''}>${n}</option>`).join('');
-    const grupoOpts = GRUPOS_POR_NIVEL[importState.targetNivel].map(g => `<option value="${g}" ${g===importState.targetGrupo?'selected':''}>${g}</option>`).join('');
+    const nivelOpts = NIVELES.map(n => `<option value="${_tEsc(n)}" ${n===importState.targetNivel?'selected':''}>${_tEsc(n)}</option>`).join('');
+    const grupoOpts = GRUPOS_POR_NIVEL[importState.targetNivel].map(g => `<option value="${_tEsc(g)}" ${g===importState.targetGrupo?'selected':''}>${_tEsc(g)}</option>`).join('');
 
     body.innerHTML = `
       <div class="modal-title" style="margin-bottom:16px">🎯 Destino de la importación</div>
@@ -552,7 +552,7 @@ function renderImportStep() {
 
       ${importState.importMode === 'replace' ? `
         <div style="background:rgba(247,110,110,0.1);border:1px solid rgba(247,110,110,0.3);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--red);margin-top:4px">
-          ⚠️ Se eliminarán todos los alumnos actuales de <strong>${importState.targetNivel} ${importState.targetGrupo}</strong> y se reemplazarán por los del CSV.
+          ⚠️ Se eliminarán todos los alumnos actuales de <strong>${_tEsc(importState.targetNivel)} ${_tEsc(importState.targetGrupo)}</strong> y se reemplazarán por los del CSV.
         </div>` : ''}
     `;
     actions.innerHTML = `
@@ -568,13 +568,13 @@ function renderImportStep() {
 
     const previewRows = importState.preview.slice(0, 50).map(r => {
       if (r._error) {
-        return `<tr><td colspan="8" class="err">⚠️ Fila ignorada: ${r._error}</td></tr>`;
+        return `<tr><td colspan="8" class="err">⚠️ Fila ignorada: ${_tEsc(r._error)}</td></tr>`;
       }
       return `<tr>
-        <td>${r.nombre || '<em style="color:var(--text3)">—</em>'}</td>
-        <td>${r.fecha || '—'}</td>
-        <td>${r.repetidor || '—'}</td>
-        <td>${r.nese || '—'}</td>
+        <td>${_tEsc(r.nombre || '<em style="color:var(--text3)">—</em>')}</td>
+        <td>${_tEsc(r.fecha || '—')}</td>
+        <td>${_tEsc(r.repetidor || '—')}</td>
+        <td>${_tEsc(r.nese || '—')}</td>
         <td class="${r.eval1>0?'warn':''}">${r.eval1 ?? '0'}</td>
         <td class="${r.eval2>0?'warn':''}">${r.eval2 ?? '0'}</td>
         <td class="${r.eval3>0?'warn':''}">${r.eval3 ?? '0'}</td>
@@ -588,7 +588,7 @@ function renderImportStep() {
         <span class="import-pill blue">${importState.rows.length} filas en CSV</span>
         <span class="import-pill green">✓ ${ok} válidas</span>
         ${err ? `<span class="import-pill red">✗ ${err} con error</span>` : ''}
-        <span class="import-pill yellow">→ ${importState.targetNivel} ${importState.targetGrupo}</span>
+        <span class="import-pill yellow">→ ${_tEsc(importState.targetNivel)} ${_tEsc(importState.targetGrupo)}</span>
         <span class="import-pill ${importState.importMode==='replace'?'red':'blue'}">${importState.importMode==='replace'?'Reemplazar':'Añadir'}</span>
       </div>
       <div class="preview-table-wrap">
