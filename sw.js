@@ -6,7 +6,8 @@
 // y siempre con archivos de la MISMA versión (nunca mezcla viejos y nuevos).
 //
 // Actualizar: si cambias CUALQUIER archivo de la app, cambia también el
-// CACHE_NAME de abajo (cuaderno-v3-1 -> cuaderno-v3-2, etc.). Así el navegador
+// CACHE_NAME de abajo (cuaderno-v3-1 -> cuaderno-v3-2, etc.) — «npm run sellar»
+// lo hace solo y anota la HUELLA de los archivos. Así el navegador
 // detecta que hay versión nueva, la descarga entera en segundo plano y la app
 // muestra el aviso «Hay una versión nueva · Actualizar» (ver js/registro-sw.js).
 // La versión nueva solo se activa cuando se pulsa «Actualizar».
@@ -17,7 +18,10 @@
 // Cuaderno_Profesor_v2), que comparte el mismo almacenamiento del navegador.
 
 const CACHE_PREFIJO = 'cuaderno-v3-';
-const CACHE_NAME = CACHE_PREFIJO + '15';
+const CACHE_NAME = CACHE_PREFIJO + '17';
+// Resumen de todos los archivos de esta versión. No lo cambies a mano: «npm run sellar» lo recalcula y, si
+// algún archivo ha cambiado, sube CACHE_NAME. La prueba «version-cache» falla si se sube un cambio sin sellar.
+const HUELLA = 'c5af1f24d1c108a2';
 
 // El "esqueleto" de las dos apps: HTML, manifest e iconos.
 const APP_SHELL = [
@@ -160,10 +164,13 @@ const OPTIONAL_ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(APP_SHELL);
+    // {cache:'reload'}: se piden al servidor, sin pasar por la caché HTTP del navegador. GitHub Pages deja
+    // que el navegador reutilice un archivo durante 10 minutos; sin esto, una versión publicada justo después
+    // de otra podía guardarse con algún archivo de la anterior.
+    await cache.addAll(APP_SHELL.map(url => new Request(url, { cache: 'reload' })));
     await Promise.all(OPTIONAL_ASSETS.map(async url => {
       try {
-        const resp = await fetch(url);
+        const resp = await fetch(url, { cache: 'reload' });
         if (resp && resp.status === 200) await cache.put(url, resp);
       } catch (e) { /* no está descargado; no pasa nada */ }
     }));

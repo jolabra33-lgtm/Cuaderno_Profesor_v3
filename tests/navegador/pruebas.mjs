@@ -9,6 +9,7 @@ import os from 'node:os';
 import { createRequire } from 'node:module';
 import { servir, nuevaPagina, esperar, cuadernoConGrupo, tutoriaConAlumnos, llenarLocalStorage, vaciarRelleno } from './utilidades.mjs';
 import { rastrearTutoria } from './texto-hostil.mjs';
+import { calcularHuella, selloActual, listaCache } from '../version/huella.mjs';
 
 const require = createRequire(import.meta.url);
 const RAIZ = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
@@ -21,6 +22,30 @@ export const PRUEBAS = [
     const r = await p.evaluate(() => window.__resultadoPruebas);
     t.ok(r && r.total >= 30, `se han ejecutado ${r && r.total} casos`);
     t.ok(r && !r.fallos.length && !r.error, 'ningún caso falla', r && (r.fallos.join('; ') || r.error));
+  } },
+
+  { nombre: 'version-cache', descripcion: 'sw.js: la versión de la caché está sellada y la lista de archivos sin conexión está completa', async fn(t) {
+    const sello = selloActual(RAIZ), huella = calcularHuella(RAIZ);
+    t.ok(sello.huella === huella, 'la versión está sellada: ningún archivo ha cambiado sin subir CACHE_NAME',
+      `Han cambiado archivos desde que se selló la versión ${sello.version}. Ejecuta «npm run sellar» y sube también sw.js.`);
+    const lista = new Set(listaCache(RAIZ));
+    const faltan = [...lista].filter(f => !fs.existsSync(path.join(RAIZ, f)));
+    t.ok(!faltan.length, 'todos los archivos de la lista existen', faltan.join(', '));
+    // Todo lo que cargan las páginas (scripts, estilos, iconos, fuentes) tiene que estar en la lista.
+    const sinLista = [];
+    for (const pag of ['index.html', 'tutoria/index.html', 'editor/index.html', 'tools/planificacion.html']) {
+      const html = fs.readFileSync(path.join(RAIZ, pag), 'utf8'), dir = path.dirname(pag);
+      for (const m of html.matchAll(/<(?:script|link|img)\b[^>]*?\b(?:src|href)="([^"#?]+)"/g)) {
+        if (/^(https?:|data:|#|mailto:)/.test(m[1])) continue;
+        const f = path.normalize(path.join(dir, m[1])).replace(/\\/g, '/');
+        if (!lista.has(f) && fs.existsSync(path.join(RAIZ, f)) && fs.statSync(path.join(RAIZ, f)).isFile()) sinLista.push(`${pag} → ${f}`);
+      }
+    }
+    for (const css of ['editor/css/fuentes.css', 'tools/fonts/fuentes.css'])
+      for (const m of fs.readFileSync(path.join(RAIZ, css), 'utf8').matchAll(/url\(([^)]+)\)/g)) {
+        const f = path.normalize(path.join(path.dirname(css), m[1].replace(/["']/g, ''))).replace(/\\/g, '/'); if (!lista.has(f)) sinLista.push(`${css} → ${f}`);
+      }
+    t.ok(!sinLista.length, 'todo lo que cargan las páginas está en la lista de sw.js (funciona sin conexión)', sinLista.join('; '));
   } },
 
   { nombre: 'carga', descripcion: 'Todas las páginas cargan sin errores ni archivos que falten', async fn(t) {
