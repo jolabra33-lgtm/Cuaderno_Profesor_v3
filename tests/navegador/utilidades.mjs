@@ -55,3 +55,13 @@ export async function tutoriaConAlumnos(p, url, nivel, grupo, nombres) {
   }, { nivel, grupo, nombres });
   await esperar(1200);   // autoguardado de Tutoría (800 ms)
 }
+
+/* Llena localStorage hasta el borde con una clave ajena (como haría otra app de la misma dirección).
+   Devuelve cuántos caracteres ha ocupado. Se vacía con vaciarRelleno(). */
+export const llenarLocalStorage = p => p.evaluate(() => {
+  const set = (v) => Storage.prototype.setItem.call(localStorage, 'relleno_de_otra_app', v);
+  let n = 4.0e6; set('x'.repeat(n)); let paso = 2e5;
+  while (paso >= 50) { try { set('x'.repeat(n + paso)); n += paso; } catch (e) { paso = Math.floor(paso / 2); } }
+  return n;
+});
+export const vaciarRelleno = p => p.evaluate(() => Storage.prototype.removeItem.call(localStorage, 'relleno_de_otra_app'));

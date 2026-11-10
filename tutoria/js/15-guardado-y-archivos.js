@@ -63,13 +63,55 @@ function _fmtBytes(n) {
   return (n / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-// Guarda el estado en localStorage con manejo de cuota: si la memoria del
-// navegador está llena, reintenta sin imágenes, y si aún así no cabe, sin
-// imágenes ni actas guardadas (el HTML completo de cada acta editada puede
-// pesar bastante), avisando al usuario en cada nivel de degradación.
+// ===================== ALMACÉN PRINCIPAL EN IndexedDB (v3) =====================
+/* localStorage solo admite unos 5 MB, y los comparten el Cuaderno, Tutoría y la otra versión de la app. Las
+   fotos de grupo, los horarios y las actas guardadas lo llenaban, y entonces fallaba el guardado de las dos apps.
+   Ahora el estado COMPLETO se guarda en IndexedDB (base propia «evalies-estado», sin ese límite) y en
+   localStorage queda una copia LIGERA, sin imágenes, que permite abrir al instante. Al abrir (_tutCargarDeIDB):
+     - si la copia de IndexedDB es más reciente, o la de localStorage se ha perdido, se carga entera;
+     - si no, se añaden desde IndexedDB las imágenes (y las actas, si no cupieron) que la copia ligera no lleva.
+   Si IndexedDB no está disponible, se guarda como antes: todo en localStorage, hasta donde quepa. */
+const TUT_IDB = 'evalies-estado';
+let _tutIdbP = null, _tutIdbOk = true, _tutEditado = false;
+function _tutIdb() {
+  if (_tutIdbP) return _tutIdbP;
+  _tutIdbP = new Promise((ok, ko) => {
+    if (!window.indexedDB) { ko(new Error('IndexedDB no disponible')); return; }
+    let r; try { r = indexedDB.open(TUT_IDB, 1); } catch (e) { ko(e); return; }
+    r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('kv')) r.result.createObjectStore('kv'); };
+    r.onsuccess = () => ok(r.result);
+    r.onerror = () => ko(r.error);
+    r.onblocked = () => ko(new Error('IndexedDB bloqueada'));
+  });
+  _tutIdbP.catch(() => { _tutIdbP = null; });
+  return _tutIdbP;
+}
+function _tutIdbLeer() {
+  return _tutIdb().then(db => new Promise((ok, ko) => {
+    const r = db.transaction('kv', 'readonly').objectStore('kv').get('estado');
+    r.onsuccess = () => ok(r.result || null); r.onerror = () => ko(r.error);
+  }));
+}
+function _tutIdbGuardar(json, savedAt) {
+  return _tutIdb().then(db => new Promise((ok, ko) => {
+    const t = db.transaction('kv', 'readwrite');
+    t.objectStore('kv').put({ savedAt, json }, 'estado');
+    t.oncomplete = () => ok(true); t.onerror = () => ko(t.error); t.onabort = () => ko(t.error || new Error('abortada'));
+  }));
+}
+function _tutEstadoGuardado(dot, lbl, texto, error) {
+  if (dot) dot.className = 'autosave-dot' + (error ? ' error' : '');
+  if (lbl) lbl.textContent = texto;
+}
+
+// Guarda el estado: completo en IndexedDB y una copia ligera en localStorage (ver arriba).
 function persistLocal() {
   if (window.__IS_SNAPSHOT_EXPORT__) return false;  // nunca escribir desde un snapshot
   if (window.__MODO_EJEMPLO__) return false;        // v5: los datos de ejemplo nunca se guardan
+  if (window.UnaVentana && UnaVentana.estado === 'bloqueada') return false;   // otra ventana es la que guarda
+  if (window.UnaVentana && UnaVentana.estado === 'pendiente') {               // aún no se sabe si esta ventana puede guardar
+    clearTimeout(_autosaveTimer); _autosaveTimer = setTimeout(persistLocal, 700); return false;
+  }
   const dot = document.getElementById('autosaveDot');
   const lbl = document.getElementById('autosaveLabel');
   const writeIes = () => {
@@ -77,56 +119,100 @@ function persistLocal() {
     if (iname) localStorage.setItem('evalies_iesname', iname.value);
   };
   const isQuota = (e) => e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014);
-  try {
-    localStorage.setItem('evalies_data', JSON.stringify(buildState(true, true)));
-    writeIes();
-    if (dot) dot.className = 'autosave-dot';
-    if (lbl) lbl.textContent = 'Guardado';
+  const aviso = (t) => { if (!_quotaWarned) { _quotaWarned = true; showToast(t); } };
+
+  // 1) Estado completo → IndexedDB (no bloquea; si falla, se vuelve al guardado de antes).
+  let enIdb = false;
+  if (_tutIdbOk) {
+    try {
+      const completo = buildState(true, true);
+      enIdb = true;
+      _tutIdbGuardar(JSON.stringify(completo), completo.savedAt).catch(() => {
+        if (!_tutIdbOk) return;
+        _tutIdbOk = false;
+        persistLocal();   // sin IndexedDB: las imágenes vuelven a localStorage, hasta donde quepan
+      });
+    } catch (e) { enIdb = false; }
+  }
+
+  // 2) localStorage: copia ligera (sin imágenes) si lo completo está en IndexedDB; si no, como siempre.
+  const intentos = enIdb
+    ? [[false, true, 'Guardado'], [false, false, 'Guardado']]
+    : [[true, true, 'Guardado'], [false, true, 'Guardado (sin imágenes)'], [false, false, 'Guardado (sin imágenes ni actas)']];
+  for (let i = 0; i < intentos.length; i++) {
+    const [conImagenes, conActas, texto] = intentos[i];
+    try {
+      const st = buildState(conImagenes, conActas);
+      // enIDB: qué partes NO lleva esta copia porque están en IndexedDB.
+      if (enIdb) st.enIDB = { imagenes: true, actas: !conActas };
+      localStorage.setItem('evalies_data', JSON.stringify(st));
+      writeIes();
+      _tutEstadoGuardado(dot, lbl, texto);
+      if (!enIdb && i === 1) aviso('⚠ Memoria del navegador casi llena: las fotos y horarios no se guardan aquí. Guárdalos en un archivo con Ctrl+S.');
+      if (!enIdb && i === 2) aviso('⚠ Memoria del navegador muy llena: ni las imágenes ni las actas guardadas se autoguardan aquí. Expórtalas a un archivo con Ctrl+S antes de seguir editando.');
+      maybeBackup();
+      return true;
+    } catch (e) {
+      if (isQuota(e)) continue;
+      if (enIdb) break;   // localStorage bloqueado: lo completo está en IndexedDB
+      _tutEstadoGuardado(dot, lbl, 'Error al guardar', true);
+      return false;
+    }
+  }
+  if (enIdb) {
+    // La copia ligera no cabe (localStorage lleno por otra app): lo guardado en IndexedDB es lo que vale,
+    // y al abrir se carga de ahí porque es más reciente.
+    _tutEstadoGuardado(dot, lbl, 'Guardado');
     maybeBackup();
     return true;
-  } catch (e) {
-    if (isQuota(e)) {
-      // Reintento 1: sin fotos ni horarios
-      try {
-        localStorage.setItem('evalies_data', JSON.stringify(buildState(false, true)));
-        writeIes();
-        if (dot) dot.className = 'autosave-dot';
-        if (lbl) lbl.textContent = 'Guardado (sin imágenes)';
-        if (!_quotaWarned) {
-          _quotaWarned = true;
-          showToast('⚠ Memoria del navegador casi llena: las fotos y horarios no se guardan aquí. Guárdalos en un archivo con Ctrl+S.');
-        }
-        return true;
-      } catch (e2) {
-        // Reintento 2: tampoco las actas guardadas (su HTML completo puede pesar mucho)
-        try {
-          localStorage.setItem('evalies_data', JSON.stringify(buildState(false, false)));
-          writeIes();
-          if (dot) dot.className = 'autosave-dot';
-          if (lbl) lbl.textContent = 'Guardado (sin imágenes ni actas)';
-          if (!_quotaWarned) {
-            _quotaWarned = true;
-            showToast('⚠ Memoria del navegador muy llena: ni las imágenes ni las actas guardadas se autoguardan aquí. Expórtalas a un archivo con Ctrl+S antes de seguir editando.');
-          }
-          return true;
-        } catch (e3) {
-          if (dot) dot.className = 'autosave-dot error';
-          if (lbl) lbl.textContent = 'Error: memoria llena';
-          if (!_quotaWarned) {
-            _quotaWarned = true;
-            showToast('⚠ No se pudo autoguardar: memoria del navegador llena. Guarda en archivo con Ctrl+S.');
-          }
-          return false;
-        }
-      }
-    }
-    if (dot) dot.className = 'autosave-dot error';
-    if (lbl) lbl.textContent = 'Error al guardar';
-    return false;
   }
+  _tutEstadoGuardado(dot, lbl, 'Error: memoria llena', true);
+  aviso('⚠ No se pudo autoguardar: memoria del navegador llena. Guarda en archivo con Ctrl+S.');
+  return false;
+}
+
+/* Al abrir: reconcilia la copia ligera de localStorage (ya cargada) con el estado completo de IndexedDB. */
+async function _tutCargarDeIDB() {
+  if (window.__IS_SNAPSHOT_EXPORT__) return;
+  let reg = null;
+  try { reg = await _tutIdbLeer(); } catch (e) { _tutIdbOk = false; return; }
+  let ls = null;
+  try { const raw = localStorage.getItem('evalies_data'); if (raw) ls = JSON.parse(raw); } catch (e) {}
+  if (window.__MODO_EJEMPLO__) return;
+  if (!reg || !reg.json) {
+    // Primera vez con esta versión: lo que hubiera en localStorage (con sus imágenes) pasa a IndexedDB.
+    if (ls) persistLocal();
+    return;
+  }
+  let st = null;
+  try { st = JSON.parse(reg.json); } catch (e) { return; }
+  if (!st || typeof st !== 'object') return;
+  const lsAt = ls ? (Date.parse(ls.savedAt) || 0) : -1, idbAt = Date.parse(reg.savedAt || st.savedAt) || 0;
+  if (!_tutEditado && (!ls || idbAt > lsAt + 1500)) {
+    // IndexedDB tiene lo último (o localStorage se ha vaciado): se carga entero.
+    const habia = _tutTotalAlumnos();
+    applyFilePayload(st);
+    if (!ls && _tutTotalAlumnos() > 0) showToast('✓ Se han recuperado los datos de Tutoría desde la copia interna del dispositivo');
+    else if (habia !== _tutTotalAlumnos()) showToast('✓ Se han recuperado tus últimos cambios desde la copia interna del dispositivo');
+    persistLocal();
+    return;
+  }
+  // La copia ligera es la actual: se completa con lo que no lleva.
+  let cambia = false;
+  const completar = (destino, origen) => { Object.entries(origen || {}).forEach(([k, v]) => { if (destino[k] === undefined) { destino[k] = v; cambia = true; } }); };
+  if (!ls || !ls.fotoData || ls.enIDB) {
+    completar(window._fotoData = window._fotoData || {}, st.fotoData);
+    completar(window._horarioData = window._horarioData || {}, st.horarioData);
+  }
+  if (ls && ls.enIDB && ls.enIDB.actas) {
+    completar(window._actasData = window._actasData || {}, st.actasData);
+    completar(window._actasOficialesData = window._actasOficialesData || {}, st.actasOficialesData);
+  }
+  if (cambia && !_tutEditado) renderAll();
 }
 
 function markDirty() {
+  _tutEditado = true;
   clearTimeout(_autosaveTimer);
   const dot = document.getElementById('autosaveDot');
   const lbl = document.getElementById('autosaveLabel');
@@ -239,6 +325,8 @@ loadMateriasCustom();
 loadFromLocalStorage();
 // Re-render with saved data so it's ready when user clicks "Continuar"
 if (localStorage.getItem('evalies_data')) renderAll();
+// v3: el estado completo (con fotos, horarios y actas) está en IndexedDB.
+_tutCargarDeIDB();
 
 // ===================== PWA + FILE SYSTEM ACCESS =====================
 

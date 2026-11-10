@@ -100,7 +100,8 @@ async function descifrarSiHaceFalta(s,nombreArchivo){
    Se define aquí porque save() puede llamarse antes del primer render. */
 function actualizarAvisoGuardado(){
   let bar=document.getElementById("saveWarnBar");
-  if(saveState.ok && saveState.idbOk){ if(bar) bar.remove(); return; }
+  // v3: IndexedDB es el almacén que manda. Si funciona, todo está guardado aunque localStorage no admita su copia.
+  if(saveState.idbOk){ if(bar) bar.remove(); return; }
   if(!bar){
     bar=document.createElement("div");
     bar.id="saveWarnBar";
@@ -111,9 +112,7 @@ function actualizarAvisoGuardado(){
   bar.style.cssText=`position:sticky;top:0;z-index:20;background:${grave?"#912525":"#8a5a12"};color:#fff;padding:10px 16px;font-size:13.5px;font-weight:500;display:flex;gap:12px;align-items:center;justify-content:center;text-align:center;flex-wrap:wrap`;
   const msg = grave
     ? "⚠️ No se ha podido guardar en el dispositivo. Tus últimos cambios podrían perderse si cierras la app. Exporta una copia ahora."
-    : !saveState.ok
-      ? "⚠️ El almacenamiento principal está lleno o bloqueado. Tus cambios se siguen guardando en la copia interna, pero exporta una copia por seguridad."
-      : "⚠️ No se puede usar la copia interna del dispositivo (IndexedDB). Tus datos se guardan igualmente; exporta copias con regularidad.";
+    : "⚠️ No se puede usar la base de datos del dispositivo (IndexedDB). Tus datos se siguen guardando en localStorage (hasta unos 5 MB); exporta copias con regularidad.";
   bar.innerHTML=`${msg} <button onclick="exportarTodo()" style="background:#fff;color:#333;border:none;border-radius:6px;padding:6px 12px;font-weight:600;cursor:pointer">Exportar copia</button>`;
 }
 
