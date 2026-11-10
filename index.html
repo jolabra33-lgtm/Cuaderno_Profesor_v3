@@ -35,12 +35,17 @@
 <div class="grouptabs" id="groupTabs"></div>
 <main id="app"></main>
 
-<button id="cronoFab" class="crono-fab" onclick="cronoTogglePanel()" title="Cronómetro">⏱️</button>
-<div id="cronoPanel" class="crono-panel">
-  <div class="flex" style="justify-content:space-between;align-items:center">
-    <strong style="font-size:14px">⏱️ Cronómetro</strong>
-    <button class="ghost" style="padding:3px 9px" onclick="cronoTogglePanel()">✕</button>
+<button id="cronoFab" class="crono-fab" onclick="cronoTogglePanel()" title="Herramientas de clase: cronómetro, sorteo y grupos" aria-label="Herramientas de clase: cronómetro, sorteo y grupos">⏱️</button>
+<div id="cronoPanel" class="crono-panel" data-sin-privacidad>
+  <div class="flex" style="justify-content:space-between;align-items:center;gap:6px;flex-wrap:nowrap">
+    <div class="clase-tabs" role="tablist" aria-label="Herramientas de clase">
+      <button class="tab on" role="tab" aria-selected="true" data-clase-tab="crono" onclick="claseIrTab('crono')">⏱️ Crono</button>
+      <button class="tab" role="tab" aria-selected="false" data-clase-tab="sorteo" onclick="claseIrTab('sorteo')">🎲 Sorteo</button>
+      <button class="tab" role="tab" aria-selected="false" data-clase-tab="grupos" onclick="claseIrTab('grupos')">👥 Grupos</button>
+    </div>
+    <button class="ghost" style="padding:3px 9px" onclick="cronoTogglePanel()" aria-label="Cerrar">✕</button>
   </div>
+  <div id="claseCrono">
   <div class="crono-display" id="cronoDisplay">00:00</div>
   <div class="crono-quick">
     <button class="ghost" onclick="cronoIniciarMinutos(1)">1 min</button>
@@ -52,15 +57,17 @@
     <button class="ghost" onclick="cronoIniciarMinutos(45)">45 min</button>
   </div>
   <div class="flex" style="margin-top:10px;gap:6px;align-items:center">
-    <input type="number" id="cronoCustomMin" class="in" style="width:60px" placeholder="min" min="0">
+    <input type="number" id="cronoCustomMin" class="in" style="width:60px" placeholder="min" min="0" aria-label="Minutos">
     <span style="color:var(--mut)">:</span>
-    <input type="number" id="cronoCustomSeg" class="in" style="width:60px" placeholder="seg" min="0" max="59">
+    <input type="number" id="cronoCustomSeg" class="in" style="width:60px" placeholder="seg" min="0" max="59" aria-label="Segundos">
     <button class="btn" style="flex:1" onclick="cronoIniciarCustom()">Iniciar</button>
   </div>
   <div class="flex" style="margin-top:12px;gap:8px">
     <button class="btn" id="cronoBtnPausar" style="flex:1" onclick="cronoTogglePausa()">⏸ Pausar</button>
     <button class="ghost" style="flex:1;border:1px solid var(--line)" onclick="cronoReiniciar()">↺ Reiniciar</button>
   </div>
+  </div>
+  <div id="claseOtra" hidden></div>
 </div>
 
 <script src="js/00-preferencias-ui.js"></script>
@@ -78,6 +85,7 @@
 <script src="js/evaluacion/calculo-notas.js"></script>
 <script src="js/ui/barra-superior.js"></script>
 <script src="js/inicio/cronometro.js"></script>
+<script src="js/inicio/herramientas-clase.js"></script>
 <script src="js/inicio/calendario.js"></script>
 <script src="js/inicio/reuniones.js"></script>
 <script src="js/alumnado/plan-refuerzo.js"></script>

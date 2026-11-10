@@ -425,6 +425,30 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
+  { nombre: 'sorteo-y-grupos', descripcion: 'Herramientas de clase: sorteo sin repetir y sin ausentes, y reparto en grupos igualados', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const ids = await cuadernoConGrupo(p, t.url, { nombres: ['A, Uno', 'B, Dos', 'C, Tres', 'D, Cuatro', 'E, Cinco', 'F, Seis', 'G, Siete'] });
+    await p.evaluate(ids => { _mostrarBienvenida = false; const g = state.grupos[0]; g.asistencia[agHoyStr()] = { [ids[6]]: { estado: 'falta_no_justificada', nota: '' }, [ids[5]]: { estado: 'retraso', nota: '' } };
+      state.ui.appMode = 'competencial'; state.ui.grupoId = g.id; save(); render(); }, ids);
+    await p.click('#cronoFab'); await p.click('[data-clase-tab="sorteo"]'); await esperar(200);
+    const salen = [];
+    for (let i = 0; i < 6; i++) { await p.click('button:has-text("Elegir a alguien"), button:has-text("Otra persona")'); await esperar(900); salen.push(await p.innerText('#claseElegido')); }
+    t.ok(new Set(salen).size === 6, 'en seis sorteos salen las seis personas presentes, sin repetir', salen.join(' · '));
+    t.ok(!salen.includes('Siete G') && salen.includes('Seis F'), 'quien falta hoy no entra en el sorteo; quien llega tarde, sí', salen.join(' · '));
+    t.ok(/Quedan 0 de 6 · 1 ausente hoy/.test(await p.innerText('#claseOtra')), 'indica cuántos quedan y cuántos faltan', await p.innerText('#claseOtra'));
+    await p.click('button:has-text("Otra persona")'); await esperar(900);
+    t.ok(/Quedan 5 de 6/.test(await p.innerText('#claseOtra')), 'cuando han salido todos, empieza otra vuelta');
+    await p.click('[data-clase-tab="grupos"]'); await p.fill('#claseNum', '3'); await p.click('button:has-text("Hacer grupos")'); await esperar(200);
+    let eq = await p.evaluate(() => claseEquipos.equipos);
+    t.ok(eq.length === 3 && eq.every(e => e.length === 2) && new Set(eq.flat()).size === 6, 'tres grupos de dos, con todos los presentes una sola vez', JSON.stringify(eq));
+    await p.selectOption('#claseOtra select[aria-label="Cómo repartir"]', 'tam'); await p.fill('#claseNum', '4'); await p.click('button:has-text("Repartir otra vez"), button:has-text("Hacer grupos")'); await esperar(200);
+    eq = await p.evaluate(() => claseEquipos.equipos);
+    t.ok(eq.length === 2 && eq.map(e => e.length).sort().join() === '3,3', '«de cuatro en cuatro» con seis personas da dos grupos igualados (3 y 3)', JSON.stringify(eq));
+    const rep = await p.evaluate(() => { const al = Array.from({ length: 23 }, (_, i) => ({ id: 'x' + i })); return [claseRepartir(al, 'num', 5), claseRepartir(al, 'tam', 4), claseRepartir(al, 'num', 40), claseRepartir([], 'num', 3)].map(r => r.map(e => e.length).sort((a, b) => b - a).join('+')); });
+    t.ok(rep[0] === '5+5+5+4+4' && rep[1] === '4+4+4+4+4+3' && rep[2] === Array(23).fill(1).join('+') && rep[3] === '', 'los tamaños nunca difieren en más de uno', JSON.stringify(rep));
+    t.ok(await p.evaluate(() => JSON.stringify(state.grupos[0].alumnos.map(a => a.id))) === JSON.stringify(ids) && !p.errores.length, 'no toca los datos ni da errores', p.errores.join('; '));
+  } },
+
   { nombre: 'que-me-falta', descripcion: 'Inicio: «Qué me falta» detecta notas a medias y comentarios pendientes', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url, { nombres: ['A, Uno', 'B, Dos', 'C, Tres', 'D, Cuatro'] });

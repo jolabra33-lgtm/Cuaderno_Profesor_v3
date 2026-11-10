@@ -51,6 +51,7 @@ const APP_SHELL = [
   './js/evaluacion/calculo-notas.js',
   './js/ui/barra-superior.js',
   './js/inicio/cronometro.js',
+  './js/inicio/herramientas-clase.js',
   './js/inicio/calendario.js',
   './js/inicio/reuniones.js',
   './js/alumnado/plan-refuerzo.js',
