@@ -449,6 +449,51 @@ export const PRUEBAS = [
     t.ok(await p.evaluate(() => JSON.stringify(state.grupos[0].alumnos.map(a => a.id))) === JSON.stringify(ids) && !p.errores.length, 'no toca los datos ni da errores', p.errores.join('; '));
   } },
 
+  { nombre: 'modo-proyector', descripcion: 'Modo proyector: los nombres del alumnado y sus notas se difuminan en todas las pantallas', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url, { nombres: ['Xilófono Quetzal, Wenceslao', 'Ñandú Kiwi, Brígida', 'Yunque Zafiro, Úrsula'] });
+    await p.evaluate(() => { _mostrarBienvenida = false; const g = state.grupos[0], cr = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
+      g.actividades = [{ id: 'e1', nombre: 'Examen', trimestre: 0, bloqueId: 'b0', esExamen: true, criterios: [{ critId: cr, peso: 100 }] }];
+      g.alumnos.forEach((a, i) => { g.notasCuant[a.id] = { e1: 3 + i * 2.5 }; g.notas[a.id] = { e1: { [cr]: 5 + i } }; a.familia[0] = { parentesco: 'Madre', nombre: 'Familiar Reconocible ' + i, email: 'familia' + i + '@correo.es' }; });
+      g.convivencia.push({ id: uid(), alumnoId: g.alumnos[0].id, fecha: agHoyStr(), tipo: 'AC', descripcion: 'Incidencia' });
+      state.ui.appMode = 'competencial'; state.ui.grupoId = g.id; state.ui.tab = 'resultados'; save(); render(); });
+    // Nombres (o trozos) que quedan legibles: textos y campos que los contienen y no están difuminados.
+    const visibles = () => p.evaluate(() => {
+      const marcas = /xil[oó]fono|quetzal|wenceslao|[ñn]and[uú]|kiwi|br[ií]gida|yunque|zafiro|[uú]rsula|familiar reconocible|@correo\.es/i, out = [];
+      const oculto = el => !!el.closest('.priv') || !!el.closest('[data-sin-privacidad]') || el.closest('script,style');
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
+      while ((n = w.nextNode())) { const pe = n.parentElement; if (!pe || !marcas.test(n.nodeValue)) continue; if (pe.tagName === 'OPTION') { if (pe.selected && !oculto(pe.parentElement)) out.push('opción: ' + n.nodeValue.trim().slice(0, 30)); continue; } if (!oculto(pe) && pe.getBoundingClientRect().width > 0) out.push(pe.tagName + ': ' + n.nodeValue.trim().slice(0, 40)); }
+      document.querySelectorAll('input,textarea').forEach(el => { if (el !== document.activeElement && marcas.test(el.value || '') && !oculto(el) && el.getBoundingClientRect().width > 0) out.push('campo: ' + el.value.slice(0, 30)); });
+      return out; });
+    t.ok((await visibles()).length >= 3, 'sin el modo proyector los nombres se ven');
+    await p.click('#proyectorBtn'); await esperar(200);
+    const fallos = {};
+    const mira = async (nombre) => { await esperar(250); const v = await visibles(); if (v.length) fallos[nombre] = v.slice(0, 4); };
+    for (const tab of ['alumnos', 'plano', 'actividades', 'calificar', 'resultados', 'resumen', 'cobertura', 'asistencia', 'diario', 'convivencia', 'familias', 'ajustes']) {
+      await p.evaluate(tab => { state.ui.appMode = 'competencial'; state.ui.tab = tab; render(); }, tab); await mira('pestaña ' + tab); }
+    await p.evaluate(() => { state.ui.tab = 'calificar'; state.ui.calViewMode = 'table'; render(); }); await mira('calificar (tabla)');
+    await p.evaluate(() => { state.ui.tab = 'resultados'; state.ui.resAl = state.grupos[0].alumnos[0].id; render(); }); await mira('informe del alumno');
+    for (const m of ['inicio', 'corrector', 'memoria', 'nese', 'refuerzo', 'repeticion', 'reuniones']) { await p.evaluate(m => { state.ui.appMode = m; render(); }, m); await mira('modo ' + m); }
+    await p.evaluate(() => { buscarAbrir(); const i = document.querySelector('.modal-overlay input'); i.focus(); i.value = 'quetzal'; i.dispatchEvent(new Event('input', { bubbles: true })); }); await mira('buscador');
+    t.ok(!Object.keys(fallos).length, 'ningún nombre de alumno/a ni de su familia queda legible (20 pantallas y el buscador)', JSON.stringify(fallos));
+    await p.keyboard.press('Escape');
+    await p.evaluate(() => { state.ui.appMode = 'competencial'; state.ui.tab = 'resultados'; state.ui.resAl = ''; render(); }); await esperar(200);
+    const notas = await p.evaluate(() => {
+      const filas = [...document.querySelectorAll('#tabContent table tbody tr')].slice(0, 3);
+      return { filas: filas.length, notasOcultas: filas.every(tr => [...tr.querySelectorAll('td')].filter(td => /^\s*\d{1,2},\d\s*$/.test(td.textContent)).every(td => td.classList.contains('priv')) && [...tr.querySelectorAll('.pill')].every(x => x.classList.contains('priv'))),
+        grupoVisible: !document.querySelector('.gpill.on').closest('.priv'), blur: getComputedStyle(document.querySelector('.priv')).filter }; });
+    t.ok(notas.filas === 3 && notas.notasOcultas && /blur/.test(notas.blur), 'las notas de cada fila también se difuminan', JSON.stringify(notas));
+    t.ok(notas.grupoVisible, 'el resto (grupo, actividades, botones) se sigue viendo');
+    await p.click('#cronoFab'); await p.click('[data-clase-tab="sorteo"]'); await p.click('button:has-text("Elegir a alguien")'); await esperar(900);
+    t.ok(await p.evaluate(() => !document.getElementById('claseElegido').closest('.priv') && /Wenceslao|Brígida|Úrsula/.test(document.getElementById('claseElegido').textContent)), 'el sorteo sí muestra el nombre (está pensado para proyectarlo)');
+    await p.reload(); await esperar(1500);
+    await p.evaluate(() => { _mostrarBienvenida = false; state.ui.appMode = 'competencial'; state.ui.grupoId = state.grupos[0].id; state.ui.tab = 'resultados'; render(); }); await esperar(250);
+    t.ok(await p.evaluate(() => document.body.getAttribute('data-proyector') === '1') && !(await visibles()).length, 'el modo se recuerda al reabrir la app');
+    await p.click('#proyectorBtn'); await esperar(200);
+    t.ok(await p.evaluate(() => !document.querySelector('.priv')) && (await visibles()).length >= 3, 'al desactivarlo todo vuelve a verse');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
   { nombre: 'que-me-falta', descripcion: 'Inicio: «Qué me falta» detecta notas a medias y comentarios pendientes', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url, { nombres: ['A, Uno', 'B, Dos', 'C, Tres', 'D, Cuatro'] });

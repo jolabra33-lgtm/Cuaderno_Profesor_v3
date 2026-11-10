@@ -501,3 +501,8 @@
   .clase-equipo{ border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:12.5px; line-height:1.5; background:var(--surface-2) }
   .clase-equipo strong{ font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--accent-2) }
   @media(max-width:560px){ .crono-panel,.crono-panel.clase-ancho{ width:auto } }
+  /* v3 · Modo proyector: nombres del alumnado y notas difuminados (js/ui/modo-proyector.js) */
+  body[data-proyector="1"] .priv{ filter:blur(7px); -webkit-user-select:none; user-select:none }
+  body[data-proyector="1"] input.priv:focus, body[data-proyector="1"] textarea.priv:focus, body[data-proyector="1"] select.priv:focus{ filter:none }
+  body[data-proyector="1"] #proyectorBtn{ background:var(--accent); color:var(--accent-ink)!important; border-color:var(--accent)!important }
+  @media print{ body[data-proyector="1"] .priv{ filter:none!important } }

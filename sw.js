@@ -88,6 +88,7 @@ const APP_SHELL = [
   './js/corrector/corregir.js',
   './js/nucleo/nuevo-curso.js',
   './js/ui/buscador.js',
+  './js/ui/modo-proyector.js',
   './js/ui/bienvenida.js',
   './js/ui/render-accesibilidad.js',
   './js/corrector/editor-examenes.js',

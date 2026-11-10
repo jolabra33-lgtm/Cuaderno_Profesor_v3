@@ -26,6 +26,7 @@ if(!state){
 }
 migrarEstado();
 render();
+_proyAplicar();   // modo proyector, si estaba activado en este dispositivo
 
 /* v1 · Arranque del guardado seguro: pide persistencia, crea/compara el
    espejo en IndexedDB (y recupera de él si es más reciente o si el
