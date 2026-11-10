@@ -12,7 +12,7 @@ document.getElementById('segFamOverlay').addEventListener('click', e => {
 function _segNuevoBorrador(nivel, grupo) {
   const materias = getMateriasParaNivel(nivel, grupo) || [];
   return {
-    fecha: new Date().toISOString().slice(0, 10),
+    fecha: _hoyLocal(),
     materias: materias.map(m => ({ nombre: m, trabajo: '', examenes: '', comportamiento: '' })),
     observaciones: ''
   };

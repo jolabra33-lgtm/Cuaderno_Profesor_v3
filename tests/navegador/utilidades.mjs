@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const TIPOS = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.mjs':'text/javascript; charset=utf-8',
-  '.css':'text/css; charset=utf-8', '.json':'application/json; charset=utf-8', '.png':'image/png', '.woff':'font/woff', '.txt':'text/plain; charset=utf-8' };
+  '.css':'text/css; charset=utf-8', '.json':'application/json; charset=utf-8', '.png':'image/png', '.woff':'font/woff', '.woff2':'font/woff2', '.txt':'text/plain; charset=utf-8' };
 
 /* Servidor estático mínimo (como GitHub Pages) sobre la carpeta indicada. */
 export function servir(carpeta) {
@@ -17,7 +17,7 @@ export function servir(carpeta) {
       res.writeHead(200, { 'Content-Type': TIPOS[path.extname(archivo)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
       fs.createReadStream(archivo).pipe(res);
     });
-    srv.listen(0, '127.0.0.1', () => ok({ url: `http://127.0.0.1:${srv.address().port}`, cerrar: () => new Promise(r => srv.close(r)) }));
+    srv.listen(0, '127.0.0.1', () => ok({ url: `http://127.0.0.1:${srv.address().port}`, cerrar: () => new Promise(r => { srv.close(r); if (srv.closeAllConnections) srv.closeAllConnections(); }) }));
   });
 }
 

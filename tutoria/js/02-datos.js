@@ -205,7 +205,7 @@ NIVELES.forEach(n => {
 let currentModalTarget = null;
 
 // Fechas de sesion de evaluacion configurables
-const _today = new Date().toISOString().split('T')[0];
+const _today = _hoyLocal();
 // evalDates is now per-nivel: evalDates[nivel] = {eval1, eval2, eval3}
 let evalDates = {};
 // Eventos propios del calendario de Tutoría (independientes de la app principal).

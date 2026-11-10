@@ -188,7 +188,7 @@ function confirmAddNivel() {
   currentGrupos[nombre] = grupo;
   tutores[`${nombre}-${grupo}`] = '';
   if (typeof evalDates !== 'undefined') {
-    const _t = (typeof _today !== 'undefined') ? _today : new Date().toISOString().slice(0,10);
+    const _t = _hoyLocal();
     evalDates[nombre] = { eval1: _t, eval2: _t, eval3: _t };
   }
 

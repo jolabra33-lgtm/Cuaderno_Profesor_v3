@@ -20,10 +20,26 @@ let __planTempDefaultCache=null;
 /* La plantilla de la herramienta está en tools/planificacion.html (antes iba incrustada en base64).
    Se descarga una sola vez (y queda en la caché del service worker para el uso sin conexión). */
 let __planTempHtml=null, __planTempPromesa=null;
+/* Las fuentes de la herramienta van en tools/fonts/ (antes se pedían a Google Fonts). Como se muestra en un
+   <iframe srcdoc> aislado, que no pasa por el service worker ni puede leer archivos de la app, las fuentes se
+   incrustan en la propia página (data:). Si no se pueden leer, la herramienta usa las letras del sistema. */
+const PLAN_FUENTES_ENLACE='<link rel="stylesheet" href="fonts/fuentes.css" id="fuentesPlan">';
+async function _planTempFuentesCSS(){
+  try{
+    const r=await fetch("tools/fonts/fuentes.css"); if(!r.ok) return "";
+    let css=await r.text();
+    const archivos=[...new Set([...css.matchAll(/url\(([^)]+\.woff2)\)/g)].map(m=>m[1]))];
+    for(const a of archivos){
+      const f=await fetch("tools/fonts/"+a); if(!f.ok) return "";
+      css=css.split("url("+a+")").join("url(data:font/woff2;base64,"+_b64(await f.arrayBuffer())+")");
+    }
+    return css;
+  }catch(e){ return ""; }
+}
 function planTempAsegurar(){
   if(__planTempHtml!==null) return Promise.resolve(true);
   if(!__planTempPromesa) __planTempPromesa=fetch("tools/planificacion.html").then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.text(); })
-    .then(t=>{ __planTempHtml=t; return true; })
+    .then(async t=>{ const css=await _planTempFuentesCSS(); __planTempHtml=t.replace(PLAN_FUENTES_ENLACE,css?"<style id=\"fuentesPlan\">"+css+"</style>":""); return true; })
     .catch(()=>{ __planTempPromesa=null; return false; });
   return __planTempPromesa;
 }

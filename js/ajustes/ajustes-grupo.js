@@ -147,7 +147,7 @@ window.exportarGrupo=()=>{
   const grupo=grupoActual();
   const blob=new Blob([JSON.stringify({grupos:[grupo]},null,2)],{type:"application/json"});
   const u=URL.createObjectURL(blob); const a=document.createElement("a");
-  a.href=u; a.download="grupo-"+grupo.nombre.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+"-"+new Date().toISOString().slice(0,10)+".json"; a.click(); URL.revokeObjectURL(u);
+  a.href=u; a.download="grupo-"+grupo.nombre.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+"-"+fechaISOLocal()+".json"; a.click(); URL.revokeObjectURL(u);
 };
 window.importarGrupoArchivo=inp=>{
   const file=inp.files[0]; if(!file) return;

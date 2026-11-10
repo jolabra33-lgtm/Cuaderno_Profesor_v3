@@ -24,6 +24,8 @@ function jsAttr(s) {
 /* v5: el curso escolar se calcula (de septiembre a agosto); antes estaba
    escrito a mano como "2025 – 2026" en el acta oficial y en dos pantallas. */
 function _tCursoActual(sep,corto){ const d=new Date(); const y=d.getMonth()>=8?d.getFullYear():d.getFullYear()-1; return y+(sep||"-")+(corto?String(y+1).slice(2):(y+1)); }
+/* Fecha local AAAA-MM-DD. Con toISOString() (UTC), entre medianoche y la 1–2 h «hoy» era el día anterior. */
+function _hoyLocal(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function _tEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 (function(){
   const css=document.createElement('style');

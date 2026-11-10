@@ -223,7 +223,7 @@ function exComentHTML(alId,actId,itemId){
 const EX_COPIA_DIA="cuaderno_ex_copia_dia";
 async function exCopiaDiaria(forzar){
   try{
-    const hoy=new Date().toISOString().slice(0,10);
+    const hoy=fechaISOLocal();
     if(!forzar && localStorage.getItem(EX_COPIA_DIA)===hoy) return;
     const todos=await exLeerTodos(); if(!todos.length) return;
     await exTx("readwrite",s=>s.put({ts:Date.now(),fecha:hoy,disenos:todos}),"copias");

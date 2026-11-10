@@ -25,7 +25,7 @@ function agTipoInfo(id){
   const custom=(state.tiposColores||{})[id];
   return custom ? {...base,color:custom} : base;
 }
-function agHoyStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function agHoyStr(){ return fechaISOLocal(); }
 function agFestivoEnDia(fecha){ return (state.festivos||[]).find(f=>f && f.fechaInicio && fecha>=f.fechaInicio && fecha<=(f.fechaFin||f.fechaInicio)); }
 function agEsFestivo(fecha){ return !!agFestivoEnDia(fecha); }
 window.agToggleFestivo=(fecha)=>{

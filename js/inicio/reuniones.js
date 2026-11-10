@@ -452,7 +452,7 @@ window.reExportarCSV=()=>{
   });
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
   const u=URL.createObjectURL(blob); const a=document.createElement("a");
-  a.href=u; a.download="reuniones-"+new Date().toISOString().slice(0,10)+".csv"; a.click(); URL.revokeObjectURL(u);
+  a.href=u; a.download="reuniones-"+fechaISOLocal()+".csv"; a.click(); URL.revokeObjectURL(u);
 };
 window.reImprimirActa=id=>{
   const r=(state.reuniones||[]).find(x=>x.id===id); if(!r) return;

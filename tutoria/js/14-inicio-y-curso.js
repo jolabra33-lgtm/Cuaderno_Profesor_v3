@@ -93,7 +93,8 @@ async function _htmlAutocontenido() {
     st.textContent = '\n' + (await leer(ln.getAttribute('href'))) + '\n';
     ln.replaceWith(st);
   }
-  raiz.querySelectorAll('link[rel="manifest"]').forEach(n => n.remove());
+  // El manifiesto y los iconos son archivos sueltos de la app: en la versión guardada no existen.
+  raiz.querySelectorAll('link[rel="manifest"], link[rel~="icon"], link[rel="apple-touch-icon"]').forEach(n => n.remove());
   return raiz.outerHTML;
 }
 

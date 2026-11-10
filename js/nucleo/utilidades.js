@@ -50,6 +50,9 @@ function etiquetaNota(v,grupo){
 
 const KEY="geohist_multigrupo_v1";
 const OLD_KEY="hmc_eval_local_v1"; 
+/* Fecha local en formato AAAA-MM-DD. No se usa toISOString(): da la fecha en UTC y,
+   en España, entre medianoche y la 1–2 h (o con una fecha creada a las 00:00) devuelve el día anterior. */
+function fechaISOLocal(d){ d=d||new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 const uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 /* Notificación breve no bloqueante (sustituye a mostrarAviso() en confirmaciones que

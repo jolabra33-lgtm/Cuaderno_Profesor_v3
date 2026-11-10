@@ -142,17 +142,36 @@ export const PRUEBAS = [
   } },
 
   { nombre: 'sin-conexion', descripcion: 'Todo funciona sin conexión tras la primera visita', async fn(t) {
-    const p = await nuevaPagina(t.contexto); await p.goto(t.url + '/'); await esperar(3500);
-    await t.contexto.setOffline(true);
-    for (const ruta of ['/', '/tutoria/', '/editor/', '/tools/planificacion.html', '/guia_mejorada.html']) {
-      const q = await nuevaPagina(t.contexto); const fallos = [];
-      q.on('response', r => { if (r.status() >= 400) fallos.push(r.status() + ' ' + r.url()); });
-      q.on('requestfailed', r => { if (!/fonts\.g/.test(r.url())) fallos.push(r.url()); });
-      await q.goto(t.url + ruta); await esperar(1200);
-      t.ok(!fallos.length && !q.errores.length, `${ruta} sin conexión`, [...fallos, ...q.errores].join('; '));
-      await q.close();
-    }
-    await t.contexto.setOffline(false);
+    // Servidor propio que se APAGA: así no hay red de verdad, tampoco para el service worker
+    // (cortar la conexión solo en el navegador no afecta al service worker en todas las versiones).
+    const srv = await servir(RAIZ);
+    try {
+      const p = await nuevaPagina(t.contexto); await p.goto(srv.url + '/');
+      await p.evaluate(() => navigator.serviceWorker.ready); await esperar(3000);
+      await cuadernoConGrupo(p, srv.url);
+      await srv.cerrar();
+      for (const ruta of ['/', '/tutoria/', '/editor/', '/editor/index.html', '/tools/planificacion.html', '/guia_mejorada.html']) {
+        const q = await nuevaPagina(t.contexto); const fallos = [];
+        q.on('response', r => { if (r.status() >= 400) fallos.push(r.status() + ' ' + r.url()); });
+        q.on('requestfailed', r => fallos.push('sin respuesta: ' + r.url()));
+        await q.goto(srv.url + ruta).catch(e => fallos.push(e.message.split('\n')[0])); await esperar(1200);
+        t.ok(!fallos.length && !q.errores.length, `${ruta} sin conexión`, [...fallos, ...q.errores].join('; '));
+        await q.close();
+      }
+      // La Planificación temporal, dentro del Cuaderno: carga y lleva sus letras incrustadas (no pide nada a internet).
+      const fuera = []; p.on('request', r => { if (!r.url().startsWith(srv.url) && !/^(data|blob|about):/.test(r.url())) fuera.push(r.url()); });
+      await p.reload(); await esperar(1500);
+      const plan = await p.evaluate(async () => { _mostrarBienvenida = false;
+        state.programaciones = [{ id: 'p1', nombre: 'Prueba', catalogoKey: 'GeH_1ESO', sdas: [], actividades: [] }]; migrarEstado();
+        state.ui.appMode = 'programacion'; state.ui.progTab = 'detalle'; state.ui.progId = 'p1'; state.ui.progDetTab = 'planificacion'; render();
+        await new Promise(r => setTimeout(r, 2500));
+        return { hay: !!document.querySelector('#planTempWrap iframe') }; });
+      t.ok(plan.hay, 'la Planificación temporal se abre sin conexión dentro del Cuaderno', JSON.stringify(plan));
+      const marco = p.frames().find(f => f !== p.mainFrame());
+      const letras = marco ? await marco.evaluate(async () => { await document.fonts.ready; return ['700 20px Fraunces', '400 14px "Public Sans"', '500 12px "IBM Plex Mono"'].map(f => document.fonts.check(f)); }) : [];
+      t.ok(letras.length === 3 && letras.every(Boolean), 'la Planificación usa sus letras propias sin conexión', JSON.stringify(letras));
+      t.ok(!fuera.length, 'el Cuaderno no pide nada a servidores externos', fuera.slice(0, 3).join('; '));
+    } finally { await srv.cerrar().catch(() => {}); }
   } },
 
   { nombre: 'copia-carpeta', descripcion: 'Copia automática en una carpeta: escribe, poda y ofrece la de otro dispositivo', async fn(t) {

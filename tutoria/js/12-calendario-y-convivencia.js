@@ -44,7 +44,7 @@ function renderCalendario() {
     const lastDay   = new Date(year, month + 1, 0);
     const startDow  = (firstDay.getDay() + 6) % 7; // Monday=0
     const totalDays = lastDay.getDate();
-    const today     = new Date().toISOString().split('T')[0];
+    const today     = _hoyLocal();
     const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
     // Map date string → sesiones y eventos
@@ -98,7 +98,7 @@ function renderCalendario() {
 
   function buildTimeline() {
     if (!todosItems.length) return `<div style="text-align:center;padding:32px;color:var(--text3);font-size:13px">Sin sesiones ni eventos. Configura las fechas en la sección inferior, o pulsa un día del calendario para añadir un evento.</div>`;
-    const today = new Date().toISOString().split('T')[0];
+    const today = _hoyLocal();
     let html = '';
     let lastDate = '';
     todosItems.forEach(s => {
@@ -198,7 +198,7 @@ function renderCalendario() {
 
       <!-- NEXT SESSION BANNER -->
       ${(() => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = _hoyLocal();
         const next = sessions.find(s => s.date >= today);
         if (!next) return '';
         const daysUntil = Math.round((new Date(next.date+'T12:00:00') - new Date()) / 86400000);
