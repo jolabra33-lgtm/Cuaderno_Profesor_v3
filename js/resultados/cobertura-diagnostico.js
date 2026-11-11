@@ -141,9 +141,10 @@ window.aplicarArreglosDiagnostico=async()=>{
 };
 
 /* v3 · Tarjeta de novedades: se ve una vez tras actualizar, y se cierra. */
-const NOVEDADES_VERSION="v3-3";
+const NOVEDADES_VERSION="v3-4";
 window.cerrarNovedades=()=>{ state.novedadesVistas=NOVEDADES_VERSION; save(); render(); };
 const NOVEDADES_V3=[
+  ["🧩 Exámenes adaptados más fáciles","«+ Examen adaptado (NESE)» en el Diseño, aviso si un alumno NESE haría el examen general, y la versión adaptada se guarda en la Programación para los demás grupos."],
   ["🎓 Empezar curso nuevo","aquí arriba: archiva el curso que termina y deja grupos, programaciones y horario listos para el siguiente."],
   ["🙈 Modo proyector","el botón 👁️ de la cabecera difumina los nombres del alumnado y las notas mientras proyectas."],
   ["🔒 Bloqueo con PIN","en 🛟 Copias: la app pide un PIN al abrirla y tras unos minutos sin usarla (también Tutoría)."],

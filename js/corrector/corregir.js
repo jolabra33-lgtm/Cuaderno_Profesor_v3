@@ -47,6 +47,7 @@ function renderCorCorregir(grupo){
         <button class="ghost" style="border:1px solid var(--line)" onclick="cxExportarCSV('${act.id}')">⬇ CSV</button>
       </div>
     </div>
+    ${cxAvisoNeseHTML(grupo,act)?`<div style="margin-top:12px">${cxAvisoNeseHTML(grupo,act)}</div>`:""}
     ${notas.length?`<div class="flex" style="margin-top:12px;gap:24px">
       <div><div style="font-size:12.5px;color:var(--mut)">Media</div><span class="big" style="font-size:24px">${fmt(media)}</span></div>
       <div><div style="font-size:12.5px;color:var(--mut)">Aprobados</div><span class="big" style="font-size:24px">${aprob}/${notas.length}</span></div>

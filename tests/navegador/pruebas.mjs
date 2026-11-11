@@ -594,6 +594,70 @@ export const PRUEBAS = [
     t.ok(await encima('#bqp1') === 'encima', '«Activar el PIN»: la ventana del PIN se ve', await encima('#bqp1'));
   } },
 
+  { nombre: 'examen-adaptado', descripcion: 'Examen adaptado NESE: aviso, creación desde el Diseño, corrección con su rúbrica y paso por la Programación a otro grupo', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url, { nombres: ['Alfa, Ana', 'Beta, Bruno', 'Gamma, Gema'] });
+    await p.evaluate(() => { _mostrarBienvenida = false; const g = state.grupos[0], cr = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
+      g.alumnos[1].nese = true;
+      state.programaciones = [{ id: 'p1', nombre: 'Prog', catalogoKey: 'GeH_1ESO', sdas: [], actividades: [{ id: 'pa1', nombre: 'Examen tema 1', tipo: TIPOS[0], esExamen: true, criterios: [{ critId: cr, peso: 100 }], sdaIds: [] }] }];
+      migrarEstado(); g.programacionId = 'p1';
+      const act = progCrearActividadEnGrupo(g, state.programaciones[0].actividades[0], 0); g.actividades.push(act);
+      state.ui.appMode = 'corrector'; state.ui.grupoId = g.id; state.ui.corExamId = act.id; state.ui.corTab = 'diseno'; save(); render(); });
+    await esperar(800);
+    const texto = () => p.evaluate(() => document.getElementById('tabContent').innerText);
+    t.ok(/Alumno\/a NESE con el examen general:.*Beta, Bruno/s.test(await texto()), 'el Diseño avisa de que hay alumnado NESE sin versión adaptada');
+    await p.click('#tabContent button:has-text("+ Examen adaptado (NESE)")'); await esperar(1500);
+    let r = await p.evaluate(() => { const g = state.grupos[0], act = g.actividades[0], v = act.variantes[0];
+      return { v: v && v.nombre, alumnos: (v ? v.alumnos : []).map(id => g.alumnos.find(a => a.id === id).nombre), editando: state.ui.corVarId === (v && v.id), tab: state.ui.corTab, aviso: !!document.querySelector('.cx-aviso-nese') }; });
+    t.ok(r.v === 'Adaptada (NESE)' && r.alumnos.join() === 'Beta, Bruno' && r.editando && r.tab === 'diseno' && !r.aviso, 'desde el Diseño se crea el examen adaptado, con el alumnado NESE, y se abre para editarlo', JSON.stringify(r));
+    // La rúbrica adaptada es distinta y Corregir la usa con Bruno.
+    await p.evaluate(() => { const act = state.grupos[0].actividades[0]; cxItemsFlat(act.variantes[0].rubrica)[0].label = 'Pregunta adaptada'; cxItemsFlat(act.rubrica)[0].label = 'Pregunta general'; save(); });
+    // Diseño adaptado propio, guardado como plantilla de la Programación (con su rúbrica).
+    await p.evaluate(async () => { const w = document.getElementById('exFrame').contentWindow, ex = w.__ee.get(); ex.name = 'Examen adaptado de prueba'; w.__ee.cargar(ex); w.__ee.flush && w.__ee.flush(); });
+    await esperar(400);
+    await p.click('#tabContent button:has-text("Plantilla de la Programación")'); await esperar(800);
+    r = await p.evaluate(async () => { const pa = state.programaciones[0].actividades[0], v = state.grupos[0].actividades[0].variantes[0];
+      const d = await exGet('prog:pa1:' + v.progVarId);
+      return { pv: (pa.variantes || []).map(x => x.nombre + ':' + cxItemsFlat(x.rubrica)[0].label), alumnosEnProg: (pa.variantes || []).some(x => x.alumnos), diseno: d && d.exam.name }; });
+    t.ok(r.pv.join() === 'Adaptada (NESE):Pregunta adaptada' && !r.alumnosEnProg && r.diseno === 'Examen adaptado de prueba', 'la versión adaptada (rúbrica y diseño) queda en la Programación, sin alumnado', JSON.stringify(r));
+    await p.evaluate(() => { state.ui.corTab = 'corregir'; state.ui.corAlId = state.grupos[0].alumnos[1].id; render(); }); await esperar(300);
+    const bruno = await texto();
+    await p.evaluate(() => { state.ui.corAlId = state.grupos[0].alumnos[0].id; render(); }); await esperar(300);
+    const ana = await texto();
+    t.ok(/Pregunta adaptada/.test(bruno) && /Pregunta general/.test(ana) && !/Pregunta adaptada/.test(ana), 'al corregir, Bruno abre la rúbrica adaptada y Ana la general');
+    // Guardar también la rúbrica: la Programación no duplica la versión.
+    await p.evaluate(() => cxGuardarRubricaEnProgramacion(state.grupos[0].actividades[0].id)); await esperar(300);
+    t.ok(await p.evaluate(() => state.programaciones[0].actividades[0].variantes.length === 1), 'guardar la rúbrica en la Programación no duplica la versión adaptada');
+    // Otro grupo trae el examen: nace con la versión adaptada, su alumnado NESE y el diseño adaptado.
+    r = await p.evaluate(async () => {
+      const g2 = defGrupo('1º ESO B', 'GeH_1ESO'); g2.programacionId = 'p1';
+      g2.alumnos = ['Delta, Dani', 'Épsilon, Eva'].map(n => normalizarAlumno({ id: uid(), nombre: n })); g2.alumnos[1].nese = true;
+      state.grupos.push(g2);
+      const act = progCrearActividadEnGrupo(g2, state.programaciones[0].actividades[0], 0); g2.actividades.push(act);
+      state.ui.grupoId = g2.id; state.ui.corExamId = act.id; state.ui.corVarId = act.variantes[0] && act.variantes[0].id; state.ui.corTab = 'diseno'; save(); render();
+      await new Promise(r => setTimeout(r, 1800));
+      const w = document.getElementById('exFrame').contentWindow;
+      return { v: (act.variantes || []).map(v => v.nombre + ':' + cxItemsFlat(v.rubrica)[0].label), alumnos: ((act.variantes[0] || {}).alumnos || []).map(id => g2.alumnos.find(a => a.id === id).nombre),
+        rubEva: cxItemsFlat(cxRubricaDe(act, g2.alumnos[1].id))[0].label, rubDani: cxItemsFlat(cxRubricaDe(act, g2.alumnos[0].id))[0].label, diseno: w.__ee.get().name };
+    });
+    t.ok(r.v.join() === 'Adaptada (NESE):Pregunta adaptada' && r.alumnos.join() === 'Épsilon, Eva', 'en otro grupo el examen nace con la versión adaptada y su alumnado NESE', JSON.stringify(r));
+    t.ok(r.rubEva === 'Pregunta adaptada' && r.rubDani === 'Pregunta general' && r.diseno === 'Examen adaptado de prueba', 'con la rúbrica y el diseño adaptados de la plantilla', JSON.stringify(r));
+    // «Hace el general» y un NESE nuevo después.
+    r = await p.evaluate(async () => { const g2 = state.grupos[1], act = g2.actividades[0];
+      const nuevo = normalizarAlumno({ id: uid(), nombre: 'Zeta, Zoe' }); nuevo.nese = true; g2.alumnos.push(nuevo);
+      state.ui.corVarId = ''; state.ui.corTab = 'editor'; render(); await new Promise(r => setTimeout(r, 200));
+      const avisa = /Zeta, Zoe/.test((document.querySelector('.cx-aviso-nese') || {}).innerText || '');
+      document.querySelector('.cx-aviso-nese button.btn').click(); await new Promise(r => setTimeout(r, 200));
+      const anadida = act.variantes[0].alumnos.includes(nuevo.id);
+      const otro = normalizarAlumno({ id: uid(), nombre: 'Omega, Olga' }); otro.nese = true; g2.alumnos.push(otro); render(); await new Promise(r => setTimeout(r, 200));
+      [...document.querySelectorAll('.cx-aviso-nese button')].find(b => /general/.test(b.textContent)).click(); await new Promise(r => setTimeout(r, 200));
+      return { avisa, anadida, sinAviso: !document.querySelector('.cx-aviso-nese'), rubOlga: cxItemsFlat(cxRubricaDe(act, otro.id))[0].label };
+    });
+    t.ok(r.avisa && r.anadida, 'un alumno marcado NESE más tarde aparece en el aviso y se añade con un toque', JSON.stringify(r));
+    t.ok(r.sinAviso && r.rubOlga === 'Pregunta general', '«Hace el general» deja de avisar y se corrige con la general', JSON.stringify(r));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
   { nombre: 'que-me-falta', descripcion: 'Inicio: «Qué me falta» detecta notas a medias y comentarios pendientes', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url, { nombres: ['A, Uno', 'B, Dos', 'C, Tres', 'D, Cuatro'] });

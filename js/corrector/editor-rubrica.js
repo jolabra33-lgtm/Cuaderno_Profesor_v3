@@ -69,6 +69,7 @@ function renderCorEditor(grupo){
     </div>
     ${pestanas}
   </div>
+  ${cxAvisoNeseHTML(grupo,act)}
   ${panelVariante}
   ${cxPanelPrevistosHTML(grupo,act,rub,variante)}
   <div class="card">
@@ -443,26 +444,71 @@ window.cxSetItemLinkPeso=(itemId,critId,v)=>{
   const l=(it.links||[]).find(y=>y.critId===critId); if(l){ l.peso=Number(v)||0; cxRecalcTodosLosAlumnos(x.grupo,x.act); save(); } };
 /* ---- Rúbricas adaptadas (NESE) ---- */
 window.cxElegirVariante=id=>{ state.ui.corVarId=id||""; state.ui.corItemAbierto=""; save(); render(); };
-window.cxNuevaVariante=()=>{
+/* Crea una versión adaptada: rúbrica copiada de la general (o la que se pase) y, como alumnado, el NESE del grupo
+   que todavía no hace otra versión ni está marcado como «hace el general». No guarda ni pinta. */
+function cxCrearVariante(grupo,act,datos){
+  if(!Array.isArray(act.variantes)) act.variantes=[];
+  datos=datos||{};
+  const ocupados=new Set([...cxVariantes(act).flatMap(v=>v.alumnos||[]),...(act.neseGeneral||[])]);
+  const nese=datos.sinAlumnado?[]:grupo.alumnos.filter(al=>al.nese && !ocupados.has(al.id)).map(al=>al.id);
+  const n=act.variantes.length+1;
+  const v={id:uid(), nombre:datos.nombre||(n===1?"Adaptada (NESE)":"Adaptada "+n), rubrica:cxClonarRubrica(datos.rubrica||act.rubrica,datos.rubrica?grupo.catalogoKey:null),
+    escalarA10:datos.escalarA10!==false, alumnos:nese};
+  if(datos.progVarId) v.progVarId=datos.progVarId;
+  act.variantes.push(v);
+  nese.forEach(alId=>cxRecalcAlumno(grupo,act,alId));
+  cxSyncCriteriosActividad(act);
+  return v;
+}
+/* Alumnado NESE del grupo que se corrige con la rúbrica general sin que se haya decidido así. */
+function cxNeseSinVersion(grupo,act){
+  if(!act||!act.rubrica) return [];
+  const ocupados=new Set([...cxVariantes(act).flatMap(v=>v.alumnos||[]),...(act.neseGeneral||[])]);
+  return grupo.alumnos.filter(al=>al.nese && !ocupados.has(al.id));
+}
+/* Aviso en Rúbrica, Diseño y Corregir: alumnado NESE que haría el examen general. Se resuelve con un toque. */
+function cxAvisoNeseHTML(grupo,act){
+  const faltan=cxNeseSinVersion(grupo,act); if(!faltan.length) return "";
+  const vs=cxVariantes(act), nombres=faltan.map(al=>esc(al.nombre)).join(", "), uno=faltan.length===1;
+  const accion=vs.length
+    ? (vs.length===1
+        ? `<button class="btn small" onclick="cxAnadirNeseAVariante('${escJS(vs[0].id)}')">Añadir a «${esc(vs[0].nombre||"Adaptada")}»</button>`
+        : `<select class="in" style="padding:5px 8px" aria-label="Versión adaptada a la que añadirlo" onchange="if(this.value) cxAnadirNeseAVariante(this.value)"><option value="">Añadir a…</option>${vs.map(v=>`<option value="${esc(v.id)}">${esc(v.nombre||"Adaptada")}</option>`).join("")}</select>`)
+    : `<button class="btn small" onclick="cxNuevaVariante()">+ Crear versión adaptada</button>`;
+  return `<div class="alert-box cx-aviso-nese" style="margin:0 0 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <span style="flex:1;min-width:220px">🧩 <strong>${uno?"Alumno/a NESE":faltan.length+" alumnos/as NESE"} con el examen general:</strong> ${nombres}.${vs.length?"":" Este examen todavía no tiene versión adaptada."}</span>
+    ${accion}
+    <button class="ghost small" style="border:1px solid var(--line)" title="Deja de avisar: ${uno?"hace":"hacen"} el examen general a propósito" onclick="cxNeseHaceGeneral()">${uno?"Hace":"Hacen"} el general</button>
+  </div>`;
+}
+window.cxAnadirNeseAVariante=vid=>{
   const x=cxCtxEd(); if(!x) return;
-  if(!Array.isArray(x.act.variantes)) x.act.variantes=[];
-  const ocupados=new Set(cxVariantes(x.act).flatMap(v=>v.alumnos||[]));
-  const nese=x.grupo.alumnos.filter(al=>al.nese && !ocupados.has(al.id)).map(al=>al.id);
-  const n=x.act.variantes.length+1;
-  const v={id:uid(), nombre:n===1?"Adaptada (NESE)":"Adaptada "+n, rubrica:cxClonarRubrica(x.act.rubrica,null), escalarA10:true, alumnos:nese};
-  x.act.variantes.push(v);
-  state.ui.corVarId=v.id;
-  nese.forEach(alId=>cxRecalcAlumno(x.grupo,x.act,alId));
-  cxSyncCriteriosActividad(x.act);
+  const v=cxVariantes(x.act).find(y=>y.id===vid); if(!v) return;
+  const faltan=cxNeseSinVersion(x.grupo,x.act);
+  faltan.forEach(al=>{ v.alumnos=v.alumnos||[]; if(!v.alumnos.includes(al.id)) v.alumnos.push(al.id); cxRecalcAlumno(x.grupo,x.act,al.id); });
   save(); render();
-  mostrarToast(nese.length?`✓ Rúbrica adaptada creada (copia de la general) con ${nese.length} alumno${nese.length===1?"":"s"} NESE`:"✓ Rúbrica adaptada creada (copia de la general). Marca qué alumnado la hace");
+  mostrarToast(`✓ ${faltan.length} alumno${faltan.length===1?"":"s"} NESE ${faltan.length===1?"pasa":"pasan"} a «${v.nombre||"Adaptada"}»`);
+};
+window.cxNeseHaceGeneral=()=>{
+  const x=cxCtxEd(); if(!x) return;
+  x.act.neseGeneral=[...new Set([...(x.act.neseGeneral||[]),...cxNeseSinVersion(x.grupo,x.act).map(al=>al.id)])];
+  save(); render();
+  mostrarToast("De acuerdo: no se volverá a avisar en este examen","info");
+};
+window.cxNuevaVariante=()=>{
+  const x=cxCtxEd(); if(!x||!x.act.rubrica) return;
+  const v=cxCrearVariante(x.grupo,x.act);
+  state.ui.corVarId=v.id; state.ui.corVerB=false;
+  save(); render();
+  const n=v.alumnos.length, enDiseno=state.ui.corTab==="diseno";
+  mostrarToast((enDiseno?"✓ Examen adaptado creado (copia del general)":"✓ Rúbrica adaptada creada (copia de la general)")+(n?` con ${n} alumno${n===1?"":"s"} NESE`:". Marca qué alumnado lo hace en la pestaña Rúbrica"));
 };
 window.cxSetVarianteNombre=v=>{ const x=cxCtxEd(); const va=x&&cxVarEditando(x.act); if(!va) return; va.nombre=String(v||"").trim()||va.nombre; save(); render(); };
 window.cxToggleAlumnoVariante=(alId,on)=>{
   const x=cxCtxEd(); const va=x&&cxVarEditando(x.act); if(!va) return;
   const tienePuntos=Object.keys(x.grupo.rubricScores?.[alId]?.[x.act.id]||{}).length>0;
   va.alumnos=(va.alumnos||[]).filter(id=>id!==alId);
-  if(on){ cxVariantes(x.act).forEach(v=>{ v.alumnos=(v.alumnos||[]).filter(id=>id!==alId); }); va.alumnos.push(alId); }
+  if(on){ cxVariantes(x.act).forEach(v=>{ v.alumnos=(v.alumnos||[]).filter(id=>id!==alId); }); va.alumnos.push(alId); x.act.neseGeneral=(x.act.neseGeneral||[]).filter(id=>id!==alId); }
   cxRecalcAlumno(x.grupo,x.act,alId);
   save(); render();
   if(tienePuntos) mostrarToast("Ojo: este alumno/a ya estaba corregido con otra rúbrica — revisa su corrección","info");

@@ -135,7 +135,7 @@ window.progImportarArchivo=inp=>{
     // sus SdA/actividades se regeneran para no chocar con nada que ya tengas.
     const mapaIds={};
     const nuevasSdas=(original.sdas||[]).map(s=>{ const nid=uid(); mapaIds[s.id]=nid; return {...s,id:nid}; });
-    const nuevasActividades=(original.actividades||[]).map(a=>({...a, id:uid(), sdaIds:(a.sdaIds||[]).map(sid=>mapaIds[sid]).filter(Boolean), criterios:(a.criterios||[]).map(c=>({...c})), ...(a.rubrica?{rubrica:JSON.parse(JSON.stringify(a.rubrica))}:{})}));
+    const nuevasActividades=(original.actividades||[]).map(a=>({...a, id:uid(), sdaIds:(a.sdaIds||[]).map(sid=>mapaIds[sid]).filter(Boolean), criterios:(a.criterios||[]).map(c=>({...c})), ...(a.rubrica?{rubrica:JSON.parse(JSON.stringify(a.rubrica))}:{}), ...(a.variantes?{variantes:JSON.parse(JSON.stringify(a.variantes))}:{})}));
     const copia={id:uid(), nombre:original.nombre||"Programación importada", catalogoKey:original.catalogoKey,
       sdas:nuevasSdas, actividades:nuevasActividades,
       recursos:{...(original.recursos||progRecursosDefault())}, cursoEscolar:original.cursoEscolar||cursoAcademicoActual(),
@@ -153,7 +153,7 @@ window.progDuplicar=(id)=>{
   const orig=progPorId(id); if(!orig) return;
   const mapaIds={};
   const nuevasSdas=orig.sdas.map(s=>{ const nid=uid(); mapaIds[s.id]=nid; return {...s,id:nid}; });
-  const nuevasActividades=orig.actividades.map(a=>({...a, id:uid(), sdaIds:(a.sdaIds||[]).map(sid=>mapaIds[sid]).filter(Boolean), criterios:(a.criterios||[]).map(c=>({...c})), ...(a.rubrica?{rubrica:JSON.parse(JSON.stringify(a.rubrica))}:{})}));
+  const nuevasActividades=orig.actividades.map(a=>({...a, id:uid(), sdaIds:(a.sdaIds||[]).map(sid=>mapaIds[sid]).filter(Boolean), criterios:(a.criterios||[]).map(c=>({...c})), ...(a.rubrica?{rubrica:JSON.parse(JSON.stringify(a.rubrica))}:{}), ...(a.variantes?{variantes:JSON.parse(JSON.stringify(a.variantes))}:{})}));
   const copia={id:uid(), nombre:orig.nombre+" (copia)", catalogoKey:orig.catalogoKey, sdas:nuevasSdas, actividades:nuevasActividades,
     recursos:{...(orig.recursos||progRecursosDefault())}, cursoEscolar:"", profesorNombre:orig.profesorNombre||"",
     metodologia:orig.metodologia||"", criteriosCalifCualitativa:orig.criteriosCalifCualitativa||"", criteriosCalifCuantitativa:orig.criteriosCalifCuantitativa||""};

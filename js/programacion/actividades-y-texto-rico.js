@@ -214,7 +214,7 @@ function progActividadCardHTML(idx,a,p,grupoId,iAct,totalGrupo){
       <button class="ghost danger" onclick="progEliminarActividad('${a.id}')">✕</button>
     </div>
     ${a.esExamen&&(a.rubrica||[]).length?(()=>{ const n=cxItemsFlat(a.rubrica).length, tot=cxMaxTotal(a.rubrica);
-      return `<div style="font-size:12.5px;color:var(--mut);margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">📌 Rúbrica guardada: ${a.rubrica.length} apartado${a.rubrica.length===1?"":"s"}, ${n} ítem${n===1?"":"s"}, ${String(Math.round(tot*100)/100).replace(".",",")} pts — se usará al traer este examen a cualquier grupo.
+      return `<div style="font-size:12.5px;color:var(--mut);margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">📌 Rúbrica guardada: ${a.rubrica.length} apartado${a.rubrica.length===1?"":"s"}, ${n} ítem${n===1?"":"s"}, ${String(Math.round(tot*100)/100).replace(".",",")} pts${(a.variantes||[]).length?`, con ${a.variantes.length===1?"versión adaptada":a.variantes.length+" versiones adaptadas"} (${a.variantes.map(v=>esc(v.nombre||"Adaptada")).join(", ")})`:""} — se usará al traer este examen a cualquier grupo.
         <button class="ghost danger small" style="padding:2px 8px" onclick="progQuitarRubrica('${a.id}')">Quitar</button></div>`; })():""}
     <div style="margin-top:8px">
       <div class="section-eyebrow" style="margin:0 0 4px">Situaciones de Aprendizaje que cubre (marca varias si es un examen conjunto)</div>
