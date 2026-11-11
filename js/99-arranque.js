@@ -68,7 +68,9 @@ _ultimoDatosStr=_datosSinUI();
       }
     }
     const tsLS=_cargadoDesdeLS?(state._guardadoEn||0):-1;
-    if(!_datosEnIDB && esp && esp.json && (esp.guardadoEn||0)>tsLS+1500){
+    // v3: basta con que sea más reciente. localStorage e IndexedDB guardan la misma marca de tiempo para el mismo
+    // estado, así que una diferencia —por pequeña que sea— significa que a localStorage no llegó el último guardado.
+    if(!_datosEnIDB && esp && esp.json && (esp.guardadoEn||0)>tsLS){
       let nuevo=null; try{ nuevo=JSON.parse(esp.json); }catch(e){}
       if(nuevo && resumenEstado(nuevo).total>0){
         if(_cargadoDesdeLS && resumenEstado(state).total>0) await crearCopiaAuto("Antes de recuperar la copia interna",true);

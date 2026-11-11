@@ -32,6 +32,21 @@ function _hoyLocal(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getM
    Todo lo que escribe una persona o llega en un archivo (nombres, observaciones, grupos, materias…) pasa por aquí;
    si además va dentro de código (onclick="f('…')"), por jsAttr(). */
 function _tEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* HTML que guardó la propia app después de editarlo una persona (un acta rellenada, los acuerdos de la sesión).
+   No se puede escapar —perdería las negritas, los saltos de línea y las tablas—, así que se sanea: se conserva el
+   formato y se quitan los elementos y atributos capaces de ejecutar código, por si el archivo viene de otra persona. */
+function _tHtmlSeguro(html){
+  const t=document.createElement('template');
+  t.innerHTML=String(html==null?'':html);
+  t.content.querySelectorAll('script,iframe,frame,frameset,object,embed,applet,link,meta,base,form').forEach(n=>n.remove());
+  t.content.querySelectorAll('*').forEach(el=>{
+    for(const a of Array.from(el.attributes)){
+      const n=a.name.toLowerCase();
+      if(n.startsWith('on') || n==='srcdoc' || (/^(href|src|xlink:href|action|formaction)$/.test(n) && /^\s*(javascript|vbscript|data:text\/html)/i.test(a.value))) el.removeAttribute(a.name);
+    }
+  });
+  return t.innerHTML;
+}
 (function(){
   const css=document.createElement('style');
   css.textContent=`

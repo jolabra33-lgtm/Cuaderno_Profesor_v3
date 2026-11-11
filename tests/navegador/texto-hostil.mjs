@@ -84,7 +84,8 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
       try { closeModal(); } catch (e) {}
       document.querySelectorAll('details[open]').forEach(d => d.removeAttribute('open'));
     };
-    const visibles = raiz => [...raiz.querySelectorAll('[onclick], button, summary')].filter(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+    // Fuera del rastreo: los avisos de «una sola ventana» y del PIN (recargan la página o la bloquean).
+    const visibles = raiz => [...raiz.querySelectorAll('[onclick], button, summary')].filter(el => { if (el.closest('#unaVentanaOverlay, #bloqueoOverlay, #avisoVersionNueva, #bloqueoBtn')) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
     const forma = el => (el.getAttribute('onclick') || el.className || el.textContent).replace(/'[^']*'/g, "''").replace(/\d+/g, '0').slice(0, 70) + '|' + el.tagName;
     const abiertos = () => [...document.querySelectorAll('.tdlg-ov, .tdoc-ov, .modal-overlay.open, .overlay.open, [id$="Overlay"].open, [id$="Overlay"].show, [id$="Modal"].open, .col-manager-panel, .pendientes-panel, details[open] > :not(summary)')].filter(o => o.getBoundingClientRect().width > 0);
     const NO_PULSAR = /cargarDatosEjemplo|salirDatosEjemplo|toggleTheme|location\.|reload|href/i;

@@ -573,7 +573,7 @@ function openActaOficial(nivel, grupo, evalNum) {
   <!-- SECCIÓN ACUERDOS -->
   <div class="section-title" style="margin-top:32px"><span>${nextSec()}</span>Acuerdos de la sesión de evaluación</div>
   <div class="acuerdos-box" id="acuerdosBox" contenteditable="true"
-    data-placeholder="Escribe aquí los acuerdos adoptados en la sesión: medidas de mejora, compromisos del equipo docente, actuaciones con familias, etc.">${_tEsc(guardada.acuerdos || '')}</div>
+    data-placeholder="Escribe aquí los acuerdos adoptados en la sesión: medidas de mejora, compromisos del equipo docente, actuaciones con familias, etc.">${_tHtmlSeguro(guardada.acuerdos || '')}</div>
   <div class="no-print" style="font-size:8pt;color:#9aa3bb;margin-top:4px;">Pulsa «💾 Guardar» para no perder este texto, las firmas y las decisiones sobre pendientes — la ventana no lo guarda solo al cerrarla.</div>
 
   <!-- SECCIÓN PROFESORES ASISTENTES -->

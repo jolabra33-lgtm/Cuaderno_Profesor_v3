@@ -110,7 +110,9 @@ export const PRUEBAS = [
   { nombre: 'tutoria-texto-hostil', descripcion: 'Tutoría: un nombre, grupo, materia u observación con HTML o comillas no se cuela como código', async fn(t) {
     const completo = process.env.RASTREO === 'completo';
     for (const modo of ['hostil', 'doble']) {
-      const p = await nuevaPagina(t.contexto); p.setDefaultTimeout(0);
+      // Cada modo en un navegador limpio: el primero deja datos y su ventana como «activa».
+      const ctx = await t.navegador.newContext({ viewport: { width: 1366, height: 900 } });
+      const p = await nuevaPagina(ctx); p.setDefaultTimeout(0);
       await p.goto(t.url + '/tutoria/'); await esperar(1500);
       const r = await rastrearTutoria(p, { modo, completo });
       t.ok(r.clics > (completo ? 1500 : 250) && !r.fallos.length, `[${modo}] el rastreo recorre las pantallas (${r.clics} pulsaciones)`, r.fallos.join('; '));
@@ -119,7 +121,7 @@ export const PRUEBAS = [
         t.ok(!r.ejecutados.length, 'ningún texto se ejecuta como código', r.ejecutados.slice(0, 6).join('\n        '));
       } else t.ok(!r.dobles.length, 'ningún texto se escapa dos veces (no se ve «&amp;» ni «&#39;»)', r.dobles.slice(0, 6).join('\n        '));
       t.ok(!p.errores.length, `[${modo}] sin errores de JavaScript`, p.errores.slice(0, 3).join('; '));
-      await p.close();
+      await ctx.close();
     }
   } },
 
@@ -173,6 +175,36 @@ export const PRUEBAS = [
     });
     t.ok(imp.antes === '1º ESO A' && /identificadores/.test(imp.avisos) && !imp.colado, 'la copia con un identificador manipulado se rechaza con un aviso', JSON.stringify(imp));
     t.ok(imp.despues === 'Importado bien', 'una copia normal se sigue cargando', JSON.stringify(imp));
+  } },
+
+  { nombre: 'tutoria-actas-guardadas', descripcion: 'Tutoría: un acta guardada conserva su formato y no puede traer código dentro', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['Prueba, Ana']);
+    const r = await p.evaluate(() => {
+      window.__colado = 0;
+      const malo = '<p><strong>Acuerdo</strong> en <em>negrita</em></p><table><tr><td>Celda</td></tr></table>' +
+        '<img src="x" onerror="window.__colado++"><script>window.__colado++<\/script><a href="javascript:window.__colado++">enlace</a>' +
+        '<iframe srcdoc="<script>parent.__colado++<\/script>"></iframe><div onclick="window.__colado++" style="color:red">texto</div>';
+      const limpio = _tHtmlSeguro(malo);
+      const d = document.createElement('div'); d.innerHTML = limpio; document.body.appendChild(d);
+      d.querySelectorAll('a,div').forEach(x => { try { x.click(); } catch (e) {} });
+      return { limpio, formato: /<strong>Acuerdo<\/strong>/.test(limpio) && /<em>negrita<\/em>/.test(limpio) && /<table>/.test(limpio) && /style="color:red"/.test(limpio),
+        peligroso: /onerror|onclick|<script|javascript:|<iframe/i.test(limpio) };
+    });
+    await esperar(300);
+    const colado = await p.evaluate(() => window.__colado);
+    t.ok(r.formato, 'se conservan negritas, cursivas, tablas y estilos', r.limpio);
+    t.ok(!r.peligroso && colado === 0, 'se quitan scripts, eventos, enlaces javascript: y marcos', r.limpio + ' · ejecutado ' + colado);
+    // De punta a punta: un acta guardada con código dentro se abre sin ejecutarlo.
+    const ok = await p.evaluate(async () => {
+      window.__colado = 0; window._actasData = window._actasData || {};
+      window._actasData[_actaKey('1º ESO', 'A', 1)] = { html: '<p>Mi acta</p><img src="x" onerror="window.__colado++">', savedAt: new Date().toISOString() };
+      openInforme('1º ESO', 'A', 1);
+      await new Promise(r => setTimeout(r, 600));
+      return { texto: (document.getElementById('informeContent') || {}).innerHTML || '', colado: window.__colado };
+    });
+    t.ok(/Mi acta/.test(ok.texto) && ok.colado === 0, 'un acta guardada con código dentro se abre sin ejecutarlo', JSON.stringify(ok).slice(0, 200));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
   { nombre: 'del-cuaderno', descripcion: 'Tutoría: «📥 Del Cuaderno» copia la lista sin duplicar y se puede deshacer', async fn(t) {
@@ -241,6 +273,15 @@ export const PRUEBAS = [
     t.ok(e.ls && !e.marca, 'al liberarse espacio vuelve la copia rápida de localStorage', JSON.stringify(e));
     await p.reload(); await esperar(2000);
     t.ok(await p.evaluate(() => state.grupos[0]?.alumnos.length) === 6 && !p.errores.length, 'y los datos siguen completos', p.errores.join('; '));
+    // Caso límite: en localStorage queda una copia ANTERIOR (el último guardado no cupo) y además está lleno.
+    const viejo = await p.evaluate(() => localStorage.getItem(KEY));
+    await anadir('Nuevo, Cuatro'); await esperar(1200);
+    await p.evaluate(v => Storage.prototype.setItem.call(localStorage, KEY, v), viejo); await llenarLocalStorage(p);
+    await p.reload(); await esperar(3000);
+    e = await p.evaluate(() => ({ alumnos: state.grupos[0]?.alumnos.length, ls: localStorage.getItem(KEY) !== null, marca: localStorage.getItem(KEY_EN_IDB) !== null }));
+    t.ok(e.alumnos === 7 && !e.ls && e.marca, 'si localStorage se quedó con una copia anterior, manda la de IndexedDB (más reciente) y la vieja se retira', JSON.stringify(e));
+    await p.reload(); await esperar(2500);
+    t.ok(await p.evaluate(() => state.grupos[0]?.alumnos.length === 7 && !/recuperado/i.test((document.getElementById('toastGlobal') || {}).innerText || '')) && !p.errores.length, 'y la siguiente apertura vuelve a ser normal', p.errores.join('; '));
   } },
 
   { nombre: 'tutoria-almacen', descripcion: 'Tutoría: fotos y actas van a IndexedDB, localStorage queda ligero y nada se pierde aunque esté lleno', async fn(t) {

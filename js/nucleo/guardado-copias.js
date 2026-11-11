@@ -169,6 +169,9 @@ function volcarEspejoIDB(){
     saveState.idbOk=false; actualizarAvisoGuardado();
   });
 }
+// Un guardado hecho en el primer medio segundo (mientras se decide qué ventana guarda) puede no haber cabido en
+// localStorage sin que save() lo supiera: se repite, y entonces sí sigue el camino normal (IndexedDB manda).
+window.addEventListener("una-ventana:escritura-fallida",e=>{ if(e.detail && (e.detail.claves||[]).includes(KEY)) save(); });
 // Al ocultar/cerrar la app se vuelca de inmediato lo pendiente.
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") volcarEspejoIDB(); });
 window.addEventListener("pagehide",()=>{ volcarEspejoIDB(); });

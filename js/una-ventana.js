@@ -161,8 +161,12 @@
     miN = ((t && t.n) || 0) + 1;
     escribirTurno({ id: yo, n: miN });
     estado = 'activa';
-    for (const [k, v] of pendientes) { try { v === null ? removeOriginal.call(ls, k) : setOriginal.call(ls, k, v); } catch (e) {} }
+    // Lo escrito mientras se decidía se guarda ahora. Si alguna escritura no cabe (localStorage lleno), la app
+    // no se ha enterado —se le dijo que sí—, así que se le avisa para que vuelva a guardar por su vía normal.
+    const fallidas = [];
+    for (const [k, v] of pendientes) { try { v === null ? removeOriginal.call(ls, k) : setOriginal.call(ls, k, v); } catch (e) { fallidas.push(k); } }
     pendientes.clear();
+    if (fallidas.length) setTimeout(() => { try { window.dispatchEvent(new CustomEvent('una-ventana:escritura-fallida', { detail: { claves: fallidas } })); } catch (e) {} }, 0);
   }
   function guardarPendiente() {
     for (const fn of antesDeCeder) { try { fn(); } catch (e) {} }

@@ -23,6 +23,7 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `tutoria-apostrofo` | Grupos y niveles con apóstrofo («PMAR d'Alt», «FPB l'Horta») |
 | `tutoria-texto-hostil` | Tutoría: ningún nombre, grupo, materia u observación con HTML o comillas se cuela como código ni se escapa dos veces |
 | `cuaderno-texto-hostil` | Cuaderno: lo mismo en 20 pantallas y el buscador; una copia con identificadores manipulados no se carga |
+| `tutoria-actas-guardadas` | Un acta guardada conserva su formato y no puede traer código dentro |
 | `del-cuaderno` | «📥 Del Cuaderno»: sin duplicar, vinculando identificadores, deshacer |
 | `suspensos` | Importar suspensos por identificador y por nombre parecido |
 | `dos-ventanas` | Una sola ventana guarda; relevo con «Usar esta ventana» |

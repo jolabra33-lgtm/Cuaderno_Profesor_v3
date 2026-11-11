@@ -131,7 +131,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 28 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 29 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.
@@ -201,6 +201,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
   observaciones, en pantalla y en los documentos). Ahora todo pasa por `_tEsc()` / `jsAttr()`; se retiran las 17 funciones
   `esc` locales. `tests/navegador/texto-hostil.mjs` rellena todos los campos con texto preparado para colarse, pulsa
   cada botón de cada pantalla y comprueba que nada se inyecta, se ejecuta ni se escapa dos veces.
+  Las actas guardadas (HTML editado) pasan por `_tHtmlSeguro()`, que conserva el formato y quita lo que ejecuta código.
 - **Asistencia → «Este mes» se desplazaba un día** (fecha en UTC). `fechaISOLocal()` en el Cuaderno y `_hoyLocal()` en Tutoría.
 - **El almacén de 5 MB compartido**: IndexedDB pasa a ser el almacén principal en las dos apps (ver abajo).
 - **Avisos tapados**: las confirmaciones abiertas desde una ventana (p. ej. «Restaurar» en 🛟 Copias) quedaban debajo de ella.

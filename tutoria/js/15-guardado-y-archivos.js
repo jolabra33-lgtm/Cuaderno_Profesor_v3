@@ -122,11 +122,11 @@ function persistLocal() {
   const aviso = (t) => { if (!_quotaWarned) { _quotaWarned = true; showToast(t); } };
 
   // 1) Estado completo → IndexedDB (no bloquea; si falla, se vuelve al guardado de antes).
-  let enIdb = false;
+  let enIdb = false, sello = null;
   if (_tutIdbOk) {
     try {
       const completo = buildState(true, true);
-      enIdb = true;
+      enIdb = true; sello = completo.savedAt;
       _tutIdbGuardar(JSON.stringify(completo), completo.savedAt).catch(() => {
         if (!_tutIdbOk) return;
         _tutIdbOk = false;
@@ -144,7 +144,8 @@ function persistLocal() {
     try {
       const st = buildState(conImagenes, conActas);
       // enIDB: qué partes NO lleva esta copia porque están en IndexedDB.
-      if (enIdb) st.enIDB = { imagenes: true, actas: !conActas };
+      // Misma marca de tiempo que el estado completo: así, al abrir, «más reciente» se compara sin margen.
+      if (enIdb) { st.enIDB = { imagenes: true, actas: !conActas }; st.savedAt = sello; }
       localStorage.setItem('evalies_data', JSON.stringify(st));
       writeIes();
       _tutEstadoGuardado(dot, lbl, texto);
@@ -188,7 +189,7 @@ async function _tutCargarDeIDB() {
   try { st = JSON.parse(reg.json); } catch (e) { return; }
   if (!st || typeof st !== 'object') return;
   const lsAt = ls ? (Date.parse(ls.savedAt) || 0) : -1, idbAt = Date.parse(reg.savedAt || st.savedAt) || 0;
-  if (!_tutEditado && (!ls || idbAt > lsAt + 1500)) {
+  if (!_tutEditado && (!ls || idbAt > lsAt)) {
     // IndexedDB tiene lo último (o localStorage se ha vaciado): se carga entero.
     const habia = _tutTotalAlumnos();
     applyFilePayload(st);
@@ -229,6 +230,8 @@ let _tutPendiente = false;
 function _tutGuardarPendiente() { if (_tutPendiente) { _tutPendiente = false; clearTimeout(_autosaveTimer); persistLocal(); } }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') _tutGuardarPendiente(); });
 window.addEventListener('pagehide', _tutGuardarPendiente);
+// Un guardado hecho mientras se decidía qué ventana guarda puede no haber cabido en localStorage: se repite.
+window.addEventListener('una-ventana:escritura-fallida', e => { if (e.detail && (e.detail.claves || []).includes('evalies_data')) persistLocal(); });
 
 // Si se pasa a trabajar en otra ventana, antes de ceder se guarda al momento (ver js/una-ventana.js).
 if (window.UnaVentana) UnaVentana.antesDeCeder(() => { clearTimeout(_autosaveTimer); persistLocal(); });

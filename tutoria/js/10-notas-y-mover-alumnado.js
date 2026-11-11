@@ -334,7 +334,7 @@ function openInformeBach(nivel, grupo, evalNum, forzarRegenerar) {
   if (!forzarRegenerar) {
     const guardada = _actaGetGuardada(nivel, grupo, evalNum);
     if (guardada) {
-      contentEl.innerHTML = guardada.html;
+      contentEl.innerHTML = _tHtmlSeguro(guardada.html);
       _actaEnableRowDelete(contentEl);
       overlay.style.display = 'flex';
       _actaMostrarAvisoGuardada(guardada.savedAt);
