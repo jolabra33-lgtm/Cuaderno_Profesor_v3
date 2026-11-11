@@ -150,6 +150,8 @@ function _procesarArchivoCopiaJSON(file,limpiar){
 }
 window.importarTodo=inp=>{ _procesarArchivoCopiaJSON(inp.files[0],()=>{ inp.value=""; }); };
 
+/* Secciones de un grupo. En pantallas anchas se ven todas como pestañas (.gtabs); en estrechas, en un desplegable. */
+const GRUPO_PESTANAS=[["alumnos","Alumnado"],["plano","Plano de aula"],["actividades","Actividades"],["calificar","Calificar"],["resultados","Resultados"],["asistencia","Asistencia"],["convivencia","Convivencia"],["familias","Familias"],["resumen","Resumen"],["diario","Diario"],["cobertura","Cobertura"],["ajustes","Ajustes"]];
 function renderGrupo(grupo){
   const cat=getCatalogo(grupo.catalogoKey);
   const app=document.getElementById("app");
@@ -162,11 +164,13 @@ function renderGrupo(grupo){
       </div>
       <div class="flex">
         <button class="ghost" style="border:1px solid var(--line)" onclick="irAGrupo(null)">← Inicio</button>
-        <select class="in" style="font-weight:600;min-width:160px" onchange="irATab(this.value)" aria-label="Pestaña del grupo">
-          ${[["alumnos","Alumnado"],["plano","Plano de aula"],["actividades","Actividades"],["calificar","Calificar"],["resultados","Resultados"],["asistencia","Asistencia"],["convivencia","Convivencia"],["familias","Familias"],["resumen","Resumen"],["diario","Diario"],["cobertura","Cobertura"],["ajustes","Ajustes"]]
-            .map(([k,l])=>`<option value="${k}" ${state.ui.tab===k?"selected":""}>${l}</option>`).join("")}
+        <select class="in gtabs-sel" style="font-weight:600;min-width:160px" onchange="irATab(this.value)" aria-label="Pestaña del grupo">
+          ${GRUPO_PESTANAS.map(([k,l])=>`<option value="${k}" ${state.ui.tab===k?"selected":""}>${l}</option>`).join("")}
         </select>
       </div>
+    </div>
+    <div class="gtabs" role="tablist" aria-label="Secciones del grupo">
+      ${GRUPO_PESTANAS.map(([k,l])=>`<button class="gtab ${state.ui.tab===k?"on":""}" role="tab" aria-selected="${state.ui.tab===k?"true":"false"}" onclick="irATab('${k}')">${l}</button>`).join("")}
     </div>
   </div>
   <div id="tabContent"></div>`;

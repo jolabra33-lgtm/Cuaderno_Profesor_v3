@@ -69,7 +69,7 @@ function renderRpListaHTML(root){
     return `<div class="card" style="cursor:pointer;padding:16px 18px" onclick="rpAbrirDetalle('${p.id}')">
       <div class="flex" style="justify-content:space-between;align-items:flex-start">
         <div style="min-width:0">
-          <span class="pill" style="background:${info.color}1a;color:${info.color};margin-bottom:6px">${info.label}</span>
+          <span class="pill" style="${pillTinte(info.color)};margin-bottom:6px">${info.label}</span>
           <div style="font-size:15px;font-weight:700">${esc(rpNombre(p))}</div>
           <div style="font-size:12.5px;color:var(--mut);margin-top:2px">${alV?esc(alV.g.nombre):"pendiente de asignar"}${p.cursoRepite?" · "+esc(p.cursoRepite):""}</div>
           <div style="font-size:12.5px;color:var(--mut);margin-top:6px">${p.fechaInicio?"Desde "+fmt2(p.fechaInicio):""}</div>
@@ -516,7 +516,7 @@ window.rpImprimirInforme=id=>{
     <table>
       <tr><th style="width:170px">Curso académico</th><td>${esc(p.cursoAcademico)||"—"}</td></tr>
       <tr><th>Fecha de inicio</th><td>${fmt2(p.fechaInicio)}</td></tr>
-      <tr><th>Estado</th><td><span class="pill" style="background:${rpEstadoInfo(p.estado).color}1a;color:${rpEstadoInfo(p.estado).color}">${rpEstadoInfo(p.estado).label}</span></td></tr>
+      <tr><th>Estado</th><td><span class="pill" style="${pillTinte(rpEstadoInfo(p.estado).color)}">${rpEstadoInfo(p.estado).label}</span></td></tr>
       <tr><th>Motivos de la no superación</th><td>${rfrpMotivosResumenHTML(p.motivos)}</td></tr>
       <tr><th>Medidas Nivel II</th><td>${rpMedidasResumenHTML(p.medidasNivelII,RP_MEDIDAS_II)}</td></tr>
       <tr><th>Medidas Nivel III</th><td>${rpMedidasResumenHTML(p.medidasNivelIII,RP_MEDIDAS_III)}</td></tr>
@@ -525,7 +525,7 @@ window.rpImprimirInforme=id=>{
     ${rfrpTrimBodyHTML(1,p.trimestres[1])}
     ${rfrpTrimBodyHTML(2,p.trimestres[2])}
     <h2>Valoración final del plan</h2>
-    <p><span class="pill" style="background:${vfinal.color}1a;color:${vfinal.color}">${vfinal.label}</span></p>
+    <p><span class="pill" style="${pillTinte(vfinal.color)}">${vfinal.label}</span></p>
     ${p.observacionesFinales?`<h2>Observaciones finales</h2><p style="white-space:pre-wrap;line-height:1.6">${esc(p.observacionesFinales)}</p>`:""}
     ${rfrpCeLegendPrintHTML()}
   `;

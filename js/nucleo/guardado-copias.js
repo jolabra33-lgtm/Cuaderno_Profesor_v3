@@ -282,6 +282,7 @@ async function pintarCopias(){
     ${typeof bloqueoSeccionHTML==="function"?bloqueoSeccionHTML():""}
     <div class="flex" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn" onclick="exportarTodo()">⬇ Exportar copia a un archivo</button>
+      <label class="ghost file" style="border:1px solid var(--line)">⬆ Importar copia<input type="file" accept="application/json,.json" style="display:none" onchange="importarTodo(this)"></label>
       ${cifradoDisponible()?'<button class="btn" onclick="exportarCifrada()" title="Recomendado si la copia va a salir del dispositivo (correo, pendrive, nube)">🔒 Exportar copia cifrada</button>':""}
       <button class="ghost" style="border:1px solid var(--line)" onclick="copiaManualAhora()">＋ Crear copia interna ahora</button>
       <button class="ghost" style="border:1px solid var(--line)" onclick="cerrarCopias();abrirDiagnostico()">🩺 Revisar mis datos</button>

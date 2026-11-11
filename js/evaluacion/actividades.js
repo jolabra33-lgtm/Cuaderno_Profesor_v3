@@ -95,7 +95,7 @@ function renderActividades(grupo){
           <div style="flex:1;min-width:0">
             <div style="font-size:14.5px;font-weight:500">${esc(a.nombre)} ${a.sda ? `<span class="badge" style="vertical-align:middle;margin-left:6px">${esc(a.sda)}</span>` : ''}</div>
             <div style="font-size:12.5px;color:var(--mut);margin-top:2px">${a.tipo} · ${b?esc(b.label):""} · ${tipoDesc}</div>
-            ${a.recupera?`<div style="font-size:12.5px;margin-top:2px;color:var(--accent-2,#8a5a12);font-weight:600">🔁 ${recResumenTexto(grupo,a)}</div>`:`<div style="font-size:12.5px;color:var(--mut);margin-top:2px">Peso dentro del bloque: ${pctEnBloque} %${(a.pesoBloque==null||a.pesoBloque==="")?" (automático)":""}</div>`}
+            ${a.recupera?`<div style="font-size:12.5px;margin-top:2px;color:var(--accent-texto,#7d5a12);font-weight:600">🔁 ${recResumenTexto(grupo,a)}</div>`:`<div style="font-size:12.5px;color:var(--mut);margin-top:2px">Peso dentro del bloque: ${pctEnBloque} %${(a.pesoBloque==null||a.pesoBloque==="")?" (automático)":""}</div>`}
             ${!a.recupera && recuperacionesDe(grupo,a.id).length?`<div style="font-size:12.5px;color:var(--mut);margin-top:2px">🔁 Tiene recuperación: ${recuperacionesDe(grupo,a.id).map(r=>esc(r.nombre)).join(", ")}</div>`:""}
             ${cxAvisoCriteriosBadgeHTML(grupo,a)}
             <div style="font-size:12.5px;color:var(--mut);margin-top:4px">Criterios: ${a.criterios.length?a.criterios.map(l=>`${critLinkHTML(grupo.catalogoKey,l.critId)} (${l.peso})`).join(" · "):"ninguno todavía"}</div>

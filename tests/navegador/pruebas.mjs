@@ -646,13 +646,15 @@ export const PRUEBAS = [
 
   { nombre: 'accesibilidad', descripcion: 'Accesibilidad WCAG 2 A/AA (axe-core) en las pantallas principales', async fn(t) {
     const axe = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
-    const p = await nuevaPagina(t.contexto);
-    let contraste = 0;
+    // Sin animaciones: con ellas se medía el texto a medio aparecer y salían contrastes bajos que no son reales.
+    const ctx = await t.navegador.newContext({ viewport: { width: 1366, height: 900 }, reducedMotion: 'reduce' });
+    const p = await nuevaPagina(ctx);
+    let contraste = 0; const bajos = [];   // (los avisos breves se excluyen: mientras se desvanecen son semitransparentes)
     const auditar = async (pant) => {
       await p.addScriptTag({ content: axe });
-      const v = await p.evaluate(async () => (await axe.run(document, { runOnly: ['wcag2a', 'wcag2aa'] })).violations.map(v => ({ id: v.id, n: v.nodes.length })));
+      const v = await p.evaluate(async () => (await axe.run({ exclude: [['#appToast'], ['#toastGlobal']] }, { runOnly: ['wcag2a', 'wcag2aa'] })).violations.map(v => ({ id: v.id, n: v.nodes.length, donde: v.nodes.slice(0, 2).map(n => n.target.join(' ').slice(0, 70)) })));
       const otras = v.filter(x => x.id !== 'color-contrast');
-      contraste += (v.find(x => x.id === 'color-contrast') || { n: 0 }).n;
+      const cc = v.find(x => x.id === 'color-contrast'); if (cc) { contraste += cc.n; bajos.push(pant + ': ' + cc.donde.join(' | ')); }
       t.ok(!otras.length, `${pant}: sin errores de accesibilidad`, otras.map(x => x.id + '×' + x.n).join(', '));
     };
     await cuadernoConGrupo(p, t.url);
@@ -664,9 +666,25 @@ export const PRUEBAS = [
       await p.evaluate(tab => { _mostrarBienvenida = false; state.ui.appMode = 'competencial'; state.ui.tab = tab; render(); }, tab); await esperar(300); await auditar('Cuaderno · ' + tab); }
     for (const modo of ['inicio', 'corrector', 'programacion', 'memoria', 'nese', 'refuerzo', 'repeticion', 'reuniones']) {
       await p.evaluate(m => { _mostrarBienvenida = false; state.ui.appMode = m; render(); }, modo); await esperar(300); await auditar('Cuaderno · modo ' + modo); }
+    // Ventanas y paneles nuevos.
+    await p.evaluate(() => { state.ui.appMode = 'inicio'; render(); abrirCopias(); }); await esperar(500); await auditar('Cuaderno · ventana Copias'); await p.evaluate(() => cerrarCopias());
+    await p.evaluate(() => abrirNuevoCurso()); await esperar(300); await auditar('Cuaderno · Empezar curso nuevo'); await p.evaluate(() => ncCerrar());
+    await p.evaluate(() => { cronoTogglePanel(); claseIrTab('sorteo'); claseSortear(); }); await esperar(900); await auditar('Cuaderno · Sorteo');
+    await p.evaluate(() => { claseIrTab('grupos'); claseCrearGrupos(); }); await esperar(200); await auditar('Cuaderno · Grupos'); await p.evaluate(() => { claseIrTab('crono'); cronoTogglePanel(); });
+    await p.evaluate(() => { state.ui.appMode = 'competencial'; state.ui.tab = 'resultados'; render(); toggleProyector(); }); await esperar(300); await auditar('Cuaderno · modo proyector'); await p.evaluate(() => toggleProyector());
+    await p.evaluate(async () => { await BloqueoPIN.configurar('1234', 5); BloqueoPIN.bloquear(); }); await esperar(300); await auditar('Bloqueo con PIN');
+    await p.evaluate(() => { BloqueoPIN.quitar(); document.documentElement.classList.remove('app-bloqueada'); const o = document.getElementById('bloqueoOverlay'); if (o) o.remove(); });
+    // Lo mismo en el tema oscuro.
+    for (const tab of ['alumnos', 'plano', 'actividades', 'calificar', 'resultados', 'resumen', 'cobertura', 'asistencia', 'diario', 'convivencia', 'familias', 'ajustes']) {
+      await p.evaluate(tab => { document.body.setAttribute('data-tema', 'oscuro'); _mostrarBienvenida = false; state.ui.appMode = 'competencial'; state.ui.grupoId = state.grupos[0].id; state.ui.tab = tab; render(); }, tab); await esperar(200); await auditar('Cuaderno (oscuro) · ' + tab); }
+    for (const modo of ['inicio', 'corrector', 'programacion', 'memoria', 'nese', 'refuerzo', 'repeticion', 'reuniones']) {
+      await p.evaluate(m => { state.ui.appMode = m; render(); }, modo); await esperar(200); await auditar('Cuaderno (oscuro) · modo ' + modo); }
+    await p.evaluate(() => document.body.setAttribute('data-tema', 'claro'));
     await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['Prueba, Ana']); await auditar('Tutoría · grupo');
+    for (const e of ['__home__', '__calendario__', '__informe__', '__convivencia__', '__materias__']) { await p.evaluate(e => selectNivel(e), e); await esperar(300); await auditar('Tutoría · ' + e); }
     await p.goto(t.url + '/editor/'); await esperar(1200); await auditar('Editor de exámenes');
-    t.ok(contraste <= 15, `contraste: ${contraste} textos por debajo de 4,5:1 (máximo admitido 15)`);
+    t.ok(contraste === 0, `contraste: ningún texto por debajo de 4,5:1 (${contraste})`, bajos.slice(0, 6).join('\n        '));
+    await ctx.close();
   } },
 
   { nombre: 'actualizacion', descripcion: 'Aviso «Hay una versión nueva · Actualizar»', async fn(t) {

@@ -2634,6 +2634,7 @@
   }
   .mat-level-tab:hover { border-color: var(--yellow); color: var(--yellow); }
   .mat-level-tab.active { background: var(--yellow); color: #111; border-color: var(--yellow); }
+  html.light .mat-level-tab.active { color: #fff; }   /* en claro el «amarillo» es ocre oscuro: letra blanca */
   .mat-editor {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 12px; overflow: hidden;

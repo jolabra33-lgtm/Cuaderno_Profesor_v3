@@ -421,7 +421,7 @@ function renderListaCatalogosPersonalizados(){
         const nCrit=d.cat.ces.reduce((n,ce)=>n+ce.criterios.length,0);
         const badges=`<span class="badge">${d.cat.ces.length} CE · ${nCrit} criterios</span>`
           +(d.oficial?` <span class="badge">oficial</span>`:` <span class="badge" style="opacity:.75">personalizada</span>`)
-          +(d.override?` <span class="badge" style="background:var(--accent-soft);color:var(--accent-2)">editada</span>`:"")
+          +(d.override?` <span class="badge" style="background:var(--accent-soft);color:var(--accent-texto)">editada</span>`:"")
           +(d.oculto?` <span class="badge" style="background:var(--danger-soft);color:var(--danger)">oculta</span>`:"");
         const editable=catalogoEsEditableComoTexto(d.cat);
         const botones=[];

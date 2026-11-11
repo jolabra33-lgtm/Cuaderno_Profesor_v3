@@ -54,7 +54,7 @@ function svgBarrasMultiserie(categorias,series,opts){
     out+=`<text x="${(padIzq+ci*grupoAncho+grupoAncho/2).toFixed(1)}" y="${alto-5}" font-size="10.5" text-anchor="middle" fill="#8a94a3">${esc(cat)}</text>`;
   });
   out+=`<line x1="${padIzq}" y1="${padSup+areaAlto}" x2="${ancho-4}" y2="${padSup+areaAlto}" stroke="#e0e0e0" stroke-width="1"/>`;
-  const leyenda=series.map(s=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:#666;margin-right:10px"><span style="width:9px;height:9px;border-radius:2px;background:${s.color};display:inline-block"></span>${esc(s.nombre)}</span>`).join("");
+  const leyenda=series.map(s=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:var(--mut);margin-right:10px"><span style="width:9px;height:9px;border-radius:2px;background:${s.color};display:inline-block"></span>${esc(s.nombre)}</span>`).join("");
   return `<svg width="${ancho}" height="${alto}" viewBox="0 0 ${ancho} ${alto}" style="max-width:100%">${out}</svg><div style="margin-top:2px">${leyenda}</div>`;
 }
 function svgLineaEvolucion(categorias,valores){

@@ -61,7 +61,7 @@ function evolucionAprobadosHTML(grupo){
   const barras=datos.map(d=>{
     const alturaPx = d.pct==null? 4 : Math.max(4, Math.round(d.pct/100*90));
     return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
-      <div style="font-size:12px;font-weight:700;color:${d.pct==null?'var(--mut)':'var(--accent-2)'}">${d.pct==null?"—":d.pct+"%"}</div>
+      <div style="font-size:12px;font-weight:700;color:${d.pct==null?'var(--mut)':'var(--accent-texto)'}">${d.pct==null?"—":d.pct+"%"}</div>
       <div style="width:100%;max-width:46px;height:90px;display:flex;align-items:flex-end;background:var(--surface-2);border-radius:6px;overflow:hidden">
         <div style="width:100%;height:${alturaPx}px;background:linear-gradient(180deg,var(--accent),var(--accent-2));border-radius:6px 6px 0 0"></div>
       </div>
@@ -116,7 +116,7 @@ function statsProblematicaHTML(grupo){
       <div class="flex" style="justify-content:space-between"><span style="font-size:13.5px">Alumnado NESE</span><strong style="font-size:14px">${nese}</strong></div>
       <div class="flex" style="justify-content:space-between"><span style="font-size:13.5px">Alumnado repetidor</span><strong style="font-size:14px">${repetidores}</strong></div>
       <div class="flex" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:7px;margin-top:1px">
-        <span style="font-size:13.5px;font-weight:600">Alumnado con problemática</span><strong style="font-size:15px;color:var(--accent-2)">${problematica}</strong>
+        <span style="font-size:13.5px;font-weight:600">Alumnado con problemática</span><strong style="font-size:15px;color:var(--accent-texto)">${problematica}</strong>
       </div>
     </div>
     <p class="sub" style="margin:8px 0 0;font-size:11px">"Con problemática" = NESE o repetidor; a quien sea las dos cosas se le cuenta una sola vez.</p>

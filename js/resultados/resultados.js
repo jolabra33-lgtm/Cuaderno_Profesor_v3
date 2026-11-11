@@ -102,7 +102,7 @@ function renderResultados(grupo){
   <div class="card">
     <div class="flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
       <h2 style="font-size:15px">Toda la clase</h2>
-      <div class="flex">
+      <div class="flex res-acciones">
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarCSVGrupo()" title="Hoja de cálculo con la media y la nota de acta (entera) de cada alumno/a, lista para pasar a ITACA">Exportar notas (CSV)</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesTodos()">Exportar todos los informes</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesFinalesTodos()">Exportar informes finales de curso</button>
@@ -225,7 +225,7 @@ function renderResultados(grupo){
     <p class="sub">Ponderación: ${grupo.bloques.map(b=>`${esc(b.label)} ${b.peso} %`).join(" · ")}.</p>
     <div class="flex" style="gap:24px;align-items:flex-end">
       <div><div style="font-size:12.5px;color:var(--mut)">Nota de ${TRIMESTRES[trim]}</div>
-        <div class="flex" style="gap:8px;align-items:baseline"><span class="big" style="color:var(--accent)">${fmt(nt)}</span> ${pillCuant(nt)}</div></div>
+        <div class="flex" style="gap:8px;align-items:baseline"><span class="big" style="color:var(--accent-texto)">${fmt(nt)}</span> ${pillCuant(nt)}</div></div>
       <div><div style="font-size:12.5px;color:var(--mut)">Nota final (media ponderada)</div>
         <div class="flex" style="gap:8px;align-items:baseline"><span class="big">${fmt(nf)}</span> ${pillCuant(nf)}</div></div>
     </div>

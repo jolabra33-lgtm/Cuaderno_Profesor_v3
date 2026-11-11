@@ -292,6 +292,7 @@ function showToast(msg) {
   if (!t) {
     t = document.createElement('div');
     t.id = 'appToast';
+    t.setAttribute('role', 'status'); t.setAttribute('aria-live', 'polite');   // los lectores de pantalla lo anuncian
     t.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
       background:var(--surface2);border:1px solid var(--border);color:var(--text);
       padding:12px 22px;border-radius:10px;font-size:13px;font-weight:500;
@@ -300,9 +301,11 @@ function showToast(msg) {
     document.body.appendChild(t);
   }
   t.textContent = msg;
+  t.style.visibility = 'visible';
   t.style.opacity = '1';
-  clearTimeout(t._to);
-  t._to = setTimeout(()=>{ t.style.opacity='0'; }, 3500);
+  clearTimeout(t._to); clearTimeout(t._to2);
+  // Al terminar se oculta del todo (no solo transparente): un texto invisible seguía «estando» en la página.
+  t._to = setTimeout(()=>{ t.style.opacity='0'; t._to2 = setTimeout(()=>{ t.style.visibility='hidden'; }, 450); }, 3500);
 }
 
 // ===================== MODAL NUEVA CONVOCATORIA =====================

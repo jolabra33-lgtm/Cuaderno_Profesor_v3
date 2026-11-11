@@ -18,10 +18,12 @@ La aplicación es **estática**: no necesita compilar nada. Se publica tal cual 
 | `editor/` | Editor de exámenes (página propia que se carga dentro de la pestaña «Diseño»): `index.html`, `css/`, `js/` y `fonts/` (Lora e Inter) |
 | `editor/js/puente-cuaderno.js` | Conexión del editor con el Cuaderno: guardado, criterios, estructura y PDF |
 | `tools/planificacion.html` | Herramienta de Planificación temporal (se incrusta en cada Programación) |
+| `tools/fonts/` | Fuentes de la Planificación (Fraunces, Public Sans, IBM Plex Mono; licencia OFL). Se incrustan en la herramienta al cargarla: no se pide nada a internet |
 | `sw.js` | Service worker: lista de archivos para el uso sin conexión y versión de la caché |
 | `guia_mejorada.html` | Guía de uso |
 
 | `js/una-ventana.js` | Solo una ventana guarda a la vez: si la app ya está abierta en otra (o en la otra versión, v2/v3), esta se bloquea con un aviso y «Usar esta ventana». Es el **primer** script de `index.html` y de `tutoria/index.html` |
+| `js/bloqueo.js` | Bloqueo con PIN (opcional): tapa la app hasta escribir el PIN, al abrir y tras unos minutos sin usarla. En `<head>` del Cuaderno y de Tutoría. Sus ajustes están en `js/ui/privacidad.js` |
 | `js/registro-sw.js` | Registro del service worker y aviso «Hay una versión nueva · Actualizar» (lo usan el Cuaderno y Tutoría) |
 | `tutoria/` | Gestor de Tutoría, aplicación independiente (ver más abajo) |
 | `tests/calculo-notas.html` | Pruebas del motor de cálculo de notas (ver más abajo) |
@@ -40,13 +42,14 @@ Completan el repositorio: `manifest.json` e `icons/` (instalación como app), `.
 | `js/nucleo/plantillas-materias.js` | Gestión de plantillas de materias: editar y eliminar/ocultar |
 | `js/nucleo/modelo-datos.js` | Modelo de datos: grupos, alumnado, columnas de la lista |
 | `js/nucleo/estado-migraciones.js` | Estado global de la app y migraciones de datos antiguos |
-| `js/nucleo/guardado-copias.js` | Guardado a prueba de pérdidas, deshacer/rehacer y copias automáticas |
+| `js/nucleo/guardado-copias.js` | Guardado (IndexedDB es el almacén que manda; localStorage, copia rápida si cabe), deshacer/rehacer y copias automáticas |
 | `js/nucleo/cifrado.js` | Copias cifradas con contraseña |
-| `js/nucleo/copia-carpeta.js` | Copia automática en una carpeta elegida (ordenador, Chrome/Edge): un archivo por día y dispositivo; avisa si otro dispositivo ha dejado una copia más reciente |
+| `js/nucleo/copia-carpeta.js` | Copia automática en una carpeta elegida (ordenador, Chrome/Edge): un archivo por día y dispositivo; avisa si otro dispositivo ha dejado una copia más reciente; cifrado opcional con contraseña |
 | `js/curriculo/catalogos-importador.js` | Autocarga del currículo e importador de materias propias |
 | `js/evaluacion/calculo-notas.js` | Motor de cálculo de notas (criterios, CE, CC, bloques, trimestres, final) y recuperaciones |
 | `js/ui/barra-superior.js` | Barra superior y navegación entre las aplicaciones |
 | `js/inicio/cronometro.js` | Cronómetro flotante |
+| `js/inicio/herramientas-clase.js` | Sorteo de alumno/a y creación de grupos (pestañas del panel del cronómetro) |
 | `js/inicio/calendario.js` | Calendario de Inicio: eventos, exámenes y entregas |
 | `js/inicio/reuniones.js` | Registro de reuniones con familias, alumnado y equipo |
 | `js/alumnado/plan-refuerzo.js` | Plan de refuerzo: seguimiento individualizado |
@@ -81,7 +84,9 @@ Completan el repositorio: `manifest.json` e `icons/` (instalación como app), `.
 | `js/corrector/navegacion-lista-crear.js` | Navegación del Corrector, lista de exámenes y crear examen |
 | `js/corrector/editor-rubrica.js` | Editor de rúbrica y rúbricas adaptadas (NESE) |
 | `js/corrector/corregir.js` | Corregir, estadísticas por ítem e impresión de la rúbrica corregida |
+| `js/nucleo/nuevo-curso.js` | Asistente «Empezar curso nuevo»: archiva el curso y deja lo reutilizable |
 | `js/ui/buscador.js` | Buscador global |
+| `js/ui/privacidad.js` | Modo proyector (difumina nombres y notas) y ajustes del bloqueo con PIN |
 | `js/ui/bienvenida.js` | Pantalla de bienvenida y conservación de scroll |
 | `js/ui/render-accesibilidad.js` | Accesibilidad y render principal |
 | `js/corrector/editor-examenes.js` | Editor de exámenes dentro del Corrector (pestaña «Diseño») |
@@ -126,8 +131,10 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 14 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
-  importaciones, dos ventanas, versión del curso, sin conexión, copia en carpeta, accesibilidad, actualización…).
+- `tests/navegador/`: 28 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+  importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
+  curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
+- `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.
   `npm test` las ejecuta todas; GitHub también, en cada subida (`.github/workflows/pruebas.yml`).
   Instrucciones y lista completa en `tests/README.md`.
 
@@ -138,8 +145,9 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 1. **Todos los scripts son «clásicos»** y comparten el mismo ámbito global (igual que cuando era un solo archivo). Una función definida en un archivo se puede llamar desde cualquier otro **una vez cargada la página**.
 2. **Al cargar, un archivo solo puede usar lo definido en los anteriores.** Las funciones que se *ejecutan* al cargar (listeners, constantes calculadas) deben quedar después de aquello de lo que dependen. Lo que se ejecuta solo cuando el usuario hace algo no tiene esta restricción.
 3. **Archivo nuevo = línea nueva** en `index.html` (y en `APP_SHELL` de `sw.js`).
-4. **Tras cualquier cambio, cambia `CACHE_NAME` en `sw.js`** (`CACHE_PREFIJO + '1'` → `'2'`…). Es lo que hace que los dispositivos descarguen la versión nueva y muestren el aviso «Actualizar».
+4. **Tras cualquier cambio, ejecuta `npm run sellar`**: sube `CACHE_NAME` en `sw.js` y anota la huella de los archivos. Es lo que hace que los dispositivos descarguen la versión nueva y muestren el aviso «Actualizar». La prueba `version-cache` falla si se sube un cambio sin sellar.
 5. La app se entrega **vacía**: ningún archivo contiene datos de alumnado. Los datos viven en el navegador de cada dispositivo.
+6. **Texto de una persona → siempre escapado.** En el Cuaderno, `esc()` para HTML y `escJS()` si va dentro del código de un botón (`onclick="f('…')"`). En Tutoría, `_tEsc()` y `jsAttr()`. Las pruebas `tutoria-texto-hostil` y `cuaderno-texto-hostil` lo comprueban.
 
 ## Cómo se comprobó que el troceado no pierde nada
 
@@ -185,5 +193,39 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
   29 pantallas revisadas con axe-core (WCAG 2 A/AA) no dan ningún error (no se ha revisado el contraste de color).
 
 ## Cambios recientes
+
+### Auditoría y mejoras (noviembre de 2026)
+
+**Fallos corregidos**
+- **Tutoría ejecutaba HTML metido en un nombre** (y en otros ~200 puntos: niveles, grupos, materias, destinos, tutores,
+  observaciones, en pantalla y en los documentos). Ahora todo pasa por `_tEsc()` / `jsAttr()`; se retiran las 17 funciones
+  `esc` locales. `tests/navegador/texto-hostil.mjs` rellena todos los campos con texto preparado para colarse, pulsa
+  cada botón de cada pantalla y comprueba que nada se inyecta, se ejecuta ni se escapa dos veces.
+- **Asistencia → «Este mes» se desplazaba un día** (fecha en UTC). `fechaISOLocal()` en el Cuaderno y `_hoyLocal()` en Tutoría.
+- **El almacén de 5 MB compartido**: IndexedDB pasa a ser el almacén principal en las dos apps (ver abajo).
+- **Avisos tapados**: las confirmaciones abiertas desde una ventana (p. ej. «Restaurar» en 🛟 Copias) quedaban debajo de ella.
+- **Sin conexión**: `./editor/` está en la lista de `sw.js`; la Planificación ya no pide fuentes a Google; la prueba
+  `sin-conexion` apaga el servidor (antes el service worker seguía teniendo red en la prueba).
+
+**Almacenamiento**
+- *Cuaderno* (`js/nucleo/guardado-copias.js`, `js/99-arranque.js`): se guarda siempre en IndexedDB. localStorage lleva la
+  misma copia mientras quepa (abre al instante). Si no cabe, se retira la copia antigua y se pone la marca `KEY_EN_IDB`:
+  al abrir, los datos se leen de IndexedDB como un arranque normal, y hasta tenerlos no se guarda nada (`_guardadoEnPausa`).
+- *Tutoría* (`tutoria/js/15-guardado-y-archivos.js`): estado completo en IndexedDB (base `evalies-estado`); en localStorage,
+  copia ligera sin imágenes (`enIDB`). `_tutCargarDeIDB()` reconcilia al abrir. Las fotos y horarios se reducen al cargarlos
+  (`_tutReducirImagen`) y se guardan al momento.
+
+**Mejoras**
+- **Copia en carpeta cifrada** (`ccCifrar`, `cifrarConClave`): la clave derivada, no extraíble, se guarda en IndexedDB.
+- **Versión sellada** (`tests/version/`): `npm run sellar` y la prueba `version-cache`. `sw.js` instala con `{cache:'reload'}`.
+- **Empezar curso nuevo** (`js/nucleo/nuevo-curso.js`): `ncAplicar(opciones)` hace el cambio; antes exige guardar el archivo.
+- **Modo proyector** (`js/ui/privacidad.js`): tras cada cambio de la página marca con `.priv` los textos y campos que
+  coinciden con un nombre del alumnado y las notas de su fila. `data-sin-privacidad` excluye una zona.
+- **Bloqueo con PIN** (`js/bloqueo.js`): `window.BloqueoPIN`. Guarda el resumen del PIN en localStorage (`cuaderno_bloqueo_pin`).
+- **Sorteo y grupos** (`js/inicio/herramientas-clase.js`): `claseRepartir()` reparte en equipos igualados.
+- **Cabecera y pestañas**: en ≤640 px la cabecera cabe en dos filas (`.tb-txt`, `.tb-fuera-movil`); en ≥1000 px las secciones
+  del grupo son pestañas (`.gtabs`, `GRUPO_PESTANAS`).
+- **Importar con identificadores seguros** (`idsNoValidos`): una copia, grupo, programación o materia con identificadores
+  que la app no genera no se carga.
 
 - **Rúbrica = estructura del Diseño.** «Importar a la rúbrica →» copia ahora apartado → pregunta → subpregunta, en el mismo orden y con los puntos de cada parte (antes solo importaba una línea por pregunta). El código está en `js/corrector/editor-examenes.js` (`cxImportarEstructura`, `exHojas`, `exPrevisionReimport`); el puente `editor/js/puente-cuaderno.js` entrega ahora el texto completo y la numeración de cada nodo. Los bloques importados llevan `tipo` («apartado», «pregunta», «subpregunta») y las preguntas sueltas dentro de un nivel mixto son bloques de un solo ítem (`unico`).

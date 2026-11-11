@@ -368,7 +368,7 @@ function hoyTarjetaHTML(){
       </div>`
       : (h.celda.tipo==="clase"?`<button class="ghost small" style="border:1px dashed var(--line)" onclick="homeTabActual='horario';horAbrirModal(${h.fila},'${h.dia}')">🔗 Enlazar a un grupo</button>`:"");
     return `<div class="flex" style="gap:12px;align-items:center;padding:8px 10px;border-radius:10px;flex-wrap:wrap;${estado==="ahora"?"background:var(--surface-2);box-shadow:inset 3px 0 0 var(--accent)":""}${min>=fin?";opacity:.55":""}">
-      <div style="width:92px;flex-shrink:0;font-variant-numeric:tabular-nums;font-size:13px;font-weight:600">${esc(h.inicio)}–${esc(h.fin)}${estado==="ahora"?'<div style="font-size:11px;color:var(--accent-2)">● ahora</div>':estado==="proxima"?'<div style="font-size:11px;color:var(--mut)">siguiente</div>':""}</div>
+      <div style="width:92px;flex-shrink:0;font-variant-numeric:tabular-nums;font-size:13px;font-weight:600">${esc(h.inicio)}–${esc(h.fin)}${estado==="ahora"?'<div style="font-size:11px;color:var(--accent-texto)">● ahora</div>':estado==="proxima"?'<div style="font-size:11px;color:var(--mut)">siguiente</div>':""}</div>
       <div style="flex:1;min-width:160px"><span class="ag-dot" style="background:${info.color};display:inline-block;margin-right:6px"></span><strong style="font-size:13.5px">${detalle||info.label}</strong></div>
       ${acciones}
     </div>`;
@@ -382,7 +382,7 @@ function hoyTarjetaHTML(){
   const vacio=festivo?`🎉 Hoy es festivo${festivo.etiqueta?": "+esc(festivo.etiqueta):""}.`:finde?"Fin de semana: no hay clases.":hayHorario?"Hoy no tienes nada en tu horario.":"";
   return `<div class="card" style="border-left:4px solid var(--accent);padding:14px 18px">
     <div class="flex" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-      <strong style="font-size:14.5px;color:var(--accent-2)">📌 Hoy · ${esc(fechaLarga.charAt(0).toUpperCase()+fechaLarga.slice(1))}</strong>
+      <strong style="font-size:14.5px;color:var(--accent-texto)">📌 Hoy · ${esc(fechaLarga.charAt(0).toUpperCase()+fechaLarga.slice(1))}</strong>
       ${hayHorario?"":`<button class="ghost small" style="border:1px solid var(--line)" onclick="homeTabActual='horario';homeSecciones.calendario=true;render()">🗓️ Rellena tu horario para ver aquí tus clases</button>`}
     </div>
     ${chips?`<div class="flex" style="gap:8px;margin-top:10px;flex-wrap:wrap">${chips}</div>`:""}

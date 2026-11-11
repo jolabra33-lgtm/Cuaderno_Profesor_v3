@@ -80,6 +80,10 @@ function idsNoValidos(obj){
   return malos;
 }
 const AVISO_IDS_NO_VALIDOS="Este archivo no se puede cargar: contiene identificadores que la aplicación no genera (con comillas, <, > o &). Está dañado o ha sido modificado a mano. No se ha cambiado nada de lo que tenías.";
+/* Píldora de color (tipo de evento, de reunión, estado de un plan…): fondo muy suave del color y letra del mismo
+   tono, algo más oscura en el tema claro y más clara en el oscuro para que se lea bien (--pill-hacia, --pill-mezcla).
+   El primer «color» es el de siempre, para los navegadores que no conocen color-mix(). */
+function pillTinte(c){ return `background:${c}1a;color:${c};color:color-mix(in srgb,${c} var(--pill-mezcla,68%),var(--pill-hacia,#000))`; }
 /* Notificación breve no bloqueante (sustituye a mostrarAviso() en confirmaciones que
    no necesitan respuesta del usuario, p. ej. "Guardado", "Copiado al portapapeles…"). */
 let _toastTimer=null;

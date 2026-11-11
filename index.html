@@ -25,7 +25,7 @@
     <div class="flex" style="justify-content:space-between">
       <div class="flex" style="gap:10px">
         <h1 style="cursor:pointer" onclick="irInicio()" id="pageH1">Cuaderno del profesor</h1>
-        <button class="ghost" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="buscarAbrir()" title="Buscar (Ctrl/Cmd + K)">🔍 Buscar</button>
+        <button class="ghost" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="buscarAbrir()" title="Buscar (Ctrl/Cmd + K)" aria-label="Buscar">🔍<span class="tb-txt"> Buscar</span></button>
         <button class="ghost" id="temaToggleBtn" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="toggleTemaApp()" title="Cambiar modo claro/oscuro">🌙</button>
         <button class="ghost" id="proyectorBtn" aria-pressed="false" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="toggleProyector()" title="Modo proyector: difumina los nombres del alumnado y las notas (para proyectar la pantalla)">👁️</button>
         <button class="ghost" id="bloqueoBtn" style="display:none;color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="BloqueoPIN.bloquear()" title="Bloquear la app ahora (pide el PIN para volver a entrar)" aria-label="Bloquear la app ahora">🔒</button>

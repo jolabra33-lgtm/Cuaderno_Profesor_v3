@@ -141,20 +141,22 @@ window.aplicarArreglosDiagnostico=async()=>{
 };
 
 /* v3 · Tarjeta de novedades: se ve una vez tras actualizar, y se cierra. */
-const NOVEDADES_VERSION="v3-2";
+const NOVEDADES_VERSION="v3-3";
 window.cerrarNovedades=()=>{ state.novedadesVistas=NOVEDADES_VERSION; save(); render(); };
 const NOVEDADES_V3=[
-  ["✨ Aviso de versión nueva","al publicar cambios aparece «Actualizar»; ya no hace falta cerrar la app del todo."],
-  ["🔒 Una sola ventana guarda","si abres la app dos veces (o la v2 y la v3), la segunda avisa y no pisa tus cambios."],
-  ["☁️ Copia automática","en el ordenador, 🛟 Copias → «Elegir carpeta» (Drive, OneDrive, iCloud) y llega sola a tus otros equipos."],
-  ["📝 Qué me falta","aquí mismo, las notas y comentarios pendientes del periodo, con un botón para resolverlos."],
-  ["📥 Del Cuaderno a Tutoría","la lista de alumnado se copia con un botón; los suspensos, con «👥 Para la tutoría»."]
+  ["🎓 Empezar curso nuevo","aquí arriba: archiva el curso que termina y deja grupos, programaciones y horario listos para el siguiente."],
+  ["🙈 Modo proyector","el botón 👁️ de la cabecera difumina los nombres del alumnado y las notas mientras proyectas."],
+  ["🔒 Bloqueo con PIN","en 🛟 Copias: la app pide un PIN al abrirla y tras unos minutos sin usarla (también Tutoría)."],
+  ["🎲 Sorteo y grupos","en el botón del cronómetro: elegir a alguien al azar y repartir la clase en equipos."],
+  ["☁️ Copias cifradas","la copia automática en carpeta se puede cifrar con contraseña (🛟 Copias → «Cifrar las copias»)."],
+  ["💾 Más sitio y más seguro","los datos ya no dependen del límite de 5 MB del navegador; las fotos de Tutoría tampoco."],
+  ["📱 Más cómodo","en el móvil la cabecera ocupa la mitad; en el ordenador, las secciones del grupo están a la vista."]
 ];
 function novedadesHTML(){
   if(state.novedadesVistas===NOVEDADES_VERSION) return "";
   return `<div class="card" style="border-left:4px solid var(--accent-2);padding:12px 16px">
     <div class="flex" style="justify-content:space-between;align-items:center;gap:10px">
-      <strong style="font-size:14px">Novedades de la v3</strong>
+      <strong style="font-size:14px">Novedades de esta versión</strong>
       <button class="modal-close" onclick="cerrarNovedades()" aria-label="Cerrar novedades">×</button>
     </div>
     <ul style="margin:6px 0 0 18px;font-size:13.5px;line-height:1.55">
@@ -258,7 +260,7 @@ function renderCobertura(grupo){
         let crStatus = "";
         if (acts.length === 0) crStatus = `<span style="color:var(--danger);font-weight:600;font-size:13px">✗ Pendiente</span>`;
         else if (acts.length === 1) crStatus = `<span style="color:var(--warning);font-weight:600;font-size:13px">⚠️ Eval. 1 sola vez</span>`;
-        else crStatus = `<span style="color:var(--accent);font-weight:600;font-size:13px">✓ Evaluado (${acts.length})</span>`;
+        else crStatus = `<span style="color:var(--accent-texto);font-weight:600;font-size:13px">✓ Evaluado (${acts.length})</span>`;
         
         const borderStyle = i === ce.criterios.length - 1 ? 'border-bottom:none;padding-bottom:0' : 'border-bottom:1px dashed var(--line);padding-bottom:10px';
         
@@ -267,7 +269,7 @@ function renderCobertura(grupo){
               <div style="margin-bottom:6px"><strong>${cr.id}</strong> ${esc(cr.texto)}</div>
               <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
                  ${crStatus}
-                 ${acts.length > 0 ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${acts.map(a => `<span class="chip" style="padding:3px 8px;font-size:11.5px;background:var(--paper)">${esc(a.nombre)} <span style="opacity:0.6">(${TRIMESTRES[a.trimestre]})</span></span>`).join("")}</div>` : '<span style="color:var(--mut);font-size:12.5px">Ninguna actividad asociada</span>'}
+                 ${acts.length > 0 ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${acts.map(a => `<span class="chip" style="padding:3px 8px;font-size:11.5px;background:var(--paper)">${esc(a.nombre)} <span style="opacity:0.85">(${TRIMESTRES[a.trimestre]})</span></span>`).join("")}</div>` : '<span style="color:var(--mut);font-size:12.5px">Ninguna actividad asociada</span>'}
               </div>
            </div>
         `;

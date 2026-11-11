@@ -1070,7 +1070,7 @@ function renderResumen() {
       const nPct = tot ? Math.round(d.noPromo.length/tot*100) : 0;
       const sPct = tot ? Math.round(d.sinDec.length/tot*100) : 0;
       const isSinAsignar = ceip === '— Sin asignar';
-      return `<tr style="${isSinAsignar?'opacity:0.55':''}">
+      return `<tr style="${isSinAsignar?'font-style:italic':''}">
         <td style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);max-width:320px;white-space:normal;word-break:break-word;">${_tEsc(ceip)}</td>
         <td style="padding:7px 10px;border-bottom:1px solid var(--border);text-align:center;font-family:inherit;font-weight:700;color:var(--text2)">${tot}</td>
         <td style="padding:7px 10px;border-bottom:1px solid var(--border);">
@@ -1297,7 +1297,7 @@ function renderResumen() {
     html += `<div class="resumen-block">
       <div class="resumen-block-title" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
         <span>📚 Materias con más alumnos pendientes — por nivel</span>
-        <button onclick="printPendientesReport()" style="padding:4px 14px;border-radius:7px;border:1px solid var(--yellow);background:rgba(245,200,66,0.12);color:var(--yellow);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;text-transform:none;letter-spacing:0;">🖨 Informe pendientes</button>
+        <button onclick="printPendientesReport()" style="padding:4px 14px;border-radius:7px;border:1px solid var(--yellow);background:rgba(245,200,66,0.05);color:var(--yellow);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;text-transform:none;letter-spacing:0;">🖨 Informe pendientes</button>
       </div>
       <div>${nivelRows.length ? nivelRows.join('') : '<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px;">Sin datos — añade alumnos y registra sus materias pendientes</div>'}</div>
     </div>`;

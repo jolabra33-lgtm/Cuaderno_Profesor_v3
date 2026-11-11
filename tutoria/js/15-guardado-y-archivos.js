@@ -200,10 +200,10 @@ async function _tutCargarDeIDB() {
   // La copia ligera es la actual: se completa con lo que no lleva.
   let cambia = false;
   const completar = (destino, origen) => { Object.entries(origen || {}).forEach(([k, v]) => { if (destino[k] === undefined) { destino[k] = v; cambia = true; } }); };
-  if (!ls || !ls.fotoData || ls.enIDB) {
-    completar(window._fotoData = window._fotoData || {}, st.fotoData);
-    completar(window._horarioData = window._horarioData || {}, st.horarioData);
-  }
+  // Las imágenes solo están en IndexedDB. Se añaden siempre las que falten en memoria: si la copia ligera la
+  // ha reescrito la otra versión de la app (que no las conoce), así no se pierden.
+  completar(window._fotoData = window._fotoData || {}, st.fotoData);
+  completar(window._horarioData = window._horarioData || {}, st.horarioData);
   if (ls && ls.enIDB && ls.enIDB.actas) {
     completar(window._actasData = window._actasData || {}, st.actasData);
     completar(window._actasOficialesData = window._actasOficialesData || {}, st.actasOficialesData);
@@ -218,10 +218,17 @@ function markDirty() {
   const lbl = document.getElementById('autosaveLabel');
   if (dot) { dot.className = 'autosave-dot saving'; }
   if (lbl) lbl.textContent = 'Guardando…';
+  _tutPendiente = true;
   _autosaveTimer = setTimeout(() => {
+    _tutPendiente = false;
     persistLocal();
   }, 800);
 }
+// Si la app pasa a segundo plano o se cierra con un cambio aún sin guardar (los 0,8 s de espera), se guarda ya.
+let _tutPendiente = false;
+function _tutGuardarPendiente() { if (_tutPendiente) { _tutPendiente = false; clearTimeout(_autosaveTimer); persistLocal(); } }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') _tutGuardarPendiente(); });
+window.addEventListener('pagehide', _tutGuardarPendiente);
 
 // Si se pasa a trabajar en otra ventana, antes de ceder se guarda al momento (ver js/una-ventana.js).
 if (window.UnaVentana) UnaVentana.antesDeCeder(() => { clearTimeout(_autosaveTimer); persistLocal(); });
