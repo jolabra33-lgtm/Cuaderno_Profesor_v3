@@ -27,7 +27,7 @@ function syncDateInputs() {
     </label>`;
   bar.innerHTML =
     `<span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">
-       📅 ${nivel} — Fechas de evaluación:
+       📅 ${_tEsc(nivel)} — Fechas de evaluación:
      </span>` +
     inp('dateEval1', d.eval1, 'var(--accent)', 'I Evaluación',  'eval1') +
     inp('dateEval2', d.eval2, 'var(--green)',  'II Evaluación', 'eval2') +
@@ -71,10 +71,11 @@ document.addEventListener('click', function(e) {
    dentro el contenido de cada archivo, en el mismo orden y en el mismo sitio.
    No se incluyen el aviso de versión nueva ni el bloqueo de ventanas, que
    solo tienen sentido en la app instalada. */
-const _VERSION_SIN = ['../js/registro-sw.js', '../js/una-ventana.js'];
+const _VERSION_SIN = ['../js/registro-sw.js', '../js/una-ventana.js', '../js/bloqueo.js'];
 async function _htmlAutocontenido() {
   const raiz = document.documentElement.cloneNode(true);
-  raiz.querySelectorAll('#avisoVersionNueva, #unaVentanaOverlay').forEach(n => n.remove());
+  raiz.querySelectorAll('#avisoVersionNueva, #unaVentanaOverlay, #bloqueoOverlay, #bloqueoBtn').forEach(n => n.remove());
+  raiz.classList.remove('app-bloqueada');
   const leer = async (src) => {
     const r = await fetch(new URL(src, location.href).href);
     if (!r.ok) throw new Error('No se ha podido leer ' + src);
@@ -93,7 +94,8 @@ async function _htmlAutocontenido() {
     st.textContent = '\n' + (await leer(ln.getAttribute('href'))) + '\n';
     ln.replaceWith(st);
   }
-  raiz.querySelectorAll('link[rel="manifest"]').forEach(n => n.remove());
+  // El manifiesto y los iconos son archivos sueltos de la app: en la versión guardada no existen.
+  raiz.querySelectorAll('link[rel="manifest"], link[rel~="icon"], link[rel="apple-touch-icon"]').forEach(n => n.remove());
   return raiz.outerHTML;
 }
 
@@ -290,6 +292,7 @@ function showToast(msg) {
   if (!t) {
     t = document.createElement('div');
     t.id = 'appToast';
+    t.setAttribute('role', 'status'); t.setAttribute('aria-live', 'polite');   // los lectores de pantalla lo anuncian
     t.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
       background:var(--surface2);border:1px solid var(--border);color:var(--text);
       padding:12px 22px;border-radius:10px;font-size:13px;font-weight:500;
@@ -298,9 +301,11 @@ function showToast(msg) {
     document.body.appendChild(t);
   }
   t.textContent = msg;
+  t.style.visibility = 'visible';
   t.style.opacity = '1';
-  clearTimeout(t._to);
-  t._to = setTimeout(()=>{ t.style.opacity='0'; }, 3500);
+  clearTimeout(t._to); clearTimeout(t._to2);
+  // Al terminar se oculta del todo (no solo transparente): un texto invisible seguía «estando» en la página.
+  t._to = setTimeout(()=>{ t.style.opacity='0'; t._to2 = setTimeout(()=>{ t.style.visibility='hidden'; }, 450); }, 3500);
 }
 
 // ===================== MODAL NUEVA CONVOCATORIA =====================
@@ -449,8 +454,8 @@ function renderICStep() {
       }[p.status];
       return `<tr>
         <td><code style="background:var(--surface2);padding:1px 6px;border-radius:4px;font-size:11px">${p.csvCode}</code></td>
-        <td>${p.status !== 'skip' ? `<strong>${p.nivel}</strong>` : '<span style="color:var(--text3)">—</span>'}</td>
-        <td>${p.status !== 'skip' ? p.grupo : '<span style="color:var(--text3)">—</span>'}</td>
+        <td>${p.status !== 'skip' ? `<strong>${_tEsc(p.nivel)}</strong>` : '<span style="color:var(--text3)">—</span>'}</td>
+        <td>${p.status !== 'skip' ? _tEsc(p.grupo) : '<span style="color:var(--text3)">—</span>'}</td>
         <td style="text-align:center;font-family:inherit;font-weight:700">${p.alumnos.length}</td>
         <td>${statusHtml}</td>
       </tr>`;
@@ -507,7 +512,7 @@ function renderICStep() {
         <table class="ic-group-table">
           <thead><tr><th>Grupo</th><th style="text-align:center">Alumnos importados</th><th>Acción</th></tr></thead>
           <tbody>${lines.map(l=>`<tr>
-            <td><strong>${l.nivel} ${l.grupo}</strong></td>
+            <td><strong>${_tEsc(l.nivel)} ${_tEsc(l.grupo)}</strong></td>
             <td style="text-align:center;font-family:inherit;font-weight:700;color:var(--green)">${l.count}</td>
             <td style="color:var(--text3);font-size:11px">${l.action}</td>
           </tr>`).join('')}</tbody>

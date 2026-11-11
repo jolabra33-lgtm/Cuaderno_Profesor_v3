@@ -84,7 +84,7 @@ window.marcarInformeEntregado=(alId,periodo)=>{
   if(!grupo.entregasInforme) grupo.entregasInforme={};
   if(!grupo.entregasInforme[alId]) grupo.entregasInforme[alId]={};
   if(grupo.entregasInforme[alId][periodo]) delete grupo.entregasInforme[alId][periodo];
-  else grupo.entregasInforme[alId][periodo]={fecha:new Date().toISOString().slice(0,10)};
+  else grupo.entregasInforme[alId][periodo]={fecha:fechaISOLocal()};
   save(); render();
 };
 

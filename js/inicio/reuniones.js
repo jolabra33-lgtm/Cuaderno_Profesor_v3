@@ -82,7 +82,7 @@ function renderReListaHTML(root){
     return `<div class="card" style="cursor:pointer;padding:16px 18px" onclick="reAbrirDetalle('${r.id}')">
       <div class="flex" style="justify-content:space-between;align-items:flex-start">
         <div style="min-width:0">
-          <span class="pill" style="background:${info.color}1a;color:${info.color};margin-bottom:6px">${info.label}</span>
+          <span class="pill" style="${pillTinte(info.color)};margin-bottom:6px">${info.label}</span>
           <div style="font-size:15px;font-weight:700">${esc(r.titulo||"Sin título")}</div>
           <div style="font-size:12.5px;color:var(--mut);margin-top:2px">
             ${r.fecha?fmt2(r.fecha):"Sin fecha"}${r.horaInicio?" · "+r.horaInicio:""}${alV?" · "+esc(alV.al.nombre):""}${r.grupoId&&!alV?" · "+esc((state.grupos.find(g=>g.id===r.grupoId)||{}).nombre||""):""}
@@ -91,7 +91,7 @@ function renderReListaHTML(root){
         </div>
         <div style="text-align:right;flex-shrink:0">
           <span class="badge">${nAsist} asistente${nAsist===1?"":"s"}</span>
-          <div style="margin-top:6px"><span class="pill" style="background:${r.estado==="cerrada"?"#dcfce7":"#f1f5f9"};color:${r.estado==="cerrada"?"#166534":"#64748b"}">${r.estado==="cerrada"?"✓ Cerrada":"Borrador"}</span></div>
+          <div style="margin-top:6px"><span class="pill" style="background:${r.estado==="cerrada"?"#dcfce7":"#f1f5f9"};color:${r.estado==="cerrada"?"#166534":"#4b5768"}">${r.estado==="cerrada"?"✓ Cerrada":"Borrador"}</span></div>
         </div>
       </div>
     </div>`;
@@ -452,7 +452,7 @@ window.reExportarCSV=()=>{
   });
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
   const u=URL.createObjectURL(blob); const a=document.createElement("a");
-  a.href=u; a.download="reuniones-"+new Date().toISOString().slice(0,10)+".csv"; a.click(); URL.revokeObjectURL(u);
+  a.href=u; a.download="reuniones-"+fechaISOLocal()+".csv"; a.click(); URL.revokeObjectURL(u);
 };
 window.reImprimirActa=id=>{
   const r=(state.reuniones||[]).find(x=>x.id===id); if(!r) return;

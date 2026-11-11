@@ -25,7 +25,7 @@ function agTipoInfo(id){
   const custom=(state.tiposColores||{})[id];
   return custom ? {...base,color:custom} : base;
 }
-function agHoyStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function agHoyStr(){ return fechaISOLocal(); }
 function agFestivoEnDia(fecha){ return (state.festivos||[]).find(f=>f && f.fechaInicio && fecha>=f.fechaInicio && fecha<=(f.fechaFin||f.fechaInicio)); }
 function agEsFestivo(fecha){ return !!agFestivoEnDia(fecha); }
 window.agToggleFestivo=(fecha)=>{
@@ -495,7 +495,7 @@ function agRenderHoyBannerHTML(){
   }).join("");
   return `<div class="card" style="border-left:4px solid var(--accent);padding:14px 18px">
     <div class="flex" style="align-items:center;gap:10px;flex-wrap:wrap">
-      <strong style="font-size:13.5px;color:var(--accent-2);flex-shrink:0">📌 Hoy</strong>
+      <strong style="font-size:13.5px;color:var(--accent-texto);flex-shrink:0">📌 Hoy</strong>
       <div class="flex" style="gap:8px">${chips}</div>
     </div>
   </div>`;
@@ -516,7 +516,7 @@ function agRenderModalColoresHTML(){
     const color=agTipoInfo(t.id).color;
     const personalizado=!!(state.tiposColores&&state.tiposColores[t.id]);
     return `<div class="flex" style="justify-content:space-between;align-items:center;padding:6px 0">
-      <span class="pill" style="background:${color}1a;color:${color}">${t.label}</span>
+      <span class="pill" style="${pillTinte(color)}">${t.label}</span>
       <div class="flex" style="gap:6px;align-items:center">
         <input type="color" value="${color}" style="width:34px;height:28px;padding:0;border:1px solid var(--line);border-radius:6px;cursor:pointer" onchange="agSetColorTipo('${t.id}',this.value)">
         ${personalizado?`<button class="ghost small" style="border:1px solid var(--line)" onclick="agResetColorTipo('${t.id}')" title="Restablecer color por defecto">↺</button>`:""}
@@ -705,7 +705,7 @@ function agEventoDiaFilaHTML(e){
       <strong style="font-size:12.5px;color:var(--mut)">${e.hora?esc(e.hora):"—"}</strong>
     </div>
     <div class="ag-evento-info">
-      <span class="pill" style="background:${info.color}1a;color:${info.color}">${info.label}</span>
+      <span class="pill" style="${pillTinte(info.color)}">${info.label}</span>
       <div class="ag-evento-titulo">${esc(e.titulo)}</div>
       ${grupoLabel?`<div class="ag-evento-grupo">${esc(grupoLabel)}</div>`:""}
       ${con?`<div class="ag-evento-grupo">👥 ${esc(con)}</div>`:""}
@@ -733,7 +733,7 @@ function agHorarioFilaHTML(h){
       <strong style="font-size:11px;color:var(--mut)">${h.inicio}</strong>
     </div>
     <div class="ag-evento-info">
-      <span class="pill" style="background:${info.color}1a;color:${info.color}">${info.label}</span>
+      <span class="pill" style="${pillTinte(info.color)}">${info.label}</span>
       ${detalle?`<div class="ag-evento-titulo" style="font-size:12.5px;font-weight:600">${esc(detalle)}</div>`:""}
     </div>
   </div>`;
@@ -752,7 +752,7 @@ function agRenderDiaHTML(fecha){
     <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:2px;flex-wrap:wrap;gap:8px">
       <div>
         <strong style="font-size:14.5px">${nombreDia} ${d.getDate()} de ${AG_MESES[d.getMonth()]}</strong>
-        ${esHoy?`<span class="pill" style="background:var(--accent-soft);color:var(--accent-2);margin-left:8px">Hoy</span>`:""}
+        ${esHoy?`<span class="pill" style="background:var(--accent-soft);color:var(--accent-texto);margin-left:8px">Hoy</span>`:""}
         ${esFestivo?`<span class="pill" style="background:rgba(220,38,38,.14);color:#b91c1c;margin-left:8px">Festivo${festivoInfo&&festivoInfo.etiqueta?": "+esc(festivoInfo.etiqueta):""}</span>`:""}
       </div>
       <button class="ghost" style="padding:2px 10px" onclick="agCerrarDia()" title="Volver al resumen del mes">× Cerrar</button>
@@ -786,7 +786,7 @@ function agRenderResumenHTML(){
     return `<div class="ag-evento" onclick="agAbrirModal('${e.fecha}','${e.id}')">
       <div class="ag-evento-fecha"><span>${etiquetaFecha}</span><strong>${d.getDate()}</strong></div>
       <div class="ag-evento-info">
-        <span class="pill" style="background:${info.color}1a;color:${info.color}">${info.label}</span>
+        <span class="pill" style="${pillTinte(info.color)}">${info.label}</span>
         ${e.hora?`<span class="pill" style="background:var(--surface);border:1px solid var(--line);color:var(--mut);margin-left:4px">⏰ ${esc(e.hora)}</span>`:""}
         <div class="ag-evento-titulo">${esc(e.titulo)}</div>
         ${grupoLabel?`<div class="ag-evento-grupo">${esc(grupoLabel)}</div>`:""}
@@ -799,7 +799,7 @@ function agRenderResumenHTML(){
   <div class="card">
     <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:2px;flex-wrap:wrap;gap:8px">
       <div class="flex" style="gap:4px">
-        ${busqueda?`<span class="pill" style="background:var(--accent-soft);color:var(--accent-2)">🔎 Resultados de "${esc(busqueda)}"</span>`:`
+        ${busqueda?`<span class="pill" style="background:var(--accent-soft);color:var(--accent-texto)">🔎 Resultados de "${esc(busqueda)}"</span>`:`
         <button class="tab ${vista==="mes"?"on":""}" style="padding:5px 12px;font-size:12.5px" onclick="agSetVista('mes')">Este mes</button>
         <button class="tab ${vista==="proximos"?"on":""}" style="padding:5px 12px;font-size:12.5px" onclick="agSetVista('proximos')">Próximos</button>`}
       </div>

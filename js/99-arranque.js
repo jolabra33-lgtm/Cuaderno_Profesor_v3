@@ -5,6 +5,11 @@
 
 try{ state=JSON.parse(localStorage.getItem(KEY)) || null; }catch(e){ state=null; }
 const _cargadoDesdeLS=!!state;
+/* v3: si la copia de localStorage no cabía, los datos están en IndexedDB (ver guardado-copias.js). Hasta
+   leerlos no se guarda nada: así un estado vacío nunca pisa los datos buenos. */
+let _datosEnIDB=false;
+try{ _datosEnIDB=!state && !!localStorage.getItem(KEY_EN_IDB); }catch(e){}
+if(_datosEnIDB){ _guardadoEnPausa=true; _lsCedido=true; }
 if(!state){
   state=defAppState();
   try{
@@ -21,6 +26,7 @@ if(!state){
 }
 migrarEstado();
 render();
+_proyAplicar();   // modo proyector, si estaba activado en este dispositivo
 
 /* v1 · Arranque del guardado seguro: pide persistencia, crea/compara el
    espejo en IndexedDB (y recupera de él si es más reciente o si el
@@ -35,9 +41,36 @@ _ultimoDatosStr=_datosSinUI();
     }
   }catch(e){}
   try{
-    const esp=await idbGet("kv","estado");
+    let esp=null;
+    try{ esp=await idbGet("kv","estado"); }
+    catch(e){
+      if(_datosEnIDB){
+        // Los datos están en IndexedDB y no se ha podido leer: no se guarda nada encima.
+        document.getElementById("app").innerHTML=`<div class="card" style="border-color:var(--danger);margin-top:24px"><h2 style="color:var(--danger)">⚠️ No se han podido leer tus datos</h2><p class="sub">El navegador no ha dejado abrir la base de datos del dispositivo. Cierra las demás ventanas de la app y vuelve a intentarlo. Tus datos no se han tocado.</p><button class="btn" onclick="location.reload()">Reintentar</button></div>`;
+        const _h=document.getElementById("appHeader"); if(_h) _h.style.display="none";
+        return;
+      }
+      throw e;
+    }
+    if(_datosEnIDB){
+      // Arranque normal, solo que los datos vienen de IndexedDB en vez de localStorage.
+      let nuevo=null; try{ nuevo=esp && esp.json ? JSON.parse(esp.json) : null; }catch(e){}
+      _guardadoEnPausa=false;
+      if(nuevo && Array.isArray(nuevo.grupos)){
+        state=Object.assign(defAppState(),nuevo);
+        Object.keys(CAT_CACHE).forEach(k=>delete CAT_CACHE[k]);
+        migrarEstado();
+        _ultimoDatosStr=_datosSinUI();
+        render();
+      }else{
+        try{ localStorage.removeItem(KEY_EN_IDB); }catch(e){}
+        mostrarAviso("No se han encontrado los datos guardados en este dispositivo (puede que se hayan borrado los datos del sitio). Si tienes una copia de seguridad, cárgala con «Abrir archivo».");
+      }
+    }
     const tsLS=_cargadoDesdeLS?(state._guardadoEn||0):-1;
-    if(esp && esp.json && (esp.guardadoEn||0)>tsLS+1500){
+    // v3: basta con que sea más reciente. localStorage e IndexedDB guardan la misma marca de tiempo para el mismo
+    // estado, así que una diferencia —por pequeña que sea— significa que a localStorage no llegó el último guardado.
+    if(!_datosEnIDB && esp && esp.json && (esp.guardadoEn||0)>tsLS){
       let nuevo=null; try{ nuevo=JSON.parse(esp.json); }catch(e){}
       if(nuevo && resumenEstado(nuevo).total>0){
         if(_cargadoDesdeLS && resumenEstado(state).total>0) await crearCopiaAuto("Antes de recuperar la copia interna",true);

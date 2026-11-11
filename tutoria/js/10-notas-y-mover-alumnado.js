@@ -44,8 +44,8 @@ function openNotesPanel(e, nivel, grupo, idx) {
   panel.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 320)) + 'px';
 
   panel.innerHTML = `
-    <div class="notes-panel-title">📝 Observaciones — ${alumno.nombre}</div>
-    <textarea class="notes-textarea" id="notesPanelTA" placeholder="Escribe aquí tus observaciones sobre este alumno/a…">${alumno.notas || ''}</textarea>
+    <div class="notes-panel-title">📝 Observaciones — ${_tEsc(alumno.nombre)}</div>
+    <textarea class="notes-textarea" id="notesPanelTA" placeholder="Escribe aquí tus observaciones sobre este alumno/a…">${_tEsc(alumno.notas || '')}</textarea>
     <div class="notes-panel-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeNotesPanel()">Cerrar</button>
       <button class="btn btn-primary btn-sm" onclick="saveNote('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx})">Guardar</button>
@@ -132,18 +132,18 @@ function openMovePanel(e, nivel, grupo, idx) {
 
   // Build nivel options (all except current)
   const nivelOpts = NIVELES.map(n =>
-    `<option value="${n}" ${n === nivel ? 'selected' : ''}>${n}</option>`
+    `<option value="${_tEsc(n)}" ${n === nivel ? 'selected' : ''}>${_tEsc(n)}</option>`
   ).join('');
 
   function getGrupoOpts(targetNivel) {
     return (GRUPOS_POR_NIVEL[targetNivel] || []).map(g =>
-      `<option value="${g}" ${targetNivel === nivel && g === grupo ? '' : ''}>${g}</option>`
+      `<option value="${_tEsc(g)}" ${targetNivel === nivel && g === grupo ? '' : ''}>${_tEsc(g)}</option>`
     ).join('');
   }
 
   panel.innerHTML = `
     <div class="move-panel-title">↗ Mover alumno</div>
-    <div style="font-size:12px;color:var(--text);font-weight:600;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${alumno.nombre || 'Sin nombre'}</div>
+    <div style="font-size:12px;color:var(--text);font-weight:600;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_tEsc(alumno.nombre || 'Sin nombre')}</div>
     <label>Nivel destino</label>
     <select id="movePanelNivel" onchange="
       var g=document.getElementById('movePanelGrupo');
@@ -232,10 +232,10 @@ function openBulkMovePanel() {
   }
 
   const nivelOpts = NIVELES.map(n =>
-    `<option value="${n}" ${n === nivel ? 'selected' : ''}>${n}</option>`
+    `<option value="${_tEsc(n)}" ${n === nivel ? 'selected' : ''}>${_tEsc(n)}</option>`
   ).join('');
   const grupoOpts = (GRUPOS_POR_NIVEL[nivel] || []).map(g =>
-    `<option value="${g}">${g}</option>`
+    `<option value="${_tEsc(g)}">${_tEsc(g)}</option>`
   ).join('');
 
   overlay.innerHTML = `
@@ -334,7 +334,7 @@ function openInformeBach(nivel, grupo, evalNum, forzarRegenerar) {
   if (!forzarRegenerar) {
     const guardada = _actaGetGuardada(nivel, grupo, evalNum);
     if (guardada) {
-      contentEl.innerHTML = guardada.html;
+      contentEl.innerHTML = _tHtmlSeguro(guardada.html);
       _actaEnableRowDelete(contentEl);
       overlay.style.display = 'flex';
       _actaMostrarAvisoGuardada(guardada.savedAt);
@@ -367,7 +367,7 @@ function openInformeBach(nivel, grupo, evalNum, forzarRegenerar) {
   // For final: alumnos with evalExtr
   const extrAlumnos = evalNum === 3 ? alumnos.filter(a => (+a.evalExtr||0) > 0) : [];
   const extrRows = (extrAlumnos.length
-    ? extrAlumnos.map(a=>`<tr><td>${a.nombre}</td><td style="text-align:center;font-weight:700">${a.evalExtr}</td><td contenteditable="true">&nbsp;</td></tr>`).join('')
+    ? extrAlumnos.map(a=>`<tr><td>${_tEsc(a.nombre)}</td><td style="text-align:center;font-weight:700">${a.evalExtr}</td><td contenteditable="true">&nbsp;</td></tr>`).join('')
       + emptyRows(Math.max(0,4-extrAlumnos.length),3)
     : emptyRows(4,3)) + _actaAddRowBtnRow(3);
 
@@ -381,9 +381,9 @@ function openInformeBach(nivel, grupo, evalNum, forzarRegenerar) {
         ${tituloActaPorEval[evalNum]} — BACHILLERATO
       </div>
       <div class="inf-header-row">
-        <div class="inf-header-field"><label>Curso:</label><input type="text" value="${nivel}" /></div>
-        <div class="inf-header-field"><label>Modalidad:</label><input type="text" value="${grupo}" /></div>
-        <div class="inf-header-field"><label>Tutor/a:</label><input type="text" value="${tutor}" style="min-width:200px;" /></div>
+        <div class="inf-header-field"><label>Curso:</label><input type="text" value="${_tEsc(nivel)}" /></div>
+        <div class="inf-header-field"><label>Modalidad:</label><input type="text" value="${_tEsc(grupo)}" /></div>
+        <div class="inf-header-field"><label>Tutor/a:</label><input type="text" value="${_tEsc(tutor)}" style="min-width:200px;" /></div>
         <div class="inf-header-field"><label>Evaluación:</label>
           <select>
             <option ${evalNum===1?'selected':''}>1ª Evaluación</option>
@@ -495,7 +495,7 @@ function openInformeBach(nivel, grupo, evalNum, forzarRegenerar) {
       <div class="inf-section-title">${evalNum===3?'5':'4'}. Alumnado con necesidades específicas de apoyo educativo (NESE)</div>
       <table class="inf-table">
         <tr><th style="width:35%">Alumno/a</th><th style="width:25%">Tipo de necesidad</th><th>Medidas adoptadas</th></tr>
-        ${alumnos.filter(a=>a.nese==='Sí').map(a=>`<tr><td>${a.nombre}</td><td contenteditable="true">${_getNeseCodes(a.recursoNese).join('/') || '&nbsp;'}</td><td contenteditable="true">&nbsp;</td></tr>`).join('') || emptyRows(3,3)}
+        ${alumnos.filter(a=>a.nese==='Sí').map(a=>`<tr><td>${_tEsc(a.nombre)}</td><td contenteditable="true">${_tEsc(_getNeseCodes(a.recursoNese).join('/')) || '&nbsp;'}</td><td contenteditable="true">&nbsp;</td></tr>`).join('') || emptyRows(3,3)}
         ${_actaAddRowBtnRow(3)}
       </table>
     </div>`;
@@ -505,7 +505,7 @@ function openInformeBach(nivel, grupo, evalNum, forzarRegenerar) {
       <div class="inf-sign-block">
         <div class="inf-sign-label">Tutor/a del grupo</div>
         <div class="inf-sign-line"></div>
-        <div class="inf-sign-name">${tutor !== '___________________________' ? tutor : ''}</div>
+        <div class="inf-sign-name">${tutor !== '___________________________' ? _tEsc(tutor) : ''}</div>
       </div>
       <div class="inf-sign-block">
         <div class="inf-sign-label">Jefe/a de Estudios</div>
@@ -533,7 +533,7 @@ function openInformeBach(nivel, grupo, evalNum, forzarRegenerar) {
         <div class="inf-sign-block">
           <div class="inf-sign-label">Tutor/a del grupo</div>
           <div class="inf-sign-line"></div>
-          <div class="inf-sign-name">${tutor !== '___________________________' ? tutor : ''}</div>
+          <div class="inf-sign-name">${tutor !== '___________________________' ? _tEsc(tutor) : ''}</div>
         </div>
         <div class="inf-sign-block">
           <div class="inf-sign-label">Jefe/a de Estudios</div>

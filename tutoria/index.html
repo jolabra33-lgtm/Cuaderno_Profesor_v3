@@ -23,6 +23,7 @@
 <meta name="apple-mobile-web-app-title" content="Tutoría v3">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<script src="../js/bloqueo.js"></script>
 <script src="../js/registro-sw.js"></script>
 <!-- Se ha quitado la fuente de Google Fonts para que la app no dependa de internet:
      todas las reglas font-family ya tenían sans-serif/monospace como alternativa,
@@ -163,6 +164,7 @@
   <div class="header-actions">
     <a class="theme-toggle" href="../index.html" title="Volver al Inicio (Evaluación y Corrector)" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:16px">🏠</a>
     <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="Cambiar modo claro/oscuro">🌙</button>
+    <button class="theme-toggle" id="bloqueoBtn" style="display:none" onclick="BloqueoPIN.bloquear()" title="Bloquear la app ahora (pide el PIN para volver a entrar)" aria-label="Bloquear la app ahora">🔒</button>
     <button class="theme-toggle" onclick="openGuide()" title="Guía de usuario" style="font-size:16px;">?</button>
     <!-- Menú Gestión de Curso -->
     <div class="dropdown-wrapper" id="courseMenuWrapper">

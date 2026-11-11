@@ -126,6 +126,7 @@ window.progImportarArchivo=inp=>{
     catch(e){ mostrarAviso("El archivo no es un JSON válido."); inp.value=""; return; }
     const original = datos && datos.tipo==="geohist-programacion-aula" && datos.programacion ? datos.programacion : (datos && datos.sdas && datos.catalogoKey ? datos : null);
     if(!original){ mostrarAviso("Este archivo no parece ser una Programación de Aula exportada desde esta aplicación."); inp.value=""; return; }
+    if(idsNoValidos(original).length){ mostrarAviso(AVISO_IDS_NO_VALIDOS); inp.value=""; return; }
     if(!CATALOGOS[original.catalogoKey] && !(state.catalogosPersonalizados||{})[original.catalogoKey]){
       mostrarAviso("Esta Programación es de una materia/curso que no existe en tu catálogo — no se puede importar.");
       inp.value=""; return;

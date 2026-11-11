@@ -19,9 +19,9 @@ index.html              → Cuaderno del profesor (estructura y lista de scripts
 css/                    → estilos de la aplicación
 js/                     → código de la aplicación en módulos (ver README_ESTRUCTURA.md)
 tests/                  → pruebas: cálculo de notas (tests/calculo-notas.html) y de navegador (tests/README.md)
-package.json            → solo para ejecutar las pruebas (npm test); la app no necesita compilarse
+package.json            → solo para las pruebas (npm test) y para sellar la versión (npm run sellar); la app no se compila
 editor/                 → editor de exámenes (página propia, con sus fuentes Lora e Inter)
-tools/                  → Planificación temporal de la materia
+tools/                  → Planificación temporal de la materia (y sus fuentes, en tools/fonts/)
 sw.js                   → service worker: funcionamiento sin conexión y versión de la caché
 manifest.json, icons/   → instalación como app
 guia_mejorada.html      → guía de uso actual (también enlazada desde la app)
@@ -89,9 +89,12 @@ sigue `tutoria/vendor/LEEME.txt` (en este repositorio ya vienen incluidas las li
 
 1. Antes, en el dispositivo de trabajo: **Exportar copia** en la app.
 2. Sube los archivos que cambien al repositorio, respetando las carpetas.
-3. **Cambia `CACHE_NAME` en `sw.js`** (`'1'` → `'2'`, etc., en la línea
-   `const CACHE_NAME = CACHE_PREFIJO + '1';`). Es imprescindible: es lo que avisa a los
-   dispositivos de que hay versión nueva.
+3. **Sella la versión**: ejecuta `npm run sellar`. Calcula una huella de todos los archivos y,
+   si alguno ha cambiado, sube solo `CACHE_NAME` en `sw.js` (y anota la huella). Es
+   imprescindible: es lo que avisa a los dispositivos de que hay versión nueva. Sube también
+   `sw.js`. Si no tienes Node.js, cambia el número a mano (`'17'` → `'18'`) en la línea
+   `const CACHE_NAME = CACHE_PREFIJO + '17';`: funciona igual, aunque la prueba `version-cache`
+   de GitHub saldrá en rojo hasta que alguien selle (no impide publicar).
 4. Abre la app con conexión. En unos segundos aparece abajo el aviso **«Hay una versión
    nueva · Actualizar»**: púlsalo y la app se recarga con la versión nueva. Si pulsas
    «Luego», seguirás con la versión anterior hasta que actualices.
@@ -103,11 +106,19 @@ Actualizar los archivos no toca tus datos: viven en el navegador, no en GitHub.
 
 ## Cosas importantes
 
-- **Los datos no salen del dispositivo.** Se guardan en el almacenamiento del navegador
-  (localStorage e IndexedDB), ligados a la dirección de GitHub Pages. Nadie más los ve.
+- **Los datos no salen del dispositivo.** Se guardan en la base de datos del navegador
+  (IndexedDB, sin el límite de 5 MB; localStorage guarda además una copia para abrir más
+  rápido), ligados a la dirección de GitHub Pages. Nadie más los ve.
 - **Copia automática (ordenador).** En 🛟 Copias → «Elegir carpeta»: si es una carpeta de
   Drive, OneDrive o iCloud, la copia llega sola a tus otros equipos y la app ofrece cargarla al
-  abrirla allí. La copia va sin cifrar: usa una carpeta de tu cuenta, no una compartida.
+  abrirla allí. Por defecto la copia va sin cifrar (usa una carpeta de tu cuenta, no una compartida);
+  con «🔒 Cifrar las copias» se guarda cifrada con tu contraseña.
+- **En el aula.** El botón 👁️ de la cabecera (modo proyector) difumina nombres y notas mientras
+  proyectas. En 🛟 Copias puedes activar un **PIN**: la app (y Tutoría) se abre tapada y se bloquea
+  tras unos minutos sin usarla. El PIN evita descuidos; no cifra los datos, así que el dispositivo
+  debe tener su propia contraseña. Guarda el código de recuperación que se muestra al activarlo.
+- **Cada septiembre**, «🎓 Empezar curso nuevo» (Inicio) archiva el curso que termina en un archivo
+  y deja los grupos, las programaciones y el horario listos para el siguiente.
 - **Exporta copias de seguridad con regularidad.** La app avisa si llevas tiempo sin hacerlo.
   Si borras los datos del sitio o desinstalas la app sin copia, se pierden.
 - **Cada navegador y cada dispositivo tienen sus propios datos.** Usa «Exportar/Importar

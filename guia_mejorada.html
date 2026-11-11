@@ -117,6 +117,17 @@
 
 <h2 id="novedades">✨ Novedades de la v3</h2>
 <p>Tus datos de siempre funcionan igual: la v3 se abre con lo que ya tenías en este navegador.</p>
+<h3>Lo último</h3>
+<div class="grid2">
+  <div class="card"><h4>🎓 Empezar curso nuevo</h4><p>En Inicio, «🎓 Empezar curso nuevo» prepara un archivo con el curso completo (cifrado si quieres) y, solo cuando el archivo se ha guardado, vacía lo que es de un único curso: alumnado, actividades, notas, asistencia, diario, convivencia, familias, reuniones y planes. Tú eliges qué conservar: los grupos con sus bloques y pesos (y, si sigues con el mismo grupo, su alumnado sin datos del curso), las Programaciones de Aula, el horario y los festivos. Queda además una copia interna y se puede deshacer con ↶.</p></div>
+  <div class="card"><h4>🙈 Modo proyector</h4><p>El botón 👁️ de la cabecera difumina los nombres del alumnado y de sus familias, y las notas de su misma fila, en todas las pantallas y en el buscador. No cambia ningún dato y se recuerda en el dispositivo. Un campo difuminado se ve mientras escribes en él; al imprimir, todo sale normal. El sorteo y los grupos no se difuminan: están pensados para proyectarlos.</p></div>
+  <div class="card"><h4>🔒 Bloqueo con PIN</h4><p>En 🛟 Copias → «Activar el PIN». La app (el Cuaderno y Tutoría) se abre tapada y pide el PIN; se bloquea sola tras unos minutos sin usarla y, con 🔒 en la cabecera, al momento. Al activarlo te muestra una vez un <strong>código de recuperación</strong>: apúntalo, porque es lo que permite quitar el PIN si lo olvidas. Es un cierre de pantalla para descuidos, no un cifrado: el dispositivo debe tener su propia contraseña.</p></div>
+  <div class="card"><h4>🎲 Sorteo y grupos</h4><p>El botón redondo del cronómetro tiene ahora tres pestañas. <strong>Sorteo</strong> elige a alguien del grupo al azar, sin repetir hasta que salgan todos y dejando fuera a quien falta hoy. <strong>Grupos</strong> reparte la clase en N equipos o en equipos de N personas, igualados, y los puedes copiar. Nada de esto se guarda.</p></div>
+  <div class="card"><h4>☁️ Copias de la carpeta cifradas</h4><p>Si usas la copia automática en una carpeta, «🔒 Cifrar las copias» te pide una contraseña una sola vez. Desde entonces el archivo de la carpeta es ilegible sin ella. Este dispositivo no vuelve a pedírtela; en otro, «Importar copia» sí.</p></div>
+  <div class="card"><h4>💾 Sin el límite de 5 MB</h4><p>Los datos se guardan en la base de datos del dispositivo (IndexedDB) en vez de depender del almacén pequeño del navegador, que compartían el Cuaderno y Tutoría. Las fotos de grupo y los horarios de Tutoría se reducen al cargarlos y se guardan al momento. No tienes que hacer nada: lo que ya tenías se pasa solo.</p></div>
+  <div class="card"><h4>📱 Más cómodo</h4><p>En el móvil la cabecera ocupa la mitad (exportar e importar están dentro de 🛟 Copias). En el ordenador, las secciones del grupo —Alumnado, Calificar, Resultados…— están a la vista como pestañas. Y los avisos que se abrían desde una ventana (por ejemplo «Restaurar» en Copias) ya no quedan tapados por ella.</p></div>
+</div>
+<h3>De la v3</h3>
 <div class="grid2">
   <div class="card"><h4>✨ Aviso de versión nueva</h4><p>Cuando hay cambios publicados aparece abajo «Hay una versión nueva · <strong>Actualizar</strong>». Ya no hace falta cerrar la app del todo.</p></div>
   <div class="card"><h4>🔒 Una sola ventana guarda</h4><p>Si abres la app dos veces (dos pestañas, Split View en el iPad, o la v2 y la v3), la segunda avisa y no guarda nada. Con «Usar esta ventana» pasas a trabajar en ella sin perder lo de la otra.</p></div>
@@ -162,7 +173,7 @@
 
 <h3>Tus datos, protegidos</h3>
 <ul>
-  <li><strong>Copia interna automática.</strong> Además del almacenamiento de siempre, la app guarda un espejo en otra zona del navegador (IndexedDB, sin el límite de 5 MB). Si el almacenamiento principal se borra o se llena, al abrir la app recupera tus datos sola.</li>
+  <li><strong>Guardado sin el límite de 5 MB.</strong> Los datos se guardan en la base de datos del navegador (IndexedDB), que no tiene el límite de 5 MB del almacenamiento de siempre; este último guarda además una copia para abrir más rápido. Si una de las dos zonas se borra o se llena, la app sigue con la otra sin que tengas que hacer nada.</li>
   <li><strong>🛟 Copias</strong> (barra superior): copias automáticas al abrir la app y cada pocas horas de trabajo (las 12 últimas y una por día durante 30 días), con <em>Restaurar</em> y <em>Descargar</em>. Siempre se hace una antes de importar o restaurar.</li>
   <li><strong>🔒 Copia cifrada con contraseña</strong> (en 🛟 Copias): recomendable si la copia sale del dispositivo (correo, pendrive, nube), porque contiene datos sensibles. Sin la contraseña no se puede abrir; si la olvidas, no hay forma de recuperarla.</li>
   <li>En iPad, <strong>Exportar copia</strong> abre el menú Compartir: elige "Guardar en Archivos" (o iCloud Drive).</li>
@@ -695,7 +706,7 @@
 <div class="flow">
   <div class="step"><b>1.</b> Antes de nada, en tu dispositivo de trabajo: <strong>Exportar copia</strong>.</div>
   <div class="step"><b>2.</b> Sube <strong>todo el contenido</strong> de la carpeta de la versión nueva al repositorio, respetando las carpetas: <code>index.html</code>, <code>sw.js</code>, <code>guia_mejorada.html</code> y las carpetas <code>css/</code>, <code>js/</code>, <code>editor/</code> y <code>tools/</code> (en GitHub: <em>Add file → Upload files</em> y arrastra los archivos y carpetas; si te limita a 100 archivos por vez, súbelo en dos tandas). En un repositorio nuevo, sube también <code>manifest.json</code>, <code>icons/</code>, <code>tutoria/</code> y <code>.nojekyll</code>; al actualizar, déjalos como están.</div>
-  <div class="step"><b>3.</b> Cada vez que cambies <strong>cualquier</strong> archivo, <code>sw.js</code> debe llevar un número de versión nuevo en <code>CACHE_NAME</code> (p. ej. <code>geohist-suite-v72-…</code> → <code>v73</code>). Es lo que hace que el iPad descargue la versión nueva completa en vez de mezclar archivos viejos y nuevos.</div>
+  <div class="step"><b>3.</b> Cada vez que cambies <strong>cualquier</strong> archivo, <code>sw.js</code> debe llevar un número de versión nuevo en <code>CACHE_NAME</code> (p. ej. <code>geohist-suite-v72-…</code> → <code>v73</code>). Es lo que hace que el iPad descargue la versión nueva completa en vez de mezclar archivos viejos y nuevos. Con Node.js instalado, <code>npm run sellar</code> lo hace solo: sube el número si algún archivo ha cambiado.</div>
   <div class="step"><b>4.</b> Espera uno o dos minutos y abre la app <strong>con conexión</strong>. La primera vez puede mostrar todavía la versión anterior: ciérrala del todo y vuelve a abrirla.</div>
 </div>
 <div class="tip">Actualizar los archivos no toca tus datos: los grupos, notas y diseños están en el navegador, no en GitHub. Aun así, la copia del paso 1 es tu red de seguridad.</div>

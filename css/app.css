@@ -10,6 +10,8 @@
     /* Marca — constante, es el "chasis" del instrumento */
     --brand-1:#0a1120; --brand-2:#152a44; --brand-3:#25456b;
     --accent:#d7b463; --accent-2:#b3893a; --accent-ink:#1c1408;
+    --accent-texto:#7d5a12;   /* el dorado, cuando es letra sobre fondo claro (contraste ≥ 4,5:1) */
+    --pill-hacia:#000; --pill-mezcla:68%;   /* píldoras de color: la letra, algo más oscura que su tono */
     --accent-soft:rgba(183,137,58,.12);
 
     /* Superficie de contenido — tema claro ("papel de día") */
@@ -18,7 +20,7 @@
     --warning:#9c5e0a; --warning-soft:#fdf1de; --warning-ink:#5c3a08;
     --surface:#f3f6fa; --surface-2:#e8edf4; --border-soft:rgba(20,27,40,.08); --muted-border:#c7d1de;
     --gpill-on-1:var(--brand-1); --gpill-on-2:var(--brand-3); --overlay-hover:rgba(10,17,32,.08);
-    --glass-bg:rgba(255,255,255,.58); --glass-border:rgba(255,255,255,.6); --glass-blur:18px;
+    --glass-bg:rgba(255,255,255,.9); --glass-border:rgba(255,255,255,.6); --glass-blur:18px;
 
     --font-serif:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     --shadow-sm:0 1px 2px rgba(10,17,32,.05),0 1px 3px rgba(10,17,32,.07);
@@ -27,6 +29,7 @@
     --shadow-glow:0 8px 28px -6px rgba(183,137,58,.35);
   }
   body[data-tema="oscuro"]{
+    --accent-texto:var(--accent); --pill-hacia:#fff; --pill-mezcla:55%;
     --ink:#eef1f2; --mut:#8d97ab; --paper:#0a0e16; --card:#121a27;
     --line:#232f42; --danger:#f0707f; --danger-soft:#3a1a20;
     --warning:#e2ac57; --warning-soft:#3a2a10; --warning-ink:#f6dea3;
@@ -265,8 +268,8 @@
   .section-eyebrow{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:700;margin:6px 0 2px}
   .home-seccion-header{display:flex;align-items:center;gap:7px;width:100%;background:none;border:none;padding:8px 2px;margin:4px 0 2px;cursor:pointer;text-align:left;border-radius:8px}
   .home-seccion-header:hover{background:var(--overlay-hover)}
-  .home-seccion-header:hover .section-eyebrow{color:var(--accent-2)}
-  .home-seccion-chevron{color:var(--accent-2);font-size:11px;width:12px;flex-shrink:0;transition:transform .15s}
+  .home-seccion-header:hover .section-eyebrow{color:var(--accent-texto)}
+  .home-seccion-chevron{color:var(--accent-texto);font-size:11px;width:12px;flex-shrink:0;transition:transform .15s}
   .home-seccion-header-right{justify-content:flex-end}
   .gcard-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:10px}
   .gcard{background:var(--card);border:1px solid var(--border-soft);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:2px;box-shadow:var(--shadow-sm);transition:transform .22s cubic-bezier(.16,1,.3,1), box-shadow .22s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden}
@@ -293,9 +296,10 @@
   }
   /* v6 · modo oscuro: los textos de estado añadidos en v1–v5 usan verdes,
      ámbar y rojos oscuros pensados para fondo claro; en oscuro se aclaran. */
-  body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="color:#1e7a44"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="color:#16a34a"]{color:#4ade80!important}
-  body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="color:#b45309"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="color:#8a5a12"]{color:#fbbf24!important}
-  body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="color:#912525"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="color:#dc2626"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="color:var(--danger,#b91c1c)"]{color:#f87171!important}
+  body[data-tema="oscuro"] *:not(.pill):not(.badge)[style^="color:#1e7a44"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*=";color:#1e7a44"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="; color:#1e7a44"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style^="color:#16a34a"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*=";color:#16a34a"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="; color:#16a34a"]{color:#4ade80!important}
+  body[data-tema="oscuro"] *:not(.pill):not(.badge)[style^="color:#b45309"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*=";color:#b45309"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="; color:#b45309"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style^="color:#8a5a12"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*=";color:#8a5a12"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="; color:#8a5a12"]{color:#fbbf24!important}
+  body[data-tema="oscuro"] *:not(.pill):not(.badge)[style^="color:#912525"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*=";color:#912525"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="; color:#912525"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style^="color:#dc2626"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*=";color:#dc2626"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="; color:#dc2626"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style^="color:var(--danger,#b91c1c)"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*=";color:var(--danger,#b91c1c)"], body[data-tema="oscuro"] *:not(.pill):not(.badge)[style*="; color:var(--danger,#b91c1c)"]{color:#f87171!important}
+  body[data-tema="oscuro"] *[style^="color:#c62839"], body[data-tema="oscuro"] *[style*=";color:#c62839"], body[data-tema="oscuro"] *[style*="; color:#c62839"]{color:#f0707f!important}
   /* v3 · accesibilidad: foco siempre visible al navegar con teclado */
   :focus-visible{outline:3px solid var(--accent-2,#c9a24a)!important;outline-offset:2px}
   [role="button"]{cursor:pointer}
@@ -482,3 +486,55 @@
   .cal-chips .chip{padding:4px 10px;font-size:12.5px}
 
   body[data-tema="oscuro"] .critlink{color:var(--accent)}
+  /* v3 · Asistente «Empezar curso nuevo» */
+  .nc-op{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.45;padding:5px 0;cursor:pointer}
+  .nc-op input{margin-top:3px;flex-shrink:0;width:17px;height:17px}
+  /* v3 · Herramientas de clase (sorteo y grupos) en el panel del cronómetro */
+  .crono-panel{ width:300px; max-height:calc(100vh - 110px); overflow:auto }
+  .crono-panel.clase-ancho{ width:360px }
+  .clase-tabs{ display:flex; gap:4px; flex-wrap:nowrap }
+  .clase-tabs .tab{ padding:6px 10px; font-size:12.5px; min-height:34px; white-space:nowrap }
+  .clase-elegido{ text-align:center; font-size:26px; font-weight:800; line-height:1.2; letter-spacing:-.01em; color:var(--ink);
+    min-height:96px; display:flex; align-items:center; justify-content:center; padding:10px 6px; margin:4px 0 10px;
+    border-radius:14px; background:var(--surface-2); overflow-wrap:anywhere }
+  .clase-elegido.clase-vacio{ font-size:16px; font-weight:600; color:var(--mut) }
+  .clase-elegido.clase-girando{ color:var(--mut) }
+  .clase-op{ display:flex; gap:8px; align-items:center; font-size:12.5px; color:var(--ink); padding:3px 0; cursor:pointer }
+  .clase-op input{ width:16px; height:16px; flex-shrink:0 }
+  .clase-equipos{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; max-height:46vh }
+  .clase-equipo{ border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:12.5px; line-height:1.5; background:var(--surface-2) }
+  .clase-equipo strong{ font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--accent-texto) }
+  @media(max-width:560px){ .crono-panel,.crono-panel.clase-ancho{ width:auto } }
+  /* v3 · Modo proyector: nombres del alumnado y notas difuminados (js/ui/modo-proyector.js) */
+  body[data-proyector="1"] .priv{ filter:blur(7px); -webkit-user-select:none; user-select:none }
+  body[data-proyector="1"] input.priv:focus, body[data-proyector="1"] textarea.priv:focus, body[data-proyector="1"] select.priv:focus{ filter:none }
+  body[data-proyector="1"] #proyectorBtn{ background:var(--accent); color:var(--accent-ink)!important; border-color:var(--accent)!important }
+  @media print{ body[data-proyector="1"] .priv{ filter:none!important } }
+  /* v3 · Secciones del grupo: pestañas a la vista en pantallas anchas, desplegable en estrechas */
+  .gtabs{display:none;gap:2px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  .gtab{padding:6px 9px;border-radius:999px;border:1px solid transparent;background:transparent;color:var(--mut);font-size:13px;font-weight:700;letter-spacing:-.005em;cursor:pointer;transition:.15s;min-height:34px}
+  .gtab:hover{background:var(--surface-2);color:var(--ink)}
+  .gtab.on{background:linear-gradient(135deg,var(--gpill-on-1),var(--gpill-on-2));color:#fff;box-shadow:var(--shadow-sm)}
+  body[data-tema="oscuro"] .gtab.on{color:var(--accent-ink)}
+  @media(min-width:1000px){ .gtabs{display:flex} .gtabs-sel{display:none} }
+  /* v3 · teléfono: la cabecera cabe en dos filas (iconos sin texto; exportar e importar están en 🛟 Copias) */
+  @media (max-width:640px){
+    .tb-txt{display:none}
+    .tb-fuera-movil{display:none!important}
+    #anchoToggleBtn{display:none}
+    header .wrap{padding-top:9px;padding-bottom:9px}
+    header .wrap>.flex>.flex:first-child{flex-wrap:nowrap;width:100%;gap:6px!important}
+    header h1{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    header .wrap>.flex>.flex:first-child>button{flex:0 0 auto;padding:5px 10px!important}
+    #backupBar{flex-wrap:nowrap!important;width:100%;gap:6px!important;align-items:center}
+    #backupBar>*{flex:0 0 auto}
+    #backupBar #trimSel{flex:1 1 auto;min-width:0;padding:5px 6px!important;font-size:13px}
+    #backupBar .tb-copia{padding:4px 9px!important}
+    .crono-fab{width:48px;height:48px;font-size:20px;border-width:2px;right:12px;bottom:12px}
+    .crono-fab.crono-corriendo{font-size:13px}
+    .crono-panel{bottom:68px}
+    /* Resultados: los botones de exportar en una fila que se desliza, para que la tabla quede a la vista */
+    .res-acciones{flex-wrap:nowrap!important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:100%;padding-bottom:4px}
+    .res-acciones::-webkit-scrollbar{display:none}
+    .res-acciones>*{flex:0 0 auto;white-space:nowrap}
+  }

@@ -16,6 +16,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="stylesheet" href="css/app.css">
 <script src="js/una-ventana.js" data-app="cuaderno" data-nombre="El Cuaderno del profesor"></script>
+<script src="js/bloqueo.js"></script>
 <script src="js/registro-sw.js"></script>
 </head>
 <body>
@@ -24,8 +25,10 @@
     <div class="flex" style="justify-content:space-between">
       <div class="flex" style="gap:10px">
         <h1 style="cursor:pointer" onclick="irInicio()" id="pageH1">Cuaderno del profesor</h1>
-        <button class="ghost" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="buscarAbrir()" title="Buscar (Ctrl/Cmd + K)">🔍 Buscar</button>
+        <button class="ghost" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="buscarAbrir()" title="Buscar (Ctrl/Cmd + K)" aria-label="Buscar">🔍<span class="tb-txt"> Buscar</span></button>
         <button class="ghost" id="temaToggleBtn" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="toggleTemaApp()" title="Cambiar modo claro/oscuro">🌙</button>
+        <button class="ghost" id="proyectorBtn" aria-pressed="false" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="toggleProyector()" title="Modo proyector: difumina los nombres del alumnado y las notas (para proyectar la pantalla)">👁️</button>
+        <button class="ghost" id="bloqueoBtn" style="display:none;color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="BloqueoPIN.bloquear()" title="Bloquear la app ahora (pide el PIN para volver a entrar)" aria-label="Bloquear la app ahora">🔒</button>
         <button class="ghost" id="anchoToggleBtn" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="toggleAnchoApp()" title="Alternar versión iPad / escritorio">🖥️</button>
       </div>
       <div class="flex" id="backupBar"></div>
@@ -35,12 +38,17 @@
 <div class="grouptabs" id="groupTabs"></div>
 <main id="app"></main>
 
-<button id="cronoFab" class="crono-fab" onclick="cronoTogglePanel()" title="Cronómetro">⏱️</button>
-<div id="cronoPanel" class="crono-panel">
-  <div class="flex" style="justify-content:space-between;align-items:center">
-    <strong style="font-size:14px">⏱️ Cronómetro</strong>
-    <button class="ghost" style="padding:3px 9px" onclick="cronoTogglePanel()">✕</button>
+<button id="cronoFab" class="crono-fab" onclick="cronoTogglePanel()" title="Herramientas de clase: cronómetro, sorteo y grupos" aria-label="Herramientas de clase: cronómetro, sorteo y grupos">⏱️</button>
+<div id="cronoPanel" class="crono-panel" data-sin-privacidad>
+  <div class="flex" style="justify-content:space-between;align-items:center;gap:6px;flex-wrap:nowrap">
+    <div class="clase-tabs" role="tablist" aria-label="Herramientas de clase">
+      <button class="tab on" role="tab" aria-selected="true" data-clase-tab="crono" onclick="claseIrTab('crono')">⏱️ Crono</button>
+      <button class="tab" role="tab" aria-selected="false" data-clase-tab="sorteo" onclick="claseIrTab('sorteo')">🎲 Sorteo</button>
+      <button class="tab" role="tab" aria-selected="false" data-clase-tab="grupos" onclick="claseIrTab('grupos')">👥 Grupos</button>
+    </div>
+    <button class="ghost" style="padding:3px 9px" onclick="cronoTogglePanel()" aria-label="Cerrar">✕</button>
   </div>
+  <div id="claseCrono">
   <div class="crono-display" id="cronoDisplay">00:00</div>
   <div class="crono-quick">
     <button class="ghost" onclick="cronoIniciarMinutos(1)">1 min</button>
@@ -52,15 +60,17 @@
     <button class="ghost" onclick="cronoIniciarMinutos(45)">45 min</button>
   </div>
   <div class="flex" style="margin-top:10px;gap:6px;align-items:center">
-    <input type="number" id="cronoCustomMin" class="in" style="width:60px" placeholder="min" min="0">
+    <input type="number" id="cronoCustomMin" class="in" style="width:60px" placeholder="min" min="0" aria-label="Minutos">
     <span style="color:var(--mut)">:</span>
-    <input type="number" id="cronoCustomSeg" class="in" style="width:60px" placeholder="seg" min="0" max="59">
+    <input type="number" id="cronoCustomSeg" class="in" style="width:60px" placeholder="seg" min="0" max="59" aria-label="Segundos">
     <button class="btn" style="flex:1" onclick="cronoIniciarCustom()">Iniciar</button>
   </div>
   <div class="flex" style="margin-top:12px;gap:8px">
     <button class="btn" id="cronoBtnPausar" style="flex:1" onclick="cronoTogglePausa()">⏸ Pausar</button>
     <button class="ghost" style="flex:1;border:1px solid var(--line)" onclick="cronoReiniciar()">↺ Reiniciar</button>
   </div>
+  </div>
+  <div id="claseOtra" hidden></div>
 </div>
 
 <script src="js/00-preferencias-ui.js"></script>
@@ -78,6 +88,7 @@
 <script src="js/evaluacion/calculo-notas.js"></script>
 <script src="js/ui/barra-superior.js"></script>
 <script src="js/inicio/cronometro.js"></script>
+<script src="js/inicio/herramientas-clase.js"></script>
 <script src="js/inicio/calendario.js"></script>
 <script src="js/inicio/reuniones.js"></script>
 <script src="js/alumnado/plan-refuerzo.js"></script>
@@ -112,7 +123,9 @@
 <script src="js/corrector/navegacion-lista-crear.js"></script>
 <script src="js/corrector/editor-rubrica.js"></script>
 <script src="js/corrector/corregir.js"></script>
+<script src="js/nucleo/nuevo-curso.js"></script>
 <script src="js/ui/buscador.js"></script>
+<script src="js/ui/privacidad.js"></script>
 <script src="js/ui/bienvenida.js"></script>
 <script src="js/ui/render-accesibilidad.js"></script>
 <script src="js/corrector/editor-examenes.js"></script>

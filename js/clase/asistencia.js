@@ -150,7 +150,7 @@ window.asistMarcarTodosPresentes=()=>{
 };
 window.asistRangoRapido=(tipo)=>{
   const hoy=new Date(); let desde,hasta;
-  const iso=d=>d.toISOString().slice(0,10);
+  const iso=fechaISOLocal;
   if(tipo==="semana"){
     const diaSemana=hoy.getDay()||7;
     const lunes=new Date(hoy); lunes.setDate(hoy.getDate()-diaSemana+1);

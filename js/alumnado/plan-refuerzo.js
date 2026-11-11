@@ -95,7 +95,7 @@ function renderRfListaHTML(root){
     return `<div class="card" style="cursor:pointer;padding:16px 18px" onclick="rfAbrirDetalle('${p.id}')">
       <div class="flex" style="justify-content:space-between;align-items:flex-start">
         <div style="min-width:0">
-          <span class="pill" style="background:${info.color}1a;color:${info.color};margin-bottom:6px">${info.label}</span>
+          <span class="pill" style="${pillTinte(info.color)};margin-bottom:6px">${info.label}</span>
           <div style="font-size:15px;font-weight:700">${esc(p.titulo||"Sin título")}</div>
           <div style="font-size:12.5px;color:var(--mut);margin-top:2px">${esc(rfNombre(p))}${alV?neseBadgeHTML(alV.al)+" · "+esc(alV.g.nombre):" · pendiente de asignar"}</div>
           <div style="font-size:12.5px;color:var(--mut);margin-top:6px">${p.fechaInicio?"Desde "+fmt2(p.fechaInicio):""}${ultimo?" · último seguimiento "+fmt2(ultimo.fecha):""}</div>
@@ -298,7 +298,7 @@ function renderRfDetalleHTML(root){
     const v=rfValoracionInfo(s.valoracion);
     return `<div class="row" style="align-items:flex-start;flex-direction:column;gap:4px">
       <div class="flex" style="justify-content:space-between;width:100%">
-        <div class="flex" style="gap:8px"><strong style="font-size:13px">${fmt2(s.fecha)}</strong><span class="pill" style="background:${v.color}1a;color:${v.color};font-size:11px">${v.label}</span></div>
+        <div class="flex" style="gap:8px"><strong style="font-size:13px">${fmt2(s.fecha)}</strong><span class="pill" style="${pillTinte(v.color)};font-size:11px">${v.label}</span></div>
         <button class="ghost danger small" onclick="rfQuitarSeguimiento('${s.id}')">Eliminar</button>
       </div>
       <div style="font-size:13.5px;white-space:pre-wrap">${esc(s.nota||"")}</div>
@@ -445,7 +445,7 @@ function rfModalElegirCEHTML(){
     return `<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)">
       <div class="flex" style="justify-content:space-between;align-items:center;gap:8px">
         <div style="font-weight:700;font-size:13.5px">${esc(ce.id)} · ${esc(ce.titulo)}</div>
-        <button type="button" class="ghost small" style="border:1px solid var(--line);flex-shrink:0" onclick="rfToggleTodosCE('${esc(ce.id)}')">Marcar/desmarcar</button>
+        <button type="button" class="ghost small" style="border:1px solid var(--line);flex-shrink:0" onclick="rfToggleTodosCE('${escJS(ce.id)}')">Marcar/desmarcar</button>
       </div>
       <div class="sub" style="margin:2px 0 6px">Competencias clave: ${(ce.cc||[]).join(", ")||"—"}</div>
       ${sab.length?`<details style="margin:0 0 8px"><summary class="sub" style="cursor:pointer">Saberes básicos (${sab.length})</summary><ul style="margin:4px 0 0 18px;font-size:12px">${sab.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></details>`:""}
@@ -623,7 +623,7 @@ function rfrpTrimBodyHTML(idx,trim){
     ${actividadesLis?`<ol style="margin-left:18px">${actividadesLis}</ol>`:'<p style="color:#999;font-style:italic">Sin actividades registradas.</p>'}
     <table style="margin-top:6px">
       <tr><th style="width:170px">Calificación obtenida</th><td>${esc(trim.calificacion)||"—"}</td></tr>
-      <tr><th>Valoración</th><td><span class="pill" style="background:${vinfo.color}1a;color:${vinfo.color}">${vinfo.label}</span></td></tr>
+      <tr><th>Valoración</th><td><span class="pill" style="${pillTinte(vinfo.color)}">${vinfo.label}</span></td></tr>
       <tr><th>Justificación</th><td>${esc(trim.justificacion)||"—"}</td></tr>
     </table>`;
 }
@@ -640,14 +640,14 @@ window.rfImprimirInforme=id=>{
       <tr><th style="width:170px">Título</th><td>${esc(p.titulo||"—")}</td></tr>
       <tr><th>Curso académico</th><td>${esc(p.cursoAcademico)||"—"}</td></tr>
       <tr><th>Periodo</th><td>${fmt2(p.fechaInicio)}${p.fechaFinPrevista?" a "+fmt2(p.fechaFinPrevista):""}</td></tr>
-      <tr><th>Estado</th><td><span class="pill" style="background:${rfEstadoInfo(p.estado).color}1a;color:${rfEstadoInfo(p.estado).color}">${rfEstadoInfo(p.estado).label}</span></td></tr>
+      <tr><th>Estado</th><td><span class="pill" style="${pillTinte(rfEstadoInfo(p.estado).color)}">${rfEstadoInfo(p.estado).label}</span></td></tr>
       <tr><th>Motivos de la no superación</th><td>${rfrpMotivosResumenHTML(p.motivos)}</td></tr>
     </table>
     ${rfrpTrimBodyHTML(0,p.trimestres[0])}
     ${rfrpTrimBodyHTML(1,p.trimestres[1])}
     ${rfrpTrimBodyHTML(2,p.trimestres[2])}
     <h2>Valoración final del plan</h2>
-    <p><span class="pill" style="background:${vfinal.color}1a;color:${vfinal.color}">${vfinal.label}</span></p>
+    <p><span class="pill" style="${pillTinte(vfinal.color)}">${vfinal.label}</span></p>
     <h2>Diario de seguimiento</h2>
     ${seguimientoFilas?`<table><thead><tr><th>Fecha</th><th>Valoración</th><th>Anotación</th></tr></thead><tbody>${seguimientoFilas}</tbody></table>`:'<p style="color:#999;font-style:italic">Sin entradas de seguimiento.</p>'}
     ${p.observacionesFinales?`<h2>Observaciones finales</h2><p style="white-space:pre-wrap;line-height:1.6">${esc(p.observacionesFinales)}</p>`:""}

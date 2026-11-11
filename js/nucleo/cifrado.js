@@ -25,6 +25,15 @@ async function cifrarTexto(texto,pass){
   return JSON.stringify({formato:CIFRADO_FORMATO,version:1,kdf:"PBKDF2-SHA256",iteraciones:iter,sal:_b64(salt),iv:_b64(iv),datos:_b64(ct),creado:new Date().toISOString(),
     aviso:"Copia cifrada del Cuaderno del Profesor. Solo se puede abrir desde la app (Importar copia) con su contraseña."});
 }
+/* v3: cifra con una clave ya derivada (la copia automática en carpeta la guarda en el dispositivo para no
+   pedir la contraseña cada vez). El archivo tiene el mismo formato que «Exportar copia cifrada»: en cualquier
+   otro dispositivo se abre con «Importar copia» y la contraseña. */
+async function cifrarConClave(texto,clave,salt,iter,extra){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},clave,new TextEncoder().encode(texto));
+  return JSON.stringify(Object.assign({formato:CIFRADO_FORMATO,version:1,kdf:"PBKDF2-SHA256",iteraciones:iter,sal:_b64(salt),iv:_b64(iv),datos:_b64(ct),creado:new Date().toISOString(),
+    aviso:"Copia cifrada del Cuaderno del Profesor. Solo se puede abrir desde la app (Importar copia) con su contraseña."},extra||{}));
+}
 async function descifrarTexto(obj,pass){
   const k=await _claveDe(pass,_unb64(obj.sal),obj.iteraciones||310000);
   const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:_unb64(obj.iv)},k,_unb64(obj.datos));
@@ -33,7 +42,7 @@ async function descifrarTexto(obj,pass){
 /* Ventana para pedir contraseña (campos de tipo contraseña, no prompt()). */
 function pedirContrasena({titulo,texto,confirmar,boton}){
   return new Promise(resolve=>{
-    const div=document.createElement("div"); div.className="modal-overlay"; div.style.zIndex="60";
+    const div=document.createElement("div"); div.className="modal-overlay"; div.style.zIndex="1500";
     div.innerHTML=`<div class="modal-box" style="max-width:440px">
       <h2 style="font-size:17px">${titulo}</h2>
       <p class="sub">${texto||""}</p>
@@ -71,7 +80,7 @@ window.exportarCifrada=async()=>{
   const nombre=`copia-cuaderno-CIFRADA-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json`;
   const blob=new Blob([txt],{type:"application/json"});
   // Botón aparte para guardar: en iPad el menú Compartir exige un toque "fresco".
-  const div=document.createElement("div"); div.className="modal-overlay"; div.style.zIndex="60";
+  const div=document.createElement("div"); div.className="modal-overlay"; div.style.zIndex="1500";
   div.innerHTML=`<div class="modal-box" style="max-width:420px;text-align:center"><h2 style="font-size:17px">🔒 Copia cifrada lista</h2><p class="sub">${esc(nombre)} · ${_fmtBytes(txt.length)}</p><div class="flex" style="justify-content:center;gap:8px;margin-top:8px"><button class="ghost" id="cfNo" style="border:1px solid var(--line)">Cancelar</button><button class="btn" id="cfSi">💾 Guardar archivo</button></div></div>`;
   document.body.appendChild(div);
   div.querySelector("#cfNo").onclick=()=>div.remove();
@@ -87,6 +96,8 @@ window.exportarCifrada=async()=>{
 async function descifrarSiHaceFalta(s,nombreArchivo){
   if(!s || s.formato!==CIFRADO_FORMATO) return s;
   if(!cifradoDisponible()){ mostrarAviso("Esta copia está cifrada y este navegador no permite descifrarla aquí."); return null; }
+  // Copia de la carpeta cifrada con la clave que guarda este mismo dispositivo: se abre sin pedir la contraseña.
+  if(typeof ccIntentarDescifrar==="function"){ const r=await ccIntentarDescifrar(s); if(r) return r; }
   for(let intento=0;intento<5;intento++){
     const pass=await pedirContrasena({titulo:"🔒 Copia cifrada",texto:`«${esc(nombreArchivo||"copia")}» está protegida con contraseña.${intento?' <strong style="color:var(--danger,#b91c1c)">Contraseña incorrecta, prueba de nuevo.</strong>':""}`,boton:"Abrir"});
     if(pass==null) return null;
@@ -100,7 +111,8 @@ async function descifrarSiHaceFalta(s,nombreArchivo){
    Se define aquí porque save() puede llamarse antes del primer render. */
 function actualizarAvisoGuardado(){
   let bar=document.getElementById("saveWarnBar");
-  if(saveState.ok && saveState.idbOk){ if(bar) bar.remove(); return; }
+  // v3: IndexedDB es el almacén que manda. Si funciona, todo está guardado aunque localStorage no admita su copia.
+  if(saveState.idbOk){ if(bar) bar.remove(); return; }
   if(!bar){
     bar=document.createElement("div");
     bar.id="saveWarnBar";
@@ -111,9 +123,7 @@ function actualizarAvisoGuardado(){
   bar.style.cssText=`position:sticky;top:0;z-index:20;background:${grave?"#912525":"#8a5a12"};color:#fff;padding:10px 16px;font-size:13.5px;font-weight:500;display:flex;gap:12px;align-items:center;justify-content:center;text-align:center;flex-wrap:wrap`;
   const msg = grave
     ? "⚠️ No se ha podido guardar en el dispositivo. Tus últimos cambios podrían perderse si cierras la app. Exporta una copia ahora."
-    : !saveState.ok
-      ? "⚠️ El almacenamiento principal está lleno o bloqueado. Tus cambios se siguen guardando en la copia interna, pero exporta una copia por seguridad."
-      : "⚠️ No se puede usar la copia interna del dispositivo (IndexedDB). Tus datos se guardan igualmente; exporta copias con regularidad.";
+    : "⚠️ No se puede usar la base de datos del dispositivo (IndexedDB). Tus datos se siguen guardando en localStorage (hasta unos 5 MB); exporta copias con regularidad.";
   bar.innerHTML=`${msg} <button onclick="exportarTodo()" style="background:#fff;color:#333;border:none;border-radius:6px;padding:6px 12px;font-weight:600;cursor:pointer">Exportar copia</button>`;
 }
 

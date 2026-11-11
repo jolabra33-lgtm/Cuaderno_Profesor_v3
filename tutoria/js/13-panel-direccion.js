@@ -188,7 +188,7 @@ function _barRow(label, c, tot, color, labelW) {
       <div style="flex:1;background:var(--border);border-radius:4px;height:13px;overflow:hidden;">
         <div style="width:${pct}%;height:13px;background:${color};border-radius:4px;"></div>
       </div>
-      <span style="font-family:inherit;font-size:12px;font-weight:700;color:${color};min-width:28px;text-align:right">${c}</span>
+      <span style="font-family:inherit;font-size:12px;font-weight:700;color:${color};min-width:28px;text-align:right">${_tEsc(c)}</span>
       <span style="font-size:10px;color:var(--text3);min-width:34px;text-align:right">${tot ? pct + '%' : '—'}</span>
     </div>`;
 }
@@ -310,7 +310,7 @@ function renderDashboard() {
       <div style="font-family:inherit;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.5px;">
         📈 Dashboard de Dirección
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-top:4px;">${iesName} · ${dateStr.charAt(0).toUpperCase()+dateStr.slice(1)}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:4px;">${_tEsc(iesName)} · ${dateStr.charAt(0).toUpperCase()+dateStr.slice(1)}</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="btn btn-ghost btn-sm" onclick="setAllDashSections(true)" title="Plegar todas las secciones">⊟ Plegar todo</button>
@@ -423,7 +423,7 @@ function renderDashboard() {
         return `<div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;flex-wrap:wrap;gap:6px;">
             <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:13px;font-weight:700;color:var(--text);min-width:120px;">${n}</span>
+              <span style="font-size:13px;font-weight:700;color:var(--text);min-width:120px;">${_tEsc(n)}</span>
               <span style="font-size:10px;color:var(--text3)">${tot} alumnos</span>
               ${crit>0?`<span style="font-size:10px;color:var(--red);font-weight:700;background:rgba(247,110,110,0.1);border-radius:4px;padding:1px 6px">🚨 ${crit} críticos</span>`:''}
             </div>
@@ -446,15 +446,15 @@ function renderDashboard() {
   ${dashSection('grupos', 'Estado de grupos — semáforo', 'var(--green)', `
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;">
       ${grupoGrid.map(({n,g,tot,dec,pct,crit,tutor}) => `
-        <div onclick="selectNivel('${n.replace(/'/g,"\\'")}');currentGrupos['${n.replace(/'/g,"\\'")}']='${jsAttr(g)}';renderAll();"
+        <div onclick="selectNivel('${jsAttr(n)}');currentGrupos['${jsAttr(n)}']='${jsAttr(g)}';renderAll();"
           style="background:${pctBg(pct)};border:1px solid ${pct===100?'rgba(45,212,160,0.3)':pct>=75?'rgba(245,200,66,0.3)':'rgba(247,110,110,0.3)'};
           border-radius:10px;padding:12px 14px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;"
           onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.2)'"
           onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
             <div>
-              <div style="font-size:13px;font-weight:700;color:var(--text)">${n} ${g}</div>
-              <div style="font-size:10px;color:var(--text3);margin-top:1px">${tot} alumnos · ${tutor}</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text)">${_tEsc(n)} ${_tEsc(g)}</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:1px">${tot} alumnos · ${_tEsc(tutor)}</div>
             </div>
             <span style="font-size:18px">${semaforo(pct)}</span>
           </div>
@@ -539,7 +539,7 @@ function renderDashboard() {
             const re = al.filter(a=>a.repetidor==='Sí').length;
             const pctNese = t ? Math.round(ne/t*100) : 0;
             return `<tr style="border-bottom:1px solid var(--border);${ni%2===0?'background:var(--surface2)':''}">
-              <td style="padding:7px 12px;font-weight:600;color:var(--text)">${n}</td>
+              <td style="padding:7px 12px;font-weight:600;color:var(--text)">${_tEsc(n)}</td>
               <td style="padding:7px 10px;text-align:center;font-weight:700;color:var(--purple)">${ne}</td>
               <td style="padding:7px 10px;text-align:center;font-weight:700;color:var(--orange)">${co}</td>
               <td style="padding:7px 10px;text-align:center;font-weight:700;color:var(--yellow)">${re}</td>

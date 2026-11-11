@@ -360,6 +360,9 @@ window.validarEImportarCatalogo=async ()=>{
   }
   const val=validarCatalogo(obj);
   const errores=[...erroresFormato, ...val.errores];
+  // Los identificadores (CE1, 1.1, CCL…) van dentro del código de los botones: sin comillas, <, > ni &.
+  if(obj && Array.isArray(obj.ces) && (idsNoValidos({ces:obj.ces}).length || obj.ces.some(ce=>ce && Array.isArray(ce.cc) && ce.cc.some(c=>/['"<>&\\`]/.test(String(c))))))
+    errores.push("Los identificadores de las competencias y los criterios (CE1, 1.1, CCL…) solo pueden llevar letras, números, puntos y guiones.");
   if(errores.length){
     mostrarResultadoImportacion(`<div class="alert-box" style="border-color:var(--danger);background:#fbeaea;align-items:flex-start">
       <span>⚠️</span>
@@ -418,7 +421,7 @@ function renderListaCatalogosPersonalizados(){
         const nCrit=d.cat.ces.reduce((n,ce)=>n+ce.criterios.length,0);
         const badges=`<span class="badge">${d.cat.ces.length} CE · ${nCrit} criterios</span>`
           +(d.oficial?` <span class="badge">oficial</span>`:` <span class="badge" style="opacity:.75">personalizada</span>`)
-          +(d.override?` <span class="badge" style="background:var(--accent-soft);color:var(--accent-2)">editada</span>`:"")
+          +(d.override?` <span class="badge" style="background:var(--accent-soft);color:var(--accent-texto)">editada</span>`:"")
           +(d.oculto?` <span class="badge" style="background:var(--danger-soft);color:var(--danger)">oculta</span>`:"");
         const editable=catalogoEsEditableComoTexto(d.cat);
         const botones=[];

@@ -44,7 +44,7 @@ function renderCalendario() {
     const lastDay   = new Date(year, month + 1, 0);
     const startDow  = (firstDay.getDay() + 6) % 7; // Monday=0
     const totalDays = lastDay.getDate();
-    const today     = new Date().toISOString().split('T')[0];
+    const today     = _hoyLocal();
     const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
     // Map date string → sesiones y eventos
@@ -66,7 +66,7 @@ function renderCalendario() {
       const isToday = iso === today;
       const hasSession = daySessions.length > 0;
       const dots = daySessions.slice(0, 3).map(s =>
-        `<span style="width:7px;height:7px;border-radius:${s.esEvento?'2px':'50%'};background:${s.dot};display:inline-block;flex-shrink:0" title="${s.esEvento?'':(s.nivel+' — ')}${s.esEvento?s.nivel:s.label}"></span>`
+        `<span style="width:7px;height:7px;border-radius:${s.esEvento?'2px':'50%'};background:${s.dot};display:inline-block;flex-shrink:0" title="${_calEsc((s.esEvento?'':(s.nivel+' — '))+(s.esEvento?s.nivel:s.label))}"></span>`
       ).join('');
       const extraCount = daySessions.length > 3 ? `<span style="font-size:8px;color:var(--text3)">+${daySessions.length-3}</span>` : '';
       cells += `
@@ -98,7 +98,7 @@ function renderCalendario() {
 
   function buildTimeline() {
     if (!todosItems.length) return `<div style="text-align:center;padding:32px;color:var(--text3);font-size:13px">Sin sesiones ni eventos. Configura las fechas en la sección inferior, o pulsa un día del calendario para añadir un evento.</div>`;
-    const today = new Date().toISOString().split('T')[0];
+    const today = _hoyLocal();
     let html = '';
     let lastDate = '';
     todosItems.forEach(s => {
@@ -117,7 +117,7 @@ function renderCalendario() {
           border-left:4px solid ${s.dot};border-radius:8px;margin-bottom:6px;
           opacity:${isPast?'0.65':'1'};">
           <div>
-            <div style="font-size:12px;font-weight:700;color:var(--text)">${s.esEvento?_calEsc(s.nivel):s.nivel}</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text)">${_calEsc(s.nivel)}</div>
             <div style="font-size:11px;color:var(--text2)">${s.label}${s.esEvento&&s.nota?' · '+_calEsc(s.nota):''}</div>
           </div>
           <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
@@ -126,7 +126,7 @@ function renderCalendario() {
             <span style="font-size:10px;color:var(--text3)">${s.date?new Date(s.date+'T12:00:00').toLocaleDateString('es-ES'):'—'}</span>
             ${s.esEvento
               ? `<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px" onclick="_calEliminarEvento('${s.evId}')">Eliminar</button>`
-              : `<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px" onclick="selectNivel('${s.nivel.replace(/'/g,"\\'")}');renderAll();">Ver grupo</button>`}
+              : `<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px" onclick="selectNivel('${jsAttr(s.nivel)}');renderAll();">Ver grupo</button>`}
           </div>
         </div>`;
     });
@@ -138,16 +138,16 @@ function renderCalendario() {
       const d = getDates(n);
       return `
         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">${n}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">${_tEsc(n)}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
             ${[['eval1','I Evaluación','var(--accent)'],['eval2','II Evaluación','var(--green)'],['eval3','III Evaluación','var(--orange)']].map(([k,lbl,col])=>`
               <div>
                 <label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;display:block;margin-bottom:4px">
                   <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${col};margin-right:4px"></span>${lbl}
                 </label>
-                <input type="date" value="${d[k]||''}"
+                <input type="date" value="${_tEsc(d[k]||'')}"
                   style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:inherit;font-size:12px;"
-                  onchange="_calUpdateDate('${n.replace(/'/g,"\\'")}','${k}',this.value)">
+                  onchange="_calUpdateDate('${jsAttr(n)}','${k}',this.value)">
               </div>`).join('')}
           </div>
         </div>`;
@@ -198,7 +198,7 @@ function renderCalendario() {
 
       <!-- NEXT SESSION BANNER -->
       ${(() => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = _hoyLocal();
         const next = sessions.find(s => s.date >= today);
         if (!next) return '';
         const daysUntil = Math.round((new Date(next.date+'T12:00:00') - new Date()) / 86400000);
@@ -206,7 +206,7 @@ function renderCalendario() {
         return `<div style="background:${daysUntil<=3?'rgba(247,110,110,0.08)':daysUntil<=7?'rgba(247,157,79,0.08)':'rgba(79,142,247,0.08)'};border:1px solid ${urgColor};border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
           <div style="font-size:24px">${daysUntil<=3?'🚨':daysUntil<=7?'⚠️':'📌'}</div>
           <div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)">Próxima sesión: <span style="color:${urgColor}">${next.nivel} — ${next.label}</span></div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">Próxima sesión: <span style="color:${urgColor}">${_tEsc(next.nivel)} — ${next.label}</span></div>
             <div style="font-size:12px;color:var(--text2);margin-top:2px">${new Date(next.date+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · ${daysUntil===0?'Hoy':daysUntil===1?'Mañana':`En ${daysUntil} días`}</div>
           </div>
         </div>`;
@@ -245,11 +245,11 @@ function renderCalendario() {
         <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-left:4px solid ${s.dot};border-radius:8px;margin-bottom:6px;">
           <div style="width:10px;height:10px;border-radius:50%;background:${s.dot};flex-shrink:0"></div>
           <div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)">${s.nivel}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${_tEsc(s.nivel)}</div>
             <div style="font-size:11px;color:var(--text2)">${s.label}</div>
           </div>
           <button class="btn btn-primary btn-sm" style="margin-left:auto;font-size:11px"
-            onclick="selectNivel('${s.nivel.replace(/'/g,"\\'")}');renderAll();">Ir al nivel →</button>
+            onclick="selectNivel('${jsAttr(s.nivel)}');renderAll();">Ir al nivel →</button>
         </div>`).join('')}
       ${dayEvs.map(e=>{ const info=calEvTipoInfo(e.tipo); return `
         <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-left:4px solid ${info.color};border-radius:8px;margin-bottom:6px;">
@@ -428,7 +428,7 @@ function drawConvivCharts() {
       ${nivelesConv.map((n, i) => `
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)">
           <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px;">
-            <span>${n}</span>
+            <span>${_tEsc(n)}</span>
             <span style="font-size:10px;color:var(--text3);font-weight:500">${(GRUPOS_POR_NIVEL[n] || []).length} grupo(s)</span>
           </div>
           <div style="position:relative;height:220px;"><canvas id="convivLvl_${i}"></canvas></div>
@@ -470,7 +470,7 @@ function exportConvivenciaInforme(evalKey) {
 
   const dateStr = new Date().toLocaleDateString('es-ES',{year:'numeric',month:'long',day:'numeric'});
   const iesName = document.getElementById('headerIesName')?.value || 'Centro Educativo';
-  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = s => _tEsc(s||'');
 
   // Suma de una métrica para un alumno, a través de las evaluaciones incluidas
   const sumaAlumno = (a, campo) => evalsIncluidas.reduce((s, ev) => {
@@ -570,7 +570,7 @@ function exportConvivenciaInforme(evalKey) {
 // punto verde junto a cada botón indica que ya existe una versión guardada.
 function renderActasNoOficiales() {
   const mc = document.getElementById('mainContent');
-  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = s => _tEsc(s||'');
 
   const nivelesConAlumnos = NIVELES.filter(n => (GRUPOS_POR_NIVEL[n]||[]).some(g => (data[n]?.[g]||[]).some(a=>a.nombre&&a.nombre.trim())));
 
@@ -582,7 +582,7 @@ function renderActasNoOficiales() {
     const grupos = (GRUPOS_POR_NIVEL[n]||[]).filter(g => (data[n]?.[g]||[]).some(a=>a.nombre&&a.nombre.trim()));
     const rows = grupos.map(g => {
       const tut = tutores[`${n}-${g}`] || '';
-      const ng = n.replace(/'/g,"\\'"), gg = g.replace(/'/g,"\\'");
+      const ng = n, gg = g;   // jsAttr() se aplica en cada onclick (antes se escapaba dos veces)
       return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
         <div style="min-width:150px;">
           <div style="font-weight:700;font-size:13px;color:var(--text)">${esc(n)} ${esc(g)}</div>
@@ -629,7 +629,7 @@ function renderConvivencia() {
         return `<td${sep ? ' class="conviv-eval-sep"' : ''}>${v || '·'}</td>`;
       };
       return `<tr>
-        <td class="conviv-grupo">${n} ${g}${tut ? `<span style="font-weight:400;color:var(--text3);font-size:10px;display:block">${tut}</span>` : ''}</td>
+        <td class="conviv-grupo">${_tEsc(n)} ${_tEsc(g)}${tut ? `<span style="font-weight:400;color:var(--text3);font-size:10px;display:block">${_tEsc(tut)}</span>` : ''}</td>
         ${cell('eval1','ac',false)}${cell('eval1','partes',false)}${cell('eval1','expedientes',false)}${cell('eval1','faltasJust',false)}${cell('eval1','faltasInjust',false)}
         ${cell('eval2','ac',true)}${cell('eval2','partes',false)}${cell('eval2','expedientes',false)}${cell('eval2','faltasJust',false)}${cell('eval2','faltasInjust',false)}
         ${cell('eval3','ac',true)}${cell('eval3','partes',false)}${cell('eval3','expedientes',false)}${cell('eval3','faltasJust',false)}${cell('eval3','faltasInjust',false)}
@@ -637,7 +637,7 @@ function renderConvivencia() {
     }).join('');
     return `
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:16px;box-shadow:var(--shadow)">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">${n}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">${_tEsc(n)}</div>
         <div style="overflow-x:auto">
           <table class="conviv-table">
             <thead>
@@ -797,7 +797,7 @@ function renderInformeAcademico() {
   _informeChartInstances = [];
   destroyAllDonuts();
   _dashDonuts = []; // se rellena con cada gráfico circular durante la construcción del HTML
-  const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const esc = s => _tEsc(s||'');
   const fuente = _informeFuente;
   const fcfg = INFORME_FUENTES[fuente] || INFORME_FUENTES.pendientesIII;
   const fuenteLabel = fcfg.soloBach ? `${fcfg.label} (solo 1º y 2º Bachillerato)` : fcfg.label;

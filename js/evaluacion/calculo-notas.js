@@ -10,7 +10,7 @@
    entero en sitios donde solo cabe el identificador.
    ================================================================= */
 function critLinkHTML(catalogoKey,critId,label){
-  return `<span class="critlink" onclick="verCriterio('${catalogoKey}','${esc(critId)}')" title="Ver la descripción completa de este criterio">${esc(label||critId)}</span>`;
+  return `<span class="critlink" onclick="verCriterio('${escJS(catalogoKey)}','${escJS(critId)}')" title="Ver la descripción completa de este criterio">${esc(label||critId)}</span>`;
 }
 function cerrarModalCriterioEsc(e){ if(e.key==="Escape") cerrarModalCriterio(); }
 window.verCriterio=(catalogoKey,critId)=>{

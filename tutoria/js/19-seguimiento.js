@@ -12,7 +12,7 @@ document.getElementById('segFamOverlay').addEventListener('click', e => {
 function _segNuevoBorrador(nivel, grupo) {
   const materias = getMateriasParaNivel(nivel, grupo) || [];
   return {
-    fecha: new Date().toISOString().slice(0, 10),
+    fecha: _hoyLocal(),
     materias: materias.map(m => ({ nombre: m, trabajo: '', examenes: '', comportamiento: '' })),
     observaciones: ''
   };
@@ -30,14 +30,14 @@ window.closeSegFamilia = function() {
   document.getElementById('segFamOverlay').classList.remove('open');
 };
 
-function _segEsc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _segEsc(s) { return _tEsc(s); }
 
 function renderSegFamiliaBody() {
   const { nivel, grupo, idx, draft } = _segCtx;
   const alumno = data[nivel]?.[grupo]?.[idx];
   if (!alumno) return;
   const sub = document.getElementById('segFamSubtitle');
-  if (sub) sub.textContent = `${_segEsc(alumno.nombre)} — ${nivel} · Grupo ${grupo}`;
+  if (sub) sub.textContent = `${alumno.nombre} — ${nivel} · Grupo ${grupo}`;   // textContent: no hay que escapar
 
   const filasMaterias = draft.materias.map((m, i) => `
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">

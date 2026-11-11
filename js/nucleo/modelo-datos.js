@@ -227,7 +227,7 @@ function alumThHTML(colId,label,opts){
   const ancho=alumColAncho(colId);
   const sk=opts.sortKey;
   const activo=sk && state.ui.alumSortCol===sk;
-  const indicador=sk?`<span style="font-size:9px;margin-left:3px;opacity:${activo?1:0.4};color:${activo?"var(--accent-2)":"inherit"}">${activo?(state.ui.alumSortDir==="asc"?"▲":"▼"):"⇅"}</span>`:"";
+  const indicador=sk?`<span style="font-size:9px;margin-left:3px;opacity:${activo?1:0.4};color:${activo?"var(--accent-texto)":"inherit"}">${activo?(state.ui.alumSortDir==="asc"?"▲":"▼"):"⇅"}</span>`:"";
   const clickAttr=sk?` onclick="alumSetSort('${sk}')"`:"";
   return `<th style="overflow:hidden;white-space:nowrap;font-size:${opts.small?"11.5px":"12.5px"};${sk?"cursor:pointer;user-select:none;":""}"${clickAttr}>${esc(label)}${indicador}<div class="alum-col-resizer" onmousedown="alumStartResize(event,'${colId}')"></div></th>`;
 }

@@ -17,6 +17,10 @@
      queda «en pausa», un aviso en Inicio permite reactivarlo con un toque.
    - En iPad/Safari no existe esta función del navegador: se explica cómo
      hacerlo con «Exportar copia» y el menú Compartir.
+   - v3 · Cifrado opcional: «🔒 Cifrar las copias» pide una contraseña una
+     vez; la clave derivada (no la contraseña) se guarda en este dispositivo
+     y cada copia se escribe cifrada (AES-GCM, mismo formato que «Exportar
+     copia cifrada»). En otro dispositivo se abre con la contraseña.
    ================================================================= */
 const CC_CLAVE_IDB="carpetaCopias";          // en el almacén «kv» (IndexedDB)
 const CC_MAX_ARCHIVOS=10;
@@ -24,6 +28,8 @@ const CC_ESPERA_MS=2*60*1000;                // copia como mucho cada 2 minutos 
 const CC_PREFIJO="copia-cuaderno-auto-";
 let _ccHandle=null, _ccEstado="no", _ccTimer=null, _ccPendiente=false, _ccUltima=0, _ccError="";
 let _ccMasReciente=null, _ccIgnorarReciente=false;
+const CC_CLAVE_CIFRADO_IDB="carpetaClave";   // {sal,iter,clave}: clave AES no extraíble (IndexedDB)
+let _ccClave=null;
 
 function ccDisponible(){ return typeof window.showDirectoryPicker==="function"; }
 function ccDispositivo(){
@@ -53,6 +59,7 @@ async function ccIniciar(){
   if(!ccDisponible()){ _ccEstado="no-disponible"; return; }
   if(window.UnaVentana && UnaVentana.estado==="bloqueada") return;
   try{ _ccHandle=await idbGet("kv",CC_CLAVE_IDB)||null; }catch(e){ _ccHandle=null; }
+  try{ _ccClave=cifradoDisponible() ? (await idbGet("kv",CC_CLAVE_CIFRADO_IDB)||null) : null; }catch(e){ _ccClave=null; }
   if(!_ccHandle){ _ccEstado="no"; return; }
   _ccEstado=(await _ccPermiso(false))==="granted" ? "activa" : "sin-permiso";
   if(_ccEstado==="activa") await ccBuscarMasReciente();
@@ -91,7 +98,9 @@ async function ccEscribir(){
   _ccPendiente=false;
   try{
     const ex=(typeof exTodosSync==="function" && exTodosSync()) || (typeof exLeerTodos==="function" ? await exLeerTodos() : []);
-    const json=JSON.stringify(ex && ex.length ? {...state,_examenesDiseno:ex} : state);
+    let json=JSON.stringify(ex && ex.length ? {...state,_examenesDiseno:ex} : state);
+    // Cifrada si se ha activado. «_guardadoEn» va fuera del cifrado: es solo la fecha, para comparar copias.
+    if(_ccClave) json=await cifrarConClave(json,_ccClave.clave,_ccClave.sal,_ccClave.iter,{_guardadoEn:state._guardadoEn||Date.now()});
     const fh=await _ccHandle.getFileHandle(_ccNombreHoy(),{create:true});
     const w=await fh.createWritable(); await w.write(new Blob([json],{type:"application/json"})); await w.close();
     _ccUltima=Date.now(); _ccError="";
@@ -142,6 +151,55 @@ window.ccQuitar=async()=>{
   try{ await idbDel("kv",CC_CLAVE_IDB); }catch(e){}
   _ccHandle=null; _ccEstado="no"; _ccMasReciente=null; _ccRepintar();
 };
+/* ---------- Cifrado de las copias de la carpeta ---------- */
+async function ccActivarCifrado(pass){
+  const sal=crypto.getRandomValues(new Uint8Array(16)), iter=310000;
+  const clave=await _claveDe(pass,sal,iter);
+  const reg={sal,iter,clave};
+  await idbPut("kv",reg,CC_CLAVE_CIFRADO_IDB);
+  _ccClave=reg;
+  return _ccEstado==="activa" ? ccEscribir() : true;
+}
+/* Copias automáticas de ESTE dispositivo que siguen sin cifrar en la carpeta (de antes de activar el cifrado). */
+async function _ccPropiasSinCifrar(){
+  const out=[];
+  for(const a of (await _ccArchivos()).filter(a=>a.nombre.startsWith(CC_PREFIJO) && a.nombre.endsWith("-"+ccDispositivo()+".json"))){
+    try{ const inicio=await a.f.slice(0,400).text(); if(!inicio.includes(CIFRADO_FORMATO)) out.push(a); }catch(e){}
+  }
+  return out;
+}
+window.ccCifrar=async()=>{
+  if(!cifradoDisponible()){ mostrarAviso("Este navegador no permite cifrar aquí."); return; }
+  const pass=await pedirContrasena({titulo:"🔒 Cifrar las copias de la carpeta",confirmar:true,boton:"Cifrar",
+    texto:"Elige una contraseña. A partir de ahora las copias automáticas se guardan cifradas y, sin ella, son ilegibles. En este dispositivo no te la volverá a pedir; en otro, la necesitarás al cargar la copia. <strong>Apúntala en un lugar seguro: si la olvidas, esas copias no se podrán abrir.</strong>"});
+  if(!pass) return;
+  let ok=false;
+  try{ ok=await ccActivarCifrado(pass); }catch(e){ mostrarAviso("No se ha podido activar el cifrado: "+(e&&e.message||e)); _ccRepintar(); return; }
+  mostrarToast(ok?"✓ Las copias de la carpeta se guardan ya cifradas":"Cifrado activado; se aplicará en la próxima copia");
+  try{
+    const viejas=_ccEstado==="activa" ? await _ccPropiasSinCifrar() : [];
+    if(viejas.length && await confirmar(`En la carpeta quedan ${viejas.length} copia${viejas.length===1?"":"s"} automática${viejas.length===1?"":"s"} de este dispositivo sin cifrar, de días anteriores. ¿Borrarlas? (La de hoy ya está cifrada.)`,{ok:"Borrar las sin cifrar",peligro:true})){
+      for(const a of viejas){ try{ await _ccHandle.removeEntry(a.nombre); }catch(e){} }
+      mostrarToast("✓ Copias sin cifrar borradas");
+    }
+  }catch(e){}
+  _ccRepintar();
+};
+window.ccQuitarCifrado=async()=>{
+  if(!await confirmar("¿Dejar de cifrar las copias de la carpeta? Las próximas se guardarán sin cifrar, legibles por cualquiera que tenga acceso a la carpeta. Las que ya están cifradas siguen necesitando la contraseña.",{ok:"Dejar de cifrar",peligro:true})) return;
+  try{ await idbDel("kv",CC_CLAVE_CIFRADO_IDB); }catch(e){}
+  _ccClave=null;
+  if(_ccEstado==="activa") await ccEscribir();
+  _ccRepintar();
+};
+/* Si la copia se cifró con la clave que guarda este dispositivo (misma sal), se abre sin pedir contraseña. */
+async function ccIntentarDescifrar(s){
+  if(!_ccClave || !s || s.sal!==_b64(_ccClave.sal)) return null;
+  try{
+    const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:_unb64(s.iv)},_ccClave.clave,_unb64(s.datos));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }catch(e){ return null; }
+}
 window.ccCargarMasReciente=()=>{ if(_ccMasReciente) _procesarArchivoCopiaJSON(_ccMasReciente.f); };
 window.ccIgnorarMasReciente=()=>{ _ccIgnorarReciente=true; _ccRepintar(); };
 window.ccCompartirCopia=()=>exportarTodo();   // en el iPad abre el menú Compartir (iCloud Drive, Drive…)
@@ -163,7 +221,9 @@ function ccSeccionHTML(){
     <strong style="font-size:13.5px">☁️ Pasar los datos a otro dispositivo</strong>
     <p class="sub" style="margin:4px 0 8px">En este navegador (iPad, Safari, Firefox) la app no puede guardar sola en una carpeta. Pulsa «Compartir copia» y elige <strong>Guardar en Archivos</strong> (iCloud Drive) o Drive; en el otro dispositivo, «Importar copia». En un ordenador con Chrome o Edge puedes activar la copia automática.</p>
     <button class="btn small" onclick="ccCompartirCopia()">📤 Compartir copia</button></div>`;
-  const aviso=`<p class="sub" style="margin:6px 0 0">La copia se guarda <strong>sin cifrar</strong>, igual que «Exportar copia». Contiene datos del alumnado: usa una carpeta de tu cuenta del centro o de tu ordenador, no una compartida.</p>`;
+  const aviso=_ccClave
+    ? `<p class="sub" style="margin:6px 0 0">🔒 Las copias se guardan <strong>cifradas</strong> con tu contraseña. En otro dispositivo, «Importar copia» te la pedirá.</p>`
+    : `<p class="sub" style="margin:6px 0 0">La copia se guarda <strong>sin cifrar</strong>, igual que «Exportar copia». Contiene datos del alumnado: usa una carpeta de tu cuenta del centro o de tu ordenador, no una compartida${cifradoDisponible()?", o pulsa «🔒 Cifrar las copias»":""}.</p>`;
   if(_ccEstado==="no" || !_ccHandle) return `<div class="card" style="margin:0 0 10px;padding:12px 14px">
     <strong style="font-size:13.5px">☁️ Copia automática en una carpeta</strong>
     <p class="sub" style="margin:4px 0 8px">Elige una carpeta y la app guardará sola una copia unos minutos después de cada cambio. Si es una carpeta de Drive, OneDrive o iCloud sincronizada en este ordenador, la copia llega a tus otros equipos y, al abrir allí la app, te ofrecerá cargarla.</p>
@@ -177,6 +237,7 @@ function ccSeccionHTML(){
     <div class="flex" style="gap:6px;flex-wrap:wrap">
       ${_ccEstado==="activa"?`<button class="btn small" onclick="ccCopiarAhora()">Guardar copia ahora</button>`:`<button class="btn small" onclick="ccReactivar()">Reactivar</button>`}
       ${_ccMasReciente?`<button class="btn small" onclick="ccCargarMasReciente()">🔄 Cargar la copia más reciente de otro dispositivo</button>`:""}
+      ${!cifradoDisponible()?"":_ccClave?`<button class="ghost small" style="border:1px solid var(--line)" onclick="ccQuitarCifrado()">🔓 Dejar de cifrar</button>`:`<button class="btn small" onclick="ccCifrar()">🔒 Cifrar las copias</button>`}
       <button class="ghost small" style="border:1px solid var(--line)" onclick="ccElegirCarpeta()">Cambiar carpeta</button>
       <button class="ghost small" style="border:1px solid var(--line)" onclick="ccQuitar()">Dejar de usarla</button>
     </div>${aviso}</div>`;

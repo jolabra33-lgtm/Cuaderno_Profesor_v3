@@ -1,0 +1,9 @@
+Fuentes incluidas en esta carpeta (subconjunto latino), usadas por la Planificación temporal:
+Fraunces (variable, redonda y cursiva), Public Sans (variable, redonda) e IBM Plex Mono (400/500/600).
+Se distribuyen bajo la licencia SIL Open Font License 1.1 (https://openfontlicense.org).
+
+Copyright 2020 The Fraunces Project Authors (https://github.com/undercasetype/Fraunces)
+Copyright 2015 The Public Sans Project Authors (https://github.com/uswds/public-sans)
+Copyright 2017 IBM Corp. All rights reserved, with Reserved Font Name "Plex".
+
+El texto completo de la licencia está en editor/fonts/LICENCIAS-FUENTES.txt y en https://scripts.sil.org/OFL

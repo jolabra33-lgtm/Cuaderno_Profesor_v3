@@ -179,7 +179,7 @@ window.papSetFilaCampo = function(nivel, grupo, idx, arrKey, rowIdx, campo, valu
 
 function renderPapFormHTML(nivel, grupo, idx, a) {
   const p = a.pap;
-  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const esc = _tEsc;
   const F = (id,label,value,type) => `<div class="pap-field"><label>${label}</label><input type="${type||'text'}" id="${id}" value="${esc(value)}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${id.split('_').slice(1).join('_')}',this.value)"></div>`;
   const T = (id,label,value) => `<div class="pap-field"><label>${label}</label><textarea id="${id}" onchange="savePapField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${id.split('_').slice(1).join('_')}',this.value)">${esc(value)}</textarea></div>`;
 
@@ -347,7 +347,7 @@ function renderPapFormHTML(nivel, grupo, idx, a) {
 function _papDocBodyHTML(nivel, grupo, idx) {
   const a = _papAlumno(nivel,grupo,idx);
   const p = a.pap || papDefault();
-  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = _tEsc;
   const iesName = document.getElementById('headerIesName')?.value || 'Centro Educativo';
 
   const medidasRows = PAP_MEDIDAS.filter(m => p.medidas[m.key]?.on).map(m => {
@@ -633,7 +633,7 @@ window.acSetFilaCampo = function(nivel, grupo, idx, arrKey, rowIdx, campo, value
 // Reutiliza el catálogo de materias por nivel/grupo ya existente en la app (⚙ Materias),
 // de modo que la lista siempre coincide con lo que realmente se imparte en su curso.
 function renderAcEnriquecimientoTabla(nivel, grupo, idx, p) {
-  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const esc = _tEsc;
   const materiasNivel = getMateriasParaNivel(nivel, grupo);
   const enr = p.enriquecimientoMaterias || (p.enriquecimientoMaterias = {});
 
@@ -666,7 +666,7 @@ function renderAcEnriquecimientoTabla(nivel, grupo, idx, p) {
 
 function renderAcFormHTML(nivel, grupo, idx, a) {
   const p = a.ac;
-  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const esc = _tEsc;
   const F = (id,label,value,type) => `<div class="pap-field"><label>${label}</label><input type="${type||'text'}" id="${id}" value="${esc(value)}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${id.split('_').slice(1).join('_')}',this.value)"></div>`;
   const T = (id,label,value) => `<div class="pap-field"><label>${label}</label><textarea id="${id}" onchange="saveAcField('${jsAttr(nivel)}','${jsAttr(grupo)}',${idx},'${id.split('_').slice(1).join('_')}',this.value)">${esc(value)}</textarea></div>`;
 
@@ -810,7 +810,7 @@ function renderAcFormHTML(nivel, grupo, idx, a) {
 function _acDocBodyHTML(nivel, grupo, idx) {
   const a = _acAlumno(nivel,grupo,idx);
   const p = a.ac || acDefault();
-  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc = _tEsc;
   const iesName = document.getElementById('headerIesName')?.value || 'Centro Educativo';
 
   const estrategiasRows = AC_ESTRATEGIAS.filter(e => p.estrategias[e.key]).map(e =>

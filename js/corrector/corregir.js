@@ -191,7 +191,7 @@ function renderCxGradingAlumno(grupo,act,al){
   </div>
   <div class="card">
     <div style="font-size:12.5px;color:var(--mut)">Nota cuantitativa</div>
-    <span class="big" style="color:var(--accent)">${vc==null?"—":fmt(vc)}</span>
+    <span class="big" style="color:var(--accent-texto)">${vc==null?"—":fmt(vc)}</span>
     <p class="sub" style="margin:8px 0 0">Cuenta para la nota numérica del trimestre.</p>
   </div>
   <div class="card">

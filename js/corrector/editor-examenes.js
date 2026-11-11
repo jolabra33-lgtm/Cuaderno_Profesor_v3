@@ -48,7 +48,7 @@ function exAvisoCopia(){
   return `<span style="font-size:12.5px;color:var(--danger,#b91c1c)">⚠️ ${n} diseño${n===1?"":"s"} sin exportar · <a href="#" onclick="exportarTodo();return false">Exportar todo</a></span>`;
 }
 function exModal(html){
-  const d=document.createElement("div"); d.className="modal-overlay"; d.style.zIndex="90";
+  const d=document.createElement("div"); d.className="modal-overlay"; d.style.zIndex="1500";
   d.innerHTML=`<div class="modal-box" style="max-width:660px;max-height:85vh;overflow:auto">${html}<div class="flex" style="justify-content:flex-end;margin-top:14px"><button class="btn">Cerrar</button></div></div>`;
   d.onclick=e=>{ if(e.target===d||e.target.tagName==="BUTTON") d.remove(); };
   document.body.appendChild(d);
@@ -223,7 +223,7 @@ function exComentHTML(alId,actId,itemId){
 const EX_COPIA_DIA="cuaderno_ex_copia_dia";
 async function exCopiaDiaria(forzar){
   try{
-    const hoy=new Date().toISOString().slice(0,10);
+    const hoy=fechaISOLocal();
     if(!forzar && localStorage.getItem(EX_COPIA_DIA)===hoy) return;
     const todos=await exLeerTodos(); if(!todos.length) return;
     await exTx("readwrite",s=>s.put({ts:Date.now(),fecha:hoy,disenos:todos}),"copias");

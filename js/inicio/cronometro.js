@@ -62,7 +62,7 @@ window.cronoReiniciar=()=>{
   const btnP=document.getElementById("cronoBtnPausar"); if(btnP) btnP.textContent="⏸ Pausar";
   cronoActualizarDisplay();
 };
-window.cronoTogglePanel=()=>{ document.getElementById("cronoPanel").classList.toggle("open"); };
+window.cronoTogglePanel=()=>{ const p=document.getElementById("cronoPanel"); p.classList.toggle("open"); if(p.classList.contains("open") && typeof clasePintar==="function") clasePintar(); };
 function cronoSonarAlarma(){
   try{
     const Ctx=window.AudioContext||window.webkitAudioContext;

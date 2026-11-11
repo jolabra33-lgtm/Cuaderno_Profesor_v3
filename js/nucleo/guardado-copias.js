@@ -4,11 +4,15 @@
    ============================================================================ */
 
 /* =================================================================
-   v1 · GUARDADO A PRUEBA DE PÉRDIDAS
-   1) Almacenamiento principal: localStorage (como hasta ahora).
-   2) Copia interna espejo en IndexedDB (sin el límite de ~5 MB y menos
-      expuesta a borrados): si la principal falla o se borra, al abrir la
-      app se recuperan los datos de aquí automáticamente.
+   v1 · GUARDADO A PRUEBA DE PÉRDIDAS  (v3: IndexedDB es el almacén que manda)
+   1) Los datos se guardan en IndexedDB (sin el límite de ~5 MB de
+      localStorage, que además comparten el Cuaderno, Tutoría y la otra
+      versión de la app).
+   2) En localStorage se guarda la misma copia mientras quepa: permite
+      abrir al instante. Si no cabe (lo ha llenado otra app), no pasa
+      nada: se retira para que no quede una versión antigua, se anota
+      que los datos están en IndexedDB (KEY_EN_IDB) y al abrir se leen
+      de ahí. Si falla IndexedDB, queda localStorage, como antes.
    3) Copias automáticas (instantáneas) en IndexedDB: cada pocas horas de
       trabajo y SIEMPRE antes de importar o restaurar. Se consultan y
       restauran en 🛟 Copias.
@@ -51,6 +55,16 @@ const idbDel=(store,key)=>idbReq(store,"readwrite",st=>st.delete(key));
 const idbAll=(store)=>idbReq(store,"readonly",st=>st.getAll());
 
 let _ultimoDatosStr=null, _idbEspejoTimer=null, _idbJsonPendiente=null;
+/* v3: marca en localStorage «los datos están en IndexedDB» (cuando la copia de localStorage no cabe). */
+const KEY_EN_IDB=KEY+":en-idb";
+/* v3: mientras se leen los datos de IndexedDB al abrir, no se guarda nada (se guardaría un estado vacío). */
+let _guardadoEnPausa=false;
+let _lsCedido=false;   // hay marca KEY_EN_IDB puesta
+function _lsCederAIDB(){
+  _lsCedido=true;
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  try{ localStorage.setItem(KEY_EN_IDB,String(state._guardadoEn||Date.now())); }catch(e){}
+}
 function _datosSinUI(obj){
   const {ui,cambiosSinCopia,lastBackupAt,_guardadoEn,_ultimaCopiaAuto,...resto}=obj||state;
   return JSON.stringify(resto);
@@ -105,6 +119,7 @@ document.addEventListener("keydown",e=>{
   if(k==="y" || (k==="z" && e.shiftKey)) rehacer(); else deshacer();
 });
 function save(){
+  if(_guardadoEnPausa) return;
   let cambio=false, datosOK=false;
   try{
     const d=_datosSinUI();
@@ -126,15 +141,16 @@ function save(){
     json=(datosOK && _ultimoDatosStr.length>2) ? m.slice(0,-1)+","+_ultimoDatosStr.slice(1) : JSON.stringify(state);
   }catch(e){ saveState.ok=false; actualizarAvisoGuardado(); return; }
   saveState.bytesLS=json.length;
-  if(json.length>4e6 && !saveState.avisoEspacio){ saveState.avisoEspacio=true; setTimeout(()=>mostrarToast("ℹ️ El almacenamiento principal está casi lleno. Tus datos siguen a salvo en la copia interna; exporta una copia de vez en cuando.","info"),800); }
+  // Copia rápida en localStorage, si cabe.
   try{
     localStorage.setItem(KEY,json);
+    if(_lsCedido){ _lsCedido=false; try{ localStorage.removeItem(KEY_EN_IDB); }catch(e){} }   // vuelve a caber
     if(!saveState.ok){ saveState.ok=true; actualizarAvisoGuardado(); }
   }catch(e){
     saveState.ok=false;
     actualizarAvisoGuardado();
   }
-  // Espejo en IndexedDB (agrupando ráfagas de cambios).
+  // Almacén principal: IndexedDB (agrupando ráfagas de cambios; al momento si localStorage no ha podido).
   _idbJsonPendiente=json;
   clearTimeout(_idbEspejoTimer);
   _idbEspejoTimer=setTimeout(volcarEspejoIDB, saveState.ok?700:0);
@@ -147,10 +163,15 @@ function volcarEspejoIDB(){
   _idbJsonPendiente=null;
   return idbPut("kv",{guardadoEn:state._guardadoEn||Date.now(),json},"estado").then(()=>{
     if(!saveState.idbOk){ saveState.idbOk=true; actualizarAvisoGuardado(); }
+    // Si la copia de localStorage no cabe, se retira la antigua: los datos buenos ya están en IndexedDB.
+    if(!saveState.ok && _idbJsonPendiente==null) _lsCederAIDB();
   }).catch(()=>{
     saveState.idbOk=false; actualizarAvisoGuardado();
   });
 }
+// Un guardado hecho en el primer medio segundo (mientras se decide qué ventana guarda) puede no haber cabido en
+// localStorage sin que save() lo supiera: se repite, y entonces sí sigue el camino normal (IndexedDB manda).
+window.addEventListener("una-ventana:escritura-fallida",e=>{ if(e.detail && (e.detail.claves||[]).includes(KEY)) save(); });
 // Al ocultar/cerrar la app se vuelca de inmediato lo pendiente.
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") volcarEspejoIDB(); });
 window.addEventListener("pagehide",()=>{ volcarEspejoIDB(); });
@@ -259,10 +280,12 @@ async function pintarCopias(){
     <p class="sub" style="margin-top:6px">Además de la copia que exportas tú, la app guarda <strong>copias automáticas</strong> dentro del propio dispositivo: las 12 más recientes y una por día durante 30 días. Si algo sale mal (un borrado, una importación equivocada…), restaura desde aquí.</p>
     ${avisoPersist}
     ${uso&&uso.usage?`<p class="sub" style="margin:0 0 8px">Espacio usado por la app en este dispositivo: ${_fmtBytes(uso.usage)}.</p>`:""}
-    ${(()=>{ const b=saveState.bytesLS||0; const pct=Math.round(b/5e6*100); return `<p class="sub" style="margin:0 0 8px">Almacenamiento principal: ${_fmtBytes(b)} de unos 5 MB (${pct} %)${pct>=80?' — <strong style="color:#b45309">casi lleno</strong>: no pasa nada, la copia interna no tiene ese límite, pero conviene exportar copias.':"."}</p>`; })()}
+    <p class="sub" style="margin:0 0 8px">Tus datos ocupan ${_fmtBytes(saveState.bytesLS||0)} y se guardan en la base de datos del dispositivo (IndexedDB), sin el límite de 5 MB que tenía antes.${saveState.ok?"":" Ahora mismo no caben en la copia rápida de localStorage (lo ocupa otra aplicación de esta misma dirección): no pasa nada, solo tarda un instante más en abrir."}</p>
     ${typeof ccSeccionHTML==="function"?ccSeccionHTML():""}
+    ${typeof bloqueoSeccionHTML==="function"?bloqueoSeccionHTML():""}
     <div class="flex" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn" onclick="exportarTodo()">⬇ Exportar copia a un archivo</button>
+      <label class="ghost file" style="border:1px solid var(--line)">⬆ Importar copia<input type="file" accept="application/json,.json" style="display:none" onchange="importarTodo(this)"></label>
       ${cifradoDisponible()?'<button class="btn" onclick="exportarCifrada()" title="Recomendado si la copia va a salir del dispositivo (correo, pendrive, nube)">🔒 Exportar copia cifrada</button>':""}
       <button class="ghost" style="border:1px solid var(--line)" onclick="copiaManualAhora()">＋ Crear copia interna ahora</button>
       <button class="ghost" style="border:1px solid var(--line)" onclick="cerrarCopias();abrirDiagnostico()">🩺 Revisar mis datos</button>

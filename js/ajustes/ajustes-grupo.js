@@ -147,7 +147,7 @@ window.exportarGrupo=()=>{
   const grupo=grupoActual();
   const blob=new Blob([JSON.stringify({grupos:[grupo]},null,2)],{type:"application/json"});
   const u=URL.createObjectURL(blob); const a=document.createElement("a");
-  a.href=u; a.download="grupo-"+grupo.nombre.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+"-"+new Date().toISOString().slice(0,10)+".json"; a.click(); URL.revokeObjectURL(u);
+  a.href=u; a.download="grupo-"+grupo.nombre.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+"-"+fechaISOLocal()+".json"; a.click(); URL.revokeObjectURL(u);
 };
 window.importarGrupoArchivo=inp=>{
   const file=inp.files[0]; if(!file) return;
@@ -158,6 +158,7 @@ window.importarGrupoArchivo=inp=>{
     catch(e){ mostrarAviso("El archivo no es un JSON válido."); inp.value=""; return; }
     const original = datos && Array.isArray(datos.grupos) && datos.grupos[0] ? datos.grupos[0] : null;
     if(!original){ mostrarAviso("Este archivo no parece ser un grupo exportado desde esta aplicación."); inp.value=""; return; }
+    if(idsNoValidos(original).length){ mostrarAviso(AVISO_IDS_NO_VALIDOS); inp.value=""; return; }
     if(!CATALOGOS[original.catalogoKey] && !(state.catalogosPersonalizados||{})[original.catalogoKey]){
       mostrarAviso("Este grupo es de una materia/curso que no existe en tu catálogo — no se puede importar.");
       inp.value=""; return;

@@ -226,7 +226,7 @@ function openInforme(nivel, grupo, evalNum, forzarRegenerar) {
   if (!forzarRegenerar) {
     const guardada = _actaGetGuardada(nivel, grupo, evalNum);
     if (guardada) {
-      contentEl.innerHTML = guardada.html;
+      contentEl.innerHTML = _tHtmlSeguro(guardada.html);
       _actaEnableRowDelete(contentEl);
       overlay.style.display = 'flex';
       _actaMostrarAvisoGuardada(guardada.savedAt);
@@ -264,8 +264,8 @@ function openInforme(nivel, grupo, evalNum, forzarRegenerar) {
   // Pre-fill alumnos NESE table rows
   const neseRows = nesAlumnos.length > 0
     ? nesAlumnos.map(a => `<tr>
-        <td>${a.nombre||''}</td>
-        <td contenteditable="true">${a.nese==='Sí'?(_getNeseCodes(a.recursoNese).join('+') || 'NESE'):''}</td>
+        <td>${_tEsc(a.nombre||'')}</td>
+        <td contenteditable="true">${a.nese==='Sí'?(_tEsc(_getNeseCodes(a.recursoNese).join('+')) || 'NESE'):''}</td>
         <td contenteditable="true">&nbsp;</td>
         <td contenteditable="true">&nbsp;</td>
       </tr>`).join('') + emptyRows(Math.max(0, 5-nesAlumnos.length), 4)
@@ -276,7 +276,7 @@ function openInforme(nivel, grupo, evalNum, forzarRegenerar) {
   const REP_ROWS_BASE = 6;
   const repRows = (repAlumnos.length > 0
     ? repAlumnos.map(a => `<tr>
-        <td>${a.nombre||''}</td>
+        <td>${_tEsc(a.nombre||'')}</td>
         <td contenteditable="true">&nbsp;</td>
       </tr>`).join('') + emptyRows(Math.max(0, REP_ROWS_BASE-repAlumnos.length), 2)
     : emptyRows(REP_ROWS_BASE, 2)) + _actaAddRowBtnRow(2);
@@ -285,8 +285,8 @@ function openInforme(nivel, grupo, evalNum, forzarRegenerar) {
   const neseAlumnos = alumnos.filter(a => a.nese === 'Sí');
   const nesePreRows = neseAlumnos.length > 0
     ? neseAlumnos.map(a => `<tr>
-        <td contenteditable="true">${_getNeseCodes(a.recursoNese).join('/') || '&nbsp;'}</td>
-        <td contenteditable="true">${a.nombre||''}</td>
+        <td contenteditable="true">${_tEsc(_getNeseCodes(a.recursoNese).join('/')) || '&nbsp;'}</td>
+        <td contenteditable="true">${_tEsc(a.nombre||'')}</td>
         <td contenteditable="true">&nbsp;</td>
         <td contenteditable="true">&nbsp;</td>
       </tr>`).join('') + emptyRows(Math.max(0, 8-neseAlumnos.length), 4)
@@ -299,7 +299,7 @@ function openInforme(nivel, grupo, evalNum, forzarRegenerar) {
     ? repPropAlumnos.map(a => {
         const ev = evalNum === 1 ? (a.eval1||0) : evalNum === 2 ? (a.eval2||0) : (a.eval3||0);
         return `<tr>
-          <td>${a.nombre||''}</td>
+          <td>${_tEsc(a.nombre||'')}</td>
           <td contenteditable="true">${ev > 0 ? ev + ' mat. no superadas' : ''}</td>
           <td contenteditable="true">&nbsp;</td>
         </tr>`;
@@ -310,7 +310,7 @@ function openInforme(nivel, grupo, evalNum, forzarRegenerar) {
   const promoConSusp = alumnos.filter(a => getPromocionaTipo(a) === 'Promoción' && (a.eval3||0) > 0);
   const promoSuspRows = (promoConSusp.length > 0
     ? promoConSusp.map(a => `<tr>
-        <td>${a.nombre||''}</td>
+        <td>${_tEsc(a.nombre||'')}</td>
         <td contenteditable="true">${(a.eval3||0)} mat. no superadas</td>
       </tr>`).join('') + emptyRows(Math.max(0, 5-promoConSusp.length), 2)
     : emptyRows(5, 2)) + _actaAddRowBtnRow(2);
@@ -327,9 +327,9 @@ function openInforme(nivel, grupo, evalNum, forzarRegenerar) {
         ${tituloActaPorEval[evalNum]} — ESO
       </div>
       <div class="inf-header-row">
-        <div class="inf-header-field"><label>Curso:</label><input type="text" value="${nivel}" /></div>
-        <div class="inf-header-field"><label>Grupo:</label><input type="text" value="${grupo}" /></div>
-        <div class="inf-header-field"><label>Tutor/a:</label><input type="text" value="${tutor}" style="min-width:200px;" /></div>
+        <div class="inf-header-field"><label>Curso:</label><input type="text" value="${_tEsc(nivel)}" /></div>
+        <div class="inf-header-field"><label>Grupo:</label><input type="text" value="${_tEsc(grupo)}" /></div>
+        <div class="inf-header-field"><label>Tutor/a:</label><input type="text" value="${_tEsc(tutor)}" style="min-width:200px;" /></div>
         <div class="inf-header-field"><label>Trimestre:</label>
           <select>
             <option ${evalNum===1?'selected':''}>1º Trimestre</option>
@@ -439,7 +439,7 @@ function openInforme(nivel, grupo, evalNum, forzarRegenerar) {
       return p.tipo === 'Promoción' && p.destino === 'FPB';
     });
     const fpbRows = (fpbAlumnos.length > 0
-      ? fpbAlumnos.map(a=>`<tr><td>${a.nombre}</td><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td></tr>`).join('')
+      ? fpbAlumnos.map(a=>`<tr><td>${_tEsc(a.nombre)}</td><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td></tr>`).join('')
         + emptyRows(Math.max(0,3-fpbAlumnos.length),3)
       : emptyRows(3,3)) + _actaAddRowBtnRow(3);
 
@@ -536,7 +536,7 @@ function openInforme(nivel, grupo, evalNum, forzarRegenerar) {
       <div class="inf-sign-block">
         <div class="inf-sign-label">Tutor/a del grupo</div>
         <div class="inf-sign-line"></div>
-        <div class="inf-sign-name">${tutor !== '___________________________' ? tutor : ''}</div>
+        <div class="inf-sign-name">${tutor !== '___________________________' ? _tEsc(tutor) : ''}</div>
       </div>
       <div class="inf-sign-block">
         <div class="inf-sign-label">Jefe/a de Estudios</div>
@@ -566,7 +566,7 @@ function openInforme(nivel, grupo, evalNum, forzarRegenerar) {
         <div class="inf-sign-block">
           <div class="inf-sign-label">Tutor/a del grupo</div>
           <div class="inf-sign-line"></div>
-          <div class="inf-sign-name">${tutor !== '___________________________' ? tutor : ''}</div>
+          <div class="inf-sign-name">${tutor !== '___________________________' ? _tEsc(tutor) : ''}</div>
         </div>
         <div class="inf-sign-block">
           <div class="inf-sign-label">Jefe/a de Estudios</div>
@@ -983,7 +983,7 @@ function exportInformeWord() {
   const css = _actaReportCss();
   const tituloEl = document.getElementById('informeToolbarTitle');
   const titulo = (tituloEl && tituloEl.textContent) ? tituloEl.textContent.trim() : 'Acta de Evaluación';
-  const tituloEsc = titulo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const tituloEsc = _tEsc(titulo);
 
   const html = `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
@@ -1033,7 +1033,7 @@ function exportInformeHTML() {
   const css = _actaReportCss();
   const tituloEl = document.getElementById('informeToolbarTitle');
   const titulo = (tituloEl && tituloEl.textContent) ? tituloEl.textContent.trim() : 'Acta de Evaluación';
-  const tituloEsc = titulo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const tituloEsc = _tEsc(titulo);
 
   const html = `<!DOCTYPE html>
 <html lang="es">

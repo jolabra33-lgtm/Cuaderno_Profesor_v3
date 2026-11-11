@@ -5,6 +5,30 @@
 
 // ===================== FOTO DEL GRUPO (una por grupo) =====================
 if (!window._fotoData) window._fotoData = {};  // key -> { src, name }
+
+/* Reduce una imagen (data:URL) para que su lado mayor no pase de maxLado y la guarda como JPEG.
+   Una foto de móvil ocupa 3–8 MB; reducida, 200–500 KB, sin que se note en pantalla ni impresa.
+   Si ya es pequeña, o no se puede leer, se devuelve tal cual. */
+function _tutReducirImagen(src, maxLado, calidad) {
+  return new Promise(ok => {
+    if (!src || !/^data:image\//.test(src) || /^data:image\/svg/.test(src)) { ok(src); return; }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const mayor = Math.max(img.naturalWidth, img.naturalHeight);
+        if (mayor <= maxLado && src.length < 600000) { ok(src); return; }
+        const f = Math.min(1, maxLado / mayor);
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(img.naturalWidth * f)); c.height = Math.max(1, Math.round(img.naturalHeight * f));
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        const out = c.toDataURL('image/jpeg', calidad);
+        ok(out && out.length < src.length ? out : src);
+      } catch (e) { ok(src); }
+    };
+    img.onerror = () => ok(src);
+    img.src = src;
+  });
+}
 let _fotoContext = { nivel: '', grupo: '' };
 
 function openFotoGaleria(nivel, grupo) {
@@ -64,19 +88,19 @@ function handleFotoFile(file) {
     }
   };
 
+  // La imagen se reduce antes de guardarla (una foto del móvil pesa varios MB) y se guarda al momento.
+  const poner = async (src, nombre) => {
+    src = await _tutReducirImagen(src, 1800, 0.82);
+    _fotoData[key] = { src, name: nombre };
+    renderFotoDisplay();
+    warnIfTooBig(src);
+    markDirty();
+  };
   if (file.type === 'application/pdf') {
-    readPdfFirstPage(file, src => {
-      _fotoData[key] = { src, name: file.name.replace(/\.pdf$/i, '') };
-      renderFotoDisplay();
-      warnIfTooBig(src);
-    });
+    readPdfFirstPage(file, src => poner(src, file.name.replace(/\.pdf$/i, '')));
   } else if (file.type.startsWith('image/')) {
     const reader = new FileReader();
-    reader.onload = e => {
-      _fotoData[key] = { src: e.target.result, name: file.name.replace(/\.[^.]+$/, '') };
-      renderFotoDisplay();
-      warnIfTooBig(e.target.result);
-    };
+    reader.onload = e => poner(e.target.result, file.name.replace(/\.[^.]+$/, ''));
     reader.readAsDataURL(file);
   } else {
     loadingEl.style.display = 'none';
@@ -89,6 +113,7 @@ async function deleteFotoGrupo() {
   const key = `${_fotoContext.nivel}-${_fotoContext.grupo}`;
   delete _fotoData[key];
   renderFotoDisplay();
+  markDirty();
 }
 
 function readPdfFirstPage(file, callback) {
@@ -197,19 +222,19 @@ function handleHorarioFile(file) {
     }
   };
 
+  // Igual que la foto: se reduce (sin perder legibilidad) y se guarda al momento.
+  const poner = async (src, nombre) => {
+    src = await _tutReducirImagen(src, 2200, 0.86);
+    _horarioData[key] = { src, name: nombre };
+    renderHorarioDisplay();
+    warnIfTooBig(src);
+    markDirty();
+  };
   if (file.type === 'application/pdf') {
-    readPdfFirstPage(file, src => {
-      _horarioData[key] = { src, name: file.name.replace(/\.pdf$/i, '') };
-      renderHorarioDisplay();
-      warnIfTooBig(src);
-    });
+    readPdfFirstPage(file, src => poner(src, file.name.replace(/\.pdf$/i, '')));
   } else if (file.type.startsWith('image/')) {
     const reader = new FileReader();
-    reader.onload = e => {
-      _horarioData[key] = { src: e.target.result, name: file.name.replace(/\.[^.]+$/, '') };
-      renderHorarioDisplay();
-      warnIfTooBig(e.target.result);
-    };
+    reader.onload = e => poner(e.target.result, file.name.replace(/\.[^.]+$/, ''));
     reader.readAsDataURL(file);
   } else {
     loadingEl.style.display = 'none';
@@ -222,6 +247,7 @@ async function deleteHorarioGrupo() {
   const key = `${_horarioContext.nivel}-${_horarioContext.grupo}`;
   delete _horarioData[key];
   renderHorarioDisplay();
+  markDirty();
 }
 
 function openHorarioLightbox() {
@@ -248,7 +274,7 @@ function printHorario() {
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Horario ${nivel} ${grupo}</title>
+<title>Horario ${_tEsc(nivel)} ${_tEsc(grupo)}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:Arial,sans-serif; }
@@ -264,11 +290,11 @@ function printHorario() {
   <div class="header">
     <div>
       <div class="header-title">🗓️ Horario del grupo</div>
-      <div class="header-sub">${nivel} ${grupo} — ${iesName.replace(/</g,'&lt;')}</div>
+      <div class="header-sub">${_tEsc(nivel)} ${_tEsc(grupo)} — ${_tEsc(iesName)}</div>
     </div>
   </div>
   <div class="img-wrap">
-    <img src="${horario.src}" alt="Horario ${nivel} ${grupo}">
+    <img src="${horario.src}" alt="Horario ${_tEsc(nivel)} ${_tEsc(grupo)}">
   </div>
   <script>window.onload=function(){window.print();}<\/script>
 </body>
@@ -336,9 +362,7 @@ function printObservacionesGrupo() {
   }
 
   // Escape and convert line breaks to <br>
-  const textoHtml = texto
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\n/g,'<br>');
+  const textoHtml = _tEsc(texto).replace(/\n/g,'<br>');
 
   const alumnos  = (GRUPOS_POR_NIVEL[nivel] || []).flatMap(g => g === grupo ? (data[nivel]?.[g] || []) : []);
   const total    = alumnos.length;
@@ -349,7 +373,7 @@ function printObservacionesGrupo() {
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Observaciones ${nivel} ${grupo}</title>
+<title>Observaciones ${_tEsc(nivel)} ${_tEsc(grupo)}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Arial, sans-serif; font-size: 11pt; color: #111; }
@@ -392,10 +416,10 @@ function printObservacionesGrupo() {
 <div class="page">
   <div class="header">
     <div class="title">📝 Observaciones del Grupo</div>
-    <div class="sub">${nivel} — Grupo ${grupo}</div>
+    <div class="sub">${_tEsc(nivel)} — Grupo ${_tEsc(grupo)}</div>
     <div class="meta">
-      <span>🏫 ${iesName.replace(/</g,'&lt;')}</span>
-      <span>👤 Tutor/a: ${tutor.replace(/</g,'&lt;')}</span>
+      <span>🏫 ${_tEsc(iesName)}</span>
+      <span>👤 Tutor/a: ${_tEsc(tutor)}</span>
       <span>📅 ${dateStr}</span>
     </div>
   </div>
