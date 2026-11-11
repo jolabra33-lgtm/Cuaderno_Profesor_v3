@@ -62,6 +62,25 @@ function cxRubricaInicial(grupo,act,progAct){
   if(progAct && Array.isArray(progAct.rubrica) && progAct.rubrica.length) return cxClonarRubrica(progAct.rubrica,grupo.catalogoKey);
   return cxRubricaDesdeCriterios(act.criterios,grupo.catalogoKey);
 }
+/* v3 · Versiones adaptadas en la Programación. La actividad de la Programación guarda, además de la rúbrica
+   general, sus versiones adaptadas: progAct.variantes=[{id,nombre,escalarA10,rubrica}] (sin alumnado: eso es de
+   cada grupo). Su diseño de examen, si se guarda, va en la base de diseños con la clave «prog:<actividad>:<id>».
+   Al traer el examen a un grupo, cada versión se crea en él y recibe al alumnado NESE del grupo (la primera). */
+function cxGuardarVarianteEnProgAct(progAct,v){
+  if(!Array.isArray(progAct.variantes)) progAct.variantes=[];
+  let pv=v.progVarId && progAct.variantes.find(x=>x.id===v.progVarId);
+  if(!pv){ pv={id:uid()}; progAct.variantes.push(pv); v.progVarId=pv.id; }
+  pv.nombre=v.nombre||"Adaptada"; pv.escalarA10=v.escalarA10!==false; pv.rubrica=JSON.parse(JSON.stringify(v.rubrica||[]));
+  return pv;
+}
+function cxVariantesDesdeProgAct(grupo,act,progAct){
+  if(!progAct || !Array.isArray(progAct.variantes) || !act.rubrica) return;
+  progAct.variantes.forEach((pv,i)=>{
+    if(!Array.isArray(pv.rubrica) || !pv.rubrica.length) return;
+    if(cxVariantes(act).some(v=>v.progVarId===pv.id)) return;
+    cxCrearVariante(grupo,act,{nombre:pv.nombre,rubrica:pv.rubrica,escalarA10:pv.escalarA10,progVarId:pv.id,sinAlumnado:i>0});
+  });
+}
 function cxActTieneNotas(grupo,act){
   return grupo.alumnos.some(al=>{
     if(grupo.notasCuant?.[al.id]?.[act.id]!=null) return true;
@@ -79,6 +98,7 @@ async function cxPonerRubrica(grupo,act){
   const ref=cxProgActDe(grupo,act);
   if(!Array.isArray(act.criteriosPrevistos) || !act.criteriosPrevistos.length) act.criteriosPrevistos=(act.criterios||[]).map(c=>c.critId);
   act.rubrica=cxRubricaInicial(grupo,act,ref&&ref.progAct);
+  cxVariantesDesdeProgAct(grupo,act,ref&&ref.progAct);
   act.escalarA10=true;
   act.esExamen=true;
   cxSyncCriteriosActividad(act);
@@ -105,6 +125,7 @@ function progCrearActividadEnGrupo(grupo,progAct,trimestre){
     criteriosPrevistos:(progAct.criterios||[]).map(c=>c.critId) };
   if(act.esExamen){
     act.rubrica=cxRubricaInicial(grupo,act,progAct);
+    cxVariantesDesdeProgAct(grupo,act,progAct);
     act.escalarA10=true;
     cxSyncCriteriosActividad(act);
   }
@@ -180,13 +201,19 @@ window.cxGuardarRubricaEnProgramacion=async examId=>{
     if(!await confirmar(`La Programación "${ref.prog.nombre}" ya tiene guardada una rúbrica para «${ref.progAct.nombre}». ¿Sustituirla por esta?`,{ok:"Sí, sustituir"})) return;
   }
   ref.progAct.rubrica=JSON.parse(JSON.stringify(act.rubrica));
+  // Las versiones adaptadas viajan con ella (sin alumnado). Las que ya no existen en el examen se quitan.
+  const vs=cxVariantes(act);
+  vs.forEach(v=>cxGuardarVarianteEnProgAct(ref.progAct,v));
+  const vivas=new Set(vs.map(v=>v.progVarId));
+  ref.progAct.variantes=(ref.progAct.variantes||[]).filter(pv=>vivas.has(pv.id));
+  if(!ref.progAct.variantes.length) delete ref.progAct.variantes;
   save(); render();
-  mostrarToast("✓ Rúbrica guardada en la Programación");
+  mostrarToast(vs.length?`✓ Rúbrica guardada en la Programación, con ${vs.length===1?"su versión adaptada":"sus "+vs.length+" versiones adaptadas"}`:"✓ Rúbrica guardada en la Programación");
 };
 window.progQuitarRubrica=async actId=>{
   const p=progPorId(state.ui.progId); const a=p&&p.actividades.find(x=>x.id===actId); if(!a) return;
-  if(!await confirmar("¿Quitar la rúbrica guardada en la Programación para este examen? Los exámenes ya creados en los grupos conservan la suya.",{ok:"Quitar"})) return;
-  delete a.rubrica; save(); render();
+  if(!await confirmar("¿Quitar la rúbrica guardada en la Programación para este examen (y sus versiones adaptadas)? Los exámenes ya creados en los grupos conservan la suya.",{ok:"Quitar"})) return;
+  delete a.rubrica; delete a.variantes; save(); render();
 };
 
 /* Acceso cruzado: abrir un examen concreto en el Corrector desde Evaluación por Competencias */

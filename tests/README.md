@@ -38,6 +38,7 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `modo-proyector` | Los nombres del alumnado y sus notas se difuminan en todas las pantallas |
 | `bloqueo-pin` | PIN: app tapada, PIN incorrecto, espera tras 5 fallos, código de recuperación, Tutoría |
 | `avisos-encima` | Los avisos y ventanas de contraseña salen por encima de la ventana desde la que se abren |
+| `examen-adaptado` | Examen adaptado NESE: aviso, creación desde el Diseño, corrección con su rúbrica, paso por la Programación a otro grupo |
 | `que-me-falta` | Avisos de notas a medias y comentarios pendientes |
 | `calificar` | Calificar con Intro y guardado de notas |
 | `corregir-desplegable` | Corregir: puntuación de cada ítem en un desplegable y «No presentado» |

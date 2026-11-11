@@ -80,9 +80,9 @@ Completan el repositorio: `manifest.json` e `icons/` (instalación como app), `.
 | `js/informes/informe-final.js` | Informe final de curso |
 | `js/resumen/resumen-grupo.js` | Resumen del grupo: aprobados, SdA y estadísticas |
 | `js/corrector/motor-rubricas.js` | Corrector de exámenes: motor de rúbricas |
-| `js/corrector/programacion-corrector.js` | Programación ↔ Corrector: rúbricas para los exámenes planificados |
+| `js/corrector/programacion-corrector.js` | Programación ↔ Corrector: rúbricas para los exámenes planificados y sus versiones adaptadas (`progAct.variantes`; diseño en «prog:<actividad>:<versión>») |
 | `js/corrector/navegacion-lista-crear.js` | Navegación del Corrector, lista de exámenes y crear examen |
-| `js/corrector/editor-rubrica.js` | Editor de rúbrica y rúbricas adaptadas (NESE) |
+| `js/corrector/editor-rubrica.js` | Editor de rúbrica y rúbricas adaptadas (NESE): `cxCrearVariante`, aviso de alumnado NESE sin versión (`cxAvisoNeseHTML`, `act.neseGeneral`) |
 | `js/corrector/corregir.js` | Corregir, estadísticas por ítem e impresión de la rúbrica corregida |
 | `js/nucleo/nuevo-curso.js` | Asistente «Empezar curso nuevo»: archiva el curso y deja lo reutilizable |
 | `js/ui/buscador.js` | Buscador global |
@@ -131,7 +131,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 29 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 30 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.

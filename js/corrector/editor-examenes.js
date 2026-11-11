@@ -30,12 +30,18 @@ async function exGuardarVarios(a){ for(const r of a) try{ await exPut(r); }catch
 function exClave(act){ const v=cxVarEditando(act); return v? act.id+":"+v.id : (state.ui.corVerB? act.id+":B" : act.id); }
 window.exSel=id=>{ state.ui.corVerB=false; cxElegirVariante(id); };
 window.exVerB=()=>{ state.ui.corVerB=true; state.ui.corVarId=""; save(); render(); };
+/* Desde el Diseño: si el examen aún no tiene rúbrica, se le pone primero (como al pasar a la pestaña Rúbrica). */
+window.exNuevoAdaptado=async()=>{
+  const g=grupoActual(), act=g&&g.actividades.find(a=>a.id===state.ui.corExamId); if(!act) return;
+  if(!act.rubrica && !await cxPonerRubrica(g,act)) return;
+  exFlush(); cxNuevaVariante();
+};
 window.exMezclar=()=>{ if(_exFrame&&_exFrame.contentWindow.__ee) _exFrame.contentWindow.__ee.mezclar(); };
 function exSelectorVariante(act){
   const vs=cxVariantes(act), vid=state.ui.corVarId;
   return `<button class="tab ${!cxVarEditando(act)&&!state.ui.corVerB?"on":""}" onclick="exSel('')">Examen general</button><button class="tab ${!cxVarEditando(act)&&state.ui.corVerB?"on":""}" title="Mismo examen con las preguntas en otro orden; comparte la rúbrica" onclick="exVerB()">Versión B</button>`
     +vs.map(v=>`<button class="tab ${vid===v.id?"on":""}" onclick="cxElegirVariante('${v.id}')">${esc(v.nombre||"Examen adaptado")}</button>`).join("")
-    +(vs.length?"":`<span style="font-size:12px;color:var(--mut)">Para un examen distinto (p. ej. NESE), crea antes una rúbrica adaptada en la pestaña Rúbrica.</span>`);
+    +`<button class="ghost" style="border:1px dashed var(--line)" title="Examen distinto para el alumnado NESE (u otro): empieza como copia del general y se corrige con su propia rúbrica" onclick="exNuevoAdaptado()">+ Examen adaptado (NESE)</button>`;
 }
 /* Aviso de diseños sin exportar (solo cuenta; no toca el estado de la app) */
 const EX_PEND="cuaderno_ex_sin_copia";
@@ -309,7 +315,7 @@ function renderCorDiseno(grupo){
   const c=document.getElementById("tabContent");
   const act=grupo.actividades.find(a=>a.id===state.ui.corExamId);
   if(!act){ state.ui.corTab="lista"; renderCorLista(grupo); return; }
-  c.innerHTML=cxSubtabs(act,"diseno")+`<div class="card" style="padding:10px 14px"><div class="flex" style="gap:8px;flex-wrap:wrap;align-items:center">
+  c.innerHTML=cxSubtabs(act,"diseno")+cxAvisoNeseHTML(grupo,act)+`<div class="card" style="padding:10px 14px"><div class="flex" style="gap:8px;flex-wrap:wrap;align-items:center">
     ${exSelectorVariante(act)}<button class="btn" onclick="exImportar()">Importar a la rúbrica →</button>
     <button class="ghost" style="border:1px solid var(--line)" title="Guarda este diseño como plantilla de la actividad de la Programación para reutilizarlo en otros grupos" onclick="exComoPlantilla()">💾 Plantilla de la Programación</button>
     ${state.ui.corVerB&&!cxVarEditando(act)?`<button class="ghost" style="border:1px solid var(--line)" title="Vuelve a barajar el orden de las preguntas" onclick="exMezclar()">🔀 Mezclar de nuevo</button>`:""}
@@ -328,6 +334,7 @@ function renderCorDiseno(grupo){
     try{
       const win=f.contentWindow;
       const clave=exClave(act), vr=cxVarEditando(act), esB=!!state.ui.corVerB&&!vr; let nuevoB=false; let rec=await exGet(clave);
+      if(!rec && vr && vr.progVarId && act.progActId){ const p=await exGet("prog:"+act.progActId+":"+vr.progVarId); if(p){ rec={key:clave,exam:JSON.parse(JSON.stringify(p.exam))}; rec.exam.id=uid(); } }
       if(!rec && vr){ const g=await exGet(act.id); if(g){ rec={key:clave,exam:JSON.parse(JSON.stringify(g.exam))}; rec.exam.id=uid(); } }
       if(!rec && esB){ const g=await exGet(act.id); if(g){ rec={key:clave,exam:JSON.parse(JSON.stringify(g.exam))}; rec.exam.id=uid(); nuevoB=true; } }
       if(!rec && act.progActId && !vr && !esB){ const p=await exGet("prog:"+act.progActId); if(p) rec={key:act.id,exam:JSON.parse(JSON.stringify(p.exam))}; }
@@ -353,9 +360,19 @@ function renderCorDiseno(grupo){
 }
 window.exComoPlantilla=async()=>{
   const g=grupoActual(), act=g&&g.actividades.find(a=>a.id===state.ui.corExamId); if(!act||!_exFrame) return;
-  if(cxVarEditando(act)||state.ui.corVerB){ mostrarAviso("La plantilla de la Programación es la del examen general: cámbiate a «Examen general» para guardarla."); return; }
+  if(state.ui.corVerB&&!cxVarEditando(act)){ mostrarAviso("La versión B se genera sola a partir del examen general: cámbiate a «Examen general» para guardar la plantilla."); return; }
   if(!act.progActId){ mostrarAviso("Este examen no procede de la Programación de Aula, así que no hay actividad a la que asociar la plantilla."); return; }
   const ex=_exFrame.contentWindow.__ee.get(); if(!ex) return;
+  const vr=cxVarEditando(act);
+  if(vr){
+    // El diseño adaptado se guarda junto a su rúbrica: la versión adaptada pasa a formar parte de la plantilla.
+    const ref=cxProgActDe(g,act); if(!ref){ mostrarAviso("No se encuentra la actividad de la Programación de este examen."); return; }
+    const pv=cxGuardarVarianteEnProgAct(ref.progAct,vr);
+    await exPut({key:"prog:"+act.progActId+":"+pv.id,exam:ex,actualizado:Date.now(),nombre:act.nombre+" · "+(vr.nombre||"Adaptada")});
+    save(); render();
+    mostrarToast(`✓ «${vr.nombre||"Adaptada"}» guardada en la Programación: los próximos grupos tendrán ya este examen adaptado`);
+    return;
+  }
   await exPut({key:"prog:"+act.progActId,exam:ex,actualizado:Date.now(),nombre:act.nombre});
   mostrarToast("✓ Diseño guardado como plantilla de la Programación");
 };
