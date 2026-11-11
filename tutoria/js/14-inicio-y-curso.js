@@ -71,10 +71,11 @@ document.addEventListener('click', function(e) {
    dentro el contenido de cada archivo, en el mismo orden y en el mismo sitio.
    No se incluyen el aviso de versión nueva ni el bloqueo de ventanas, que
    solo tienen sentido en la app instalada. */
-const _VERSION_SIN = ['../js/registro-sw.js', '../js/una-ventana.js'];
+const _VERSION_SIN = ['../js/registro-sw.js', '../js/una-ventana.js', '../js/bloqueo.js'];
 async function _htmlAutocontenido() {
   const raiz = document.documentElement.cloneNode(true);
-  raiz.querySelectorAll('#avisoVersionNueva, #unaVentanaOverlay').forEach(n => n.remove());
+  raiz.querySelectorAll('#avisoVersionNueva, #unaVentanaOverlay, #bloqueoOverlay, #bloqueoBtn').forEach(n => n.remove());
+  raiz.classList.remove('app-bloqueada');
   const leer = async (src) => {
     const r = await fetch(new URL(src, location.href).href);
     if (!r.ok) throw new Error('No se ha podido leer ' + src);

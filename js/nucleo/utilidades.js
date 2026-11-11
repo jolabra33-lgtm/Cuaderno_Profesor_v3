@@ -99,7 +99,9 @@ function mostrarToast(mensaje,tipo){
    veces ni aparecen. Intro = aceptar, Escape = cancelar. Las acciones
    peligrosas (eliminar…) se muestran con el botón en rojo.
    ================================================================= */
-let _dlgZ=80;
+/* Los avisos van por encima de cualquier ventana de la app (.modal-overlay usa 1000). Antes empezaban en 80 y,
+   abiertos desde una ventana (p. ej. «Restaurar» en 🛟 Copias), quedaban tapados por ella. */
+let _dlgZ=2000;
 function _textoDialogoHTML(m){ return esc(String(m??"")).replace(/\n/g,"<br>"); }
 function _dialogo({titulo,mensaje,ok,cancelar,peligro,entrada,valor}){
   const auto=window.__dialogosAuto;

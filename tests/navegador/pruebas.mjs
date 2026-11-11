@@ -494,6 +494,65 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
+  { nombre: 'bloqueo-pin', descripcion: 'Bloqueo con PIN: la app se abre tapada, solo entra el PIN correcto y el código de recuperación lo quita', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url, { nombres: ['Dato Privado, Alumna'] });
+    await p.evaluate(() => { _mostrarBienvenida = false; state.ui.appMode = 'inicio'; render(); abrirCopias(); }); await esperar(400);
+    await p.click('button:has-text("Activar el PIN")'); await p.fill('#bqp1', '2468'); await p.fill('#bqp2', '2468'); await p.click('#bqpSi'); await esperar(1500);
+    const aviso = await p.innerText('.dlg-msg');
+    const codigo = (aviso.match(/[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}/) || [])[0];
+    t.ok(!!codigo, 'al activarlo muestra un código de recuperación', aviso.slice(0, 120));
+    await p.click('.dlg-si'); await esperar(200);
+    t.ok(await p.evaluate(() => BloqueoPIN.activo && getComputedStyle(document.getElementById('bloqueoBtn')).display !== 'none' && !/2468/.test(localStorage.getItem('cuaderno_bloqueo_pin'))), 'queda activado, aparece el botón 🔒 y el PIN no se guarda en claro');
+    await p.reload(); await esperar(1500);
+    t.ok(await p.evaluate(() => !BloqueoPIN.bloqueada), 'recargar en la misma pestaña no vuelve a pedirlo');
+    // Pestaña nueva (como al abrir la app): tapada hasta escribir el PIN.
+    await p.evaluate(() => sessionStorage.clear()); await p.reload(); await esperar(1500);
+    const tapada = () => p.evaluate(() => ({ bloqueada: BloqueoPIN.bloqueada, visibles: [...document.body.children].filter(e => e.id !== 'bloqueoOverlay' && getComputedStyle(e).visibility !== 'hidden' && e.getBoundingClientRect().width > 0).map(e => e.tagName + '#' + e.id),
+      seLee: (() => { const el = document.elementFromPoint(300, 300); return !!(el && el.closest('#bloqueoOverlay')); })() }));
+    let e = await tapada();
+    t.ok(e.bloqueada && !e.visibles.length && e.seLee, 'al abrir, la app está tapada y no se ve nada de ella', JSON.stringify(e));
+    await p.fill('#bqCampo', '1111'); await p.click('.bq-btn'); await esperar(900);
+    t.ok((await tapada()).bloqueada && /incorrecto/.test(await p.innerText('#bqError')), 'un PIN incorrecto no entra');
+    await p.fill('#bqCampo', '2468'); await p.click('.bq-btn'); await esperar(900);
+    t.ok(await p.evaluate(() => !BloqueoPIN.bloqueada && !document.getElementById('bloqueoOverlay') && state.grupos[0].alumnos[0].nombre === 'Dato Privado, Alumna'), 'con el PIN correcto se entra y los datos están intactos');
+    await p.evaluate(() => { _mostrarBienvenida = false; render(); }); await p.click('#bloqueoBtn'); await esperar(300);
+    t.ok((await tapada()).bloqueada, 'el botón 🔒 bloquea al momento');
+    // Tutoría comparte el bloqueo.
+    await p.goto(t.url + '/tutoria/'); await esperar(1500);
+    t.ok((await tapada()).bloqueada, 'Tutoría también se abre tapada');
+    for (let i = 0; i < 5; i++) { await p.fill('#bqCampo', '0000'); await p.click('.bq-btn'); await esperar(500); }
+    await p.fill('#bqCampo', '2468'); await p.click('.bq-btn'); await esperar(700);
+    t.ok((await tapada()).bloqueada && /Espera/.test(await p.innerText('#bqError')), 'tras cinco intentos fallidos hay que esperar, aunque después se escriba el PIN bueno');
+    // Olvidado: el código de recuperación quita el PIN sin tocar los datos.
+    await p.reload(); await esperar(1500);
+    await p.fill('#bqCampo', '2468'); await p.click('.bq-btn'); await esperar(700);
+    t.ok((await tapada()).bloqueada && /Espera/.test(await p.innerText('#bqError')), 'recargar la página no salta la espera');
+    await p.evaluate(() => { const i = JSON.parse(localStorage.getItem('cuaderno_bloqueo_intentos')); i.hasta = Date.now() - 1; Storage.prototype.setItem.call(localStorage, 'cuaderno_bloqueo_intentos', JSON.stringify(i)); });
+    await p.reload(); await esperar(1500);   // (pasados los 30 s)
+    await p.click('#bqOtro'); await p.fill('#bqCampo', 'AAAA-BBBB-CCCC'); await p.click('.bq-btn'); await esperar(900);
+    t.ok((await tapada()).bloqueada, 'un código de recuperación inventado no sirve');
+    await p.fill('#bqCampo', codigo.toLowerCase().replace(/-/g, ' ')); await p.click('.bq-btn'); await esperar(900);
+    t.ok(await p.evaluate(() => !BloqueoPIN.bloqueada && !BloqueoPIN.activo), 'el código de recuperación (aunque se escriba en minúsculas y con espacios) quita el PIN');
+    await p.goto(t.url + '/'); await esperar(1500);
+    t.ok(await p.evaluate(() => !BloqueoPIN.bloqueada && state.grupos[0].alumnos.length === 1) && !p.errores.length, 'y la app vuelve a abrirse sin PIN, con sus datos', p.errores.join('; '));
+  } },
+
+  { nombre: 'avisos-encima', descripcion: 'Los avisos y las ventanas de contraseña salen por encima de la ventana desde la que se abren', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url);
+    const encima = sel => p.evaluate(sel => { const el = document.querySelector(sel); if (!el) return 'no existe'; const r = el.getBoundingClientRect(); const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return top === el || el.contains(top) ? 'encima' : 'tapado por ' + (top && (top.className || top.tagName)); }, sel);
+    await p.evaluate(async () => { _mostrarBienvenida = false; state.ui.appMode = 'inicio'; render(); await abrirCopias(); await copiaManualAhora(); }); await esperar(600);
+    await p.click('#copiasCuerpo button:has-text("Restaurar")'); await esperar(400);
+    t.ok(await encima('.dlg-si') === 'encima', '«Restaurar» en 🛟 Copias: la confirmación se ve y se puede pulsar', await encima('.dlg-si'));
+    await p.click('.dlg-no'); await esperar(200);
+    await p.click('#copiasCuerpo button:has-text("Exportar copia cifrada")'); await esperar(400);
+    t.ok(await encima('#pwd1') === 'encima', '«Exportar copia cifrada»: la ventana de la contraseña se ve', await encima('#pwd1'));
+    await p.click('#pwdNo'); await esperar(200);
+    await p.click('#copiasCuerpo button:has-text("Activar el PIN")'); await esperar(300);
+    t.ok(await encima('#bqp1') === 'encima', '«Activar el PIN»: la ventana del PIN se ve', await encima('#bqp1'));
+  } },
+
   { nombre: 'que-me-falta', descripcion: 'Inicio: «Qué me falta» detecta notas a medias y comentarios pendientes', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url, { nombres: ['A, Uno', 'B, Dos', 'C, Tres', 'D, Cuatro'] });

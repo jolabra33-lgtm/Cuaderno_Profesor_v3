@@ -1,6 +1,6 @@
 /* ============================================================================
-   Cuaderno del profesor · Modo proyector: oculta nombres del alumnado y notas
-   js/ui/modo-proyector.js
+   Cuaderno del profesor · Privacidad en el aula: modo proyector y ajustes del bloqueo con PIN
+   js/ui/privacidad.js
    ============================================================================ */
 
 /* =================================================================
@@ -91,4 +91,77 @@ window.toggleProyector=()=>{
   try{ localStorage.setItem("geohist_proyector",_proyector?"1":"0"); }catch(e){}
   _proyAplicar();
   mostrarToast(_proyector?"🙈 Modo proyector: nombres y notas difuminados":"👁️ Nombres y notas visibles","info");
+};
+
+/* =================================================================
+   v3 · BLOQUEO CON PIN — ajustes (🛟 Copias)
+   El bloqueo en sí está en js/bloqueo.js, que cargan el Cuaderno y
+   Tutoría antes que nada. Aquí solo se activa, se cambia o se quita.
+   ================================================================= */
+const BLOQUEO_MINUTOS=[[1,"1 minuto"],[5,"5 minutos"],[15,"15 minutos"],[60,"1 hora"],[0,"Solo al abrir la app"]];
+function bloqueoSeccionHTML(){
+  const B=window.BloqueoPIN; if(!B || !B.disponible) return "";
+  const nota=`<p class="sub" style="margin:6px 0 0">Evita que alguien abra la app en un descuido (un alumno con el iPad, el ordenador del aula). Vale también para Tutoría. <strong>No cifra los datos</strong>: para eso protege el dispositivo con su contraseña y usa copias cifradas.</p>`;
+  if(!B.activo) return `<div class="card" style="margin:0 0 10px;padding:12px 14px">
+    <strong style="font-size:13.5px">🔒 Bloqueo con PIN</strong>
+    <p class="sub" style="margin:4px 0 8px">Pide un PIN al abrir la app y tras unos minutos sin usarla.</p>
+    <button class="btn small" onclick="bloqueoActivar()">Activar el PIN</button>${nota}</div>`;
+  return `<div class="card" style="margin:0 0 10px;padding:12px 14px">
+    <strong style="font-size:13.5px">🔒 Bloqueo con PIN</strong>
+    <p class="sub" style="margin:4px 0 8px">✓ Activado. Con 🔒 en la cabecera bloqueas la app al momento.</p>
+    <div class="flex" style="gap:6px;flex-wrap:wrap;align-items:center">
+      <label class="sub" style="margin:0" for="bloqueoMin">Bloquear sola tras</label>
+      <select class="in" id="bloqueoMin" style="padding:6px 9px" onchange="BloqueoPIN.cambiarMinutos(this.value);mostrarToast('✓ Guardado')">${BLOQUEO_MINUTOS.map(([m,l])=>`<option value="${m}" ${B.minutos===m?"selected":""}>${l}</option>`).join("")}</select>
+      <button class="ghost small" style="border:1px solid var(--line)" onclick="bloqueoActivar(true)">Cambiar el PIN</button>
+      <button class="ghost small" style="border:1px solid var(--line)" onclick="bloqueoQuitar()">Quitar el PIN</button>
+    </div>${nota}</div>`;
+}
+/* Pide un PIN nuevo (dos veces) en una ventana propia. Devuelve el PIN o null. */
+function bloqueoPedirPin(titulo,texto,confirmarlo){
+  return new Promise(resolve=>{
+    const div=document.createElement("div"); div.className="modal-overlay"; div.style.zIndex="1500";
+    div.innerHTML=`<div class="modal-box" style="max-width:400px" role="dialog" aria-modal="true" aria-labelledby="bqpT">
+      <h2 id="bqpT" style="font-size:17px">${titulo}</h2>
+      <p class="sub">${texto}</p>
+      <input class="in" type="password" inputmode="numeric" autocomplete="off" maxlength="12" id="bqp1" aria-label="PIN" placeholder="PIN (4 a 12 cifras)" style="width:100%;margin-top:6px">
+      ${confirmarlo?'<input class="in" type="password" inputmode="numeric" autocomplete="off" maxlength="12" id="bqp2" aria-label="Repite el PIN" placeholder="Repite el PIN" style="width:100%;margin-top:8px">':""}
+      <div id="bqpErr" role="alert" style="color:var(--danger,#b91c1c);font-size:12.5px;min-height:18px;margin-top:6px"></div>
+      <div class="flex" style="justify-content:flex-end;gap:8px"><button class="ghost" id="bqpNo" style="border:1px solid var(--line)">Cancelar</button><button class="btn" id="bqpSi">Aceptar</button></div></div>`;
+    document.body.appendChild(div);
+    const p1=div.querySelector("#bqp1"), p2=div.querySelector("#bqp2"), err=div.querySelector("#bqpErr");
+    const fin=v=>{ div.remove(); resolve(v); };
+    const ok=()=>{
+      if(confirmarlo && !/^\d{4,12}$/.test(p1.value)){ err.textContent="El PIN debe tener entre 4 y 12 cifras."; return; }
+      if(confirmarlo && p1.value!==p2.value){ err.textContent="Los dos PIN no coinciden."; return; }
+      if(!p1.value){ err.textContent="Escribe el PIN."; return; }
+      fin(p1.value);
+    };
+    div.querySelector("#bqpSi").onclick=ok;
+    div.querySelector("#bqpNo").onclick=()=>fin(null);
+    div.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); e.stopPropagation(); ok(); } else if(e.key==="Escape"){ e.stopPropagation(); fin(null); } });
+    setTimeout(()=>p1.focus(),30);
+  });
+}
+window.bloqueoActivar=async(cambio)=>{
+  const B=window.BloqueoPIN; if(!B) return;
+  if(cambio){
+    const actual=await bloqueoPedirPin("🔒 Cambiar el PIN","Escribe primero el PIN actual.",false);
+    if(actual==null) return;
+    if(!await B.comprobar(actual)){ mostrarAviso("Ese no es el PIN actual."); return; }
+  }
+  const pin=await bloqueoPedirPin(cambio?"🔒 PIN nuevo":"🔒 Activar el bloqueo con PIN","Elige un PIN de 4 a 12 cifras. Se pedirá al abrir la app (el Cuaderno y Tutoría) y tras unos minutos sin usarla.",true);
+  if(pin==null) return;
+  let codigo;
+  try{ codigo=await B.configurar(pin, cambio?B.minutos:5); }catch(e){ mostrarAviso(e.message||String(e)); return; }
+  if(_copiasModalEl) pintarCopias();
+  await mostrarAviso("Apunta este código de recuperación y guárdalo fuera de este dispositivo:\n\n"+codigo+"\n\nSi olvidas el PIN, con él podrás quitarlo («He olvidado el PIN»). No se volverá a mostrar.","🔒 PIN "+(cambio?"cambiado":"activado"));
+};
+window.bloqueoQuitar=async()=>{
+  const B=window.BloqueoPIN; if(!B) return;
+  const pin=await bloqueoPedirPin("🔓 Quitar el PIN","Escribe el PIN actual para quitar el bloqueo.",false);
+  if(pin==null) return;
+  if(!await B.comprobar(pin)){ mostrarAviso("Ese no es el PIN actual."); return; }
+  B.quitar();
+  if(_copiasModalEl) pintarCopias();
+  mostrarToast("PIN quitado: la app ya no se bloquea","info");
 };

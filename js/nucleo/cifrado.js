@@ -42,7 +42,7 @@ async function descifrarTexto(obj,pass){
 /* Ventana para pedir contraseña (campos de tipo contraseña, no prompt()). */
 function pedirContrasena({titulo,texto,confirmar,boton}){
   return new Promise(resolve=>{
-    const div=document.createElement("div"); div.className="modal-overlay"; div.style.zIndex="60";
+    const div=document.createElement("div"); div.className="modal-overlay"; div.style.zIndex="1500";
     div.innerHTML=`<div class="modal-box" style="max-width:440px">
       <h2 style="font-size:17px">${titulo}</h2>
       <p class="sub">${texto||""}</p>
@@ -80,7 +80,7 @@ window.exportarCifrada=async()=>{
   const nombre=`copia-cuaderno-CIFRADA-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json`;
   const blob=new Blob([txt],{type:"application/json"});
   // Botón aparte para guardar: en iPad el menú Compartir exige un toque "fresco".
-  const div=document.createElement("div"); div.className="modal-overlay"; div.style.zIndex="60";
+  const div=document.createElement("div"); div.className="modal-overlay"; div.style.zIndex="1500";
   div.innerHTML=`<div class="modal-box" style="max-width:420px;text-align:center"><h2 style="font-size:17px">🔒 Copia cifrada lista</h2><p class="sub">${esc(nombre)} · ${_fmtBytes(txt.length)}</p><div class="flex" style="justify-content:center;gap:8px;margin-top:8px"><button class="ghost" id="cfNo" style="border:1px solid var(--line)">Cancelar</button><button class="btn" id="cfSi">💾 Guardar archivo</button></div></div>`;
   document.body.appendChild(div);
   div.querySelector("#cfNo").onclick=()=>div.remove();

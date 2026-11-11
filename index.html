@@ -16,6 +16,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="stylesheet" href="css/app.css">
 <script src="js/una-ventana.js" data-app="cuaderno" data-nombre="El Cuaderno del profesor"></script>
+<script src="js/bloqueo.js"></script>
 <script src="js/registro-sw.js"></script>
 </head>
 <body>
@@ -27,6 +28,7 @@
         <button class="ghost" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="buscarAbrir()" title="Buscar (Ctrl/Cmd + K)">🔍 Buscar</button>
         <button class="ghost" id="temaToggleBtn" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="toggleTemaApp()" title="Cambiar modo claro/oscuro">🌙</button>
         <button class="ghost" id="proyectorBtn" aria-pressed="false" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="toggleProyector()" title="Modo proyector: difumina los nombres del alumnado y las notas (para proyectar la pantalla)">👁️</button>
+        <button class="ghost" id="bloqueoBtn" style="display:none;color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="BloqueoPIN.bloquear()" title="Bloquear la app ahora (pide el PIN para volver a entrar)" aria-label="Bloquear la app ahora">🔒</button>
         <button class="ghost" id="anchoToggleBtn" style="color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 13px;font-size:12.5px" onclick="toggleAnchoApp()" title="Alternar versión iPad / escritorio">🖥️</button>
       </div>
       <div class="flex" id="backupBar"></div>
@@ -123,7 +125,7 @@
 <script src="js/corrector/corregir.js"></script>
 <script src="js/nucleo/nuevo-curso.js"></script>
 <script src="js/ui/buscador.js"></script>
-<script src="js/ui/modo-proyector.js"></script>
+<script src="js/ui/privacidad.js"></script>
 <script src="js/ui/bienvenida.js"></script>
 <script src="js/ui/render-accesibilidad.js"></script>
 <script src="js/corrector/editor-examenes.js"></script>

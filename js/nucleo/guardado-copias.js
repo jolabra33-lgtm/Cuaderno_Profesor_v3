@@ -279,6 +279,7 @@ async function pintarCopias(){
     ${uso&&uso.usage?`<p class="sub" style="margin:0 0 8px">Espacio usado por la app en este dispositivo: ${_fmtBytes(uso.usage)}.</p>`:""}
     <p class="sub" style="margin:0 0 8px">Tus datos ocupan ${_fmtBytes(saveState.bytesLS||0)} y se guardan en la base de datos del dispositivo (IndexedDB), sin el límite de 5 MB que tenía antes.${saveState.ok?"":" Ahora mismo no caben en la copia rápida de localStorage (lo ocupa otra aplicación de esta misma dirección): no pasa nada, solo tarda un instante más en abrir."}</p>
     ${typeof ccSeccionHTML==="function"?ccSeccionHTML():""}
+    ${typeof bloqueoSeccionHTML==="function"?bloqueoSeccionHTML():""}
     <div class="flex" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn" onclick="exportarTodo()">⬇ Exportar copia a un archivo</button>
       ${cifradoDisponible()?'<button class="btn" onclick="exportarCifrada()" title="Recomendado si la copia va a salir del dispositivo (correo, pendrive, nube)">🔒 Exportar copia cifrada</button>':""}
