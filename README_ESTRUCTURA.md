@@ -85,6 +85,7 @@ Completan el repositorio: `manifest.json` e `icons/` (instalación como app), `.
 | `js/corrector/editor-rubrica.js` | Editor de rúbrica y rúbricas adaptadas (NESE): `cxCrearVariante`, aviso de alumnado NESE sin versión (`cxAvisoNeseHTML`, `act.neseGeneral`) |
 | `js/corrector/modelo-b.js` | Modelo B: se reconstruye desde el general con su orden (`act.modeloB.orden`), reparto A/B (`act.modeloB.alumnos`), rúbrica en el orden del B al corregir (`mbRubricaVista`) y enlace de rúbricas hechas a mano con el diseño (`mbEnlazarRubrica`) |
 | `js/corrector/corregir.js` | Corregir, estadísticas por ítem e impresión de la rúbrica corregida |
+| `js/corrector/rubrica-niveles.js` | Rúbrica por niveles de logro (categorías × niveles, como una matriz analítica): editor en tabla, corrección pinchando casillas y afinando con puntos, impresión y reparto por niveles. Se guarda con la forma de una rúbrica normal (`formato:"niveles"`), así que el cálculo de notas, NESE, plantillas y Programación funcionan igual |
 | `js/nucleo/nuevo-curso.js` | Asistente «Empezar curso nuevo»: archiva el curso y deja lo reutilizable |
 | `js/ui/buscador.js` | Buscador global |
 | `js/ui/privacidad.js` | Modo proyector (difumina nombres y notas) y ajustes del bloqueo con PIN |

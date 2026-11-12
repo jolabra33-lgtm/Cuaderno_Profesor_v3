@@ -40,7 +40,7 @@ function renderCorCorregir(grupo){
         <p class="sub" style="margin:0">${TRIMESTRES[act.trimestre]} · ${notas.length} de ${grupo.alumnos.length} corregidos</p>
       </div>
       <div class="flex">
-        <button class="ghost" style="border:1px solid var(--line)" title="Corregir una pregunta de todo el grupo seguida (opcional)" onclick="exTogglePreg()">↕ Por pregunta</button>
+        <button class="ghost" style="border:1px solid var(--line)" title="Corregir una pregunta de todo el grupo seguida (opcional)" onclick="exTogglePreg()">↕ Por ${cxEsNiveles(act.rubrica)?"categoría":"pregunta"}</button>
         <select class="in" id="cxExamSel">${exams.map(a=>`<option value="${a.id}" ${a.id===act.id?"selected":""}>${esc(a.nombre)}</option>`).join("")}</select>
         <button class="ghost" style="border:1px solid var(--line)" onclick="cxIrEditor('${act.id}')">✏️ Editar rúbrica</button>
         ${notas.length?`<button class="ghost" style="border:1px solid var(--line)" onclick="cxImprimirRubricasTodos('${act.id}')">🖨️ Imprimir rúbricas</button>
@@ -57,7 +57,7 @@ function renderCorCorregir(grupo){
   </div>
   <div class="card">
     <div class="flex" style="justify-content:space-between;align-items:center">
-      <h2 style="font-size:15px">📊 Estadísticas por ítem</h2>
+      <h2 style="font-size:15px">📊 Estadísticas por ${cxEsNiveles(act.rubrica)?"categoría":"ítem"}</h2>
       <button class="ghost small" style="border:1px solid var(--line)" onclick="cxToggleEstadisticas()">${state.ui.cxVerEstadisticas?"Ocultar":"Ver"}</button>
     </div>
     ${state.ui.cxVerEstadisticas
@@ -111,7 +111,8 @@ function cxEstadisticasItemsHTML(grupo,act){
   const color=v=> v==null?"#c7cede": v<50?"#c62839": v<75?"#a3620a":"#1e7a44";
   const filas=stats.map(s=>barraHorizontalHTML(`${s.label} — ${s.seccion}`,s.avg,color(s.avg))).join("");
   return `<div style="margin-top:10px">${filas}</div>
-    <p class="sub" style="margin:4px 0 0;font-size:11px">Media de acierto de cada ítem (puntos obtenidos / puntos máximos) sobre el alumnado ya corregido, de peor a mejor.</p>`;
+    <p class="sub" style="margin:4px 0 0;font-size:11px">Media de acierto de cada ${cxEsNiveles(act.rubrica)?"categoría":"ítem"} (puntos obtenidos / puntos máximos) sobre el alumnado ya corregido, de peor a mejor.</p>
+    ${cxnRepartoHTML(grupo,act)}`;
 }
 window.cxToggleEstadisticas=()=>{ state.ui.cxVerEstadisticas=!state.ui.cxVerEstadisticas; save(); render(); };
 /* Desplegable de puntuación de un ítem (de 0,05 en 0,05 hasta el máximo) para poder corregir solo con el ratón.
@@ -164,7 +165,7 @@ function renderCxGradingAlumno(grupo,act,al){
   const rubAl=mbRubricaVista(act,al.id);   // la suya y, si hace el modelo B, en el orden del B
   const varAl=cxVarianteDeAlumno(act,al.id), deB=mbHaceB(act,al.id);
   const critIds=cxCriteriosDeRubrica(rubAl);
-  const itemsHtml=rubAl.map(sec=>cxNodoCorregirHTML(sec,0,sc,al.id,act.id)).join("");
+  const itemsHtml=cxEsNiveles(rubAl)? cxnCorregirHTML(grupo,rubAl,sc,al.id,act.id) : rubAl.map(sec=>cxNodoCorregirHTML(sec,0,sc,al.id,act.id)).join("");
   const vc=grupo.notasCuant?.[al.id]?.[act.id];
   const critPanel=critIds.length? `<div class="grid" style="gap:6px;margin-top:6px">
     ${critIds.map(cid=>{
@@ -253,7 +254,7 @@ window.cxExportarCSV=actId=>{
    Lleva su propia hoja de estilos (cxRubricaPrintCSS), inyectada solo dentro de esta ventana de
    impresión concreta: no toca la plantilla que usan el resto de informes de la aplicación. */
 function cxRubricaPrintCSS(){
-  return `<style>
+  return cxnPrintCSS()+`<style>
     @page{ margin:2.3cm 2cm; }
     body{ margin:0; padding:46px 54px 70px; max-width:740px; line-height:1.55; }
     .cx-letterhead{ font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#5b6b82; margin:0 0 14px; padding-bottom:10px; border-bottom:1px solid #dde3ec; }
@@ -336,7 +337,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
     if(depth===0) return `<div class="cx-sec"><h2 style="white-space:pre-wrap${sec.tipo==="pregunta"?";text-transform:none;letter-spacing:0;font-size:13.5px;color:#141b28":""}">${pts}${tit}</h2>${filas?`<table><tbody>${filas}</tbody></table>`:""}${subs}</div>`;
     return `<div style="margin:12px 0 0 ${depth>1?"14px":"0"}"><h3 style="font-size:12.5px;color:#465064;margin:0 0 4px;white-space:pre-wrap">${pts}${tit}</h3>${filas?`<table><tbody>${filas}</tbody></table>`:""}${subs}</div>`;
   };
-  const seccionesHtml=(rubAl||[]).map(sec=>nodoHTML(sec,0)).join("");
+  const seccionesHtml=cxEsNiveles(rubAl)? cxnImprimirHTML(grupo,act,al,rubAl,sc,opts) : (rubAl||[]).map(sec=>nodoHTML(sec,0)).join("");
   return `
     <div${opts.pageBreak?' style="page-break-before:always;break-before:page"':''}>
     ${state.centroNombre?`<div class="cx-letterhead">${esc(state.centroNombre)}</div>`:""}

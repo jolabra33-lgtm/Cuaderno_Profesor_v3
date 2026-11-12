@@ -42,11 +42,17 @@ function cxRubricaDesdeCriterios(criterios,catalogoKey){
 }
 function cxClonarRubrica(rubrica,catalogoKey){
   const validos=catalogoKey? cxCriteriosValidosEnCatalogo(catalogoKey) : null;
-  const clonar=sec=>({
-    ...sec, id:uid(),
-    items:(sec.items||[]).map(it=>({...it, id:uid(), desc:Array.isArray(it.desc)?it.desc:[], links:(it.links||[]).filter(l=>!validos||validos.has(l.critId))})),
-    subs:(sec.subs||[]).map(clonar)
-  });
+  const clonar=sec=>{
+    // Rúbrica por niveles: cada nivel recibe un id nuevo y los descriptores de las casillas lo siguen.
+    const mapa=new Map(Array.isArray(sec.niveles)? sec.niveles.map(l=>[l.id,uid()]) : []);
+    const celdas=c=>{ const o={}; Object.keys(c||{}).forEach(k=>{ if(mapa.has(k)) o[mapa.get(k)]=String(c[k]); }); return o; };
+    return {
+      ...sec, id:uid(),
+      ...(Array.isArray(sec.niveles)? {niveles:sec.niveles.map(l=>({...l,id:mapa.get(l.id)}))} : {}),
+      items:(sec.items||[]).map(it=>({...it, id:uid(), desc:Array.isArray(it.desc)?it.desc:[], links:(it.links||[]).filter(l=>!validos||validos.has(l.critId)), ...(it.celdas?{celdas:celdas(it.celdas)}:{})})),
+      subs:(sec.subs||[]).map(clonar)
+    };
+  };
   return JSON.parse(JSON.stringify(rubrica||[])).map(clonar);
 }
 /* Actividad de la Programación de la que procede una actividad del grupo (o null). */
