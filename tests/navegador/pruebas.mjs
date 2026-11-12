@@ -658,6 +658,94 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
+  { nombre: 'modelo-b', descripcion: 'Modelo B: sigue al general, reparto A/B, rúbrica en el orden del B y enlace de una rúbrica hecha a mano', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url, ['Alfa, Ana', 'Beta, Bruno', 'Gamma, Gema', 'Delta, Dani'].length ? { nombres: ['Alfa, Ana', 'Beta, Bruno', 'Gamma, Gema', 'Delta, Dani'] } : {});
+    // Examen general con 4 preguntas (la 3.ª con dos subpreguntas) y su rúbrica importada del diseño.
+    const r0 = await p.evaluate(async () => { _mostrarBienvenida = false; const g = state.grupos[0];
+      g.actividades = [{ id: 'e1', nombre: 'Examen', tipo: TIPOS[0], trimestre: 0, bloqueId: 'b0', esExamen: true, criterios: [] }];
+      state.ui.appMode = 'corrector'; state.ui.grupoId = g.id; state.ui.corExamId = 'e1'; state.ui.corTab = 'diseno'; save(); render();
+      await new Promise(r => setTimeout(r, 1800));
+      const w = document.getElementById('exFrame').contentWindow, ex = w.__ee.get();
+      const q = (id, txt, pts, hijos) => ({ id, type: 'question', title: '', text: txt, points: hijos ? '' : String(pts), children: hijos || [] });
+      const sq = (id, txt, pts) => ({ id, type: 'subquestion', title: '', text: txt, points: String(pts), children: [] });
+      ex.body = ex.body.filter(n => n.type === 'title').concat([q('q1', 'Define latitud', 2), q('q2', 'Define longitud', 2), q('q3', 'Mapa', 0, [sq('s31', 'Escala del mapa', 2), sq('s32', 'Leyenda del mapa', 2)]), q('q4', 'Explica el clima', 2)]);
+      w.__ee.cargar(ex); w.__ee.flush(); await new Promise(r => setTimeout(r, 500));
+      return (await exGet('e1')).exam.body.filter(n => n.type === 'question').length; });
+    t.ok(r0 === 4, 'el examen general de prueba tiene 4 preguntas', String(r0));
+    await p.click('#tabContent button:has-text("Importar a la rúbrica")'); await esperar(800);
+    await p.evaluate(() => { const b = document.querySelector('.dlg-si'); if (b) b.click(); }); await esperar(600);
+    // Modelo B: se crea barajado y con las mismas preguntas.
+    t.ok(await p.evaluate(() => !!state.grupos[0].actividades[0].rubrica), 'la rúbrica se importa del diseño');
+    await p.evaluate(() => { state.ui.corTab = 'diseno'; exVerB(); }); await esperar(2200);
+    let r = await p.evaluate(async () => { const act = state.grupos[0].actividades[0], B = (await exGet('e1:B')).exam, G = (await exGet('e1')).exam;
+      const qs = e => e.body.filter(n => n.type === 'question').map(n => n.id);
+      return { hayModelo: !!act.modeloB, a: qs(G), b: qs(B), eyebrow: (B.body.find(n => n.type === 'title') || {}).eyebrow, numB: act.modeloB && act.modeloB.numB }; });
+    t.ok(r.hayModelo && r.b.slice().sort().join() === r.a.slice().sort().join() && r.b.join() !== r.a.join(), 'el modelo B tiene las mismas preguntas en otro orden', JSON.stringify(r));
+    t.ok(/Modelo B/.test(r.eyebrow || '') && r.numB && Object.keys(r.numB).length === 4, 'lleva «Modelo B» encima del título y guarda la numeración de cada pregunta', JSON.stringify(r));
+    const ordenB = r.b;
+    // Se cambia el general: el B lo sigue (nueva pregunta incluida) sin perder su orden.
+    r = await p.evaluate(async () => { exSel(''); await new Promise(r => setTimeout(r, 2000));
+      const w = document.getElementById('exFrame').contentWindow, ex = w.__ee.get();
+      ex.body.find(n => n.id === 'q1').text = 'Define latitud (CAMBIADO)'; ex.body.push({ id: 'q5', type: 'question', title: '', text: 'Pregunta nueva', points: '1', children: [] });
+      w.__ee.cargar(ex); w.__ee.flush(); await new Promise(r => setTimeout(r, 1200));
+      const B = (await exGet('e1:B')).exam;
+      return { b: B.body.filter(n => n.type === 'question').map(n => n.id), texto: B.body.find(n => n.id === 'q1').text }; });
+    t.ok(r.texto === 'Define latitud (CAMBIADO)' && r.b.includes('q5') && r.b.filter(id => id !== 'q5').join() === ordenB.join(), 'al cambiar el general, el modelo B se pone al día y conserva su orden', JSON.stringify(r));
+    // En el B solo cuenta el orden: un cambio de texto allí no se guarda.
+    r = await p.evaluate(async () => { window.__dialogosAuto = { confirmar: true }; exVerB(); await new Promise(r => setTimeout(r, 2200));
+      const w = document.getElementById('exFrame').contentWindow, ex = w.__ee.get();
+      const qs = ex.body.filter(n => n.type === 'question'); const i0 = ex.body.indexOf(qs[0]), i1 = ex.body.indexOf(qs[1]); [ex.body[i0], ex.body[i1]] = [ex.body[i1], ex.body[i0]];
+      ex.body.find(n => n.id === 'q2').text = 'TEXTO CAMBIADO EN EL B';
+      w.__ee.cargar(ex); w.__ee.flush(); await new Promise(r => setTimeout(r, 1200));
+      const B = (await exGet('e1:B')).exam, act = state.grupos[0].actividades[0];
+      return { ordenGuardado: act.modeloB.orden._raiz, b: B.body.filter(n => n.type === 'question').map(n => n.id), texto: B.body.find(n => n.id === 'q2').text, aviso: (window.__dialogosLog || []).some(m => /solo cuenta el ORDEN/.test(m)) }; });
+    t.ok(r.b.join() === r.ordenGuardado.join() && r.texto === 'Define longitud' && r.aviso, 'en el modelo B el orden manual se guarda y los cambios de texto no (con aviso)', JSON.stringify(r));
+    // Reparto y corrección.
+    await p.evaluate(() => { state.ui.corTab = 'corregir'; state.ui.corAlId = ''; render(); }); await esperar(300);
+    await p.click('button:has-text("Alternar A/B por lista")'); await esperar(300);
+    r = await p.evaluate(() => { const g = state.grupos[0], act = g.actividades[0]; return { deB: act.modeloB.alumnos.map(id => g.alumnos.find(a => a.id === id).nombre), botones: document.querySelectorAll('.mb-ab').length }; });
+    t.ok(r.deB.join() === 'Beta, Bruno,Delta, Dani' && r.botones === 4, '«Alternar por lista» reparte A, B, A, B y cada alumno/a tiene su selector', JSON.stringify(r));
+    await p.evaluate(() => { const g = state.grupos[0]; mbSetModelo(g.alumnos[2].id, 'B'); }); await esperar(200);
+    const orden = () => p.evaluate(() => { const act = state.grupos[0].actividades[0], ids = [];
+      (function w(l) { l.forEach(n => { if (n.fuenteId && /^q/.test(n.fuenteId) && !ids.includes(n.fuenteId)) ids.push(n.fuenteId); (n.items || []).forEach(it => { if (it.fuenteId && /^q/.test(it.fuenteId) && !ids.includes(it.fuenteId)) ids.push(it.fuenteId); }); w(n.subs || []); }); })(mbRubricaVista(act, state.ui.corAlId));
+      return ids; });
+    await p.evaluate(() => { state.ui.corAlId = state.grupos[0].alumnos[1].id; render(); }); await esperar(300);
+    const vistaB = await orden(), textoB = await p.evaluate(() => document.getElementById('tabContent').innerText);
+    await p.evaluate(() => { state.ui.corAlId = state.grupos[0].alumnos[0].id; render(); }); await esperar(300);
+    const vistaA = await orden(), textoA = await p.evaluate(() => document.getElementById('tabContent').innerText);
+    const ordenFinal = await p.evaluate(() => state.grupos[0].actividades[0].modeloB.orden._raiz);
+    t.ok(vistaB.join() === ordenFinal.filter(id => id !== 'q5').join() && vistaA.join() === 'q1,q2,q3,q4',   // q5 se añadió al diseño después de importar la rúbrica
+       'al corregir, el modelo B sale en el orden del B y el A en el suyo', JSON.stringify({ vistaA, vistaB, ordenFinal }));
+    t.ok(/Modelo B/.test(textoB) && /modelo A: \d/.test(textoB) && !/Modelo B/.test(textoA), 'el B lleva «Modelo B» y el número de cada pregunta en el A', textoB.slice(0, 200));
+    // Mismas puntuaciones, misma nota: corregir a Bruno con el B y comprobar su nota.
+    r = await p.evaluate(() => { const g = state.grupos[0], act = g.actividades[0], al = g.alumnos[1];
+      const sc = g.rubricScores[al.id] = g.rubricScores[al.id] || {}; sc[act.id] = {}; cxItemsFlat(act.rubrica).forEach(it => { sc[act.id][it.id] = Number(it.max); });
+      cxRecalcAlumno(g, act, al.id); return g.notasCuant[al.id][act.id]; });
+    t.ok(r === 10, 'con todo bien en el modelo B la nota es 10: la rúbrica es la misma', String(r));
+    // Impresión en el orden del B.
+    const imp = await p.evaluate(() => { const g = state.grupos[0]; return cxRubricaBodyHTML(g, g.actividades[0], g.alumnos[1], {}); });
+    t.ok(/Modelo B/.test(imp), 'la rúbrica impresa del modelo B lo indica');
+    // Plano de aula: damero.
+    r = await p.evaluate(() => { const g = state.grupos[0]; g.plano.posiciones = { [g.alumnos[0].id]: { fila: 0, col: 0 }, [g.alumnos[1].id]: { fila: 0, col: 1 }, [g.alumnos[2].id]: { fila: 1, col: 0 }, [g.alumnos[3].id]: { fila: 1, col: 1 } };
+      save(); render(); mbAlternarPlano(); return g.actividades[0].modeloB.alumnos.map(id => g.alumnos.find(a => a.id === id).nombre).sort(); });
+    t.ok(r.join() === 'Beta, Bruno,Gamma, Gema', '«Alternar según el plano» reparte en damero (ni al lado ni delante el mismo modelo)', JSON.stringify(r));
+    // Rúbrica hecha a mano (sin enlaces): se enlaza por el texto sin tocar lo corregido.
+    r = await p.evaluate(async () => { const g = state.grupos[0], act = g.actividades[0];
+      const antes = JSON.stringify(g.rubricScores), ids = cxItemsFlat(act.rubrica).map(i => i.id).join();
+      (function w(l) { l.forEach(n => { delete n.fuenteId; (n.items || []).forEach(it => { delete it.fuenteId; }); w(n.subs || []); }); })(act.rubrica);
+      const sinEnlace = mbRubricaEnlazada(act);
+      state.ui.corTab = 'diseno'; state.ui.corVerB = false; render(); await new Promise(r => setTimeout(r, 2200));
+      const boton = [...document.querySelectorAll('#tabContent button')].find(b => /Enlazar la rúbrica/.test(b.textContent));
+      await mbEnlazarRubrica(); await new Promise(r => setTimeout(r, 300));
+      document.getElementById('mbSi').click(); await new Promise(r => setTimeout(r, 300));
+      return { boton: !!boton, sinEnlace, enlazada: mbRubricaEnlazada(act), sinEnlazar: mbSinEnlazar(act), mismosIds: cxItemsFlat(act.rubrica).map(i => i.id).join() === ids, mismasNotas: JSON.stringify(g.rubricScores) === antes,
+        bloqueQ3: (cxNodosFlat(act.rubrica).find(x => (x.n.items || []).some(it => it.fuenteId === 's31')) || {}).n.fuenteId }; });
+    t.ok(r.boton && !r.sinEnlace && r.enlazada && r.sinEnlazar === 0 && r.bloqueQ3 === 'q3', 'una rúbrica sin enlazar se enlaza con el diseño (ítems y bloques)', JSON.stringify(r));
+    t.ok(r.mismosIds && r.mismasNotas, 'enlazar no cambia ningún ítem ni lo ya corregido', JSON.stringify(r));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
   { nombre: 'que-me-falta', descripcion: 'Inicio: «Qué me falta» detecta notas a medias y comentarios pendientes', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url, { nombres: ['A, Uno', 'B, Dos', 'C, Tres', 'D, Cuatro'] });

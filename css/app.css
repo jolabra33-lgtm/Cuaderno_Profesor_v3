@@ -538,3 +538,13 @@
     .res-acciones::-webkit-scrollbar{display:none}
     .res-acciones>*{flex:0 0 auto;white-space:nowrap}
   }
+  /* v3 · Modelo B: reparto A/B en Corregir y emparejamiento de la rúbrica con el diseño */
+  .mb-barra{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+  .mb-ab{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .mb-ab button{border:0;background:transparent;color:var(--mut);font-weight:700;font-size:12.5px;padding:4px 11px;min-height:30px;cursor:pointer}
+  .mb-ab button.on{background:linear-gradient(135deg,var(--gpill-on-1),var(--gpill-on-2));color:#fff}
+  body[data-tema="oscuro"] .mb-ab button.on{color:var(--accent-ink)}
+  .mb-badge{color:var(--accent-texto);border-color:var(--accent-texto)}
+  .mb-par{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:1.4;cursor:pointer}
+  .mb-par:last-child{border-bottom:0}
+  .mb-par input{margin-top:3px;flex-shrink:0;width:16px;height:16px}
