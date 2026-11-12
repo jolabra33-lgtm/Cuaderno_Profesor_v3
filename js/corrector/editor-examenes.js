@@ -161,16 +161,19 @@ function exRenderPorPregunta(grupo,act){
   const filas=grupo.alumnos.map(al=>{
     const it=cxItemsFlat(cxRubricaDe(act,al.id)).find(x=>keyOf(x)===k);
     const v=grupo.rubricScores&&grupo.rubricScores[al.id]&&grupo.rubricScores[al.id][act.id]&&it? grupo.rubricScores[al.id][act.id][it.id] : null;
+    const rubAl=cxRubricaDe(act,al.id), nivAl=cxnNiveles(rubAl), posAl=it&&nivAl.length&&marcaDe(grupo,al.id,act.id)!=="NP"? cxnPosicion(it,v,nivAl) : null;
+    const botones=it&&nivAl.length? `<span class="cxn-mini" role="group" aria-label="Nivel de ${esc(al.nombre)}">${nivAl.map((l,i)=>{ const col=cxnColor(l.color,i), on=!!(posAl&&posAl.exacto===l.id);
+      return `<button type="button" class="cxn-mini-btn${on?" on":""}" style="--cxn:${col};--cxn-tinta:${cxnTinta(col)}" aria-pressed="${on}" onclick="cxnElegir('${al.id}','${act.id}','${it.id}','${l.id}')">${esc(l.nombre||"")}</button>`; }).join("")}</span> ` : "";
     const celda= marcaDe(grupo,al.id,act.id)==="EX"? '<span class="badge">Exento</span>'
-      : it? `${cxSelectPuntuacionHTML(it.max,v,"ex-preg-in",`onchange="exPregScore('${al.id}','${act.id}','${it.id}',this)" onkeydown="exEnter(event,this)"`,marcaDe(grupo,al.id,act.id)==="NP")} <span style="font-size:12px;color:var(--mut)">/ ${cxFmtPts(it.max)}</span>`
-      : '<span style="color:var(--mut);font-size:12.5px">— su rúbrica adaptada no incluye esta pregunta</span>';
+      : it? `${botones}${cxSelectPuntuacionHTML(it.max,v,"ex-preg-in",`onchange="exPregScore('${al.id}','${act.id}','${it.id}',this)" onkeydown="exEnter(event,this)"`,marcaDe(grupo,al.id,act.id)==="NP")} <span style="font-size:12px;color:var(--mut)">/ ${cxFmtPts(it.max)}</span>`
+      : `<span style="color:var(--mut);font-size:12.5px">— su rúbrica adaptada no incluye esta ${cxEsNiveles(act.rubrica)?"categoría":"pregunta"}</span>`;
     return `<tr><td style="padding:5px 8px 5px 0">${esc(al.nombre)}${neseBadgeHTML(al)}</td><td>${celda}</td></tr>`;
   }).join("");
-  c.innerHTML=`<div class="card"><div class="flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h2 style="font-size:15px">${esc(act.nombre)} · corregir por pregunta</h2>
+  c.innerHTML=`<div class="card"><div class="flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h2 style="font-size:15px">${esc(act.nombre)} · corregir por ${cxEsNiveles(act.rubrica)?"categoría":"pregunta"}</h2>
     <button class="ghost" style="border:1px solid var(--line)" onclick="exTogglePreg()">← Corregir por alumno/a</button></div>
-    <label style="font-size:12.5px;color:var(--mut);display:block;margin-top:8px">Pregunta<select class="in" style="width:100%;margin-top:4px" onchange="exElegirPreg(this.value)">${gen.map(it=>`<option value="${esc(keyOf(it))}" ${keyOf(it)===k?"selected":""}>${esc(exEtiquetaItem(act.rubrica,it).slice(0,110))} · ${cxFmtPts(it.max)} pts</option>`).join("")}</select></label>
+    <label style="font-size:12.5px;color:var(--mut);display:block;margin-top:8px">${cxEsNiveles(act.rubrica)?"Categoría":"Pregunta"}<select class="in" style="width:100%;margin-top:4px" onchange="exElegirPreg(this.value)">${gen.map(it=>`<option value="${esc(keyOf(it))}" ${keyOf(it)===k?"selected":""}>${esc(exEtiquetaItem(act.rubrica,it).slice(0,110))} · ${cxFmtPts(it.max)} pts</option>`).join("")}</select></label>
     <div data-fuente="${esc(sel.fuenteId||"")}" style="margin-top:6px"></div>
-    <p class="sub" style="margin:8px 0 0;font-size:12px">Elige la puntuación en el desplegable (Intro pasa al siguiente alumno/a). «—» = sin puntuar.</p></div>
+    <p class="sub" style="margin:8px 0 0;font-size:12px">${cxEsNiveles(act.rubrica)?"Pulsa el nivel de cada alumno/a o afina los puntos en el desplegable":"Elige la puntuación en el desplegable"} (Intro pasa al siguiente alumno/a). «—» = sin puntuar.</p></div>
     <div class="card"><table style="width:100%"><tbody>${filas}</tbody></table></div>`;
 }
 /* Fase 3 · Paquete reutilizable: examen + rúbrica + variantes NESE + versión B (sin alumnado ni notas) */
@@ -515,6 +518,7 @@ window.exImportar=async()=>{
   const est=exConReparto(_exFrame.contentWindow.__ee.estructura());
   if(!est.nodos.length){ mostrarAviso("El examen aún no tiene preguntas ni apartados con puntuación. Añade puntos a las preguntas o a sus subpreguntas (campo «puntos») y vuelve a importar."); return; }
   if(!act.rubrica && !await cxPonerRubrica(grupo,act)) return;
+  if(cxEsNiveles((cxVarEditando(act)||act).rubrica)){ mostrarAviso("Esta rúbrica es por niveles de logro (categorías × niveles), así que no se construye a partir de las preguntas del Diseño.\n\nSi quieres una rúbrica por preguntas, pásala antes a «por puntos» en la pestaña 📋 Rúbrica («⇄ Pasar a rúbrica por puntos») y vuelve a importar."); return; }
   const dest=cxVarEditando(act)||act; const yaImp=cxItemsFlat(dest.rubrica).some(i=>i.fuenteId);
   if(!yaImp){
     const n=cxItemsFlat(dest.rubrica).length;

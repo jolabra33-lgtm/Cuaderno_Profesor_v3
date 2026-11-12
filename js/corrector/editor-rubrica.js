@@ -14,6 +14,7 @@ function renderCorEditor(grupo){
   if(state.ui.corVarId && !cxVariantes(act).some(v=>v.id===state.ui.corVarId)) state.ui.corVarId="";
   const variante=cxVarEditando(act);
   const rub=cxRubEd(act);
+  const esNiv=cxEsNiveles(rub);
   const escalar=variante? variante.escalarA10!==false : !!act.escalarA10;
   const maxTotal=cxMaxTotal(rub);
   const totalOk=Math.abs(maxTotal-10)<0.01;
@@ -55,9 +56,9 @@ function renderCorEditor(grupo){
   c.innerHTML=`
   <div class="card">
     <div class="flex" style="justify-content:space-between;align-items:flex-start;flex-wrap:wrap">
-      <input class="in" id="cxNombre" value="${esc(act.nombre)}" style="font-size:15px;font-weight:600;min-width:240px;flex:1">
+      <input class="in" id="cxNombre" aria-label="Nombre del examen" value="${esc(act.nombre)}" style="font-size:15px;font-weight:600;min-width:240px;flex:1">
       <div class="flex">
-        <select class="in" id="cxBloque">${grupo.bloques.map(b=>`<option value="${b.id}" ${b.id===act.bloqueId?"selected":""}>${esc(b.label)}</option>`).join("")}</select>
+        <select class="in" id="cxBloque" aria-label="Bloque de calificación">${grupo.bloques.map(b=>`<option value="${b.id}" ${b.id===act.bloqueId?"selected":""}>${esc(b.label)}</option>`).join("")}</select>
         <input class="in" id="cxSda" placeholder="SdA (opcional)" value="${esc(act.sda||'')}" style="width:160px">
         <button class="ghost" style="border:1px solid var(--line)" onclick="cxIrLista()">← Exámenes</button>
       </div>
@@ -72,7 +73,7 @@ function renderCorEditor(grupo){
   ${cxAvisoNeseHTML(grupo,act)}
   ${panelVariante}
   ${cxPanelPrevistosHTML(grupo,act,rub,variante)}
-  <div class="card">
+  ${esNiv? cxnEditorHTML(grupo,act,rub,variante,escalar) : `  <div class="card">
     <p class="sub" style="margin:0">Organiza el examen como necesites: <strong>apartados</strong> con sus preguntas o ítems y, si hace falta, <strong>subapartados</strong> dentro (hasta ${CX_MAX_NIVELES} niveles). Cada ítem tiene su puntuación máxima, descriptores opcionales y los criterios de evaluación que trabaja. Si el alumnado elige (p. ej. «responda UNA de las dos opciones»), indica en ese apartado cuántos cuentan. Al importar desde el Diseño, la rúbrica copia su estructura (apartado → pregunta → subpregunta) con los puntos de cada parte.</p>
     <div class="flex" style="margin-top:10px;align-items:center">
       <span class="pill" style="background:${totalOk?'#dcece0':'#f3dcdc'};color:${totalOk?'#1e5631':'#912525'}">Suma de puntos${variante?" (rúbrica adaptada)":""}: ${maxTotal.toFixed(2)} / 10</span>
@@ -84,11 +85,13 @@ function renderCorEditor(grupo){
       <button class="ghost small" style="border:1px solid var(--line)" onclick="cxPlegarTodo(false)">▾ Desplegar todo</button>
     </div>
   </div>
-  ${rub.map((sec,sIdx)=>renderCxNodoHTML(grupo,sec,0,sIdx,rub.length)).join("")}
+  ${rub.map((sec,sIdx)=>renderCxNodoHTML(grupo,sec,0,sIdx,rub.length)).join("")}`}
   <div class="flex">
-    <button class="btn" onclick="cxAddSeccion()">+ Añadir apartado</button>
-    ${rub.length===1&&!rub[0].sinTitulo&&!cxElegirEf(rub[0])&&(!rub[0].tipo||rub[0].tipo==="apartado")?`<button class="ghost" style="border:1px solid var(--line)" title="Mostrar solo las preguntas, sin cabecera de apartado" onclick="cxOcultarApartado('${rub[0].id}')">Sin apartado</button>`:""}
+    ${esNiv?"":`<button class="btn" onclick="cxAddSeccion()">+ Añadir apartado</button>`}
+    ${!esNiv&&rub.length===1&&!rub[0].sinTitulo&&!cxElegirEf(rub[0])&&(!rub[0].tipo||rub[0].tipo==="apartado")?`<button class="ghost" style="border:1px solid var(--line)" title="Mostrar solo las preguntas, sin cabecera de apartado" onclick="cxOcultarApartado('${rub[0].id}')">Sin apartado</button>`:""}
     ${!variante?`<button class="ghost" style="border:1px solid var(--line)" onclick="cxGuardarComoPlantilla('${act.id}')">💾 Guardar como plantilla</button>`:""}
+    <button class="ghost" style="border:1px solid var(--line)" title="Sustituye esta rúbrica por una de tus plantillas guardadas (sirven para cualquier grupo)" onclick="cxCargarPlantilla()">📂 Cargar plantilla</button>
+    <button class="ghost" style="border:1px solid var(--line)" title="${esNiv?"Convierte las categorías en preguntas con puntos":"Convierte las preguntas en categorías de una tabla de niveles de logro"}" onclick="cxCambiarTipoRubrica()">⇄ ${esNiv?"Pasar a rúbrica por puntos":"Pasar a rúbrica por niveles"}</button>
     ${progRef&&!variante?`<button class="ghost" style="border:1px solid var(--line)" title="Guarda esta rúbrica en el examen de la Programación &quot;${esc(progRef.prog.nombre)}&quot;: los demás grupos y los cursos siguientes la recibirán ya hecha al traer el examen" onclick="cxGuardarRubricaEnProgramacion('${act.id}')">📌 ${(progRef.progAct.rubrica||[]).length?"Actualizar la rúbrica de la Programación":"Guardar en la Programación"}</button>`:""}
     <button class="ghost" style="border:1px solid var(--line)" onclick="cxIrCorregir('${act.id}')">Ir a corregir →</button>
   </div>`;
@@ -190,7 +193,6 @@ window.cxPlegarTodo=plegar=>{
   save(); render();
 };
 function renderCxItemHTML(grupo,sec,it,iIdx){
-  const idx=catIndex(grupo.catalogoKey);
   const abierto=state.ui.corItemAbierto===it.id;
   const nCrit=(it.links||[]).length;
   return `<div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface,#fff)">
@@ -216,30 +218,34 @@ function renderCxItemHTML(grupo,sec,it,iIdx){
     </div>
     <div id="cxdp_${it.id}" class="sub" style="margin:4px 0 0;font-size:12px;${cxDescATexto(it).trim()?"":"display:none"}"><span style="color:var(--mut)">Así se verá:</span>${cxDescHTML(cxDescLineas(cxDescATexto(it)),"var(--mut)","var(--ink)")}</div>
     <button class="ghost" style="border:1px solid var(--line);margin-top:6px" onclick="cxToggleItemCriterios('${it.id}')">${abierto?"Ocultar":"Vincular"} criterios${nCrit?` (${nCrit})`:""}</button>
-    ${abierto?(()=>{
-      const linkados=new Set((it.links||[]).map(l=>l.critId));
-      const visible=cr=> !_cxCritPermitidos || _cxCritPermitidos.has(cr.id) || linkados.has(cr.id);
-      const ces=idx.cat.ces.map(ce=>({...ce,criterios:ce.criterios.filter(visible)})).filter(ce=>ce.criterios.length);
-      const nota= _cxHayPrevistos
-        ? `<div class="flex" style="justify-content:space-between;align-items:center;margin:2px 0 4px;gap:8px"><span class="sub" style="margin:0;font-size:12px">${_cxCritPermitidos?"Solo se muestran los criterios previstos para este examen.":"Se muestran todos los criterios de la materia."}</span><button class="ghost small" style="padding:2px 8px" onclick="cxToggleVerTodosCrit()">${_cxCritPermitidos?"Ver todos":"Ver solo los previstos"}</button></div>`
-        : `<div class="sub" style="margin:2px 0 4px;font-size:12px">Este examen no tiene criterios previstos, así que se muestran todos.</div>`;
-      return `<div class="scroll" style="margin-top:8px;max-height:260px">${nota}
-      ${ces.map(ce=>`
-        <div style="font-size:12px;color:var(--mut);font-weight:500;margin:6px 0 3px">${ce.id} · ${esc(ce.titulo)}</div>
-        ${ce.criterios.map(cr=>{
-          const l=(it.links||[]).find(x=>x.critId===cr.id);
-          return `<div class="critbox ${l?"sel":""}">
-            <label style="display:flex;align-items:center;gap:9px;flex:1;cursor:pointer;font-size:13px">
-              <input type="checkbox" ${l?"checked":""} onchange="cxToggleItemLink('${sec.id}','${it.id}','${cr.id}')">
-              <span><strong>${cr.id}</strong> ${esc(cr.texto)}</span>
-            </label>
-            ${(cxCritNoPrevisto(cr.id)?'<span class="badge" style="background:var(--danger-soft,#f3dcdc);color:var(--danger,#912525)" title="No estaba entre los criterios previstos de este examen">no previsto</span>':"")}
-            ${l?`<span style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--mut)">peso
-              <input class="in miniw" type="number" min="0" value="${l.peso}" onchange="cxSetItemLinkPeso('${it.id}','${cr.id}',this.value)"></span>`:""}
-          </div>`;}).join("")}
-      `).join("")}
-    </div>`; })():""}
+    ${abierto?cxCritPickerHTML(grupo,sec,it):""}
   </div>`;
+}
+/* Lista de criterios para vincular a un ítem (o a una categoría de una rúbrica por niveles), con su peso. */
+function cxCritPickerHTML(grupo,sec,it){
+  const idx=catIndex(grupo.catalogoKey);
+  const linkados=new Set((it.links||[]).map(l=>l.critId));
+  const visible=cr=> !_cxCritPermitidos || _cxCritPermitidos.has(cr.id) || linkados.has(cr.id);
+  const ces=idx.cat.ces.map(ce=>({...ce,criterios:ce.criterios.filter(visible)})).filter(ce=>ce.criterios.length);
+  const nota= _cxHayPrevistos
+    ? `<div class="flex" style="justify-content:space-between;align-items:center;margin:2px 0 4px;gap:8px"><span class="sub" style="margin:0;font-size:12px">${_cxCritPermitidos?"Solo se muestran los criterios previstos para este examen.":"Se muestran todos los criterios de la materia."}</span><button class="ghost small" style="padding:2px 8px" onclick="cxToggleVerTodosCrit()">${_cxCritPermitidos?"Ver todos":"Ver solo los previstos"}</button></div>`
+    : `<div class="sub" style="margin:2px 0 4px;font-size:12px">Este examen no tiene criterios previstos, así que se muestran todos.</div>`;
+  return `<div class="scroll" style="margin-top:8px;max-height:260px">${nota}
+  ${ces.map(ce=>`
+    <div style="font-size:12px;color:var(--mut);font-weight:500;margin:6px 0 3px">${ce.id} · ${esc(ce.titulo)}</div>
+    ${ce.criterios.map(cr=>{
+      const l=(it.links||[]).find(x=>x.critId===cr.id);
+      return `<div class="critbox ${l?"sel":""}">
+        <label style="display:flex;align-items:center;gap:9px;flex:1;cursor:pointer;font-size:13px">
+          <input type="checkbox" ${l?"checked":""} onchange="cxToggleItemLink('${sec.id}','${it.id}','${cr.id}')">
+          <span><strong>${cr.id}</strong> ${esc(cr.texto)}</span>
+        </label>
+        ${(cxCritNoPrevisto(cr.id)?'<span class="badge" style="background:var(--danger-soft,#f3dcdc);color:var(--danger,#912525)" title="No estaba entre los criterios previstos de este examen">no previsto</span>':"")}
+        ${l?`<span style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--mut)">peso
+          <input class="in miniw" type="number" min="0" value="${l.peso}" onchange="cxSetItemLinkPeso('${it.id}','${cr.id}',this.value)"></span>`:""}
+      </div>`;}).join("")}
+  `).join("")}
+    </div>`;
 }
 let _cxCritPermitidos=null, _cxHayPrevistos=false, _cxPrevistosSet=null;
 function cxCritNoPrevisto(cid){ return !!(_cxPrevistosSet && !_cxPrevistosSet.has(cid)); }

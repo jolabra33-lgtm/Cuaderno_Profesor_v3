@@ -837,6 +837,95 @@ export const PRUEBAS = [
     t.ok((r.todosRes.match(/class="cx-alumno"/g) || []).length === 2 && (r.todosRes.match(/break-before:page/g) || []).length === 1, 'todas resumidas: un bloque por alumno/a corregido y salto de página entre ellos');
   } },
 
+  { nombre: 'rubrica-niveles', descripcion: 'Rúbrica por niveles de logro: crear, corregir pinchando casillas, afinar, cambiar valores y pesos, imprimir, plantillas y cambio de tipo', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const [A, B] = await cuadernoConGrupo(p, t.url);
+    const cr = await p.evaluate(() => getCatalogo('GeH_1ESO').ces[0].criterios.slice(0, 2).map(c => c.id));
+    // Crear desde el formulario «Nuevo examen», con dos criterios marcados.
+    await p.evaluate(cr => { state.ui.appMode = 'corrector'; state.ui.corTab = 'crear';
+      state.ui.corForm = { nombre: 'Exposición oral', bloqueId: '', sda: '', fecha: '', plantillaId: '', criterios: cr, tipoRub: 'niveles' }; save(); render(); }, cr);
+    await esperar(300);
+    t.ok(await p.locator('input[name="cxfTipo"][value="niveles"]').isChecked(), 'el formulario ofrece el tipo «por niveles»');
+    await p.locator('#cxfBtn').click(); await esperar(300);
+    const r0 = await p.evaluate(() => { const a = state.grupos[0].actividades[0]; return { esExamen: a.esExamen, f: a.rubrica[0].formato, niv: a.rubrica[0].niveles.map(l => l.nombre + ':' + l.valor).join(','), cats: a.rubrica[0].items.map(i => i.max + '|' + i.links.map(l => l.critId).join('')), tab: state.ui.corTab }; });
+    t.ok(r0.esExamen && r0.f === 'niveles' && r0.tab === 'editor', 'se crea un examen con rúbrica por niveles y se abre el editor');
+    t.ok(r0.niv === 'Experto:4,Avanzado:3,Aprendiz:2,Novel:1', 'niveles por defecto 4-3-2-1', r0.niv);
+    t.ok(r0.cats.length === 2 && r0.cats[0] === '5|' + cr[0] && r0.cats[1] === '5|' + cr[1], 'una categoría por criterio, 50 % cada una y vinculada', r0.cats.join(' '));
+    t.ok(await p.locator('table.cxn-editor').count() === 1 && await p.locator('table.cxn-editor tbody textarea').count() === 2 * 5, 'el editor muestra la tabla (nombre + 4 casillas por categoría)');
+    await p.locator('table.cxn-editor tbody tr').first().locator('td textarea').first().fill('Habla con un volumen adecuado TEXTO-EXPERTO');
+    await p.locator('table.cxn-editor tbody tr').first().locator('td textarea').first().dispatchEvent('change');
+    const ids = await p.evaluate(() => { const r = state.grupos[0].actividades[0].rubrica[0]; return { act: state.grupos[0].actividades[0].id, c1: r.items[0].id, c2: r.items[1].id, n: r.niveles.map(l => l.id) }; });
+    t.ok(await p.evaluate(ids => state.grupos[0].actividades[0].rubrica[0].items[0].celdas[ids.n[0]], ids) === 'Habla con un volumen adecuado TEXTO-EXPERTO', 'se guarda el descriptor de la casilla');
+    // Corregir pinchando casillas.
+    await p.evaluate(A => { state.ui.corTab = 'corregir'; state.ui.corAlId = A; save(); render(); }, A); await esperar(300);
+    const filas = p.locator('table.cxn-corr tbody tr');
+    t.ok(await filas.count() === 2 && await p.locator('table.cxn-corr td.cxn-op button').count() === 8, 'al corregir sale la tabla con 2 × 4 casillas');
+    await filas.nth(0).locator('td.cxn-op button').nth(1).click(); await esperar(200);
+    await p.locator('table.cxn-corr tbody tr').nth(1).locator('td.cxn-op button').nth(0).click(); await esperar(200);
+    const nota = () => p.evaluate(({ A, act }) => { const g = state.grupos[0]; return { n: g.notasCuant[A][act], c: g.notas[A][act], sc: g.rubricScores[A][act] }; }, { A, act: ids.act });
+    let r = await nota();
+    t.ok(r.sc[ids.c1] === 3.75 && r.sc[ids.c2] === 5 && r.n === 8.75, 'Avanzado (3/4 de 5) + Experto = 8,75', JSON.stringify(r));
+    t.ok(r.c[cr[0]] === 7.5 && r.c[cr[1]] === 10, 'la nota de cada criterio sale de su categoría', JSON.stringify(r.c));
+    t.ok(await p.locator('table.cxn-corr td.cxn-op.on').count() === 2 && await p.locator('table.cxn-corr td.cxn-op.on button[aria-pressed="true"]').count() === 2, 'las casillas elegidas se marcan (también para lectores de pantalla)');
+    // Afinar con el desplegable.
+    await p.locator('table.cxn-corr tbody tr').first().locator('select').selectOption('3.4'); await esperar(200);
+    r = await nota();
+    t.ok(r.sc[ids.c1] === 3.4 && r.n === 8.4, 'afinar: 3,4 puntos', JSON.stringify(r));
+    t.ok((await p.locator('.cxn-entre').first().textContent()).includes('entre Avanzado y Aprendiz') && await p.locator('td.cxn-op.parcial').count() === 2, 'una nota afinada se ve «entre» dos niveles');
+    // Cambiar el valor de los niveles y el peso: lo corregido sigue en su nivel.
+    await p.locator('table.cxn-corr tbody tr').first().locator('td.cxn-op button').nth(1).click(); await esperar(200);
+    await p.evaluate(() => { state.ui.corTab = 'editor'; save(); render(); }); await esperar(200);
+    await p.evaluate(ids => { cxnSetNivel(ids.n[0], 'valor', '10'); cxnSetNivel(ids.n[1], 'valor', '7'); cxnSetNivel(ids.n[3], 'valor', '0'); }, ids);
+    r = await nota();
+    t.ok(r.sc[ids.c1] === 3.5 && r.sc[ids.c2] === 5 && r.n === 8.5, 'al cambiar los valores (10-7-2-0), Avanzado pasa a valer 7/10 y Experto sigue al máximo', JSON.stringify(r));
+    await p.evaluate(ids => cxnSetPeso(ids.c1, '30'), ids);
+    r = await nota();
+    t.ok(r.sc[ids.c1] === 2.1 && r.n === 8.88, 'al cambiar el peso a 30 % la categoría sigue en Avanzado (2,1 de 3) y la nota se convierte a 10', JSON.stringify(r));
+    t.ok((await p.locator('.pill').filter({ hasText: 'Suma de pesos' }).textContent()).includes('80 %'), 'el editor avisa de que los pesos suman 80 %');
+    await p.evaluate(() => cxnIgualarPesos());
+    r = await nota();
+    t.ok(r.sc[ids.c1] === 3.5 && r.n === 8.5, 'repartir los pesos a partes iguales', JSON.stringify(r));
+    // Imprimir.
+    const imp = await p.evaluate(({ A, act }) => { const sal = {}; const o = window.abrirVentanaInforme; window.abrirVentanaInforme = (ti, h) => { sal.h = h; };
+      cxImprimirRubrica(A, act); sal.n = sal.h; cxImprimirRubrica(A, act, true); sal.r = sal.h; window.abrirVentanaInforme = o; return sal; }, { A, act: ids.act });
+    t.ok(imp.n.includes('cxn-imp-on') && imp.n.includes('TEXTO-EXPERTO') && (imp.n.match(/cxn-imp-on/g) || []).length >= 3, 'la rúbrica impresa marca la casilla de cada categoría');
+    t.ok(imp.r.includes('cxn-imp-chip') && imp.r.includes('Avanzado') && !imp.r.includes('TEXTO-EXPERTO'), 'la resumida dice el nivel sin los descriptores');
+    // Corregir por categoría (todo el grupo).
+    await p.evaluate(() => { state.ui.corTab = 'corregir'; state.ui.corAlId = ''; state.ui.corModoPreg = true; state.ui.corPregSel = ''; save(); render(); }); await esperar(300);
+    t.ok(await p.locator('.cxn-mini-btn').count() === 12, 'por categoría: botones de nivel para cada alumno/a');
+    await p.locator('.cxn-mini-btn').nth(4 + 2).click(); await esperar(200);
+    t.ok(await p.evaluate(({ B, act, c1 }) => state.grupos[0].rubricScores[B][act][c1], { B, act: ids.act, c1: ids.c1 }) === 1, 'por categoría: pulsar «Aprendiz» guarda sus puntos (2/10 de 5)');
+    await p.evaluate(() => { state.ui.corModoPreg = false; save(); render(); });
+    // Estadísticas: reparto por niveles.
+    await p.evaluate(() => { state.ui.cxVerEstadisticas = true; render(); }); await esperar(200);
+    t.ok(await p.getByText('Reparto por niveles').count() === 1, 'las estadísticas incluyen el reparto por niveles');
+    // Plantilla reutilizable en otro examen.
+    await p.evaluate(() => { window.pedirTexto = async () => 'Exposición oral'; window.confirmar = async () => true; window.mostrarAviso = () => {}; });
+    await p.evaluate(act => cxGuardarComoPlantilla(act), ids.act); await esperar(100);
+    await p.evaluate(act => cxGuardarComoPlantilla(act), ids.act); await esperar(100);
+    t.ok(await p.evaluate(() => state.plantillasRubrica.length) === 1, 'guardar con el mismo nombre sustituye la plantilla en vez de duplicarla');
+    await p.evaluate(() => { const pl = state.plantillasRubrica[0]; state.ui.corTab = 'crear'; state.ui.corForm = { nombre: 'Proyecto', bloqueId: '', sda: '', fecha: '', plantillaId: pl.id, criterios: [] }; save(); render(); });
+    await esperar(200); await p.locator('#cxfBtn').click(); await esperar(300);
+    const r2 = await p.evaluate(() => { const [a, b] = state.grupos[0].actividades; const sinId = n => JSON.stringify(n.map(l => ({ ...l, id: 0 }))); return { f: b.rubrica[0].formato, mismo: sinId(b.rubrica[0].niveles) === sinId(a.rubrica[0].niveles) && b.rubrica[0].niveles[0].id !== a.rubrica[0].niveles[0].id, txt: Object.values(b.rubrica[0].items[0].celdas).includes('Habla con un volumen adecuado TEXTO-EXPERTO'), otroId: b.rubrica[0].items[0].id !== a.rubrica[0].items[0].id }; });
+    t.ok(r2.f === 'niveles' && r2.mismo && r2.txt && r2.otroId, 'un examen nuevo desde la plantilla copia niveles, valores y descriptores', JSON.stringify(r2));
+    // Cambio de tipo: lo corregido se conserva.
+    await p.evaluate(act => { state.ui.corExamId = act; state.ui.corTab = 'editor'; save(); render(); }, ids.act); await esperar(200);
+    await p.evaluate(() => cxCambiarTipoRubrica()); await esperar(200);
+    r = await nota();
+    const r3 = await p.evaluate(() => { const a = state.grupos[0].actividades[0]; return { f: a.rubrica[0].formato || '', desc: (a.rubrica[0].items[0].desc || []).join(' ') }; });
+    t.ok(!r3.f && r3.desc.includes('TEXTO-EXPERTO') && r.n === 8.5, 'pasar a «por puntos» conserva notas y guarda los descriptores', JSON.stringify(r3));
+    await p.evaluate(() => cxCambiarTipoRubrica()); await esperar(200);
+    r = await nota();
+    t.ok(await p.evaluate(() => state.grupos[0].actividades[0].rubrica[0].formato) === 'niveles' && r.n === 8.5, 'y volver a «por niveles» también');
+    // Accesibilidad del editor y de la corrección.
+    const axe = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
+    for (const [nom, fn, zona] of [['editor', () => { state.ui.corTab = 'editor'; render(); }, '.cxn-card'], ['corregir', () => { state.ui.corTab = 'corregir'; state.ui.corAlId = state.grupos[0].alumnos[0].id; render(); }, '#tabContent']]) {
+      await p.evaluate(fn); await esperar(300); await p.addScriptTag({ content: axe });
+      const v = await p.evaluate(async zona => (await axe.run({ include: [[zona]] }, { runOnly: ['wcag2a', 'wcag2aa'] })).violations.map(v => v.id + '×' + v.nodes.length + ' ' + v.nodes.slice(0, 2).map(n => n.target.join(' ')).join(' | ')), zona);
+      t.ok(!v.length, `accesibilidad (${nom})`, v.join('; '));
+    }
+  } },
+
   { nombre: 'accesibilidad', descripcion: 'Accesibilidad WCAG 2 A/AA (axe-core) en las pantallas principales', async fn(t) {
     const axe = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
     // Sin animaciones: con ellas se medía el texto a medio aparecer y salían contrastes bajos que no son reales.

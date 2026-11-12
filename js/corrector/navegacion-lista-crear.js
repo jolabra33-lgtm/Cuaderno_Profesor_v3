@@ -177,7 +177,7 @@ function renderCorCrear(grupo){
     <div class="flex" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2>Nuevo examen</h2><button class="ghost" style="border:1px solid var(--line)" title="Crear el examen a partir de un paquete exportado (examen + rúbrica + variantes)" onclick="exImportarPaquete()">📥 Importar paquete</button></div>
     <p class="sub">Se crea en ${TRIMESTRES[state.ui.trim]}. Después diseñas la rúbrica y vinculas cada ítem a los criterios que trabaja.</p>
     <div class="grid" style="max-width:640px">
-      <input class="in" id="cxfNombre" placeholder="Nombre del examen" value="${esc(f.nombre)}">
+      <input class="in" id="cxfNombre" placeholder="Nombre del examen o trabajo" aria-label="Nombre del examen o trabajo" value="${esc(f.nombre)}">
       <select class="in" id="cxfBloque">${grupo.bloques.map(b=>`<option value="${b.id}" ${b.id===f.bloqueId?"selected":""}>${esc(b.label)}</option>`).join("")}</select>
       <input class="in" id="cxfSda" placeholder="Situación de Aprendizaje (opcional)" value="${esc(f.sda||'')}">
       <label style="font-size:12.5px;color:var(--mut);font-weight:500">Fecha del examen (opcional)
@@ -186,11 +186,16 @@ function renderCorCrear(grupo){
       <p class="sub" style="margin:-4px 0 0;font-size:11.5px">Si la indicas, se crea también en el calendario de Inicio.</p>
       <label style="font-size:12.5px;color:var(--mut);font-weight:500">Empezar la rúbrica desde
         <select class="in" style="width:100%;margin-top:4px" id="cxfPlantilla">
-          <option value="">Rúbrica en blanco</option>
-          ${plantillas.map(p=>`<option value="${p.id}" ${f.plantillaId===p.id?"selected":""}>${esc(p.nombre)}</option>`).join("")}
+          <option value="">Rúbrica nueva</option>
+          ${plantillas.map(p=>`<option value="${p.id}" ${f.plantillaId===p.id?"selected":""}>${esc(p.nombre)}${cxEsNiveles(p.rubrica)?" · por niveles":" · por puntos"}</option>`).join("")}
         </select>
       </label>
-      ${plantillas.length?`<p class="sub" style="margin:-4px 0 0;font-size:11.5px">Los ítems se copian con sus puntos y descriptores; los criterios vinculados solo se copian si existen en el catálogo de este grupo.</p>`:""}
+      ${plantillas.length?`<p class="sub" style="margin:-4px 0 0;font-size:11.5px">Las plantillas sirven para cualquier grupo: se copian con sus puntos (o niveles) y descriptores; los criterios vinculados solo se copian si existen en el catálogo de este grupo.</p>`:""}
+      ${!f.plantillaId?`<fieldset style="border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:0">
+        <legend style="font-size:12.5px;color:var(--mut);font-weight:500;padding:0 4px">Tipo de rúbrica</legend>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;cursor:pointer;padding:3px 0"><input type="radio" name="cxfTipo" value="puntos" ${f.tipoRub!=="niveles"?"checked":""} onchange="cxFormTipo(this.value)" style="margin-top:3px"><span><strong>Por puntos</strong> · apartados, preguntas e ítems con su puntuación (exámenes escritos)</span></label>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;cursor:pointer;padding:3px 0"><input type="radio" name="cxfTipo" value="niveles" ${f.tipoRub==="niveles"?"checked":""} onchange="cxFormTipo(this.value)" style="margin-top:3px"><span><strong>Por niveles de logro</strong> · tabla de categorías × niveles (Experto, Avanzado…): se corrige pinchando casillas (trabajos, exposiciones, proyectos)</span></label>
+      </fieldset>`:""}
       <div>
         <button class="ghost" style="border:1px solid var(--line)" onclick="state.ui.corFormCritAbierto=!state.ui.corFormCritAbierto;save();render()">${state.ui.corFormCritAbierto?"▾":"▸"} Criterios de evaluación que evalúa — ${(f.criterios||[]).length} marcado${(f.criterios||[]).length===1?"":"s"}</button>
         <p class="sub" style="margin:4px 0 0;font-size:11.5px">Opcional, pero recomendable: la rúbrica empezará con una pregunta por criterio, solo te ofrecerá estos para vincular y te avisará si alguno se queda sin evaluar. Pueden ser de varias Situaciones de Aprendizaje.</p>
@@ -202,7 +207,7 @@ function renderCorCrear(grupo){
   ${plantillas.length?`<div class="card">
     <h2 style="font-size:14.5px">Plantillas guardadas</h2>
     <div class="flex">
-      ${plantillas.map(p=>`<span class="chip">${esc(p.nombre)} <button class="ghost danger small" style="padding:2px 6px;margin-left:4px" onclick="cxEliminarPlantilla('${p.id}')" title="Eliminar plantilla">✕</button></span>`).join("")}
+      ${plantillas.map(p=>`<span class="chip">${esc(p.nombre)}${cxEsNiveles(p.rubrica)?' <span style="font-size:11.5px;color:var(--mut)">· niveles</span>':""} <button class="ghost danger small" style="padding:2px 6px;margin-left:4px" onclick="cxEliminarPlantilla('${p.id}')" title="Eliminar plantilla">✕</button></span>`).join("")}
     </div>
   </div>`:""}`;
   document.getElementById("cxfNombre").addEventListener("input",e=>{ state.ui.corForm.nombre=e.target.value; save();
@@ -210,21 +215,27 @@ function renderCorCrear(grupo){
   document.getElementById("cxfBloque").addEventListener("change",e=>{ state.ui.corForm.bloqueId=e.target.value; save(); });
   document.getElementById("cxfSda").addEventListener("input",e=>{ state.ui.corForm.sda=e.target.value; save(); });
   document.getElementById("cxfFecha").addEventListener("change",e=>{ state.ui.corForm.fecha=e.target.value; save(); });
-  document.getElementById("cxfPlantilla").addEventListener("change",e=>{ state.ui.corForm.plantillaId=e.target.value; save(); });
+  document.getElementById("cxfPlantilla").addEventListener("change",e=>{ state.ui.corForm.plantillaId=e.target.value; save(); render(); });
 }
 window.cxEliminarPlantilla=async id=>{
   if(!await confirmar("¿Eliminar esta plantilla de rúbrica? No afecta a los exámenes ya creados con ella.")) return;
   state.plantillasRubrica=(state.plantillasRubrica||[]).filter(p=>p.id!==id);
   save(); render();
 };
+window.cxFormTipo=v=>{ state.ui.corForm.tipoRub=v==="niveles"?"niveles":"puntos"; save(); };
 window.cxGuardarComoPlantilla=async examId=>{
   const grupo=grupoActual(); const act=grupo.actividades.find(a=>a.id===examId); if(!act) return;
   const nombre=await pedirTexto("Nombre para esta plantilla de rúbrica:", act.nombre);
   if(!nombre || !nombre.trim()) return;
   if(!Array.isArray(state.plantillasRubrica)) state.plantillasRubrica=[];
-  state.plantillasRubrica.push({ id:uid(), nombre:nombre.trim(), rubrica:JSON.parse(JSON.stringify(act.rubrica)) });
+  const rubrica=JSON.parse(JSON.stringify(act.rubrica));
+  const igual=state.plantillasRubrica.find(p=>String(p.nombre).trim().toLowerCase()===nombre.trim().toLowerCase());
+  if(igual){
+    if(!await confirmar(`Ya tienes una plantilla llamada «${igual.nombre}». ¿Sustituirla por esta rúbrica? Los exámenes ya creados con ella no cambian.`,{ok:"Sustituir",peligro:false})) return;
+    igual.rubrica=rubrica;
+  } else state.plantillasRubrica.push({ id:uid(), nombre:nombre.trim(), rubrica });
   save();
-  mostrarAviso(`Plantilla "${nombre.trim()}" guardada. Podrás elegirla al crear un nuevo examen.`);
+  mostrarAviso(`Plantilla "${nombre.trim()}" guardada. Podrás elegirla al crear un nuevo examen o cargarla en la rúbrica de cualquier examen, en cualquier grupo.`);
 };
 function cxCriteriosValidosEnCatalogo(catalogoKey){
   const idx=catIndex(catalogoKey); const set=new Set();
@@ -236,7 +247,8 @@ window.cxCrearExamen=()=>{
   if(!f.nombre.trim()) return;
   if(!f.bloqueId) f.bloqueId=defBloque("Prueba objetiva / examen",grupo.bloques);
   const critsForm=(f.criterios||[]).filter(c=>cxCriteriosValidosEnCatalogo(grupo.catalogoKey).has(c));
-  let rubricaInicial= critsForm.length? cxRubricaDesdeCriterios(critsForm.map(c=>({critId:c,peso:100})),grupo.catalogoKey)
+  let rubricaInicial= f.tipoRub==="niveles"? cxnRubricaNueva(critsForm.map(c=>({critId:c,peso:100})),grupo.catalogoKey)
+    : critsForm.length? cxRubricaDesdeCriterios(critsForm.map(c=>({critId:c,peso:100})),grupo.catalogoKey)
     : [{id:uid(),title:"Apartado 1",items:[{id:uid(),label:"",max:10,desc:[],links:[]}]}];
   if(f.plantillaId){
     const plantilla=(state.plantillasRubrica||[]).find(p=>p.id===f.plantillaId);
@@ -254,7 +266,7 @@ window.cxCrearExamen=()=>{
     state.eventos.push({id:uid(), fecha:f.fecha.trim(), titulo:act.nombre, tipo:"examen", grupoId:grupo.id, notas:"", examId:act.id});
     state.ui.agMes=f.fecha.trim().slice(0,7);
   }
-  state.ui.corExamId=act.id; state.ui.corTab="editor"; state.ui.corForm={nombre:"",bloqueId:"",sda:"",fecha:"",plantillaId:"",criterios:[]}; state.ui.corFormCritAbierto=false;
+  state.ui.corExamId=act.id; state.ui.corTab="editor"; state.ui.corForm={nombre:"",bloqueId:"",sda:"",fecha:"",plantillaId:"",criterios:[],tipoRub:f.tipoRub||"puntos"}; state.ui.corFormCritAbierto=false;
   save(); render();
 };
 
