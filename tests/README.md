@@ -45,6 +45,7 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `corregir-desplegable` | Corregir: puntuación de cada ítem en un desplegable y «No presentado» |
 | `rubrica-resumida` | Imprimir la rúbrica resumida |
 | `rubrica-niveles` | Rúbrica por niveles de logro: crear, corregir pinchando casillas, afinar, cambiar valores y pesos, imprimir, por categoría, plantillas, cambio de tipo y accesibilidad |
+| `rubrica-niveles-programacion` | Examen traído de la Programación: al abrirlo en el Corrector pregunta el tipo de rúbrica y pasa a niveles con una categoría por criterio |
 | `accesibilidad` | WCAG 2 A/AA (axe-core) en todas las pestañas y modos, y contraste |
 | `actualizacion` | Aviso «Hay una versión nueva · Actualizar» |
 

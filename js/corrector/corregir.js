@@ -49,6 +49,7 @@ function renderCorCorregir(grupo){
       </div>
     </div>
     ${mbBarraRepartoHTML(grupo,act)}
+    ${cxElegirTipoHTML(grupo,act)?`<div style="margin-top:12px">${cxElegirTipoHTML(grupo,act)}</div>`:""}
     ${cxAvisoNeseHTML(grupo,act)?`<div style="margin-top:12px">${cxAvisoNeseHTML(grupo,act)}</div>`:""}
     ${notas.length?`<div class="flex" style="margin-top:12px;gap:24px">
       <div><div style="font-size:12.5px;color:var(--mut)">Media</div><span class="big" style="font-size:24px">${fmt(media)}</span></div>

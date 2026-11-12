@@ -104,6 +104,7 @@ async function cxPonerRubrica(grupo,act){
   const ref=cxProgActDe(grupo,act);
   if(!Array.isArray(act.criteriosPrevistos) || !act.criteriosPrevistos.length) act.criteriosPrevistos=(act.criterios||[]).map(c=>c.critId);
   act.rubrica=cxRubricaInicial(grupo,act,ref&&ref.progAct);
+  if(!(ref&&Array.isArray(ref.progAct.rubrica)&&ref.progAct.rubrica.length)) act.rubricaSinElegir=true;
   cxVariantesDesdeProgAct(grupo,act,ref&&ref.progAct);
   act.escalarA10=true;
   act.esExamen=true;
@@ -131,6 +132,7 @@ function progCrearActividadEnGrupo(grupo,progAct,trimestre){
     criteriosPrevistos:(progAct.criterios||[]).map(c=>c.critId) };
   if(act.esExamen){
     act.rubrica=cxRubricaInicial(grupo,act,progAct);
+    if(!(Array.isArray(progAct.rubrica)&&progAct.rubrica.length)) act.rubricaSinElegir=true;
     cxVariantesDesdeProgAct(grupo,act,progAct);
     act.escalarA10=true;
     cxSyncCriteriosActividad(act);
@@ -224,7 +226,8 @@ window.progQuitarRubrica=async actId=>{
 
 /* Acceso cruzado: abrir un examen concreto en el Corrector desde Evaluación por Competencias */
 window.cxAbrirDesdeOtroModo=examId=>{
-  state.ui.appMode="corrector"; state.ui.corTab="corregir"; state.ui.corExamId=examId; state.ui.corAlId="";
+  const grupo=grupoActual(), act=grupo&&grupo.actividades.find(a=>a.id===examId);
+  state.ui.appMode="corrector"; state.ui.corTab=act&&cxTipoPendiente(grupo,act)?"editor":"corregir"; state.ui.corExamId=examId; state.ui.corAlId=""; state.ui.corVarId="";
   save(); render();
 };
 
