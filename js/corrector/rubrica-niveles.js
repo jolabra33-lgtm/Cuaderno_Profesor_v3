@@ -272,7 +272,7 @@ window.cxCambiarTipoRubrica=async()=>{
     if(!await confirmar("¿Pasar esta rúbrica a «por puntos» (preguntas e ítems)? Cada categoría pasa a ser un ítem con sus puntos y criterios, y los descriptores de los niveles se guardan como descriptores del ítem.\n\nLo ya corregido se conserva.",{ok:"Pasar a puntos",peligro:false})) return;
   }
   const nueva=aNiv? cxnDesdePuntos(x.rub) : cxnAPuntos(x.rub);
-  if(va) va.rubrica=nueva; else x.act.rubrica=nueva;
+  if(va) va.rubrica=nueva; else { x.act.rubrica=nueva; delete x.act.rubricaSinElegir; }
   cxSyncCriteriosActividad(x.act); cxRecalcTodosLosAlumnos(x.grupo,x.act);
   state.ui.corItemAbierto="";
   save(); render();
@@ -288,7 +288,7 @@ window.cxCargarPlantilla=async()=>{
   const corregidos=x.grupo.alumnos.filter(al=>cxRubricaDe(x.act,al.id)===x.rub && Object.keys(x.grupo.rubricScores?.[al.id]?.[x.act.id]||{}).length).length;
   if(corregidos && !await confirmar(`Ya hay ${corregidos} alumno${corregidos===1?"":"s"} corregido${corregidos===1?"":"s"} con esta rúbrica. Al cargar la plantilla se perderán esas puntuaciones.\n\n¿Continuar?`,{ok:"Cargar plantilla"})) return;
   const nueva=cxClonarRubrica(p.rubrica,x.grupo.catalogoKey), va=cxVarEditando(x.act);
-  if(va) va.rubrica=nueva; else x.act.rubrica=nueva;
+  if(va) va.rubrica=nueva; else { x.act.rubrica=nueva; delete x.act.rubricaSinElegir; }
   cxLimpiarPuntuacionesHuerfanas(x.grupo,x.act);
   state.ui.corItemAbierto="";
   save(); render();
@@ -385,3 +385,52 @@ function cxnRepartoHTML(grupo,act){
     <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%"><thead><tr><th></th>${niv.map((l,i)=>{ const col=cxnColor(l.color,i); return `<th scope="col" style="background:${col};color:${cxnTinta(col)};font-size:12px;padding:4px 6px">${esc(l.nombre||"")}</th>`; }).join("")}</tr></thead><tbody>${filas}</tbody></table></div>
     <p class="sub" style="margin:4px 0 0;font-size:11px">Las notas afinadas cuentan en el nivel más cercano.</p>`;
 }
+
+/* ---------- Elegir el tipo de rúbrica de un examen que llega con la rúbrica hecha automáticamente ----------
+   Un examen traído de la Programación (o al que se le añade rúbrica desde Evaluación) recibe una rúbrica
+   inicial por puntos, con una pregunta por criterio. Mientras nadie la haya corregido, el Corrector pregunta
+   con qué tipo se quiere corregir. act.rubricaSinElegir marca las creadas así; las creadas antes de existir
+   esta marca se reconocen por su forma (la que genera cxRubricaDesdeCriterios, sin tocar). */
+function cxRubricaAutomatica(rub){
+  if(!Array.isArray(rub)||rub.length!==1||cxEsNiveles(rub)) return false;
+  const n=rub[0], items=n.items||[];
+  if((n.subs||[]).length||!items.length||n.title!=="Apartado 1") return false;
+  return items.every(it=>!it.fuenteId&&!(it.desc||[]).length&&(/^Pregunta \d+ · criterio /.test(it.label||"")||(items.length===1&&!it.label)));
+}
+function cxTipoPendiente(grupo,act){
+  if(!act||!act.esExamen||!Array.isArray(act.rubrica)||cxEsNiveles(act.rubrica)||cxVariantes(act).length) return false;
+  if(act.rubricaSinElegir===false) return false;   // ya se eligió «por puntos»
+  if(!act.rubricaSinElegir&&!cxRubricaAutomatica(act.rubrica)) return false;
+  return !grupo.alumnos.some(al=>Object.keys(grupo.rubricScores?.[al.id]?.[act.id]||{}).length);
+}
+function cxElegirTipoHTML(grupo,act){
+  if(!cxTipoPendiente(grupo,act)) return "";
+  const hayPl=(state.plantillasRubrica||[]).length;
+  return `<div class="card" style="border-left:4px solid var(--accent)">
+    <h2 style="font-size:15px;margin:0 0 4px">¿Con qué tipo de rúbrica quieres corregir «${esc(act.nombre)}»?</h2>
+    <p class="sub" style="margin:0 0 10px">Se ha preparado una rúbrica <strong>por puntos</strong> con una pregunta por cada criterio. Puedes dejarla así o cambiarla ahora (más tarde también podrás, con «⇄ Pasar a…»).</p>
+    <div class="flex" style="gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="cxElegirTipoInicial('${act.id}','niveles')">▦ Por niveles de logro</button>
+      <button class="ghost" style="border:1px solid var(--line)" onclick="cxElegirTipoInicial('${act.id}','puntos')">Por puntos (preguntas e ítems)</button>
+      ${hayPl?`<button class="ghost" style="border:1px solid var(--line)" onclick="cxElegirTipoInicial('${act.id}','plantilla')">📂 Desde una plantilla</button>`:""}
+    </div>
+    <p class="sub" style="margin:8px 0 0;font-size:12px"><strong>Por niveles</strong>: tabla de categorías × niveles (Experto, Avanzado…) que se corrige pinchando casillas; empieza con una categoría por criterio. Si la guardas en la Programación («📌»), los demás grupos la recibirán ya hecha.</p>
+  </div>`;
+}
+window.cxElegirTipoInicial=async(actId,tipo)=>{
+  const grupo=grupoActual(), act=grupo&&grupo.actividades.find(a=>a.id===actId); if(!act) return;
+  state.ui.corExamId=act.id; state.ui.corVarId=""; state.ui.corAlId=""; state.ui.corTab="editor";
+  if(tipo==="plantilla"){
+    const antes=act.rubrica; await cxCargarPlantilla();
+    if(act.rubrica===antes){ save(); render(); return; }   // cancelado: se sigue preguntando
+  } else if(tipo==="niveles"){
+    const crits=cxCriteriosPrevistos(grupo,act)||cxCriteriosDeRubrica(act.rubrica);
+    act.rubrica=cxnRubricaNueva(crits.map(c=>({critId:c,peso:100})),grupo.catalogoKey);
+    act.escalarA10=true;
+    cxSyncCriteriosActividad(act); cxRecalcTodosLosAlumnos(grupo,act);
+    mostrarToast("✓ Rúbrica por niveles: escribe los descriptores de cada casilla");
+  }
+  if(tipo==="puntos") act.rubricaSinElegir=false; else delete act.rubricaSinElegir;
+  state.ui.corItemAbierto="";
+  save(); render();
+};

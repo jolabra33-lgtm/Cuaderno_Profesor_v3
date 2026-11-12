@@ -70,6 +70,7 @@ function renderCorEditor(grupo){
     </div>
     ${pestanas}
   </div>
+  ${variante?"":cxElegirTipoHTML(grupo,act)}
   ${cxAvisoNeseHTML(grupo,act)}
   ${panelVariante}
   ${cxPanelPrevistosHTML(grupo,act,rub,variante)}
