@@ -83,6 +83,7 @@ Completan el repositorio: `manifest.json` e `icons/` (instalación como app), `.
 | `js/corrector/programacion-corrector.js` | Programación ↔ Corrector: rúbricas para los exámenes planificados y sus versiones adaptadas (`progAct.variantes`; diseño en «prog:<actividad>:<versión>») |
 | `js/corrector/navegacion-lista-crear.js` | Navegación del Corrector, lista de exámenes y crear examen |
 | `js/corrector/editor-rubrica.js` | Editor de rúbrica y rúbricas adaptadas (NESE): `cxCrearVariante`, aviso de alumnado NESE sin versión (`cxAvisoNeseHTML`, `act.neseGeneral`) |
+| `js/corrector/modelo-b.js` | Modelo B: se reconstruye desde el general con su orden (`act.modeloB.orden`), reparto A/B (`act.modeloB.alumnos`), rúbrica en el orden del B al corregir (`mbRubricaVista`) y enlace de rúbricas hechas a mano con el diseño (`mbEnlazarRubrica`) |
 | `js/corrector/corregir.js` | Corregir, estadísticas por ítem e impresión de la rúbrica corregida |
 | `js/nucleo/nuevo-curso.js` | Asistente «Empezar curso nuevo»: archiva el curso y deja lo reutilizable |
 | `js/ui/buscador.js` | Buscador global |
@@ -131,7 +132,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 30 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 31 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.

@@ -21,6 +21,7 @@ function renderCorCorregir(grupo){
     const vc=grupo.notasCuant?.[al.id]?.[act.id];
     const hecho=vc!=null;
     return `<tr>
+      ${mbCeldaHTML(act,al)}
       <td>${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}${cxVarianteDeAlumno(act,al.id)?` <span class="badge" title="Se corrige con una rúbrica adaptada">${esc(cxVarianteDeAlumno(act,al.id).nombre||"Adaptada")}</span>`:""}</td>
       <td style="font-weight:600">${hecho?fmt(vc):"—"}</td>
       <td>${hecho?pillCuant(vc):'<span class="badge">Sin corregir</span>'}</td>
@@ -47,6 +48,7 @@ function renderCorCorregir(grupo){
         <button class="ghost" style="border:1px solid var(--line)" onclick="cxExportarCSV('${act.id}')">⬇ CSV</button>
       </div>
     </div>
+    ${mbBarraRepartoHTML(grupo,act)}
     ${cxAvisoNeseHTML(grupo,act)?`<div style="margin-top:12px">${cxAvisoNeseHTML(grupo,act)}</div>`:""}
     ${notas.length?`<div class="flex" style="margin-top:12px;gap:24px">
       <div><div style="font-size:12.5px;color:var(--mut)">Media</div><span class="big" style="font-size:24px">${fmt(media)}</span></div>
@@ -63,7 +65,7 @@ function renderCorCorregir(grupo){
       : '<p class="sub" style="margin:6px 0 0">Qué ítems de la rúbrica ha fallado más la clase, para saber qué reforzar antes de seguir.</p>'}
   </div>
   <div class="card"><div style="overflow-x:auto"><table>
-    <thead><tr><th>Alumno/a</th><th>Nota</th><th>Calificación</th><th></th></tr></thead>
+    <thead><tr>${act.modeloB?`<th title="Modelo de examen que hace cada alumno/a">Modelo</th>`:""}<th>Alumno/a</th><th>Nota</th><th>Calificación</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div></div>`;
   document.getElementById("cxExamSel").addEventListener("change",e=>{ state.ui.corExamId=e.target.value; save(); render(); });
@@ -159,8 +161,8 @@ function renderCxGradingAlumno(grupo,act,al){
   const i=alumnos.findIndex(a=>a.id===al.id);
   grupo.rubricScores[al.id]=grupo.rubricScores[al.id]||{};
   const sc=grupo.rubricScores[al.id][act.id]=grupo.rubricScores[al.id][act.id]||{};
-  const rubAl=cxRubricaDe(act,al.id);
-  const varAl=cxVarianteDeAlumno(act,al.id);
+  const rubAl=mbRubricaVista(act,al.id);   // la suya y, si hace el modelo B, en el orden del B
+  const varAl=cxVarianteDeAlumno(act,al.id), deB=mbHaceB(act,al.id);
   const critIds=cxCriteriosDeRubrica(rubAl);
   const itemsHtml=rubAl.map(sec=>cxNodoCorregirHTML(sec,0,sc,al.id,act.id)).join("");
   const vc=grupo.notasCuant?.[al.id]?.[act.id];
@@ -186,8 +188,9 @@ function renderCxGradingAlumno(grupo,act,al){
     </div>
   </div>
   <div class="card">
-    <h2 style="font-size:15px">Rúbrica${varAl?` <span class="badge" style="vertical-align:middle">${esc(varAl.nombre||"Adaptada")}</span>`:""}</h2>
+    <h2 style="font-size:15px">Rúbrica${varAl?` <span class="badge" style="vertical-align:middle">${esc(varAl.nombre||"Adaptada")}</span>`:""}${deB?` <span class="badge mb-badge" style="vertical-align:middle">Modelo B</span>`:""}</h2>
     ${varAl?`<p class="sub" style="margin:0 0 10px">Este alumno/a hace un examen adaptado y se corrige con su propia rúbrica.</p>`:""}
+    ${deB?(mbRubricaEnlazada(act)?`<p class="sub" style="margin:0 0 10px">Hace el modelo B: las preguntas salen en el orden del B y con su número (entre paréntesis, el del modelo A). La rúbrica y la nota son las mismas.</p>`:`<div class="alert-box" style="margin:0 0 10px">Hace el modelo B, pero la rúbrica no está enlazada con el diseño y sale en el orden del A. Enlázala en ✏️ Diseño → «🔗 Enlazar la rúbrica con el diseño».</div>`):""}
     ${itemsHtml}
   </div>
   <div class="card">
@@ -304,7 +307,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
   const cat=getCatalogo(grupo.catalogoKey);
   const sc=grupo.rubricScores?.[al.id]?.[act.id]||{};
   const vc=grupo.notasCuant?.[al.id]?.[act.id];
-  const rubAl=cxRubricaDe(act,al.id);
+  const rubAl=mbRubricaVista(act,al.id);
   const maxTotal=cxMaxTotal(rubAl);
   const comentario=(grupo.examComentarios?.[al.id]?.[act.id]||"").trim();
   const fechaLarga=new Date().toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"});
@@ -339,7 +342,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
     ${state.centroNombre?`<div class="cx-letterhead">${esc(state.centroNombre)}</div>`:""}
     <div class="cx-eyebrow">${opts.resumida?"Rúbrica de corrección · resumen":"Rúbrica de corrección"}</div>
     <h1 class="cx-alumno">${esc(al.nombre)}</h1>
-    <div class="cx-meta-line">${esc(act.nombre)}<span class="sep">·</span>${esc(cat.materia)} ${esc(cat.curso)}<span class="sep">·</span>Grupo ${esc(grupo.nombre)}<span class="sep">·</span><b>${fechaLarga}</b></div>
+    <div class="cx-meta-line">${esc(act.nombre)}${mbHaceB(act,al.id)?" · Modelo B":""}<span class="sep">·</span>${esc(cat.materia)} ${esc(cat.curso)}<span class="sep">·</span>Grupo ${esc(grupo.nombre)}<span class="sep">·</span><b>${fechaLarga}</b></div>
     ${seccionesHtml}
     <div class="cx-total-box">
       <div><div class="cx-total-label">Puntuación total</div><div class="cx-total-value">${vc==null?"—":fmt(vc)} <small>/ ${fmt(cxEscalarDe(act,al.id)&&maxTotal>0&&Math.abs(maxTotal-10)>=0.01?10:maxTotal)}</small></div></div>

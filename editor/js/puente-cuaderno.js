@@ -81,8 +81,9 @@
         a.forEach(function(n){ if(n.children) sh(n.children); }); }
       sh(ex.body); loadExam(sanitizeExam(ex));
     },
-    estructura:function(){
-      var ex=S.exam, lab=computeLabels(ex);
+    /* v3: también de un examen que no está abierto (el modelo B, para numerar sus preguntas). */
+    estructura:function(ex0){
+      var ex=ex0? sanitizeExam(JSON.parse(JSON.stringify(ex0))) : S.exam, lab=computeLabels(ex);
       function conv(list,inh){ var out=[]; list.forEach(function(n){
         if(n.type!=='section'&&n.type!=='question'&&n.type!=='subquestion') return;
         var has=String(n.points==null?'':n.points).trim()!=='', p=num(n.points,NaN), c=(n.crit&&n.crit.length)?n.crit:(inh||[]);

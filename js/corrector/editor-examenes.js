@@ -36,10 +36,21 @@ window.exNuevoAdaptado=async()=>{
   if(!act.rubrica && !await cxPonerRubrica(g,act)) return;
   exFlush(); cxNuevaVariante();
 };
-window.exMezclar=()=>{ if(_exFrame&&_exFrame.contentWindow.__ee) _exFrame.contentWindow.__ee.mezclar(); };
+/* Otro orden al azar para el modelo B (sale del examen general actual). */
+window.exMezclar=async()=>{
+  const g=grupoActual(), act=g&&g.actividades.find(a=>a.id===state.ui.corExamId), win=_exFrame&&_exFrame.contentWindow;
+  if(!act||!win||!win.__ee) return;
+  const gen=(await exGet(act.id)||{}).exam; if(!gen){ mostrarAviso("Diseña antes el examen general."); return; }
+  if(!act.modeloB) act.modeloB={orden:{},alumnos:[]};
+  act.modeloB.orden={};
+  const r=await mbActualizar(act,gen,win); if(!r) return;
+  win.__ee.cargar(r.exam); const g0=win.__ee.get(); g0.updated=0; _exFirma=JSON.stringify(g0);
+  save(); render();
+  mostrarToast("🔀 Nuevo orden para el modelo B");
+};
 function exSelectorVariante(act){
   const vs=cxVariantes(act), vid=state.ui.corVarId;
-  return `<button class="tab ${!cxVarEditando(act)&&!state.ui.corVerB?"on":""}" onclick="exSel('')">Examen general</button><button class="tab ${!cxVarEditando(act)&&state.ui.corVerB?"on":""}" title="Mismo examen con las preguntas en otro orden; comparte la rúbrica" onclick="exVerB()">Versión B</button>`
+  return `<button class="tab ${!cxVarEditando(act)&&!state.ui.corVerB?"on":""}" onclick="exSel('')">Examen general</button><button class="tab ${!cxVarEditando(act)&&state.ui.corVerB?"on":""}" title="Mismo examen con las preguntas en otro orden; comparte la rúbrica, que al corregir sale en el orden de cada modelo" onclick="exVerB()">Modelo B</button>`
     +vs.map(v=>`<button class="tab ${vid===v.id?"on":""}" onclick="cxElegirVariante('${v.id}')">${esc(v.nombre||"Examen adaptado")}</button>`).join("")
     +`<button class="ghost" style="border:1px dashed var(--line)" title="Examen distinto para el alumnado NESE (u otro): empieza como copia del general y se corrige con su propia rúbrica" onclick="exNuevoAdaptado()">+ Examen adaptado (NESE)</button>`;
 }
@@ -173,7 +184,8 @@ window.exExportarPaquete=async()=>{
   for(const v of vs){ const e=get(act.id+":"+v.id); if(e) disenos.variantes[v.id]=e; }
   const _cat=getCatalogo(g.catalogoKey)||{};
   const paquete={tipo:"paquete-examen",version:1,nombre:act.nombre,catalogoKey:g.catalogoKey,cursoNombre:[_cat.materia,_cat.curso].filter(Boolean).join(" · "),escalarA10:act.escalarA10!==false,criteriosPrevistos:act.criteriosPrevistos||[],
-    rubrica:act.rubrica,variantes:vs.map(v=>({id:v.id,nombre:v.nombre,escalarA10:v.escalarA10!==false,rubrica:v.rubrica})),disenos};
+    rubrica:act.rubrica,variantes:vs.map(v=>({id:v.id,nombre:v.nombre,escalarA10:v.escalarA10!==false,rubrica:v.rubrica})),disenos,
+    ordenB:act.modeloB?act.modeloB.orden:null};
   const slug=String(act.nombre).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"examen";
   await guardarArchivo(new Blob([JSON.stringify(paquete)],{type:"application/json"}),"paquete-examen-"+slug+".json");
 };
@@ -202,6 +214,7 @@ window.exImportarPaquete=()=>{
       rubrica:cxClonarRubrica(p.rubrica,grupo.catalogoKey), escalarA10:p.escalarA10!==false, criteriosPrevistos:(p.criteriosPrevistos||[]).filter(c=>ok.has(c)) };
     const vs=(p.variantes||[]).map(v=>{ const nv={id:uid(),nombre:v.nombre||"Adaptada",rubrica:cxClonarRubrica(v.rubrica,grupo.catalogoKey),escalarA10:v.escalarA10!==false,alumnos:[]}; mapaVar.push([v.id,nv.id]); return nv; });
     if(vs.length) act.variantes=vs;
+    if(p.ordenB && typeof p.ordenB==="object") act.modeloB={orden:JSON.parse(JSON.stringify(p.ordenB)),alumnos:[]};   // mismo orden de preguntas del modelo B
     cxSyncCriteriosActividad(act);
     grupo.actividades.push(act);
     const d=p.disenos||{}, nuevo=ex=>{ const e=JSON.parse(JSON.stringify(ex)); e.id=uid(); return e; };
@@ -267,7 +280,7 @@ window.exAyuda=()=>exModal(`<h2 style="font-size:16.5px;margin-bottom:8px">❔ C
     <li><b>Diseñar.</b> Con «⛶ Pantalla completa» el editor ocupa toda la pantalla. Escribe el examen y pon <i>puntos</i> a cada pregunta (o a sus apartados, no a ambos). En el panel de la pregunta puedes marcar los <i>criterios de evaluación</i> que trabaja. «📊 Cobertura» muestra qué criterios evalúa y avisa si algo no cuadra.</li>
     <li><b>Importar a la rúbrica.</b> «Importar a la rúbrica →» crea la rúbrica con la misma estructura (apartados, preguntas y subpreguntas, en el mismo orden) y los puntos de cada parte; si una pregunta tiene puntos propios y también sus subpreguntas, cuentan los de las subpreguntas. Puedes reimportar tras retocar el examen: se conservan descriptores, vínculos y notas; si ya hay alumnado corregido, se avisa de lo que cambia y ninguna puntuación queda por encima del nuevo máximo. Si el examen no tiene apartados, la rúbrica tampoco los muestra.</li>
     <li><b>Corregir.</b> Por alumno/a, o con «↕ Por pregunta» una pregunta de todo el grupo. Cada ítem muestra su enunciado y admite un comentario que sale en la hoja impresa. «📈 Análisis» resume el acierto por pregunta y criterio. La nota pasa sola a Calificar.</li>
-    <li><b>NESE y versión B.</b> Primero crea la rúbrica adaptada en la pestaña Rúbrica; luego, en Diseño, elige su pestaña y adapta el examen. «Versión B» baraja las preguntas y comparte la rúbrica.</li>
+    <li><b>NESE y modelo B.</b> «+ Examen adaptado (NESE)» crea una copia del examen y de su rúbrica para el alumnado NESE. «Modelo B» es el mismo examen con las preguntas en otro orden: se genera solo a partir del general, comparte la rúbrica y, al corregir, sale en el orden de cada modelo. Quién hace cada modelo se reparte en 🖊️ Corregir.</li>
     <li><b>Reutilizar.</b> «💾 Plantilla de la Programación» sirve el diseño a otros grupos de la misma actividad. «📦 Exportar paquete» guarda examen, rúbrica y adaptaciones en un archivo; en «Nuevo examen» → «📥 Importar paquete» lo recuperas en otro grupo o curso (hay que reasignar el alumnado NESE).</li>
   </ol>
   <p style="font-size:13px;margin:0 0 10px"><b>PDF.</b> «Exportar PDF» abre la vista previa de impresión del Cuaderno; elige «Guardar como PDF», márgenes «Ninguno» y escala 100 %. Lora e Inter funcionan sin conexión; las demás fuentes del editor necesitan internet (sin conexión se sustituyen por otra parecida).</p>
@@ -319,10 +332,12 @@ function renderCorDiseno(grupo){
     ${exSelectorVariante(act)}<button class="btn" onclick="exImportar()">Importar a la rúbrica →</button>
     <button class="ghost" style="border:1px solid var(--line)" title="Guarda este diseño como plantilla de la actividad de la Programación para reutilizarlo en otros grupos" onclick="exComoPlantilla()">💾 Plantilla de la Programación</button>
     ${state.ui.corVerB&&!cxVarEditando(act)?`<button class="ghost" style="border:1px solid var(--line)" title="Vuelve a barajar el orden de las preguntas" onclick="exMezclar()">🔀 Mezclar de nuevo</button>`:""}
+    ${act.rubrica&&mbSinEnlazar(act)&&!cxVarEditando(act)?`<button class="ghost" style="border:1px solid var(--line)" title="Empareja cada ítem de la rúbrica con su pregunta del examen, sin cambiar nada de lo corregido. Hace falta para que la rúbrica salga en el orden del modelo B." onclick="mbEnlazarRubrica()">🔗 Enlazar la rúbrica con el diseño (${mbSinEnlazar(act)} sin enlazar)</button>`:""}
     <button class="ghost" style="border:1px solid var(--line)" title="Qué criterios evalúa el examen y con qué peso" onclick="exCobertura()">📊 Cobertura</button>
     <button class="ghost" style="border:1px solid var(--line)" title="Ocupa toda la pantalla con el editor (útil en el iPad)" onclick="exPantallaCompleta(true)">⛶ Pantalla completa</button>
     <button class="ghost" style="border:1px solid var(--line)" title="Descarga examen, rúbrica, variantes NESE y versión B para reutilizarlos en otro grupo o curso (sin alumnado ni notas)" onclick="exExportarPaquete()">📦 Exportar paquete</button>
-    <span id="exEstado" style="font-size:12.5px;color:var(--mut)">Cargando editor…</span>${exAvisoCopia()}</div></div>
+    <span id="exEstado" style="font-size:12.5px;color:var(--mut)">Cargando editor…</span>${exAvisoCopia()}</div>
+    ${state.ui.corVerB&&!cxVarEditando(act)?`<p class="sub" style="margin:8px 0 0">El <strong>modelo B</strong> se genera a partir del examen general: aquí solo cuenta el <strong>orden</strong> de las preguntas (arrástralas o «🔀 Mezclar de nuevo»). El texto, los puntos y el formato se cambian en «Examen general» y el B los sigue solo. Reparte quién hace cada modelo en 🖊️ Corregir.</p>`:""}</div>
     <div id="exWrap" class="ex-wrap${_exFull?" ex-full":""}"><iframe id="exFrame" title="Editor de exámenes" style="width:100%;height:calc(100vh - 250px);height:calc(100dvh - 250px);min-height:560px;border:1px solid var(--line);border-radius:10px;background:#fff"></iframe><button class="btn ex-salir" onclick="exPantallaCompleta(false)">✕ Salir de pantalla completa</button></div>`;
   if(location.protocol==="file:"){
     const w=document.getElementById("exWrap");
@@ -333,10 +348,11 @@ function renderCorDiseno(grupo){
   f.onload=async()=>{
     try{
       const win=f.contentWindow;
-      const clave=exClave(act), vr=cxVarEditando(act), esB=!!state.ui.corVerB&&!vr; let nuevoB=false; let rec=await exGet(clave);
+      const clave=exClave(act), vr=cxVarEditando(act), esB=!!state.ui.corVerB&&!vr; let avisoB=""; let rec=await exGet(clave);
       if(!rec && vr && vr.progVarId && act.progActId){ const p=await exGet("prog:"+act.progActId+":"+vr.progVarId); if(p){ rec={key:clave,exam:JSON.parse(JSON.stringify(p.exam))}; rec.exam.id=uid(); } }
       if(!rec && vr){ const g=await exGet(act.id); if(g){ rec={key:clave,exam:JSON.parse(JSON.stringify(g.exam))}; rec.exam.id=uid(); } }
-      if(!rec && esB){ const g=await exGet(act.id); if(g){ rec={key:clave,exam:JSON.parse(JSON.stringify(g.exam))}; rec.exam.id=uid(); nuevoB=true; } }
+      // v3: el modelo B se reconstruye SIEMPRE a partir del examen general y de su orden (js/corrector/modelo-b.js).
+      if(esB){ const g=await exGet(act.id); if(g&&g.exam){ const pr=await mbPrepararB(act,g.exam,rec,win); if(pr.exam){ rec={key:clave,exam:pr.exam}; avisoB=pr.aviso; } } }
       if(!rec && act.progActId && !vr && !esB){ const p=await exGet("prog:"+act.progActId); if(p) rec={key:act.id,exam:JSON.parse(JSON.stringify(p.exam))}; }
       if(_exFrame!==f) return;
       let exam;
@@ -344,12 +360,16 @@ function renderCorDiseno(grupo){
       else { const b=win.blankExam(); b.name=act.nombre; b.body[0].title=act.nombre; b.body[0].eyebrow=grupo.nombre; exam=JSON.parse(JSON.stringify(b)); }
       win.__eeCriterios=exCriteriosDe(grupo,act);
       win.__ee.cargar(exam);
-      if(nuevoB) win.__ee.mezclar();
+      if(!vr && !esB && act.modeloB) mbActualizar(act,exam,win);   // numeración del modelo B al día
+      if(avisoB) mostrarToast(avisoB,"info");
       const g0=win.__ee.get(); g0.updated=0; _exFirma=JSON.stringify(g0);
       await exPut({key:clave,exam:win.__ee.get(),actualizado:Date.now(),nombre:act.nombre});
       win.__eeOnSave=ex=>{
         const g=JSON.parse(JSON.stringify(ex)); g.updated=0; const fr=JSON.stringify(g); if(fr===_exFirma) return; _exFirma=fr;
+        // Modelo B: solo cuenta el orden de sus preguntas; el contenido sale siempre del general.
+        if(esB){ mbGuardadoEnB(act,JSON.parse(JSON.stringify(ex)),win).then(()=>{ exMarcarPendiente(clave); exEstado("Orden guardado · "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})); }); return; }
         exPut({key:clave,exam:JSON.parse(JSON.stringify(ex)),actualizado:Date.now(),nombre:act.nombre})
+          .then(()=>{ if(!vr && act.modeloB) return mbActualizar(act,JSON.parse(JSON.stringify(ex)),win); })   // el B sigue al general
           .then(()=>{ exMarcarPendiente(clave); exCopiaDiaria(); exEstado("Guardado · "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})); })
           .catch(()=>exEstado("⚠️ No se pudo guardar el diseño: usa «Guardar archivo» del editor"));
       };
@@ -360,7 +380,7 @@ function renderCorDiseno(grupo){
 }
 window.exComoPlantilla=async()=>{
   const g=grupoActual(), act=g&&g.actividades.find(a=>a.id===state.ui.corExamId); if(!act||!_exFrame) return;
-  if(state.ui.corVerB&&!cxVarEditando(act)){ mostrarAviso("La versión B se genera sola a partir del examen general: cámbiate a «Examen general» para guardar la plantilla."); return; }
+  if(state.ui.corVerB&&!cxVarEditando(act)){ mostrarAviso("El modelo B se genera solo a partir del examen general: cámbiate a «Examen general» para guardar la plantilla."); return; }
   if(!act.progActId){ mostrarAviso("Este examen no procede de la Programación de Aula, así que no hay actividad a la que asociar la plantilla."); return; }
   const ex=_exFrame.contentWindow.__ee.get(); if(!ex) return;
   const vr=cxVarEditando(act);
@@ -490,7 +510,7 @@ function exPrevisionReimport(grupo,act,est,dest){
 window.exImportar=async()=>{
   const grupo=grupoActual(), act=grupo&&grupo.actividades.find(a=>a.id===state.ui.corExamId);
   if(!act||!_exFrame||!_exFrame.contentWindow.__ee){ mostrarAviso("El editor todavía no ha cargado."); return; }
-  if(state.ui.corVerB&&!cxVarEditando(act)){ mostrarAviso("La versión B es una copia del examen general con las preguntas en otro orden y comparte su rúbrica. Importa desde «Examen general»."); return; }
+  if(state.ui.corVerB&&!cxVarEditando(act)){ mostrarAviso("El modelo B es el examen general con las preguntas en otro orden y comparte su rúbrica (al corregir sale en el orden de cada modelo). Importa desde «Examen general»."); return; }
   exFlush();
   const est=exConReparto(_exFrame.contentWindow.__ee.estructura());
   if(!est.nodos.length){ mostrarAviso("El examen aún no tiene preguntas ni apartados con puntuación. Añade puntos a las preguntas o a sus subpreguntas (campo «puntos») y vuelve a importar."); return; }
