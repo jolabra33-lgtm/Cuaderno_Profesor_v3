@@ -606,7 +606,8 @@ export const PRUEBAS = [
     await esperar(800);
     const texto = () => p.evaluate(() => document.getElementById('tabContent').innerText);
     t.ok(/Alumno\/a NESE con el examen general:.*Beta, Bruno/s.test(await texto()), 'el Diseño avisa de que hay alumnado NESE sin versión adaptada');
-    await p.click('#tabContent button:has-text("+ Examen adaptado (NESE)")'); await esperar(1500);
+    await p.click('#tabContent button:has-text("+ Examen alternativo")'); await esperar(400);
+    await p.check('input[name="altTipo"][value="nese"]'); await p.click('#altSi'); await esperar(1500);
     let r = await p.evaluate(() => { const g = state.grupos[0], act = g.actividades[0], v = act.variantes[0];
       return { v: v && v.nombre, alumnos: (v ? v.alumnos : []).map(id => g.alumnos.find(a => a.id === id).nombre), editando: state.ui.corVarId === (v && v.id), tab: state.ui.corTab, aviso: !!document.querySelector('.cx-aviso-nese') }; });
     t.ok(r.v === 'Adaptada (NESE)' && r.alumnos.join() === 'Beta, Bruno' && r.editando && r.tab === 'diseno' && !r.aviso, 'desde el Diseño se crea el examen adaptado, con el alumnado NESE, y se abre para editarlo', JSON.stringify(r));
@@ -680,7 +681,7 @@ export const PRUEBAS = [
     await p.evaluate(() => { state.ui.corTab = 'diseno'; exVerB(); }); await esperar(2200);
     let r = await p.evaluate(async () => { const act = state.grupos[0].actividades[0], B = (await exGet('e1:B')).exam, G = (await exGet('e1')).exam;
       const qs = e => e.body.filter(n => n.type === 'question').map(n => n.id);
-      return { hayModelo: !!act.modeloB, a: qs(G), b: qs(B), eyebrow: (B.body.find(n => n.type === 'title') || {}).eyebrow, numB: act.modeloB && act.modeloB.numB }; });
+      return { hayModelo: !!mbModelo(act, 'B'), a: qs(G), b: qs(B), eyebrow: (B.body.find(n => n.type === 'title') || {}).eyebrow, numB: mbModelo(act, 'B') && mbModelo(act, 'B').num }; });
     t.ok(r.hayModelo && r.b.slice().sort().join() === r.a.slice().sort().join() && r.b.join() !== r.a.join(), 'el modelo B tiene las mismas preguntas en otro orden', JSON.stringify(r));
     t.ok(/Modelo B/.test(r.eyebrow || '') && r.numB && Object.keys(r.numB).length === 4, 'lleva «Modelo B» encima del título y guarda la numeración de cada pregunta', JSON.stringify(r));
     const ordenB = r.b;
@@ -699,12 +700,12 @@ export const PRUEBAS = [
       ex.body.find(n => n.id === 'q2').text = 'TEXTO CAMBIADO EN EL B';
       w.__ee.cargar(ex); w.__ee.flush(); await new Promise(r => setTimeout(r, 1200));
       const B = (await exGet('e1:B')).exam, act = state.grupos[0].actividades[0];
-      return { ordenGuardado: act.modeloB.orden._raiz, b: B.body.filter(n => n.type === 'question').map(n => n.id), texto: B.body.find(n => n.id === 'q2').text, aviso: (window.__dialogosLog || []).some(m => /solo cuenta el ORDEN/.test(m)) }; });
+      return { ordenGuardado: mbModelo(act, 'B').orden._raiz, b: B.body.filter(n => n.type === 'question').map(n => n.id), texto: B.body.find(n => n.id === 'q2').text, aviso: (window.__dialogosLog || []).some(m => /solo cuenta el ORDEN/.test(m)) }; });
     t.ok(r.b.join() === r.ordenGuardado.join() && r.texto === 'Define longitud' && r.aviso, 'en el modelo B el orden manual se guarda y los cambios de texto no (con aviso)', JSON.stringify(r));
     // Reparto y corrección.
     await p.evaluate(() => { state.ui.corTab = 'corregir'; state.ui.corAlId = ''; render(); }); await esperar(300);
     await p.click('button:has-text("Alternar A/B por lista")'); await esperar(300);
-    r = await p.evaluate(() => { const g = state.grupos[0], act = g.actividades[0]; return { deB: act.modeloB.alumnos.map(id => g.alumnos.find(a => a.id === id).nombre), botones: document.querySelectorAll('.mb-ab').length }; });
+    r = await p.evaluate(() => { const g = state.grupos[0], act = g.actividades[0]; return { deB: g.alumnos.filter(a => mbModeloDe(act, a.id) === 'B').map(a => a.nombre), botones: document.querySelectorAll('.mb-ab').length }; });
     t.ok(r.deB.join() === 'Beta, Bruno,Delta, Dani' && r.botones === 4, '«Alternar por lista» reparte A, B, A, B y cada alumno/a tiene su selector', JSON.stringify(r));
     await p.evaluate(() => { const g = state.grupos[0]; mbSetModelo(g.alumnos[2].id, 'B'); }); await esperar(200);
     const orden = () => p.evaluate(() => { const act = state.grupos[0].actividades[0], ids = [];
@@ -714,7 +715,7 @@ export const PRUEBAS = [
     const vistaB = await orden(), textoB = await p.evaluate(() => document.getElementById('tabContent').innerText);
     await p.evaluate(() => { state.ui.corAlId = state.grupos[0].alumnos[0].id; render(); }); await esperar(300);
     const vistaA = await orden(), textoA = await p.evaluate(() => document.getElementById('tabContent').innerText);
-    const ordenFinal = await p.evaluate(() => state.grupos[0].actividades[0].modeloB.orden._raiz);
+    const ordenFinal = await p.evaluate(() => mbModelo(state.grupos[0].actividades[0], 'B').orden._raiz);
     t.ok(vistaB.join() === ordenFinal.filter(id => id !== 'q5').join() && vistaA.join() === 'q1,q2,q3,q4',   // q5 se añadió al diseño después de importar la rúbrica
        'al corregir, el modelo B sale en el orden del B y el A en el suyo', JSON.stringify({ vistaA, vistaB, ordenFinal }));
     t.ok(/Modelo B/.test(textoB) && /modelo A: \d/.test(textoB) && !/Modelo B/.test(textoA), 'el B lleva «Modelo B» y el número de cada pregunta en el A', textoB.slice(0, 200));
@@ -728,14 +729,14 @@ export const PRUEBAS = [
     t.ok(/Modelo B/.test(imp), 'la rúbrica impresa del modelo B lo indica');
     // Plano de aula: damero.
     r = await p.evaluate(() => { const g = state.grupos[0]; g.plano.posiciones = { [g.alumnos[0].id]: { fila: 0, col: 0 }, [g.alumnos[1].id]: { fila: 0, col: 1 }, [g.alumnos[2].id]: { fila: 1, col: 0 }, [g.alumnos[3].id]: { fila: 1, col: 1 } };
-      save(); render(); mbAlternarPlano(); return g.actividades[0].modeloB.alumnos.map(id => g.alumnos.find(a => a.id === id).nombre).sort(); });
+      save(); render(); mbAlternarPlano(); return g.alumnos.filter(a => mbModeloDe(g.actividades[0], a.id) === 'B').map(a => a.nombre).sort(); });
     t.ok(r.join() === 'Beta, Bruno,Gamma, Gema', '«Alternar según el plano» reparte en damero (ni al lado ni delante el mismo modelo)', JSON.stringify(r));
     // Rúbrica hecha a mano (sin enlaces): se enlaza por el texto sin tocar lo corregido.
     r = await p.evaluate(async () => { const g = state.grupos[0], act = g.actividades[0];
       const antes = JSON.stringify(g.rubricScores), ids = cxItemsFlat(act.rubrica).map(i => i.id).join();
       (function w(l) { l.forEach(n => { delete n.fuenteId; (n.items || []).forEach(it => { delete it.fuenteId; }); w(n.subs || []); }); })(act.rubrica);
       const sinEnlace = mbRubricaEnlazada(act);
-      state.ui.corTab = 'diseno'; state.ui.corVerB = false; render(); await new Promise(r => setTimeout(r, 2200));
+      state.ui.corTab = 'diseno'; state.ui.corModelo = ''; render(); await new Promise(r => setTimeout(r, 2200));
       const boton = [...document.querySelectorAll('#tabContent button')].find(b => /Enlazar la rúbrica/.test(b.textContent));
       await mbEnlazarRubrica(); await new Promise(r => setTimeout(r, 300));
       document.getElementById('mbSi').click(); await new Promise(r => setTimeout(r, 300));
@@ -743,6 +744,107 @@ export const PRUEBAS = [
         bloqueQ3: (cxNodosFlat(act.rubrica).find(x => (x.n.items || []).some(it => it.fuenteId === 's31')) || {}).n.fuenteId }; });
     t.ok(r.boton && !r.sinEnlace && r.enlazada && r.sinEnlazar === 0 && r.bloqueQ3 === 'q3', 'una rúbrica sin enlazar se enlaza con el diseño (ítems y bloques)', JSON.stringify(r));
     t.ok(r.mismosIds && r.mismasNotas, 'enlazar no cambia ningún ítem ni lo ya corregido', JSON.stringify(r));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'modelos-abc', descripcion: 'Modelos A, B y C: tres órdenes distintos, máximo tres, reparto A/B/C (lista y plano), corrección en el orden del C, quitar un modelo y paso del formato antiguo', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url, { nombres: ['Alfa, Ana', 'Beta, Bruno', 'Gamma, Gema', 'Delta, Dani', 'Eta, Eva', 'Zeta, Zoe'] });
+    await p.evaluate(async () => { _mostrarBienvenida = false; const g = state.grupos[0];
+      g.actividades = [{ id: 'e1', nombre: 'Examen', tipo: TIPOS[0], trimestre: 0, bloqueId: 'b0', esExamen: true, criterios: [] }];
+      state.ui.appMode = 'corrector'; state.ui.grupoId = g.id; state.ui.corExamId = 'e1'; state.ui.corTab = 'diseno'; save(); render();
+      await new Promise(r => setTimeout(r, 1800));
+      const w = document.getElementById('exFrame').contentWindow, ex = w.__ee.get();
+      const q = (id, txt) => ({ id, type: 'question', title: '', text: txt, points: '2', children: [] });
+      ex.body = ex.body.filter(n => n.type === 'title').concat([q('q1', 'Define latitud'), q('q2', 'Define longitud'), q('q3', 'Explica la escala'), q('q4', 'Explica el clima'), q('q5', 'Comenta el mapa')]);
+      w.__ee.cargar(ex); w.__ee.flush(); await new Promise(r => setTimeout(r, 500)); });
+    await p.click('#tabContent button:has-text("Importar a la rúbrica")'); await esperar(800);
+    await p.evaluate(() => { const b = document.querySelector('.dlg-si'); if (b) b.click(); }); await esperar(600);
+    await p.evaluate(() => { state.ui.corTab = 'diseno'; render(); }); await esperar(2000);
+    await p.click('#tabContent button:has-text("+ Modelo B")'); await esperar(2200);
+    await p.click('#tabContent button:has-text("+ Modelo C")'); await esperar(2200);
+    let r = await p.evaluate(async () => { const act = state.grupos[0].actividades[0], qs = e => e.body.filter(n => n.type === 'question').map(n => n.id);
+      const A = (await exGet('e1')).exam, B = (await exGet('e1:B')).exam, C = (await exGet('e1:C')).exam;
+      return { letras: mbLista(act).map(m => m.letra), a: qs(A), b: qs(B), c: qs(C), eyC: (C.body.find(n => n.type === 'title') || {}).eyebrow, viendo: state.ui.corModelo,
+        masModelos: [...document.querySelectorAll('#tabContent button')].some(b => /\+ Modelo/.test(b.textContent)) }; });
+    t.ok(r.letras.join() === 'B,C' && r.viendo === 'C' && /Modelo C/.test(r.eyC), 'se crean los modelos B y C, y el C lleva «Modelo C» encima del título', JSON.stringify(r));
+    t.ok(new Set([r.a.join(), r.b.join(), r.c.join()]).size === 3 && r.b.slice().sort().join() === r.a.join() && r.c.slice().sort().join() === r.a.join(), 'los tres modelos tienen las mismas preguntas en tres órdenes distintos', JSON.stringify(r));
+    t.ok(!r.masModelos, 'con A, B y C ya no se ofrece crear otro modelo (máximo tres)');
+    // Reparto A/B/C por lista.
+    await p.evaluate(() => { state.ui.corTab = 'corregir'; state.ui.corAlId = ''; render(); }); await esperar(300);
+    await p.click('button:has-text("Alternar A/B/C por lista")'); await esperar(300);
+    r = await p.evaluate(() => { const g = state.grupos[0], act = g.actividades[0];
+      return { rep: g.alumnos.map(a => mbModeloDe(act, a.id)).join(''), botones: [...document.querySelectorAll('.mb-ab')].map(x => x.querySelectorAll('button').length) }; });
+    t.ok(r.rep === 'ABCABC' && r.botones.length === 6 && r.botones.every(n => n === 3), '«Alternar por lista» reparte A, B, C, A, B, C y cada alumno/a tiene el selector A/B/C', JSON.stringify(r));
+    // Corregir a Gema (modelo C): la rúbrica sale en el orden del C; la nota no cambia.
+    r = await p.evaluate(() => { const g = state.grupos[0], act = g.actividades[0], al = g.alumnos[2]; state.ui.corAlId = al.id; render();
+      const vista = mbRubricaVista(act, al.id).flatMap(n => [n.fuenteId, ...(n.items || []).map(i => i.fuenteId)]).filter(id => /^q/.test(id || '')).filter((v, i, a) => a.indexOf(v) === i);
+      const sc = g.rubricScores[al.id] = g.rubricScores[al.id] || {}; sc[act.id] = {}; cxItemsFlat(act.rubrica).forEach(it => { sc[act.id][it.id] = Number(it.max); });
+      cxRecalcAlumno(g, act, al.id);
+      return { vista, ordenC: mbModelo(act, 'C').orden._raiz, texto: document.getElementById('tabContent').innerText, nota: g.notasCuant[al.id][act.id],
+        imp: cxRubricaBodyHTML(g, act, al, {}) }; });
+    t.ok(r.vista.join() === r.ordenC.join() && /Modelo C/.test(r.texto) && /Modelo C/.test(r.imp), 'al corregir e imprimir, el modelo C sale en su orden y lo indica', JSON.stringify({ vista: r.vista, ordenC: r.ordenC }));
+    t.ok(r.nota === 10, 'con todo bien en el modelo C la nota es 10: la rúbrica es la misma', String(r.nota));
+    // Plano con tres modelos: ni el de al lado ni el de delante tienen el mismo.
+    r = await p.evaluate(() => { const g = state.grupos[0], act = g.actividades[0], pos = {};
+      g.alumnos.forEach((a, i) => { pos[a.id] = { fila: Math.floor(i / 3), col: i % 3 }; }); g.plano.posiciones = pos; state.ui.corAlId = ''; save(); render(); mbAlternarPlano();
+      const m = (f, c) => mbModeloDe(act, g.alumnos[f * 3 + c].id); const mal = [];
+      for (let f = 0; f < 2; f++) for (let c = 0; c < 3; c++) { if (c < 2 && m(f, c) === m(f, c + 1)) mal.push(`${f},${c} lado`); if (f < 1 && m(f, c) === m(f + 1, c)) mal.push(`${f},${c} delante`); }
+      return { mal, filas: [0, 1].map(f => [0, 1, 2].map(c => m(f, c)).join('')) }; });
+    t.ok(!r.mal.length && r.filas[0].length === 3 && new Set(r.filas[0]).size === 3, '«Alternar según el plano» con tres modelos: ni al lado ni delante el mismo', JSON.stringify(r));
+    // Quitar el B: su alumnado pasa al A y el C pasa a llamarse B (con su alumnado y su orden).
+    r = await p.evaluate(async () => { const g = state.grupos[0], act = g.actividades[0]; window.__dialogosAuto = { confirmar: true };
+      const ordenC = mbModelo(act, 'C').orden._raiz.join(), deC = g.alumnos.filter(a => mbModeloDe(act, a.id) === 'C').map(a => a.id).join(), deB = g.alumnos.filter(a => mbModeloDe(act, a.id) === 'B').map(a => a.id);
+      state.ui.corTab = 'diseno'; state.ui.corModelo = 'B'; render(); await new Promise(r => setTimeout(r, 2000));
+      await exQuitarModelo(); await new Promise(r => setTimeout(r, 2000));
+      return { letras: mbLista(act).map(m => m.letra).join(), ordenB: mbModelo(act, 'B').orden._raiz.join(), ordenC, nuevosB: g.alumnos.filter(a => mbModeloDe(act, a.id) === 'B').map(a => a.id).join(), deC,
+        antiguosBenA: deB.every(id => mbModeloDe(act, id) === 'A'), disenoC: !!(await exGet('e1:C')), viendo: state.ui.corModelo }; });
+    t.ok(r.letras === 'B' && r.ordenB === r.ordenC && r.nuevosB === r.deC && r.antiguosBenA && !r.disenoC && r.viendo === '', 'al quitar el modelo B, su alumnado pasa al A y el C pasa a ser el B', JSON.stringify(r));
+    // Datos de la versión anterior (act.modeloB) pasan al formato nuevo sin perder nada.
+    r = await p.evaluate(() => { const g = state.grupos[0], ids = g.alumnos.map(a => a.id);
+      g.actividades.push({ id: 'e2', nombre: 'Viejo', tipo: TIPOS[0], trimestre: 0, bloqueId: 'b0', esExamen: true, criterios: [],
+        modeloB: { orden: { _raiz: ['q2', 'q1'] }, alumnos: [ids[1], ids[3]], numA: { q1: '1.', q2: '2.' }, numB: { q1: '2.', q2: '1.' }, examId: 'xB' } });
+      migrarEstado(); const a = g.actividades.find(x => x.id === 'e2');
+      return { sinViejo: !a.modeloB, b: mbModelo(a, 'B'), numA: a.modelos.numA, quien: ids.map(id => mbModeloDe(a, id)).join('') }; });
+    t.ok(r.sinViejo && r.b && r.b.orden._raiz.join() === 'q2,q1' && r.b.examId === 'xB' && r.b.num.q1 === '2.' && r.numA.q1 === '1.' && r.quien === 'ABABAA', 'un modelo B de la versión anterior se conserva: orden, numeración y quién lo hace', JSON.stringify(r));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'examen-otro-dia', descripcion: 'Examen alternativo «otro día»: se crea para quien no vino, con fecha y en blanco, sin alumnado NESE; sale en la misma lista y se corrige con su rúbrica', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url, { nombres: ['Alfa, Ana', 'Beta, Bruno', 'Gamma, Gema'] });
+    await p.evaluate(async () => { _mostrarBienvenida = false; const g = state.grupos[0]; g.alumnos[1].nese = true;
+      g.actividades = [{ id: 'e1', nombre: 'Examen Unidad 1', tipo: TIPOS[0], trimestre: 0, bloqueId: 'b0', esExamen: true, criterios: [], escalarA10: true,
+        rubrica: [{ id: 's1', title: 'Preguntas', items: [{ id: 'i1', label: 'Pregunta general', max: 10, links: [] }], subs: [] }] }];
+      state.ui.appMode = 'corrector'; state.ui.grupoId = g.id; state.ui.corExamId = 'e1'; state.ui.corTab = 'diseno'; save(); render();
+      await new Promise(r => setTimeout(r, 1800));
+      const w = document.getElementById('exFrame').contentWindow, ex = w.__ee.get();
+      ex.body = ex.body.filter(n => n.type === 'title').concat([{ id: 'q1', type: 'question', title: '', text: 'Pregunta del día del examen', points: '10', children: [] }]);
+      w.__ee.cargar(ex); w.__ee.flush(); await new Promise(r => setTimeout(r, 500)); });
+    await p.click('#tabContent button:has-text("+ Examen alternativo")'); await esperar(400);
+    let r = await p.evaluate(() => ({ nombre: document.getElementById('altNombre').value, fecha: document.getElementById('altFecha').value,
+      marcados: [...document.querySelectorAll('#altAlumnos input:checked')].length }));
+    t.ok(r.nombre === 'Otro día' && /^\d{4}-\d{2}-\d{2}$/.test(r.fecha) && r.marcados === 0, 'por defecto es «Otro día», con la fecha de hoy y sin nadie marcado (tampoco el alumnado NESE)', JSON.stringify(r));
+    await p.fill('#altNombre', 'Unidad 1 · recuperación de falta'); await p.fill('#altFecha', '2026-11-20');
+    await p.check('input[name="altInicio"][value="blanco"]');
+    await p.check('#altAlumnos input[value="' + await p.evaluate(() => state.grupos[0].alumnos[0].id) + '"]');
+    await p.click('#altSi'); await esperar(2200);
+    r = await p.evaluate(async () => { const g = state.grupos[0], act = g.actividades[0], v = act.variantes[0], d = await exGet('e1:' + v.id);
+      return { tipo: v.tipo, fecha: v.fecha, nombre: v.nombre, alumnos: v.alumnos.map(id => g.alumnos.find(a => a.id === id).nombre), editando: state.ui.corVarId === v.id,
+        preguntas: d ? d.exam.body.filter(n => n.type === 'question').length : -1, avisoNese: /Beta, Bruno/.test((document.querySelector('.cx-aviso-nese') || {}).innerText || ''),
+        ofreceAnadir: !!document.querySelector('.cx-aviso-nese select, .cx-aviso-nese button.btn[onclick*="cxAnadirNese"]') }; });
+    t.ok(r.tipo === 'ausencia' && r.fecha === '2026-11-20' && r.nombre === 'Unidad 1 · recuperación de falta' && r.alumnos.join() === 'Alfa, Ana' && r.editando, 'se crea el examen alternativo para Ana, con su nombre y su fecha, y se abre para diseñarlo', JSON.stringify(r));
+    t.ok(r.preguntas === 0, 'empieza en blanco (no copia las preguntas del general)', JSON.stringify(r));
+    t.ok(r.avisoNese && !r.ofreceAnadir, 'el alumnado NESE no entra en el examen de otro día, y el aviso NESE no lo ofrece como versión adaptada', JSON.stringify(r));
+    // Misma lista de corrección, con su rúbrica.
+    r = await p.evaluate(() => { const g = state.grupos[0], act = g.actividades[0]; cxItemsFlat(act.variantes[0].rubrica)[0].label = 'Pregunta del otro día';
+      state.ui.corTab = 'corregir'; state.ui.corAlId = ''; state.ui.corVarId = ''; render();
+      const lista = document.getElementById('tabContent').innerText;
+      state.ui.corAlId = g.alumnos[0].id; render(); const ana = document.getElementById('tabContent').innerText;
+      state.ui.corAlId = g.alumnos[2].id; render(); const gema = document.getElementById('tabContent').innerText;
+      return { filas: (lista.match(/Corregir/g) || []).length, badge: /Unidad 1 · recuperación de falta · 20\/11\/2026/.test(lista), ana: /Pregunta del otro día/.test(ana) && /otro día/.test(ana), gema: /Pregunta general/.test(gema) && !/Pregunta del otro día/.test(gema) }; });
+    t.ok(r.badge && r.filas >= 3, 'Ana sale en la misma lista de corrección, con el nombre y la fecha de su examen', JSON.stringify(r));
+    t.ok(r.ana && r.gema, 'Ana se corrige con la rúbrica del otro día y Gema con la general', JSON.stringify(r));
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
