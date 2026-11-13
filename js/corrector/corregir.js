@@ -22,7 +22,7 @@ function renderCorCorregir(grupo){
     const hecho=vc!=null;
     return `<tr>
       ${mbCeldaHTML(act,al)}
-      <td>${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}${cxVarianteDeAlumno(act,al.id)?` <span class="badge" title="Se corrige con una rúbrica adaptada">${esc(cxVarianteDeAlumno(act,al.id).nombre||"Adaptada")}</span>`:""}</td>
+      <td>${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}${cxVarianteDeAlumno(act,al.id)?(v=>` <span class="badge" title="${v.tipo==="ausencia"?"Hace un examen alternativo (otro día)":"Hace un examen adaptado"} y se corrige con su propia rúbrica">${v.tipo==="ausencia"?"📅 ":""}${esc(v.nombre||"Adaptada")}${v.fecha?" · "+esc(cxFechaCorta(v.fecha)):""}</span>`)(cxVarianteDeAlumno(act,al.id)):""}</td>
       <td style="font-weight:600">${hecho?fmt(vc):"—"}</td>
       <td>${hecho?pillCuant(vc):'<span class="badge">Sin corregir</span>'}</td>
       <td><button class="btn small" onclick="cxIrAlumno('${al.id}')">${hecho?"Revisar":"Corregir"}</button>${hecho?` <button class="ghost small" style="border:1px solid var(--line)" title="Imprimir la rúbrica de este alumno/a" onclick="cxImprimirRubrica('${al.id}','${act.id}')">🖨️</button> <button class="ghost small" style="border:1px solid var(--line)" title="Imprimir la rúbrica resumida de este alumno/a: solo puntuaciones y anotaciones, para gastar menos papel" onclick="cxImprimirRubrica('${al.id}','${act.id}',true)">📄 Resumida</button>`:""}</td>
@@ -66,7 +66,7 @@ function renderCorCorregir(grupo){
       : '<p class="sub" style="margin:6px 0 0">Qué ítems de la rúbrica ha fallado más la clase, para saber qué reforzar antes de seguir.</p>'}
   </div>
   <div class="card"><div style="overflow-x:auto"><table>
-    <thead><tr>${act.modeloB?`<th title="Modelo de examen que hace cada alumno/a">Modelo</th>`:""}<th>Alumno/a</th><th>Nota</th><th>Calificación</th><th></th></tr></thead>
+    <thead><tr>${mbModelos(act)?`<th title="Modelo de examen que hace cada alumno/a">Modelo</th>`:""}<th>Alumno/a</th><th>Nota</th><th>Calificación</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div></div>`;
   document.getElementById("cxExamSel").addEventListener("change",e=>{ state.ui.corExamId=e.target.value; save(); render(); });
@@ -163,8 +163,8 @@ function renderCxGradingAlumno(grupo,act,al){
   const i=alumnos.findIndex(a=>a.id===al.id);
   grupo.rubricScores[al.id]=grupo.rubricScores[al.id]||{};
   const sc=grupo.rubricScores[al.id][act.id]=grupo.rubricScores[al.id][act.id]||{};
-  const rubAl=mbRubricaVista(act,al.id);   // la suya y, si hace el modelo B, en el orden del B
-  const varAl=cxVarianteDeAlumno(act,al.id), deB=mbHaceB(act,al.id);
+  const rubAl=mbRubricaVista(act,al.id);   // la suya y, si hace el modelo B o C, en el orden de su modelo
+  const varAl=cxVarianteDeAlumno(act,al.id), deB=mbHaceB(act,al.id), letraM=mbModeloDe(act,al.id);
   const critIds=cxCriteriosDeRubrica(rubAl);
   const itemsHtml=cxEsNiveles(rubAl)? cxnCorregirHTML(grupo,rubAl,sc,al.id,act.id) : rubAl.map(sec=>cxNodoCorregirHTML(sec,0,sc,al.id,act.id)).join("");
   const vc=grupo.notasCuant?.[al.id]?.[act.id];
@@ -190,9 +190,9 @@ function renderCxGradingAlumno(grupo,act,al){
     </div>
   </div>
   <div class="card">
-    <h2 style="font-size:15px">Rúbrica${varAl?` <span class="badge" style="vertical-align:middle">${esc(varAl.nombre||"Adaptada")}</span>`:""}${deB?` <span class="badge mb-badge" style="vertical-align:middle">Modelo B</span>`:""}</h2>
-    ${varAl?`<p class="sub" style="margin:0 0 10px">Este alumno/a hace un examen adaptado y se corrige con su propia rúbrica.</p>`:""}
-    ${deB?(mbRubricaEnlazada(act)?`<p class="sub" style="margin:0 0 10px">Hace el modelo B: las preguntas salen en el orden del B y con su número (entre paréntesis, el del modelo A). La rúbrica y la nota son las mismas.</p>`:`<div class="alert-box" style="margin:0 0 10px">Hace el modelo B, pero la rúbrica no está enlazada con el diseño y sale en el orden del A. Enlázala en ✏️ Diseño → «🔗 Enlazar la rúbrica con el diseño».</div>`):""}
+    <h2 style="font-size:15px">Rúbrica${varAl?` <span class="badge" style="vertical-align:middle">${varAl.tipo==="ausencia"?"📅 ":""}${esc(varAl.nombre||"Adaptada")}${varAl.fecha?" · "+esc(cxFechaCorta(varAl.fecha)):""}</span>`:""}${deB?` <span class="badge mb-badge" style="vertical-align:middle">Modelo ${letraM}</span>`:""}</h2>
+    ${varAl?`<p class="sub" style="margin:0 0 10px">Este alumno/a hace ${varAl&&varAl.tipo==="ausencia"?"un examen alternativo (otro día)":"un examen adaptado"} y se corrige con su propia rúbrica.</p>`:""}
+    ${deB?(mbRubricaEnlazada(act)?`<p class="sub" style="margin:0 0 10px">Hace el modelo ${letraM}: las preguntas salen en el orden del ${letraM} y con su número (entre paréntesis, el del modelo A). La rúbrica y la nota son las mismas.</p>`:`<div class="alert-box" style="margin:0 0 10px">Hace el modelo ${letraM}, pero la rúbrica no está enlazada con el diseño y sale en el orden del A. Enlázala en ✏️ Diseño → «🔗 Enlazar la rúbrica con el diseño».</div>`):""}
     ${itemsHtml}
   </div>
   <div class="card">
@@ -344,7 +344,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
     ${state.centroNombre?`<div class="cx-letterhead">${esc(state.centroNombre)}</div>`:""}
     <div class="cx-eyebrow">${opts.resumida?"Rúbrica de corrección · resumen":"Rúbrica de corrección"}</div>
     <h1 class="cx-alumno">${esc(al.nombre)}</h1>
-    <div class="cx-meta-line">${esc(act.nombre)}${mbHaceB(act,al.id)?" · Modelo B":""}<span class="sep">·</span>${esc(cat.materia)} ${esc(cat.curso)}<span class="sep">·</span>Grupo ${esc(grupo.nombre)}<span class="sep">·</span><b>${fechaLarga}</b></div>
+    <div class="cx-meta-line">${esc(act.nombre)}${mbHaceB(act,al.id)?" · Modelo "+mbModeloDe(act,al.id):""}${(v=>v?" · "+esc(v.nombre||"Adaptada")+(v.fecha?" ("+esc(cxFechaCorta(v.fecha))+")":""):"")(cxVarianteDeAlumno(act,al.id))}<span class="sep">·</span>${esc(cat.materia)} ${esc(cat.curso)}<span class="sep">·</span>Grupo ${esc(grupo.nombre)}<span class="sep">·</span><b>${fechaLarga}</b></div>
     ${seccionesHtml}
     <div class="cx-total-box">
       <div><div class="cx-total-label">Puntuación total</div><div class="cx-total-value">${vc==null?"—":fmt(vc)} <small>/ ${fmt(cxEscalarDe(act,al.id)&&maxTotal>0&&Math.abs(maxTotal-10)>=0.01?10:maxTotal)}</small></div></div>

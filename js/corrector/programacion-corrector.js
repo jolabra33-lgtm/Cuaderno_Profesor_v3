@@ -77,14 +77,17 @@ function cxGuardarVarianteEnProgAct(progAct,v){
   let pv=v.progVarId && progAct.variantes.find(x=>x.id===v.progVarId);
   if(!pv){ pv={id:uid()}; progAct.variantes.push(pv); v.progVarId=pv.id; }
   pv.nombre=v.nombre||"Adaptada"; pv.escalarA10=v.escalarA10!==false; pv.rubrica=JSON.parse(JSON.stringify(v.rubrica||[]));
+  if(v.tipo==="ausencia") pv.tipo="ausencia"; else delete pv.tipo;   // la fecha y el alumnado son de cada grupo
   return pv;
 }
 function cxVariantesDesdeProgAct(grupo,act,progAct){
   if(!progAct || !Array.isArray(progAct.variantes) || !act.rubrica) return;
-  progAct.variantes.forEach((pv,i)=>{
+  // El alumnado NESE del grupo va a la primera versión adaptada; las de «otro día» empiezan sin alumnado.
+  const primeraNese=progAct.variantes.find(pv=>pv.tipo!=="ausencia");
+  progAct.variantes.forEach(pv=>{
     if(!Array.isArray(pv.rubrica) || !pv.rubrica.length) return;
     if(cxVariantes(act).some(v=>v.progVarId===pv.id)) return;
-    cxCrearVariante(grupo,act,{nombre:pv.nombre,rubrica:pv.rubrica,escalarA10:pv.escalarA10,progVarId:pv.id,sinAlumnado:i>0});
+    cxCrearVariante(grupo,act,{nombre:pv.nombre,tipo:pv.tipo,rubrica:pv.rubrica,escalarA10:pv.escalarA10,progVarId:pv.id,sinAlumnado:pv!==primeraNese});
   });
 }
 function cxActTieneNotas(grupo,act){

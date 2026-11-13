@@ -4,11 +4,26 @@
    ============================================================================ */
 
 let state;
+/* Formato antiguo: act.modeloB={orden,alumnos:[ids],numA,numB,examId}.
+   Formato nuevo:   act.modelos={lista:[{letra:"B",orden,examId,num}], numA, asignados:{alId:"B"}}. */
+function migrarModeloB(a){
+  const mb=a.modeloB||{}, asignados={};
+  (Array.isArray(mb.alumnos)?mb.alumnos:[]).forEach(id=>{ asignados[id]="B"; });
+  const m={letra:"B",orden:(mb.orden&&typeof mb.orden==="object")?mb.orden:{}};
+  if(mb.examId) m.examId=mb.examId;
+  if(mb.numB) m.num=mb.numB;
+  a.modelos={lista:[m],asignados};
+  if(mb.numA) a.modelos.numA=mb.numA;
+  delete a.modeloB;
+}
 /* v1: todas las normalizaciones/migraciones del estado, agrupadas en una
    función para poder re-ejecutarlas al importar una copia o al recuperar
    datos desde la copia interna (IndexedDB), no solo al arrancar. */
 function migrarEstado(){
 (state.grupos||[]).forEach(g=>{ normalizarGrupo(g); (g.alumnos||[]).forEach(normalizarAlumno); ordenarAlumnos(g); });
+/* v3.1: el «modelo B» único pasa a una lista de modelos (B y C) con su reparto (js/corrector/modelo-b.js).
+   Se conserva todo: el orden del B, su diseño guardado (misma clave «<examen>:B»), su numeración y quién lo hace. */
+(state.grupos||[]).forEach(g=>(g.actividades||[]).forEach(a=>{ if(a&&a.modeloB&&!a.modelos) migrarModeloB(a); }));
 /* Migración única: hasta ahora un examen guardaba la MISMA nota clonada en
    todos sus criterios, y esa nota servía a la vez para la calificación
    cuantitativa y para la cualitativa. A partir de esta versión son dos notas

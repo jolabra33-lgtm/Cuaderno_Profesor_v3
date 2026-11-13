@@ -27,17 +27,26 @@ function renderCorEditor(grupo){
   _cxPrevistosSet = prevCrit ? new Set(prevCrit) : null;
   const pestanas=`<div class="flex" style="flex-wrap:wrap;gap:6px;margin-top:12px;align-items:center">
       <button class="tab ${!variante?"on":""}" onclick="cxElegirVariante('')">Rúbrica general · ${nGeneral} alumno${nGeneral===1?"":"s"}</button>
-      ${cxVariantes(act).map(v=>`<button class="tab ${variante&&variante.id===v.id?"on":""}" onclick="cxElegirVariante('${v.id}')">${esc(v.nombre||"Rúbrica adaptada")} · ${(v.alumnos||[]).length} alumno${(v.alumnos||[]).length===1?"":"s"}</button>`).join("")}
-      <button class="ghost" style="border:1px dashed var(--line)" title="Examen diferente para uno o varios alumnos/as (p. ej. NESE): se corrigen con su propia rúbrica y el resto con la general" onclick="cxNuevaVariante()">+ Rúbrica adaptada (NESE)</button>
+      ${cxVariantes(act).map(v=>`<button class="tab ${variante&&variante.id===v.id?"on":""}" onclick="cxElegirVariante('${v.id}')">${v.tipo==="ausencia"?"📅 ":""}${esc(v.nombre||"Examen alternativo")}${v.fecha?" · "+esc(cxFechaCorta(v.fecha)):""} · ${(v.alumnos||[]).length} alumno${(v.alumnos||[]).length===1?"":"s"}</button>`).join("")}
+      <button class="ghost" style="border:1px dashed var(--line)" title="Examen con otras preguntas para uno o varios alumnos/as (quien no vino el día del examen, o el alumnado NESE): se corrigen con su propia rúbrica y el resto con la general" onclick="cxNuevoAlternativo()">+ Examen alternativo</button>
     </div>`;
   const panelVariante=variante? `<div class="card" style="border-left:4px solid var(--accent)">
     <div class="flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
-      <label style="font-size:12.5px;color:var(--mut);font-weight:500;flex:1;min-width:220px">Nombre de esta rúbrica adaptada
+      <label style="font-size:12.5px;color:var(--mut);font-weight:500;flex:1;min-width:200px">Nombre de este examen alternativo
         <input class="in" style="width:100%;margin-top:4px" value="${esc(variante.nombre||"")}" onchange="cxSetVarianteNombre(this.value)">
       </label>
+      <label style="font-size:12.5px;color:var(--mut);font-weight:500">Tipo
+        <select class="in" style="display:block;margin-top:4px" onchange="cxSetVarianteTipo(this.value)">
+          <option value="ausencia" ${variante.tipo==="ausencia"?"selected":""}>📅 Otro día (no vino al examen)</option>
+          <option value="nese" ${variante.tipo!=="ausencia"?"selected":""}>🧩 Adaptado (NESE)</option>
+        </select>
+      </label>
+      <label style="font-size:12.5px;color:var(--mut);font-weight:500">Fecha
+        <input class="in" type="date" style="display:block;margin-top:4px" value="${esc(variante.fecha||"")}" onchange="cxSetVarianteFecha(this.value)">
+      </label>
       <div class="flex" style="align-items:flex-end">
-        <button class="ghost" style="border:1px solid var(--line)" title="Sustituye esta rúbrica adaptada por una copia de la general" onclick="cxCopiarGeneralEnVariante()">Copiar la general aquí</button>
-        <button class="ghost danger" onclick="cxEliminarVariante()">Eliminar rúbrica adaptada</button>
+        <button class="ghost" style="border:1px solid var(--line)" title="Sustituye la rúbrica de este examen alternativo por una copia de la general" onclick="cxCopiarGeneralEnVariante()">Copiar la rúbrica general aquí</button>
+        <button class="ghost danger" onclick="cxEliminarVariante()">Eliminar examen alternativo</button>
       </div>
     </div>
     <div class="section-eyebrow" style="margin:12px 0 6px">Alumnado que hace este examen</div>
@@ -449,7 +458,11 @@ window.cxSetItemLinkPeso=(itemId,critId,v)=>{
   const x=cxCtxEd(); if(!x) return;
   const it=cxItemsFlat(x.rub).find(y=>y.id===itemId); if(!it) return;
   const l=(it.links||[]).find(y=>y.critId===critId); if(l){ l.peso=Number(v)||0; cxRecalcTodosLosAlumnos(x.grupo,x.act); save(); } };
-/* ---- Rúbricas adaptadas (NESE) ---- */
+/* ---- Exámenes alternativos: adaptados (NESE) y de otro día (quien no vino al examen) ----
+   act.variantes=[{id,nombre,tipo:"nese"|"ausencia",fecha:"AAAA-MM-DD",rubrica,escalarA10,alumnos,enBlanco}].
+   Sin «tipo» es un examen adaptado (NESE), como los de antes. Un examen «ausencia» no recibe alumnado NESE
+   automáticamente: se marca a mano quién lo hace. Todos cuentan en el mismo examen y salen en su lista de corrección. */
+function cxFechaCorta(f){ const m=String(f||"").match(/^(\d{4})-(\d{2})-(\d{2})$/); return m? `${Number(m[3])}/${Number(m[2])}/${m[1]}` : String(f||""); }
 window.cxElegirVariante=id=>{ state.ui.corVarId=id||""; state.ui.corItemAbierto=""; save(); render(); };
 /* Crea una versión adaptada: rúbrica copiada de la general (o la que se pase) y, como alumnado, el NESE del grupo
    que todavía no hace otra versión ni está marcado como «hace el general». No guarda ni pinta. */
@@ -457,10 +470,20 @@ function cxCrearVariante(grupo,act,datos){
   if(!Array.isArray(act.variantes)) act.variantes=[];
   datos=datos||{};
   const ocupados=new Set([...cxVariantes(act).flatMap(v=>v.alumnos||[]),...(act.neseGeneral||[])]);
-  const nese=datos.sinAlumnado?[]:grupo.alumnos.filter(al=>al.nese && !ocupados.has(al.id)).map(al=>al.id);
-  const n=act.variantes.length+1;
-  const v={id:uid(), nombre:datos.nombre||(n===1?"Adaptada (NESE)":"Adaptada "+n), rubrica:cxClonarRubrica(datos.rubrica||act.rubrica,datos.rubrica?grupo.catalogoKey:null),
+  const ausencia=datos.tipo==="ausencia";
+  // El alumnado: el que se indique (quitándolo de otro examen alternativo) o, en uno adaptado, el NESE libre.
+  let nese;
+  if(Array.isArray(datos.alumnos)){
+    nese=datos.alumnos.filter(id=>grupo.alumnos.some(a=>a.id===id));
+    cxVariantes(act).forEach(v=>{ v.alumnos=(v.alumnos||[]).filter(id=>!nese.includes(id)); });
+    act.neseGeneral=(act.neseGeneral||[]).filter(id=>!nese.includes(id));
+  } else nese=(datos.sinAlumnado||ausencia)?[]:grupo.alumnos.filter(al=>al.nese && !ocupados.has(al.id)).map(al=>al.id);
+  const n=cxVariantes(act).filter(v=>(v.tipo==="ausencia")===ausencia).length+1;
+  const v={id:uid(), nombre:datos.nombre||(ausencia?(n===1?"Otro día":"Otro día "+n):(n===1?"Adaptada (NESE)":"Adaptada "+n)), rubrica:cxClonarRubrica(datos.rubrica||act.rubrica,datos.rubrica?grupo.catalogoKey:null),
     escalarA10:datos.escalarA10!==false, alumnos:nese};
+  if(ausencia) v.tipo="ausencia";
+  if(datos.fecha) v.fecha=String(datos.fecha);
+  if(datos.enBlanco) v.enBlanco=true;
   if(datos.progVarId) v.progVarId=datos.progVarId;
   act.variantes.push(v);
   nese.forEach(alId=>cxRecalcAlumno(grupo,act,alId));
@@ -476,7 +499,7 @@ function cxNeseSinVersion(grupo,act){
 /* Aviso en Rúbrica, Diseño y Corregir: alumnado NESE que haría el examen general. Se resuelve con un toque. */
 function cxAvisoNeseHTML(grupo,act){
   const faltan=cxNeseSinVersion(grupo,act); if(!faltan.length) return "";
-  const vs=cxVariantes(act), nombres=faltan.map(al=>esc(al.nombre)).join(", "), uno=faltan.length===1;
+  const vs=cxVariantes(act).filter(v=>v.tipo!=="ausencia"), nombres=faltan.map(al=>esc(al.nombre)).join(", "), uno=faltan.length===1;
   const accion=vs.length
     ? (vs.length===1
         ? `<button class="btn small" onclick="cxAnadirNeseAVariante('${escJS(vs[0].id)}')">Añadir a «${esc(vs[0].nombre||"Adaptada")}»</button>`
@@ -505,11 +528,60 @@ window.cxNeseHaceGeneral=()=>{
 window.cxNuevaVariante=()=>{
   const x=cxCtxEd(); if(!x||!x.act.rubrica) return;
   const v=cxCrearVariante(x.grupo,x.act);
-  state.ui.corVarId=v.id; state.ui.corVerB=false;
+  state.ui.corVarId=v.id; state.ui.corModelo="";
   save(); render();
   const n=v.alumnos.length, enDiseno=state.ui.corTab==="diseno";
   mostrarToast((enDiseno?"✓ Examen adaptado creado (copia del general)":"✓ Rúbrica adaptada creada (copia de la general)")+(n?` con ${n} alumno${n===1?"":"s"} NESE`:". Marca qué alumnado lo hace en la pestaña Rúbrica"));
 };
+/* «+ Examen alternativo»: tipo (otro día / adaptado NESE), nombre, fecha, alumnado y cómo empieza. */
+window.cxNuevoAlternativo=()=>{
+  const x=cxCtxEd(); if(!x||!x.act.rubrica) return;
+  const {grupo,act}=x, hoy=new Date(), iso=`${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,"0")}-${String(hoy.getDate()).padStart(2,"0")}`;
+  const ocupadoEn=al=>cxVarianteDeAlumno(act,al.id);
+  const div=document.createElement("div"); div.className="modal-overlay"; div.style.zIndex="1500";
+  div.innerHTML=`<div class="modal-box" style="max-width:600px;max-height:88vh;overflow:auto" role="dialog" aria-modal="true" aria-labelledby="altT">
+    <h2 id="altT" style="font-size:17px">+ Examen alternativo</h2>
+    <p class="sub">Un examen con otras preguntas dentro de «${esc(act.nombre)}»: se corrige con su propia rúbrica, sale en la misma lista de corrección y su nota cuenta en este examen.</p>
+    <fieldset style="border:0;padding:0;margin:10px 0 0"><legend class="section-eyebrow" style="margin-bottom:6px">Para quién es</legend>
+      <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin-bottom:6px"><input type="radio" name="altTipo" value="ausencia" checked> <span><strong>📅 Otro día</strong> · para quien no vino el día del examen</span></label>
+      <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px"><input type="radio" name="altTipo" value="nese"> <span><strong>🧩 Adaptado (NESE)</strong> · para el alumnado con necesidades específicas</span></label>
+    </fieldset>
+    <div class="flex" style="gap:10px;flex-wrap:wrap;margin-top:12px">
+      <label style="font-size:12.5px;color:var(--mut);font-weight:500;flex:1;min-width:180px">Nombre<input class="in" id="altNombre" style="width:100%;margin-top:4px" value="Otro día"></label>
+      <label style="font-size:12.5px;color:var(--mut);font-weight:500">Fecha (opcional)<input class="in" id="altFecha" type="date" style="display:block;margin-top:4px" value="${iso}"></label>
+    </div>
+    <fieldset style="border:0;padding:0;margin:12px 0 0"><legend class="section-eyebrow" style="margin-bottom:6px">Empieza</legend>
+      <label style="display:inline-flex;gap:6px;align-items:center;font-size:13.5px;margin-right:16px"><input type="radio" name="altInicio" value="copia" checked> Como copia del examen general</label>
+      <label style="display:inline-flex;gap:6px;align-items:center;font-size:13.5px"><input type="radio" name="altInicio" value="blanco"> En blanco</label>
+    </fieldset>
+    <div class="section-eyebrow" style="margin:12px 0 6px">Alumnado que lo hace</div>
+    <div id="altAlumnos" class="flex" style="flex-wrap:wrap;gap:6px 16px">${grupo.alumnos.map(al=>{ const o=ocupadoEn(al);
+      return `<label style="font-size:13px;display:flex;align-items:center;gap:6px" ${o?`title="Ahora hace «${esc(o.nombre||"otro examen alternativo")}»: si lo marcas, pasa a este"`:""}><input type="checkbox" value="${esc(al.id)}" data-nese="${al.nese&&!o&&!(act.neseGeneral||[]).includes(al.id)?1:0}"> ${esc(al.nombre)}${neseBadgeHTML(al)}${o?` <span class="sub" style="margin:0">(${esc(o.nombre||"alternativo")})</span>`:""}</label>`; }).join("")||'<span class="sub">Este grupo todavía no tiene alumnado.</span>'}</div>
+    <div class="flex" style="justify-content:flex-end;gap:8px;margin-top:16px"><button class="ghost" id="altNo" style="border:1px solid var(--line)">Cancelar</button><button class="btn" id="altSi">Crear</button></div>
+  </div>`;
+  document.body.appendChild(div);
+  const nombre=div.querySelector("#altNombre");
+  div.querySelectorAll('input[name="altTipo"]').forEach(r=>r.onchange=()=>{
+    const nese=r.value==="nese"&&r.checked;
+    if(/^(Otro día|Adaptada \(NESE\))$/.test(nombre.value.trim())||!nombre.value.trim()) nombre.value=nese?"Adaptada (NESE)":"Otro día";
+    div.querySelectorAll("#altAlumnos input").forEach(c=>{ c.checked=nese&&c.dataset.nese==="1"; });
+  });
+  div.querySelector("#altNo").onclick=()=>div.remove();
+  div.querySelector("#altSi").onclick=()=>{
+    const tipo=div.querySelector('input[name="altTipo"]:checked').value, alumnos=[...div.querySelectorAll("#altAlumnos input:checked")].map(c=>c.value);
+    const enBlanco=div.querySelector('input[name="altInicio"]:checked').value==="blanco", fecha=div.querySelector("#altFecha").value;
+    div.remove();
+    const v=cxCrearVariante(grupo,act,{tipo,nombre:nombre.value.trim()||undefined,fecha,enBlanco,alumnos});
+    alumnos.forEach(id=>cxRecalcAlumno(grupo,act,id));
+    state.ui.corVarId=v.id; state.ui.corModelo="";
+    save(); render();
+    const n=v.alumnos.length;
+    mostrarToast(`✓ «${v.nombre}» creado${enBlanco?" en blanco":""}`+(n?` para ${n} alumno${n===1?"":"s"}`:". Marca qué alumnado lo hace en la pestaña Rúbrica"));
+  };
+  setTimeout(()=>nombre.focus(),0);
+};
+window.cxSetVarianteTipo=t=>{ const x=cxCtxEd(); const va=x&&cxVarEditando(x.act); if(!va) return; if(t==="ausencia") va.tipo="ausencia"; else delete va.tipo; save(); render(); };
+window.cxSetVarianteFecha=f=>{ const x=cxCtxEd(); const va=x&&cxVarEditando(x.act); if(!va) return; if(f) va.fecha=String(f); else delete va.fecha; save(); render(); };
 window.cxSetVarianteNombre=v=>{ const x=cxCtxEd(); const va=x&&cxVarEditando(x.act); if(!va) return; va.nombre=String(v||"").trim()||va.nombre; save(); render(); };
 window.cxToggleAlumnoVariante=(alId,on)=>{
   const x=cxCtxEd(); const va=x&&cxVarEditando(x.act); if(!va) return;
@@ -522,14 +594,14 @@ window.cxToggleAlumnoVariante=(alId,on)=>{
 };
 window.cxCopiarGeneralEnVariante=async ()=>{
   const x=cxCtxEd(); const va=x&&cxVarEditando(x.act); if(!va) return;
-  if(!await confirmar("¿Sustituir esta rúbrica adaptada por una copia de la general? Se perderán sus apartados actuales y lo ya corregido con ella.",{ok:"Sí, sustituir"})) return;
+  if(!await confirmar("¿Sustituir la rúbrica de este examen alternativo por una copia de la general? Se perderán sus apartados actuales y lo ya corregido con ella.",{ok:"Sí, sustituir"})) return;
   va.rubrica=cxClonarRubrica(x.act.rubrica,null);
   cxLimpiarPuntuacionesHuerfanas(x.grupo,x.act);
   save(); render();
 };
 window.cxEliminarVariante=async ()=>{
   const x=cxCtxEd(); const va=x&&cxVarEditando(x.act); if(!va) return;
-  if(!await confirmar(`¿Eliminar la rúbrica adaptada «${va.nombre}»? ${(va.alumnos||[]).length?"Su alumnado pasará a corregirse con la rúbrica general.":""}`)) return;
+  if(!await confirmar(`¿Eliminar el examen alternativo «${va.nombre}» (su rúbrica)? ${(va.alumnos||[]).length?"Su alumnado pasará a corregirse con la rúbrica general.":""}`)) return;
   x.act.variantes=cxVariantes(x.act).filter(v=>v.id!==va.id);
   state.ui.corVarId="";
   cxLimpiarPuntuacionesHuerfanas(x.grupo,x.act);
