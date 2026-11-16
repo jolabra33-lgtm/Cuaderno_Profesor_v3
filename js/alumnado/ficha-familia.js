@@ -60,12 +60,15 @@ window.delAlumno=async id=>{ const g=grupoActual(); const a=g.alumnos.find(x=>x.
     const notasCuant=g.notasCuant[id]?JSON.parse(JSON.stringify(g.notasCuant[id])):{};
     const rubricScores=g.rubricScores?.[id]?JSON.parse(JSON.stringify(g.rubricScores[id])):{};
     const examComentarios=g.examComentarios?.[id]?JSON.parse(JSON.stringify(g.examComentarios[id])):{};
-    g.papelera.alumnos.unshift({alumno:JSON.parse(JSON.stringify(a)),notas,notasCuant,rubricScores,examComentarios,borradoEn:Date.now()});
+    const {extras,extrasEval}=extrasDeAlumnoCopia(g,id);
+    g.papelera.alumnos.unshift({alumno:JSON.parse(JSON.stringify(a)),notas,notasCuant,rubricScores,examComentarios,extras,extrasEval,borradoEn:Date.now()});
     if(g.papelera.alumnos.length>10) g.papelera.alumnos.length=10;
     g.alumnos=g.alumnos.filter(x=>x.id!==id);
     delete g.notas[id]; delete g.notasCuant[id];
     if(g.rubricScores) delete g.rubricScores[id];
     if(g.examComentarios) delete g.examComentarios[id];
+    if(g.extras) delete g.extras[id];
+    if(g.extrasEval) delete g.extrasEval[id];
     if(state.ui.corAlId===id) state.ui.corAlId="";
     save(); render();
   } };
@@ -76,6 +79,8 @@ window.restaurarAlumnoPapelera=idx=>{
   if(it.notasCuant && Object.keys(it.notasCuant).length) g.notasCuant[it.alumno.id]=it.notasCuant;
   if(it.rubricScores && Object.keys(it.rubricScores).length) g.rubricScores[it.alumno.id]=it.rubricScores;
   if(it.examComentarios && Object.keys(it.examComentarios).length) g.examComentarios[it.alumno.id]=it.examComentarios;
+  if(it.extras && typeof it.extras==="object" && Object.keys(it.extras).length){ g.extras=g.extras||{}; g.extras[it.alumno.id]=it.extras; }
+  if(it.extrasEval && typeof it.extrasEval==="object" && Object.keys(it.extrasEval).length){ g.extrasEval=g.extrasEval||{}; g.extrasEval[it.alumno.id]=it.extrasEval; }
   g.papelera.alumnos.splice(idx,1);
   ordenarAlumnos(g);
   save(); render();

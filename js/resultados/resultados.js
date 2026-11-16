@@ -107,6 +107,7 @@ function renderResultados(grupo){
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesTodos()">Exportar todos los informes</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesFinalesTodos()">Exportar informes finales de curso</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Archivo con los suspensos de tu materia en cada evaluación, para cargarlo en el Gestor de Tutoría del tutor/a del grupo" onclick="exportarParaTutoria()">👥 Para la tutoría</button>
+        <button class="ghost" style="border:1px solid var(--line)" title="Sumar puntos a la nota de la evaluación o a la nota final (p. ej. +0,5 por presentarse voluntario/a)" onclick="abrirExtrasEvaluacion(${trim})">➕ Puntos extra</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Borradores de comentario para quien todavía no tenga (no sobrescribe)" onclick="comSugerirGrupo('es')">💬 Comentarios vacíos</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Esborranys de comentari en valencià per a qui encara no en tinga" onclick="comSugerirGrupo('va')">💬 En valencià</button>
         <span class="flex" style="gap:6px;align-items:center">
@@ -124,7 +125,7 @@ function renderResultados(grupo){
       <thead><tr><th>Alumno/a</th><th>${TRIMESTRES[trim]}</th><th>Nota final</th><th title="Calificación y nota de acta (entera) de la nota final">Calificación · acta</th><th></th><th></th><th></th></tr></thead>
       <tbody>${grupo.alumnos.map(a=>{const t=notaTrimestre(grupo,a.id,trim),f=notaFinal(grupo,a.id);
         return `<tr style="cursor:pointer;${a.id===(al&&al.id)?'background:var(--surface-2)':''}" onclick="irAAlumnoResultados('${a.id}')">
-          <td><strong>${esc(a.nombre)}</strong>${neseBadgeHTML(a)}</td><td>${fmt(t)}${avisoBloquesHTML(grupo,a.id,trim)}</td><td>${fmt(f)}</td>
+          <td><strong>${esc(a.nombre)}</strong>${neseBadgeHTML(a)}</td><td>${fmt(t)}${extraEvalBadgeHTML(grupo,a.id,trim)}${avisoBloquesHTML(grupo,a.id,trim)}</td><td>${fmt(f)}${extraEvalBadgeHTML(grupo,a.id,"final")}</td>
           <td>${pillCuant(f)}</td>
           <td><button class="ghost small" style="border:1px solid var(--line)" title="Ver la evolución de ${esc(a.nombre)} en esta evaluación" onclick="event.stopPropagation();verEvolucionAlumno('${a.id}')">👁️</button>${grupoTieneEntrega(grupo,a.id,trim)?`<span title="Informe entregado el ${fmt2(grupoTieneEntrega(grupo,a.id,trim).fecha)}" style="margin-left:4px;color:#1e5631;font-weight:700;font-size:13px">✓</span>`:""}</td>
           <td><button class="ghost" onclick="event.stopPropagation();exportarInformeAlumno('${a.id}')">Informe</button></td>
@@ -180,9 +181,10 @@ function renderResultados(grupo){
               </span>`;
            }).join("");
            if(!a.recupera && recuperacionesDe(grupo,a.id).length){
-              const vb=notaActividadBase(grupo,al.id,a), vf=notaActividad(grupo,al.id,a);
+              const vb=notaActividadBase(grupo,al.id,a), vf=notaActividadSinExtra(grupo,al.id,a);
               if(vf!=null && (vb==null || Math.abs(vf-vb)>1e-9)) notaCell += ` <span class="pill" title="Nota tras aplicar la recuperación" style="background:#dcece0;color:#1e5631;font-size:11.5px">🔁 ${fmt(vf)}</span>`;
            }
+           if(!a.recupera) notaCell += `${extraBadgeHTML(grupo,al.id,a)} <button class="ghost small" title="Puntos extra en ${esc(a.nombre)}" aria-label="Puntos extra en ${esc(a.nombre)}" onclick="abrirExtrasActividad('${a.id}','${al.id}')">➕</button>`;
            if(a.recupera) notaCell += ` <span class="badge" title="${esc(recResumenTexto(grupo,a).replace(/<[^>]+>/g,""))}">🔁 recuperación</span>`;
            htmlActs += `<tr><td>${esc(a.nombre)}${marcaBadgeHTML(grupo,al.id,a.id)}</td><td>${esc(a.tipo)}</td><td>${notaCell}</td><td>${critCell}</td></tr>`;
         });
@@ -224,10 +226,14 @@ function renderResultados(grupo){
     <h2 style="font-size:15px">Calificación cuantitativa</h2>
     <p class="sub">Ponderación: ${grupo.bloques.map(b=>`${esc(b.label)} ${b.peso} %`).join(" · ")}.</p>
     <div class="flex" style="gap:24px;align-items:flex-end">
-      <div><div style="font-size:12.5px;color:var(--mut)">Nota de ${TRIMESTRES[trim]}</div>
+      <div><div style="font-size:12.5px;color:var(--mut)">Nota de ${TRIMESTRES[trim]}${extraEvalBadgeHTML(grupo,al.id,trim)}</div>
         <div class="flex" style="gap:8px;align-items:baseline"><span class="big" style="color:var(--accent-texto)">${fmt(nt)}</span> ${pillCuant(nt)}</div></div>
-      <div><div style="font-size:12.5px;color:var(--mut)">Nota final (media ponderada)</div>
+      <div><div style="font-size:12.5px;color:var(--mut)">Nota final (media ponderada)${extraEvalBadgeHTML(grupo,al.id,"final")}</div>
         <div class="flex" style="gap:8px;align-items:baseline"><span class="big">${fmt(nf)}</span> ${pillCuant(nf)}</div></div>
+    </div>
+    <div class="grid" style="gap:8px;margin-top:14px">
+      <div><div style="font-size:12.5px;color:var(--mut);margin-bottom:4px">Puntos extra en ${TRIMESTRES[trim]}${(x=>x&&nt!=null?` · ${textoNotaConExtra(notaTrimestreSinExtra(grupo,al.id,trim),x,nt)}`:"")(ptsExtraEval(grupo,al.id,trim))}</div>${extraCamposHTML("eval",al.id,String(trim),extraEval(grupo,al.id,trim))}</div>
+      <div><div style="font-size:12.5px;color:var(--mut);margin-bottom:4px">Puntos extra en la nota final${(x=>x&&nf!=null?` · ${textoNotaConExtra(notaFinalSinExtra(grupo,al.id),x,nf)}`:"")(ptsExtraEval(grupo,al.id,"final"))}</div>${extraCamposHTML("eval",al.id,"final",extraEval(grupo,al.id,"final"))}</div>
     </div>
   </div>
 

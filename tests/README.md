@@ -37,6 +37,7 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `sorteo-y-grupos` | Sorteo sin repetir y sin ausentes; reparto en grupos igualados |
 | `modo-proyector` | Los nombres del alumnado y sus notas se difuminan en todas las pantallas |
 | `bloqueo-pin` | PIN: app tapada, PIN incorrecto, espera tras 5 fallos, código de recuperación, Tutoría |
+| `puntos-extra` | Puntos extra: se apuntan en Calificar y en Resultados, suben la nota (tope 10), se ven en los informes y sobreviven a la papelera |
 | `avisos-encima` | Los avisos y ventanas de contraseña salen por encima de la ventana desde la que se abren |
 | `examen-adaptado` | Examen adaptado NESE: aviso, creación desde el Diseño, corrección con su rúbrica, paso por la Programación a otro grupo |
 | `modelo-b` | Modelo B: sigue al general, reparto A/B (lista y plano), rúbrica en el orden del B, enlace de una rúbrica hecha a mano |

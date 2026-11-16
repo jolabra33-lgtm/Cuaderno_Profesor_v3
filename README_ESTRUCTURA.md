@@ -62,6 +62,7 @@ Completan el repositorio: `manifest.json` e `icons/` (instalación como app), `.
 | `js/alumnado/ficha-familia.js` | Correos de la familia y papelera de alumnado |
 | `js/evaluacion/actividades.js` | Actividades y recuperaciones (interfaz) |
 | `js/evaluacion/calificar.js` | Calificar, entrada rápida de notas y marcas NP/Exento |
+| `js/evaluacion/puntos-extra.js` | Puntos extra en actividades/exámenes y en la nota de cada evaluación o la final (ventana «➕ Puntos extra», píldoras y textos de informe). El cálculo está en `calculo-notas.js` |
 | `js/resultados/informe-detallado.js` | Distribución, evolución del alumno e informe detallado de cálculo |
 | `js/resultados/resultados.js` | Comentarios sugeridos, paso a Tutoría y pantalla de Resultados |
 | `js/resultados/cobertura-diagnostico.js` | Cobertura de la evaluación, «Revisar mis datos» y novedades |

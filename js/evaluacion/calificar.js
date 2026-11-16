@@ -24,7 +24,7 @@ function renderCalificar(grupo){
         return `
         <div class="cal-tarjeta">
           <div class="cal-cab">
-            <div class="cal-nombre">${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}</div>
+            <div class="cal-nombre">${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}${extraBadgeHTML(grupo,al.id,act)}</div>
             ${act.esExamen?`<label class="cal-cuant" title="Nota cuantitativa del examen: es la que cuenta para la nota numérica">Nota
               <input class="in" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" data-cal-col="cuant" data-cal-al="${al.id}" placeholder="0–10" value="${vc==null?"":String(vc).replace(".",",")}" onchange="setNotaCuantExamen('${al.id}','${act.id}',this.value)"></label>`:""}
             <div class="cal-marcas">${marcaBotonesHTML(grupo,al.id,act.id)}</div>
@@ -51,7 +51,7 @@ function renderCalificar(grupo){
         ${grupo.alumnos.map(al=>{
           const vc=act.esExamen? grupo.notasCuant?.[al.id]?.[act.id] : null;
           return `<tr>
-          <td style="font-weight:500">${esc(al.nombre)}${neseBadgeHTML(al)}</td>
+          <td style="font-weight:500">${esc(al.nombre)}${neseBadgeHTML(al)}${extraBadgeHTML(grupo,al.id,act)}</td>
           <td><select class="in" style="font-size:14px;padding:5px 6px" onchange="setMarca('${al.id}','${act.id}',this.value)">
             <option value="">—</option><option value="NP" ${marcaDe(grupo,al.id,act.id)==="NP"?"selected":""}>NP</option><option value="EX" ${marcaDe(grupo,al.id,act.id)==="EX"?"selected":""}>Exento</option>
           </select></td>
@@ -79,9 +79,12 @@ function renderCalificar(grupo){
          <button class="ghost ${isTable?'on':''}" style="${isTable?'background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.05);border-radius:4px':''}" onclick="setCalView('table')">Tabla</button>
       </div>
     </div>
-    <select class="in" id="calSel" style="margin-bottom:16px;min-width:260px">
-      ${acts.map(a=>`<option value="${a.id}" ${a.id===act.id?"selected":""}>${a.recupera?"🔁 ":""}${esc(a.nombre)}</option>`).join("")}
-    </select>
+    <div class="flex" style="gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <select class="in" id="calSel" style="min-width:260px">
+        ${acts.map(a=>`<option value="${a.id}" ${a.id===act.id?"selected":""}>${a.recupera?"🔁 ":""}${esc(a.nombre)}</option>`).join("")}
+      </select>
+      ${act.recupera?"":`<button class="ghost" style="border:1px solid var(--line)" title="Sumar puntos a la nota de esta actividad (p. ej. +0,5 por presentarse voluntario/a)" onclick="abrirExtrasActividad('${act.id}')">➕ Puntos extra</button>`}
+    </div>
     ${act.recupera?`<div class="alert-box" style="margin-bottom:12px">🔁 ${recResumenTexto(grupo,act)} Deja en blanco a quien no se presente.</div>`:""}
     ${htmlEditor}
   </div>`;

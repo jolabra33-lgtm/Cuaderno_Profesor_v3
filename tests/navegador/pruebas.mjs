@@ -1115,4 +1115,59 @@ export const PRUEBAS = [
       t.ok(JSON.stringify(await p.evaluate(() => caches.keys())) === '["cuaderno-v3-901"]', 'queda solo la caché de la versión nueva');
     } finally { await srv.cerrar(); fs.rmSync(copia, { recursive: true, force: true }); }
   } },
+  { nombre: 'puntos-extra', descripcion: 'Puntos extra: se apuntan en Calificar y en Resultados, suben la nota, se ven en los informes y sobreviven a la papelera', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const ids = await cuadernoConGrupo(p, t.url);
+    await p.evaluate(() => {
+      const g = state.grupos[0], cr = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
+      g.actividades = [{ id: 'e1', nombre: 'Examen 1', tipo: TIPOS[0], trimestre: 0, bloqueId: g.bloques[0].id, esExamen: true, criterios: [{ critId: cr, peso: 100 }] }];
+      g.notasCuant = { [g.alumnos[0].id]: { e1: 6.5 }, [g.alumnos[1].id]: { e1: 9.5 } };
+      state.ui.appMode = 'competencial'; state.ui.tab = 'calificar'; state.ui.calAct = 'e1'; save(); render();
+    });
+    // Calificar → ➕ Puntos extra
+    await p.getByRole('button', { name: /Puntos extra/ }).first().click();
+    const filas = p.locator('.modal-overlay tbody tr');
+    t.ok(await filas.count() === 3, 'la ventana lista a todo el alumnado');
+    await filas.nth(0).locator('[data-pts]').fill('1');
+    await filas.nth(1).locator('[data-pts]').fill('1');
+    await p.locator('#extraMotivoComun').fill(`Voluntaria <img src=x onerror=top.__x()> "exposición"`);
+    await filas.nth(2).locator('[data-pts]').fill('abc');
+    await p.locator('#extraSi').click();
+    t.ok(await p.locator('.modal-overlay tbody tr').count() === 3, 'con un valor no válido avisa y no cierra');
+    await p.locator('.dlg-overlay #dlgOk').click();
+    await filas.nth(2).locator('[data-pts]').fill('');
+    await p.locator('#extraSi').click(); await esperar(200);
+    const r1 = await p.evaluate(ids => { const g = state.grupos[0], a = g.actividades[0];
+      return { ex: g.extras, n0: notaActividad(g, ids[0], a), n1: notaActividad(g, ids[1], a), guardada: g.notasCuant[ids[0]].e1,
+        pills: document.querySelectorAll('.extra-pill').length, colado: !!document.querySelector('img[onerror]') }; }, ids);
+    t.ok(r1.ex[ids[0]].e1.pts === 1 && /Voluntaria/.test(r1.ex[ids[0]].e1.motivo), 'se guardan los puntos y el motivo común', JSON.stringify(r1.ex));
+    t.ok(!r1.ex[ids[2]], 'quien no tiene puntos no guarda nada');
+    t.ok(r1.n0 === 7.5 && r1.guardada === 6.5, 'la nota del examen sube 6,5 + 1 = 7,5 y la nota corregida no se toca', JSON.stringify(r1));
+    t.ok(r1.n1 === 10, 'la nota nunca pasa de 10 (9,5 + 1 = 10)');
+    t.ok(r1.pills === 2 && !r1.colado, 'Calificar muestra «+1 extra» y el motivo no se cuela como código');
+    // Resultados → extra de la evaluación desde la ficha del alumno/a
+    await p.evaluate(ids => { state.ui.tab = 'resultados'; state.ui.resAl = ids[0]; save(); render(); }, ids);
+    const campo = p.locator('[data-extra="eval"][data-clave="0"] [data-extra-pts]');
+    await campo.fill('0,5'); await campo.dispatchEvent('change'); await esperar(200);
+    const r2 = await p.evaluate(ids => { const g = state.grupos[0];
+      return { t: notaTrimestre(g, ids[0], 0), sin: notaTrimestreSinExtra(g, ids[0], 0), f: notaFinal(g, ids[0]),
+        texto: document.getElementById('tabContent').textContent,
+        inf: informeAlumnoBodyHTML(g, g.alumnos[0]), det: informeDetalladoBodyHTML(g, g.alumnos[0], 0) }; }, ids);
+    t.ok(r2.sin === 7.5 && r2.t === 8, 'la evaluación suma el extra: 7,5 + 0,5 = 8', JSON.stringify([r2.sin, r2.t]));
+    t.ok(r2.f === 8, 'la nota final recoge la evaluación con su extra');
+    t.ok(/7,5 \+ 0,5 = 8,0/.test(r2.texto), 'Resultados explica la cuenta');
+    t.ok(/incluye \+1 extra/.test(r2.inf) && /incluye \+0,5 extra/.test(r2.inf), 'el informe del alumno/a indica los extras');
+    t.ok(/Puntos extra/.test(r2.det) && /6,5 \+ 1 extra = <strong>7,5/.test(r2.det), 'el informe detallado desglosa los extras');
+    // Papelera: borrar y restaurar al alumno/a y la actividad conserva los extras
+    const r3 = await p.evaluate(async ids => { window.__dialogosAuto = { confirmar: true };
+      await delAlumno(ids[0]); let g = grupoActual(); const borrado = !g.extras[ids[0]] && !g.extrasEval[ids[0]];
+      restaurarAlumnoPapelera(0); g = grupoActual();
+      const vuelve = g.extras[ids[0]]?.e1?.pts === 1 && g.extrasEval[ids[0]]?.['0']?.pts === 0.5;
+      await delActividad('e1'); g = grupoActual(); const sinAct = !g.extras[ids[1]]?.e1;
+      restaurarActividadPapelera(0); g = grupoActual();
+      return { borrado, vuelve, sinAct, actVuelve: g.extras[ids[1]]?.e1?.pts === 1 }; }, ids);
+    t.ok(r3.borrado && r3.vuelve, 'borrar y restaurar al alumno/a conserva sus extras', JSON.stringify(r3));
+    t.ok(r3.sinAct && r3.actVuelve, 'borrar y restaurar la actividad conserva sus extras', JSON.stringify(r3));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.slice(0, 3).join('; '));
+  } },
 ];
