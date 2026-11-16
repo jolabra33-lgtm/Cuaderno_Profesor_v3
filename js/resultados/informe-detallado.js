@@ -148,15 +148,17 @@ function desgloseBloqueHTML(grupo,al,b,trim){
     return `<div class="dsg-bloque"><div class="dsg-bloque-head"><span>${esc(b.label)}</span><span class="dsg-muted">Sin actividades este periodo</span></div></div>`;
   }
   const filas=acts.map(a=>{
-    const va=notaActividad(grupo,al.id,a);
+    const va=notaActividadSinExtra(grupo,al.id,a);
     const vb=notaActividadBase(grupo,al.id,a);
+    const ex=extraAplicadoActividad(grupo,al.id,a), exE=extraActividad(grupo,al.id,a.id);
     const w=pesoActividadEnBloque(grupo,a);
     const m=marcaDe(grupo,al.id,a.id);
     const recs=recuperacionesDe(grupo,a.id).filter(r=>notaActividadBase(grupo,al.id,r)!=null);
     const conRec=recs.length && va!=null && (vb==null || Math.abs(va-vb)>1e-9);
-    const celda=m==="EX"?"Exento":(conRec?`${vb==null?"—":fmt(vb)} → <strong>${fmt(va)}</strong>`:(va==null?"—":fmt(va)))+(m==="NP"?" (NP)":"");
+    let celda=m==="EX"?"Exento":(conRec?`${vb==null?"—":fmt(vb)} → <strong>${fmt(va)}</strong>`:(va==null?"—":fmt(va)))+(m==="NP"?" (NP)":"");
+    if(ex) celda+=` + ${fmtPts(ex)} extra = <strong>${fmt(notaActividad(grupo,al.id,a))}</strong>`;
     return `<tr>
-        <td>${esc(a.nombre)}<span class="dsg-tag">${esc(a.tipo)}</span>${conRec?`<div class="dsg-muted" style="font-size:11.5px">Recuperada con: ${recs.map(r=>esc(r.nombre)).join(", ")}</div>`:""}</td>
+        <td>${esc(a.nombre)}<span class="dsg-tag">${esc(a.tipo)}</span>${conRec?`<div class="dsg-muted" style="font-size:11.5px">Recuperada con: ${recs.map(r=>esc(r.nombre)).join(", ")}</div>`:""}${ex?`<div class="dsg-muted" style="font-size:11.5px">Puntos extra: +${fmtPts(ex)}${exE&&exE.motivo?" · "+esc(exE.motivo):""}</div>`:""}</td>
         <td style="text-align:right;white-space:nowrap">${celda}</td>
         <td style="text-align:right;white-space:nowrap">${fmtPct(w)}</td>
       </tr>
@@ -172,7 +174,17 @@ function desgloseTrimestreHTML(grupo,al,trim){
   const bloquesHtml=grupo.bloques.map(b=>desgloseBloqueHTML(grupo,al,b,trim)).join("");
   return `<div class="dsg-formula">Nota = media ponderada de los bloques de calificación de ${esc(TRIMESTRES[trim].toLowerCase())}.</div>
     ${bloquesHtml}
+    ${dsgExtraEvalHTML(grupo,al,trim,notaTrimestreSinExtra(grupo,al.id,trim),"Media de los bloques")}
     <div class="dsg-total"><span>Nota del periodo</span><span>${v==null?"—":fmt(v)} / 10</span></div>`;
+}
+/* Línea «Media … X · Puntos extra +Y (motivo)» antes del total, solo si hay extra que se suma. */
+function dsgExtraEvalHTML(grupo,al,periodo,base,etiqueta){
+  const pts=ptsExtraEval(grupo,al.id,periodo); if(!pts||base==null) return "";
+  const e=extraEval(grupo,al.id,periodo);
+  return `<table class="dsg-mini" style="margin-top:10px"><tbody>
+    <tr><td>${etiqueta}</td><td style="text-align:right">${fmt(base)}</td></tr>
+    <tr><td>Puntos extra${e&&e.motivo?` <span class="dsg-muted">· ${esc(e.motivo)}</span>`:""}</td><td style="text-align:right">+${fmtPts(pts)}${base+pts>EXTRA_TOPE?' <span class="dsg-muted">(máximo 10)</span>':""}</td></tr>
+  </tbody></table>`;
 }
 function desgloseTrimResumenBloquesHTML(grupo,al,trim){
   const filas=grupo.bloques.map(b=>{
@@ -187,11 +199,13 @@ function desgloseFinalHTML(grupo,al){
   const filasResumen=[0,1,2].map(t=>{
     const v=notaTrimestre(grupo,al.id,t);
     const w=v==null?null:pesoTrimestreEfectivo(grupo,t,disponibles);
-    return `<tr><td>${esc(TRIMESTRES[t])}</td><td style="text-align:right">${v==null?"—":fmt(v)}</td><td style="text-align:right">${w==null?"—":fmtPct(w)}</td></tr>`;
+    const pe=v==null?0:ptsExtraEval(grupo,al.id,t);
+    return `<tr><td>${esc(TRIMESTRES[t])}${pe?` <span class="dsg-muted">(incluye +${fmtPts(pe)} extra)</span>`:""}</td><td style="text-align:right">${v==null?"—":fmt(v)}</td><td style="text-align:right">${w==null?"—":fmtPct(w)}</td></tr>`;
   }).join("");
   const detalle=disponibles.map(t=>`<div class="dsg-trim-block"><h3>${esc(TRIMESTRES[t])}</h3>${desgloseTrimResumenBloquesHTML(grupo,al,t)}</div>`).join("");
   return `<div class="dsg-formula">Nota final = media ponderada de las evaluaciones con nota registrada.</div>
     <table class="dsg-tabla"><thead><tr><th>Evaluación</th><th style="text-align:right">Nota</th><th style="text-align:right">Peso</th></tr></thead><tbody>${filasResumen}</tbody></table>
+    ${dsgExtraEvalHTML(grupo,al,"final",notaFinalSinExtra(grupo,al.id),"Media de las evaluaciones")}
     <div class="dsg-total"><span>Nota final de curso</span><span>${nf==null?"—":fmt(nf)} / 10</span></div>
     ${detalle?`<div class="dsg-subtitle" style="margin-top:18px">Detalle de bloques por evaluación</div>${detalle}`:""}`;
 }

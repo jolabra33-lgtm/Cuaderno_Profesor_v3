@@ -16,7 +16,7 @@ function informeFinalAlumnoBodyHTML(grupo,al,opts){
   const ccF=Object.keys(COMP_CLAVE).filter(cc=>idx.cat.ces.some(ce=>ce.cc.includes(cc))).map(cc=>({cc,p:scoreCCAnual(grupo,al.id,cc)})).filter(x=>x.p!=null);
   const ceF=idx.cat.ces.map(ce=>({ce,p:scoreCEAnual(grupo,al.id,ce.id)})).filter(x=>x.p!=null);
   const filas3=TRIMESTRES.map((t,i)=>{const v=notaTrimestre(grupo,al.id,i); const com=(al.comentariosEval&&al.comentariosEval[i])||"";
-    return `<tr><td>${t}</td><td>${fmt(v)}</td><td>${pillCuant(v)}</td><td>${com?esc(com):"—"}</td></tr>`;}).join("");
+    return `<tr><td>${t}</td><td>${notaEvalInformeHTML(grupo,al.id,i)}</td><td>${pillCuant(v)}</td><td>${com?esc(com):"—"}</td></tr>`;}).join("");
 
   let htmlActsPDF = `<h2>Desglose de actividades (curso completo)</h2>`;
   const trimsConActs=[0,1,2].filter(t=>grupo.actividades.some(a=>a.trimestre===t));
@@ -33,7 +33,7 @@ function informeFinalAlumnoBodyHTML(grupo,al,opts){
         htmlActsPDF += '<table><thead><tr><th>Actividad</th><th>Tipo</th><th>Nota (0-10)</th></tr></thead><tbody>';
         sdaMap[sda].forEach(a=>{
           const val=notaActividad(grupo,al.id,a);
-          const valDisplay=val==null?"—":fmt(val);
+          const valDisplay=notaActividadInformeHTML(grupo,al.id,a);
           htmlActsPDF += `<tr><td>${esc(a.nombre)}</td><td>${esc(a.tipo)}</td><td><strong>${valDisplay}</strong></td></tr>`;
         });
         htmlActsPDF += '</tbody></table>';
@@ -63,7 +63,7 @@ function informeFinalAlumnoBodyHTML(grupo,al,opts){
     <div class="meta">${esc(cat.materia)} · ${esc(cat.curso)} · Grupo ${esc(grupo.nombre)} · Curso completo · Generado el ${new Date().toLocaleDateString("es-ES")}</div>
     <h2>Alumno/a: ${esc(al.nombre)}</h2>
     ${htmlAlertaAsimetria}
-    <table><thead><tr><th>Periodo</th><th>Nota</th><th>Calificación</th><th>Comentario a la calificación</th></tr></thead><tbody>${filas3}<tr><td><strong>Nota final</strong></td><td><strong>${fmt(nf)}</strong></td><td>${pillCuant(nf)}</td><td></td></tr></tbody></table>
+    <table><thead><tr><th>Periodo</th><th>Nota</th><th>Calificación</th><th>Comentario a la calificación</th></tr></thead><tbody>${filas3}<tr><td><strong>Nota final</strong></td><td><strong>${notaEvalInformeHTML(grupo,al.id,"final")}</strong></td><td>${pillCuant(nf)}</td><td></td></tr></tbody></table>
     <p style="font-size:12px;color:#666;margin-top:-2px">La nota final es la media ponderada de las evaluaciones con datos disponibles.</p>
     ${htmlAsistenciaFinal}
     ${htmlActsPDF}

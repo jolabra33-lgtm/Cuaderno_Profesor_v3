@@ -23,7 +23,7 @@ function renderCorCorregir(grupo){
     return `<tr>
       ${mbCeldaHTML(act,al)}
       <td>${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}${cxVarianteDeAlumno(act,al.id)?(v=>` <span class="badge" title="${v.tipo==="ausencia"?"Hace un examen alternativo (otro día)":"Hace un examen adaptado"} y se corrige con su propia rúbrica">${v.tipo==="ausencia"?"📅 ":""}${esc(v.nombre||"Adaptada")}${v.fecha?" · "+esc(cxFechaCorta(v.fecha)):""}</span>`)(cxVarianteDeAlumno(act,al.id)):""}</td>
-      <td style="font-weight:600">${hecho?fmt(vc):"—"}</td>
+      <td style="font-weight:600">${hecho?fmt(vc):"—"}${extraBadgeHTML(grupo,al.id,act)}</td>
       <td>${hecho?pillCuant(vc):'<span class="badge">Sin corregir</span>'}</td>
       <td><button class="btn small" onclick="cxIrAlumno('${al.id}')">${hecho?"Revisar":"Corregir"}</button>${hecho?` <button class="ghost small" style="border:1px solid var(--line)" title="Imprimir la rúbrica de este alumno/a" onclick="cxImprimirRubrica('${al.id}','${act.id}')">🖨️</button> <button class="ghost small" style="border:1px solid var(--line)" title="Imprimir la rúbrica resumida de este alumno/a: solo puntuaciones y anotaciones, para gastar menos papel" onclick="cxImprimirRubrica('${al.id}','${act.id}',true)">📄 Resumida</button>`:""}</td>
     </tr>`;
@@ -43,6 +43,7 @@ function renderCorCorregir(grupo){
         <button class="ghost" style="border:1px solid var(--line)" title="Corregir una pregunta de todo el grupo seguida (opcional)" onclick="exTogglePreg()">↕ Por ${cxEsNiveles(act.rubrica)?"categoría":"pregunta"}</button>
         <select class="in" id="cxExamSel">${exams.map(a=>`<option value="${a.id}" ${a.id===act.id?"selected":""}>${esc(a.nombre)}</option>`).join("")}</select>
         <button class="ghost" style="border:1px solid var(--line)" onclick="cxIrEditor('${act.id}')">✏️ Editar rúbrica</button>
+        ${act.recupera?"":`<button class="ghost" style="border:1px solid var(--line)" title="Sumar puntos a la nota de este examen (p. ej. +0,5 por presentarse voluntario/a)" onclick="abrirExtrasActividad('${act.id}')">➕ Puntos extra</button>`}
         ${notas.length?`<button class="ghost" style="border:1px solid var(--line)" onclick="cxImprimirRubricasTodos('${act.id}')">🖨️ Imprimir rúbricas</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Rúbricas resumidas de todo el alumnado corregido: solo puntuaciones y anotaciones, para gastar menos papel" onclick="cxImprimirRubricasTodos('${act.id}',true)">📄 Rúbricas resumidas</button>`:""}
         <button class="ghost" style="border:1px solid var(--line)" onclick="cxExportarCSV('${act.id}')">⬇ CSV</button>
@@ -198,7 +199,9 @@ function renderCxGradingAlumno(grupo,act,al){
   <div class="card">
     <div style="font-size:12.5px;color:var(--mut)">Nota cuantitativa</div>
     <span class="big" style="color:var(--accent-texto)">${vc==null?"—":fmt(vc)}</span>
+    ${extraAplicadoActividad(grupo,al.id,act)?`<div style="margin-top:4px;font-size:14px">Con puntos extra: <strong>${textoNotaConExtra(notaActividadSinExtra(grupo,al.id,act),extraAplicadoActividad(grupo,al.id,act),notaActividad(grupo,al.id,act))}</strong></div>`:""}
     <p class="sub" style="margin:8px 0 0">Cuenta para la nota numérica del trimestre.</p>
+    ${act.recupera?"":`<div style="margin-top:12px"><div style="font-size:12.5px;color:var(--mut);margin-bottom:4px">Puntos extra (opcional)${extraBadgeHTML(grupo,al.id,act)}</div>${extraCamposHTML("act",al.id,act.id,extraActividad(grupo,al.id,act.id))}</div>`}
   </div>
   <div class="card">
     <h2 style="font-size:15px">Calificación cualitativa por criterio</h2>
@@ -348,7 +351,8 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
     ${seccionesHtml}
     <div class="cx-total-box">
       <div><div class="cx-total-label">Puntuación total</div><div class="cx-total-value">${vc==null?"—":fmt(vc)} <small>/ ${fmt(cxEscalarDe(act,al.id)&&maxTotal>0&&Math.abs(maxTotal-10)>=0.01?10:maxTotal)}</small></div></div>
-      <div>${pillCuant(vc)}</div>
+      ${(x=>x?`<div><div class="cx-total-label">Puntos extra${(extraActividad(grupo,al.id,act.id).motivo||"").trim()?" · "+esc(extraActividad(grupo,al.id,act.id).motivo):""}</div><div class="cx-total-value">+${fmtPts(x)} <small>→ nota del examen</small> ${fmt(_sumarExtra(vc,x))}</div></div>`:"")(extraAplicadoActividad(grupo,al.id,act))}
+      <div>${pillCuant(_sumarExtra(vc,extraAplicadoActividad(grupo,al.id,act)))}</div>
     </div>
     ${comentario?`<div class="cx-comentario"><h2>Comentario del profesor/a</h2><p style="white-space:pre-wrap">${esc(comentario)}</p></div>`:""}
     </div>`;
@@ -402,13 +406,16 @@ function renderCalificarRubrica(grupo,act,acts){
       const v=grupo.notas?.[al.id]?.[act.id]?.[cid];
       return `${critLinkHTML(grupo.catalogoKey,cid)} ${v==null?"—":v.toFixed(1)}`;
     }).join(" · ");
-    return `<tr><td>${esc(al.nombre)}${neseBadgeHTML(al)}</td><td>${vc==null?"—":fmt(vc)}</td><td style="font-size:12.5px;color:var(--mut)">${crit||"—"}</td></tr>`;
+    return `<tr><td>${esc(al.nombre)}${neseBadgeHTML(al)}</td><td>${vc==null?"—":fmt(vc)}${extraBadgeHTML(grupo,al.id,act)}</td><td style="font-size:12.5px;color:var(--mut)">${crit||"—"}</td></tr>`;
   }).join("");
   c.innerHTML=`<div class="card">
     <h2 style="margin-bottom:12px">Calificar actividad</h2>
-    <select class="in" id="calSel" style="margin-bottom:16px;min-width:260px">
-      ${acts.map(a=>`<option value="${a.id}" ${a.id===act.id?"selected":""}>${esc(a.nombre)}</option>`).join("")}
-    </select>
+    <div class="flex" style="gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <select class="in" id="calSel" style="min-width:260px">
+        ${acts.map(a=>`<option value="${a.id}" ${a.id===act.id?"selected":""}>${esc(a.nombre)}</option>`).join("")}
+      </select>
+      ${act.recupera?"":`<button class="ghost" style="border:1px solid var(--line)" title="Sumar puntos a la nota de este examen (p. ej. +0,5 por presentarse voluntario/a)" onclick="abrirExtrasActividad('${act.id}')">➕ Puntos extra</button>`}
+    </div>
     <div class="alert-box" style="margin-bottom:14px">🖊️ Este examen se corrige con rúbrica desde el <strong>Corrector de Exámenes</strong>: la nota cuantitativa y la de cada criterio se calculan solas.
       <button class="btn small" onclick="cxAbrirDesdeOtroModo('${act.id}')">Abrir en el Corrector →</button>
     </div>

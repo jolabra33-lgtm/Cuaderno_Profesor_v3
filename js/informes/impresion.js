@@ -133,7 +133,7 @@ function informeAlumnoBodyHTML(grupo,al,opts){
   const ccT=Object.keys(COMP_CLAVE).filter(cc=>idx.cat.ces.some(ce=>ce.cc.includes(cc))).map(cc=>({cc,p:scoreCC(grupo,al.id,cc)})).filter(x=>x.p!=null);
   const ceT=idx.cat.ces.map(ce=>({ce,p:scoreCE(grupo,al.id,ce.id)})).filter(x=>x.p!=null);
   const filas3=TRIMESTRES.map((t,i)=>{const v=notaTrimestre(grupo,al.id,i); const com=(al.comentariosEval&&al.comentariosEval[i])||"";
-    return `<tr><td>${t}</td><td>${fmt(v)}</td><td>${pillCuant(v)}</td><td>${com?esc(com):"—"}</td></tr>`;}).join("");
+    return `<tr><td>${t}</td><td>${notaEvalInformeHTML(grupo,al.id,i)}</td><td>${pillCuant(v)}</td><td>${com?esc(com):"—"}</td></tr>`;}).join("");
 
   const actsT = actsTrim(grupo);
   let htmlActsPDF = `<h2>Desglose de actividades (${TRIMESTRES[trim]})</h2>`;
@@ -149,7 +149,7 @@ function informeAlumnoBodyHTML(grupo,al,opts){
              const val = notaActividad(grupo, al.id, a);
              const _m = marcaDe(grupo, al.id, a.id);
              const _vr = a.recupera ? notaActividadBase(grupo, al.id, a) : null;
-             const valDisplay = _m==="NP" ? "NP (0)" : _m==="EX" ? "Exento" : a.recupera ? (_vr==null ? "—" : fmt(_vr)+" (recuperación)") : (val == null ? "—" : fmt(val));
+             const valDisplay = _m==="NP" ? "NP (0)" : _m==="EX" ? "Exento" : a.recupera ? (_vr==null ? "—" : fmt(_vr)+" (recuperación)") : notaActividadInformeHTML(grupo, al.id, a);
              htmlActsPDF += `<tr><td>${esc(a.nombre)}</td><td>${esc(a.tipo)}</td><td><strong>${valDisplay}</strong></td></tr>`;
           });
           htmlActsPDF += '</tbody></table>';
@@ -190,7 +190,7 @@ function informeAlumnoBodyHTML(grupo,al,opts){
     <div class="meta">${esc(cat.materia)} · ${esc(cat.curso)} · Grupo ${esc(grupo.nombre)} · ${TRIMESTRES[trim]} · Generado el ${new Date().toLocaleDateString("es-ES")}</div>
     <h2>Alumno/a: ${esc(al.nombre)}</h2>
     ${htmlAlertaAsimetria}
-    <table><thead><tr><th>Periodo</th><th>Nota</th><th>Calificación</th><th>Comentario a la calificación</th></tr></thead><tbody>${filas3}<tr><td><strong>Nota final</strong></td><td><strong>${fmt(nf)}</strong></td><td>${pillCuant(nf)}</td><td></td></tr></tbody></table>
+    <table><thead><tr><th>Periodo</th><th>Nota</th><th>Calificación</th><th>Comentario a la calificación</th></tr></thead><tbody>${filas3}<tr><td><strong>Nota final</strong></td><td><strong>${notaEvalInformeHTML(grupo,al.id,"final")}</strong></td><td>${pillCuant(nf)}</td><td></td></tr></tbody></table>
     ${htmlAsistencia}
     ${htmlConvivencia}
     ${htmlActsPDF}

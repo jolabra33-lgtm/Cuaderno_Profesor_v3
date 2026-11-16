@@ -146,7 +146,42 @@ function nivel(grupo,p){
   return NIV.necesita;
 }
 
+/* =================================================================
+   PUNTOS EXTRA (p. ej. +0,5 o +1 por presentarse voluntario/a)
+   Se guardan APARTE de las notas, para que recalcular una rúbrica o
+   cambiar la nota del examen no los borre y quede constancia del motivo:
+     grupo.extras[alId][actId]        = {pts, motivo}   · en una actividad
+     grupo.extrasEval[alId][periodo]  = {pts, motivo}   · periodo "0","1","2" o "final"
+   - Actividad: se suman a su nota DESPUÉS de aplicar la recuperación
+     (si la hay). No se suman con NP ni Exento, ni si no tiene nota.
+   - Evaluación: se suman a la media de los bloques del trimestre. La
+     nota final es la media de los trimestres (ya con sus extras) más el
+     extra de la nota final, si lo hay.
+   - La nota resultante nunca pasa de 10.
+   - Solo cambian la nota numérica: los niveles de logro de criterios y
+     competencias no se tocan.
+   ================================================================= */
+const EXTRA_TOPE=10;
+function _ptsExtra(e){ const p=e?Number(e.pts):0; return (isFinite(p)&&p>0)?p:0; }
+function extraActividad(grupo,alId,actId){ return (grupo.extras&&grupo.extras[alId]&&grupo.extras[alId][actId])||null; }
+function extraEval(grupo,alId,periodo){ return (grupo.extrasEval&&grupo.extrasEval[alId]&&grupo.extrasEval[alId][String(periodo)])||null; }
+function ptsExtraActividad(grupo,alId,actId){ return _ptsExtra(extraActividad(grupo,alId,actId)); }
+function ptsExtraEval(grupo,alId,periodo){ return _ptsExtra(extraEval(grupo,alId,periodo)); }
+function _sumarExtra(v,pts){ if(v==null||!pts) return v; return Math.min(EXTRA_TOPE,v+pts); }
+/* Puntos extra que se suman de verdad en esta actividad (0 si no se aplican). */
+function extraAplicadoActividad(grupo,alId,a){
+  if(a.recupera) return 0;
+  const pts=ptsExtraActividad(grupo,alId,a.id); if(!pts) return 0;
+  if(marcaDe(grupo,alId,a.id)) return 0;
+  return notaActividadSinExtra(grupo,alId,a)==null?0:pts;
+}
+
 function notaActividad(grupo,alId,a){
+  const v=notaActividadSinExtra(grupo,alId,a);
+  return _sumarExtra(v,extraAplicadoActividad(grupo,alId,a));
+}
+/* Nota de la actividad con la recuperación ya aplicada, pero sin puntos extra. */
+function notaActividadSinExtra(grupo,alId,a){
   if(a.recupera) return null; // la recuperación no cuenta sola: actúa sobre sus originales
   let v=notaActividadBase(grupo,alId,a);
   for(const r of recuperacionesDe(grupo,a.id)){
@@ -218,6 +253,10 @@ function notaTrimestre(grupo,alId,trim){
   const _v=_notaTrimestreSinCache(grupo,alId,trim); _m.set(_k,_v); return _v;
 }
 function _notaTrimestreSinCache(grupo,alId,trim){
+  return _sumarExtra(notaTrimestreSinExtra(grupo,alId,trim),ptsExtraEval(grupo,alId,trim));
+}
+/* Media ponderada de los bloques, sin el extra de la evaluación. */
+function notaTrimestreSinExtra(grupo,alId,trim){
   let sw=0,sv=0;
   for(const b of grupo.bloques){
     const v=notaBloque(grupo,alId,b.id,trim); if(v==null) continue;
@@ -231,6 +270,10 @@ function pesoTrimestreEfectivo(grupo,t,disponibles){
   return 100/disponibles.length;
 }
 function notaFinal(grupo,alId){
+  return _sumarExtra(notaFinalSinExtra(grupo,alId),ptsExtraEval(grupo,alId,"final"));
+}
+/* Media ponderada de las evaluaciones (cada una ya con su extra), sin el extra de la nota final. */
+function notaFinalSinExtra(grupo,alId){
   const disponibles=[0,1,2].filter(t=>notaTrimestre(grupo,alId,t)!=null);
   if(!disponibles.length) return null;
   let sw=0,sv=0;

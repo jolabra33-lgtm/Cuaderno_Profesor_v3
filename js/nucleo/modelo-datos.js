@@ -7,7 +7,7 @@ function defGrupo(nombre,catalogoKey){
   const cat=getCatalogo(catalogoKey);
   return {
     id:uid(), nombre, catalogoKey,
-    alumnos:[], actividades:[], notas:{}, notasCuant:{}, rubricScores:{}, examComentarios:{}, entregasInforme:{},
+    alumnos:[], actividades:[], notas:{}, notasCuant:{}, rubricScores:{}, examComentarios:{}, entregasInforme:{}, extras:{}, extrasEval:{},
     pesos:{crit:{},ceCc:{}}, pesosTrim:{},
     umbrales:{excelente:85,adecuado:65,enProceso:45},
     sdaPrevistas:[null,null,null],
@@ -24,6 +24,8 @@ function normalizarGrupo(g){
   if(!g.rubricScores || typeof g.rubricScores!=="object") g.rubricScores={};
   if(!g.examComentarios || typeof g.examComentarios!=="object") g.examComentarios={};
   if(!g.entregasInforme || typeof g.entregasInforme!=="object") g.entregasInforme={};
+  if(!g.extras || typeof g.extras!=="object" || Array.isArray(g.extras)) g.extras={};
+  if(!g.extrasEval || typeof g.extrasEval!=="object" || Array.isArray(g.extrasEval)) g.extrasEval={};
   if(!Array.isArray(g.sdaPrevistas)) g.sdaPrevistas=[null,null,null];
   if(!g.plano || typeof g.plano!=="object") g.plano={filas:5,columnas:6,posiciones:{}};
   if(typeof g.plano.filas!=="number") g.plano.filas=5;

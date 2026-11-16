@@ -29,20 +29,20 @@ function diagnosticarDatos(){
     const alIds=new Set(g.alumnos.map(a=>a.id)), actIds=new Set(g.actividades.map(a=>a.id));
     // 1-2. Restos de alumnado / actividades borrados
     let restosAl=0, restosAct=0;
-    ["notas","notasCuant","rubricScores","examComentarios","marcas","entregasInforme"].forEach(k=>{
+    ["notas","notasCuant","rubricScores","examComentarios","marcas","entregasInforme","extras","extrasEval"].forEach(k=>{
       const m=g[k]||{};
       Object.keys(m).forEach(alId=>{
         if(!alIds.has(alId)){ restosAl++; return; }
-        if(k==="entregasInforme") return;
+        if(k==="entregasInforme"||k==="extrasEval") return;
         Object.keys(m[alId]||{}).forEach(aId=>{ if(!actIds.has(aId)) restosAct++; });
       });
     });
     if(restosAl||restosAct) add("arreglo",donde,`Hay datos sueltos de ${restosAl?restosAl+" alumno(s) ya borrado(s)":""}${restosAl&&restosAct?" y ":""}${restosAct?restosAct+" nota(s) de actividades ya borradas":""}. No se ven ni cuentan; ocupan espacio. (Lo que está en la papelera no se toca.)`,()=>{
-      ["notas","notasCuant","rubricScores","examComentarios","marcas","entregasInforme"].forEach(k=>{
+      ["notas","notasCuant","rubricScores","examComentarios","marcas","entregasInforme","extras","extrasEval"].forEach(k=>{
         const m=g[k]||{};
         Object.keys(m).forEach(alId=>{
           if(!alIds.has(alId)){ delete m[alId]; return; }
-          if(k==="entregasInforme") return;
+          if(k==="entregasInforme"||k==="extrasEval") return;
           Object.keys(m[alId]||{}).forEach(aId=>{ if(!actIds.has(aId)) delete m[alId][aId]; });
         });
       });

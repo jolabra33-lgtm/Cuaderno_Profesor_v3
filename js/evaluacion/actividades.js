@@ -315,18 +315,20 @@ window.saveActividad=()=>{ const grupo=grupoActual(); const f=state.ui.form;
   state.ui.form={editId:null,nombre:"",tipo:TIPOS[0],esExamen:false,bloqueId:"",pesoBloque:"",links:[],sda:""}; save(); render(); };
 window.delActividad=async id=>{ const grupo=grupoActual(); const a=grupo.actividades.find(x=>x.id===id); if(!a) return;
   if(await confirmar(`¿Eliminar la actividad "${a.nombre}"? Podrás restaurarla desde la papelera de esta pestaña si te equivocas.`)){
-    const notas={}; const notasCuant={}; const rubricScores={}; const examComentarios={};
+    const notas={}; const notasCuant={}; const rubricScores={}; const examComentarios={}; const extras={};
     for(const alId in grupo.notas){ if(grupo.notas[alId]?.[id]) notas[alId]=JSON.parse(JSON.stringify(grupo.notas[alId][id])); }
     for(const alId in grupo.notasCuant){ if(grupo.notasCuant[alId]?.[id]!=null) notasCuant[alId]=grupo.notasCuant[alId][id]; }
     for(const alId in (grupo.rubricScores||{})){ if(grupo.rubricScores[alId]?.[id]) rubricScores[alId]=JSON.parse(JSON.stringify(grupo.rubricScores[alId][id])); }
     for(const alId in (grupo.examComentarios||{})){ if(grupo.examComentarios[alId]?.[id]) examComentarios[alId]=grupo.examComentarios[alId][id]; }
-    grupo.papelera.actividades.unshift({actividad:JSON.parse(JSON.stringify(a)),notas,notasCuant,rubricScores,examComentarios,borradoEn:Date.now()});
+    for(const alId in (grupo.extras||{})){ if(grupo.extras[alId]?.[id]) extras[alId]=JSON.parse(JSON.stringify(grupo.extras[alId][id])); }
+    grupo.papelera.actividades.unshift({actividad:JSON.parse(JSON.stringify(a)),notas,notasCuant,rubricScores,examComentarios,extras,borradoEn:Date.now()});
     if(grupo.papelera.actividades.length>10) grupo.papelera.actividades.length=10;
     grupo.actividades=grupo.actividades.filter(x=>x.id!==id);
     for(const al in grupo.notas) delete grupo.notas[al]?.[id];
     for(const al in grupo.notasCuant) delete grupo.notasCuant[al]?.[id];
     for(const al in (grupo.rubricScores||{})) delete grupo.rubricScores[al]?.[id];
     for(const al in (grupo.examComentarios||{})) delete grupo.examComentarios[al]?.[id];
+    for(const al in (grupo.extras||{})) delete grupo.extras[al]?.[id];
     if(state.ui.form.editId===id) state.ui.form={editId:null,nombre:"",tipo:TIPOS[0],esExamen:false,bloqueId:"",pesoBloque:"",links:[],sda:""};
     if(state.ui.corExamId===id){ state.ui.corExamId=""; state.ui.corTab="lista"; }
     save(); render();
@@ -338,6 +340,7 @@ window.restaurarActividadPapelera=idx=>{
   for(const alId in (it.notasCuant||{})){ grupo.notasCuant[alId]=grupo.notasCuant[alId]||{}; grupo.notasCuant[alId][it.actividad.id]=it.notasCuant[alId]; }
   for(const alId in (it.rubricScores||{})){ grupo.rubricScores[alId]=grupo.rubricScores[alId]||{}; grupo.rubricScores[alId][it.actividad.id]=it.rubricScores[alId]; }
   for(const alId in (it.examComentarios||{})){ grupo.examComentarios[alId]=grupo.examComentarios[alId]||{}; grupo.examComentarios[alId][it.actividad.id]=it.examComentarios[alId]; }
+  for(const alId in (it.extras||{})){ grupo.extras=grupo.extras||{}; grupo.extras[alId]=grupo.extras[alId]||{}; grupo.extras[alId][it.actividad.id]=it.extras[alId]; }
   grupo.papelera.actividades.splice(idx,1);
   save(); render();
 };
