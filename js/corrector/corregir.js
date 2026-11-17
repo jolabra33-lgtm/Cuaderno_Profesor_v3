@@ -323,7 +323,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
       return `<tr><td>
           ${it.unico&&!it.label?"":`<div class="cx-item-label">${esc(it.label||"(sin enunciado)")}</div>`}
           ${desc}
-          ${(grupo.examComentarios?.[al.id]?.[act.id+"|"+it.id]||"").trim()?`<div class="cx-item-desc" style="font-style:italic">✎ ${esc(grupo.examComentarios[al.id][act.id+"|"+it.id])}</div>`:""}
+          ${(grupo.examComentarios?.[al.id]?.[act.id+"|"+it.id]||"").trim()?`<div class="cx-item-desc" style="font-style:italic;white-space:pre-wrap">✎ ${esc(grupo.examComentarios[al.id][act.id+"|"+it.id])}</div>`:""}
         </td>
         <td style="text-align:right;white-space:nowrap;vertical-align:top">
           <span class="cx-item-score">${val==null?"—":fmt(Number(val))}</span>
