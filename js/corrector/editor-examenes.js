@@ -273,7 +273,7 @@ window.exComentItem=(alId,actId,itemId,v)=>{
 };
 function exComentHTML(alId,actId,itemId){
   const g=grupoActual(), v=(g&&g.examComentarios&&g.examComentarios[alId]&&g.examComentarios[alId][actId+"|"+itemId])||"";
-  return `<input class="in ex-coment" style="margin-top:4px;font-size:12px;padding:3px 7px;width:100%" placeholder="Comentario para el alumno/a (opcional)" value="${esc(v)}" onchange="exComentItem('${alId}','${actId}','${itemId}',this.value)">`;
+  return `<textarea class="in ex-coment" rows="1" style="margin-top:4px;font-size:12px;padding:3px 7px;width:100%;min-height:28px;max-height:60vh;resize:vertical;display:block;box-sizing:border-box;font-family:inherit" placeholder="Comentario para el alumno/a (opcional)" onchange="exComentItem('${alId}','${actId}','${itemId}',this.value)">${esc(v)}</textarea>`;
 }
 /* Copia propia de los diseños: como mucho una al día, se guardan las 3 últimas */
 const EX_COPIA_DIA="cuaderno_ex_copia_dia";
