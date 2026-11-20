@@ -273,8 +273,66 @@ window.exComentItem=(alId,actId,itemId,v)=>{
 };
 function exComentHTML(alId,actId,itemId){
   const g=grupoActual(), v=(g&&g.examComentarios&&g.examComentarios[alId]&&g.examComentarios[alId][actId+"|"+itemId])||"";
-  return `<textarea class="in ex-coment" rows="1" style="margin-top:4px;font-size:12px;padding:3px 7px;width:100%;min-height:28px;max-height:60vh;resize:vertical;display:block;box-sizing:border-box;font-family:inherit" placeholder="Comentario para el alumno/a (opcional)" onchange="exComentItem('${alId}','${actId}','${itemId}',this.value)">${esc(v)}</textarea>`;
+  return comentEditorHTML(v,`exComentItem('${alId}','${actId}','${itemId}',comentValorDe(this))`,"Comentario para el alumno/a (opcional)","ex-coment");
 }
+/* ---- Comentarios de la rúbrica con color de letra (y negrita) ----
+   Formato guardado (compatible con lo anterior):
+     · sin formato → texto plano, como siempre (los saltos de línea son "\n");
+     · con color o negrita → HTML saneado con progSanitizarHTML (solo <b>, <span style="color:…">, <br>…).
+   comentRicoHTML() muestra cualquiera de los dos en pantalla y en la hoja impresa. */
+function comentEsHTML(v){ return /<(b|strong|i|em|u|span|div|p|font)(\s[^<>]*)?>|<br\s*\/?>/i.test(String(v||"")); }
+function comentRicoHTML(v){
+  const t=String(v||"").trim(); if(!t) return "";
+  return comentEsHTML(t)? progSanitizarHTML(t) : esc(t).replace(/\n/g,"<br>");
+}
+/* Valor que se guarda a partir del editor: texto plano si no hay formato; si lo hay, HTML saneado. */
+function comentValorDe(ed){
+  const tmp=document.createElement("div"); tmp.innerHTML=progSanitizarHTML(ed.innerHTML);
+  if(!(tmp.textContent||"").trim()) return "";
+  tmp.querySelectorAll("font").forEach(f=>{ const s=document.createElement("span"), c=f.getAttribute("color"); if(c) s.style.color=c; while(f.firstChild) s.appendChild(f.firstChild); f.replaceWith(s); });
+  tmp.querySelectorAll("span:not([style])").forEach(s=>{ while(s.firstChild) s.parentNode.insertBefore(s.firstChild,s); s.remove(); });
+  if(!tmp.querySelector("b,strong,i,em,u,span[style]")) return String(ed.innerText||"").replace(/ /g," ").replace(/\n{3,}/g,"\n\n").trim();
+  return tmp.innerHTML.trim();
+}
+function comentEditorHTML(valor,alGuardar,placeholder,clase){
+  const colores=[["#b91c1c","Rojo"],["#1d4ed8","Azul"],["#047857","Verde"],["#b45309","Naranja"],["#7c3aed","Morado"],["#1f2937","Negro"]];
+  return `<div class="coment-rico ${clase||""}">
+    <div class="in coment-rico-ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="${esc(placeholder)}" data-placeholder="${esc(placeholder)}"
+      onkeydown="comentTecla(event)" oninput="comentVacio(this)" onpaste="comentPegar(event)" onblur="${alGuardar}">${comentRicoHTML(valor)}</div>
+    <div class="coment-rico-bar" role="toolbar" aria-label="Formato del comentario">
+      <button type="button" class="ghost small" style="font-weight:800;padding:1px 8px" title="Negrita" aria-label="Negrita" onmousedown="event.preventDefault()" onclick="comentCmd(this,'bold')">N</button>
+      ${colores.map(([c,n])=>`<button type="button" class="coment-color" title="Letra en ${n.toLowerCase()}" aria-label="Letra en ${n.toLowerCase()}" style="background:${c}" onmousedown="event.preventDefault()" onclick="comentCmd(this,'foreColor','${c}')"></button>`).join("")}
+      <input type="color" value="#b91c1c" title="Otro color" aria-label="Otro color de letra" onmousedown="comentGuardarSeleccion(this)" onchange="comentColorOtro(this)">
+      <button type="button" class="ghost small" style="padding:1px 8px" title="Quitar el color y la negrita del texto seleccionado" onmousedown="event.preventDefault()" onclick="comentCmd(this,'removeFormat')">✕ Formato</button>
+      <span class="coment-rico-ayuda">Selecciona texto y elige un color</span>
+    </div>
+  </div>`;
+}
+let _comentRango=null;
+function _comentEd(el){ const w=el&&el.closest(".coment-rico"); return w&&w.querySelector(".coment-rico-ed"); }
+window.comentCmd=(btn,cmd,valor)=>{
+  const ed=_comentEd(btn); if(!ed) return;
+  ed.focus();
+  try{ document.execCommand("styleWithCSS",false,false); }catch(e){}
+  document.execCommand(cmd,false,valor||null);
+};
+window.comentGuardarSeleccion=inp=>{
+  const ed=_comentEd(inp), sel=window.getSelection();
+  _comentRango=(ed&&sel&&sel.rangeCount&&ed.contains(sel.anchorNode))?sel.getRangeAt(0).cloneRange():null;
+};
+window.comentColorOtro=inp=>{
+  const ed=_comentEd(inp); if(!ed) return;
+  ed.focus();
+  if(_comentRango){ const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(_comentRango); }
+  try{ document.execCommand("styleWithCSS",false,false); }catch(e){}
+  document.execCommand("foreColor",false,inp.value);
+  _comentRango=null;
+};
+/* Intro = salto de línea (<br>), como en el cuadro de texto de antes. */
+window.comentTecla=ev=>{ if(ev.key==="Enter"&&!ev.isComposing){ ev.preventDefault(); document.execCommand("insertLineBreak"); } };
+/* Si se borra todo, se vacía del todo (Chrome deja un <br>) para que vuelva a verse el texto de ayuda. */
+window.comentVacio=ed=>{ if(ed.textContent==="" && ed.innerHTML!=="") ed.innerHTML=""; };
+window.comentPegar=ev=>{ ev.preventDefault(); const t=(ev.clipboardData||window.clipboardData).getData("text/plain"); document.execCommand("insertText",false,t); };
 /* Copia propia de los diseños: como mucho una al día, se guardan las 3 últimas */
 const EX_COPIA_DIA="cuaderno_ex_copia_dia";
 async function exCopiaDiaria(forzar){

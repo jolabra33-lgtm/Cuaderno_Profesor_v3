@@ -110,7 +110,9 @@ function abrirVentanaInforme(titulo,bodyHtml,opts){
     table{border-collapse:collapse;width:100%;font-size:13px;margin-bottom:6px}
     th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #ddd}
     th{color:#555}
-    tr{page-break-inside:avoid}
+    tr{page-break-inside:avoid;break-inside:avoid}
+    h1,h2,h3,h4{page-break-after:avoid;break-after:avoid}
+    p,li{orphans:3;widows:3}
     thead{display:table-header-group}
     .pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:12px;font-weight:600}
     .btnbar{margin-bottom:22px}
@@ -191,6 +193,7 @@ function informeAlumnoBodyHTML(grupo,al,opts){
     <h2>Alumno/a: ${esc(al.nombre)}</h2>
     ${htmlAlertaAsimetria}
     <table><thead><tr><th>Periodo</th><th>Nota</th><th>Calificación</th><th>Comentario a la calificación</th></tr></thead><tbody>${filas3}<tr><td><strong>Nota final</strong></td><td><strong>${notaEvalInformeHTML(grupo,al.id,"final")}</strong></td><td>${pillCuant(nf)}</td><td></td></tr></tbody></table>
+    <div style="margin-top:18px">${resumenCalculoNotaHTML(grupo,al,trim)}</div>
     ${htmlAsistencia}
     ${htmlConvivencia}
     ${htmlActsPDF}
