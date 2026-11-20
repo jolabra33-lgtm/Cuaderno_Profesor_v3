@@ -136,6 +136,18 @@
   .rte-editable:empty:before{content:attr(data-placeholder);color:var(--mut)}
   .rte-editable ul,.rte-editable ol{margin:4px 0 4px 22px;padding:0}
   .rte-editable li{margin:2px 0}
+  /* Comentarios de la rúbrica con color: la barra de formato sale debajo solo al escribir en el comentario */
+  .coment-rico{margin-top:4px}
+  .coment-rico-ed{display:block;width:100%;box-sizing:border-box;min-height:28px;max-height:60vh;overflow:auto;font-size:12px;padding:3px 7px;line-height:1.45;cursor:text;resize:vertical;overflow-wrap:anywhere}
+  .cx-coment-general .coment-rico-ed{min-height:70px;font-size:14px;padding:8px 10px}
+  .coment-rico-ed:focus{outline:none;border-color:var(--accent-2);background:var(--card);box-shadow:0 0 0 3px var(--accent-soft)}
+  .coment-rico-ed:empty:before{content:attr(data-placeholder);color:var(--mut);pointer-events:none}
+  .coment-rico-bar{display:none;align-items:center;gap:5px;flex-wrap:wrap;margin-top:4px;padding:4px 6px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+  .coment-rico:focus-within .coment-rico-bar{display:flex}
+  .coment-rico-bar .coment-color{width:20px;height:20px;border-radius:50%;border:1px solid var(--line);padding:0;cursor:pointer;min-width:0}
+  .coment-rico-bar .coment-color:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px}
+  .coment-rico-bar input[type=color]{width:24px;height:22px;padding:0;border:1px solid var(--line);border-radius:6px;background:none;cursor:pointer}
+  .coment-rico-ayuda{font-size:11px;color:var(--mut);margin-left:4px}
   label.file{cursor:pointer;font-weight:600}
   .big{font-size:34px;font-weight:800;line-height:1;letter-spacing:-.03em}
   .flex{display:flex;gap:10px;flex-wrap:wrap;align-items:center}

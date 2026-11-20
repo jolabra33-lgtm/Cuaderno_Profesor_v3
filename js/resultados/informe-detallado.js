@@ -113,6 +113,138 @@ function critLabelPlain(catalogoKey,critId){
   return `<strong>${esc(critId)}</strong><span class="dsg-crittexto">${esc(corto)}</span>`;
 }
 
+/* ---- Resumen del cálculo de la nota cuantitativa ----
+   Tabla corta, para leer de un vistazo de dónde sale la nota de la evaluación
+   elegida (o la final): cada bloque con su peso, las notas que lo forman, su
+   media y lo que aporta; y la suma final. Va al principio del informe detallado
+   y en el informe individual. Usa exactamente las mismas funciones del motor de
+   notas (notaActividad, notaBloque, notaTrimestre…), así que no puede dar otra cifra. */
+function rsnN(x){
+  if(x==null||!isFinite(x)) return "—";
+  const r=Math.round(_limpiaFP(x)*100)/100;
+  return String(r).replace(".",",");
+}
+function rsnFactor(p){ return rsnN(p/100); }
+function rsnCSS(){
+  return `<style>
+    .rsn{ --rk:#141b28; --rm:#5b6b82; --rl:#dde3ec; --ra:#b3893a; --rs:#f6f7f9; margin:0 0 26px; border:1px solid var(--rl); border-radius:12px; overflow:hidden; background:#fff; color:var(--rk); break-inside:avoid; page-break-inside:avoid; font-size:13px; line-height:1.4; -webkit-box-decoration-break:clone; box-decoration-break:clone; }
+    .rsn-head{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; padding:11px 16px; background:linear-gradient(135deg,#152a44,#25456b); color:#fff; }
+    .rsn-head b{ font-size:14px; letter-spacing:.01em; }
+    .rsn-head span{ font-size:11.5px; color:rgba(255,255,255,.8); text-transform:uppercase; letter-spacing:.06em; }
+    .rsn table{ width:100%; border-collapse:collapse; margin:0; font-size:13px; }
+    .rsn th{ text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--rm); font-weight:700; padding:7px 16px; border-bottom:1px solid var(--rl); background:#fff; }
+    .rsn td{ padding:5px 16px; border:none; vertical-align:top; }
+    .rsn tr{ break-inside:avoid; page-break-inside:avoid; }
+    .rsn .rsn-num{ text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .rsn tbody.rsn-bloque{ break-inside:avoid; page-break-inside:avoid; }
+    .rsn tbody.rsn-bloque + tbody.rsn-bloque tr.rsn-bh td{ border-top:1px solid var(--rl); }
+    .rsn tr.rsn-bh td{ padding-top:10px; font-weight:700; background:var(--rs); }
+    .rsn tr.rsn-bh .rsn-peso{ display:inline-block; margin-left:6px; padding:1px 7px; border-radius:9px; background:rgba(183,137,58,.16); color:#7a5a1e; font-size:11px; font-weight:700; }
+    .rsn tr.rsn-act td{ color:#2b3445; }
+    .rsn tr.rsn-act td:first-child{ padding-left:30px; }
+    .rsn .rsn-nota{ font-weight:600; }
+    .rsn .rsn-mut{ color:var(--rm); font-size:11.5px; font-weight:400; }
+    .rsn .rsn-chips{ display:flex; flex-wrap:wrap; gap:4px 14px; padding-left:14px; font-size:12px; color:#2b3445; }
+    .rsn .rsn-chips b{ font-weight:600; }
+    .rsn tr.rsn-calc td{ padding-bottom:10px; color:var(--rm); font-size:12.5px; }
+    .rsn tr.rsn-calc td:first-child{ padding-left:30px; font-style:italic; }
+    .rsn tr.rsn-calc b{ color:var(--rk); }
+    .rsn tfoot td{ border-top:2px solid var(--rk); padding:11px 16px; font-weight:700; background:#fff; }
+    .rsn tfoot tr.rsn-extra td{ border-top:1px solid var(--rl); font-weight:400; padding:7px 16px; }
+    .rsn .rsn-final{ font-size:18px; }
+    .rsn .rsn-aviso{ padding:8px 16px 11px; font-size:11.5px; color:var(--rm); border-top:1px solid var(--rl); background:#fff; }
+    .rsn .pill{ display:inline-block; padding:2px 9px; border-radius:10px; font-size:12px; font-weight:600; margin-left:8px; vertical-align:middle; }
+  </style>`;
+}
+/* Media de una lista {v,w}: «(7 + 9) / 2 = 8» o, con pesos distintos, «(7 × 40 + 9 × 60) / 100 = 8,2». */
+function rsnMediaTexto(items,media){
+  if(!items.length) return "—";
+  if(items.length===1) return `<b>${rsnN(media)}</b>`;
+  const iguales=items.every(x=>Math.abs(x.w-items[0].w)<1e-9);
+  if(items.length>6) return `media de ${items.length} notas${iguales?"":" (ponderada)"} = <b>${rsnN(media)}</b>`;
+  if(iguales) return `(${items.map(x=>rsnN(x.v)).join(" + ")}) / ${items.length} = <b>${rsnN(media)}</b>`;
+  const sw=items.reduce((s,x)=>s+x.w,0);
+  return `(${items.map(x=>`${rsnN(x.v)} × ${rsnN(x.w)}`).join(" + ")}) / ${rsnN(sw)} = <b>${rsnN(media)}</b>`;
+}
+function resumenCalculoNotaHTML(grupo,al,periodo){
+  const esFinal=periodo==="final";
+  const titulo=esFinal?"Nota final de curso":TRIMESTRES[periodo];
+  const nota=esFinal?notaFinal(grupo,al.id):notaTrimestre(grupo,al.id,periodo);
+  const base=esFinal?notaFinalSinExtra(grupo,al.id):notaTrimestreSinExtra(grupo,al.id,periodo);
+  const cab=`<div class="rsn-head"><b>De dónde sale la nota · ${esc(titulo)}</b><span>Resumen del cálculo</span></div>`;
+  let cuerpo="", aportes=[], sumaPesos=0, aviso="";
+  if(esFinal){
+    const disp=[0,1,2].filter(t=>notaTrimestre(grupo,al.id,t)!=null);
+    if(!disp.length) return rsnCSS()+`<div class="rsn">${cab}<div class="rsn-aviso">Todavía no hay ninguna evaluación con nota.</div></div>`;
+    const sw=disp.reduce((s,t)=>s+pesoTrimestreEfectivo(grupo,t,disp),0);
+    cuerpo=disp.map(t=>{
+      const v=notaTrimestre(grupo,al.id,t), w=pesoTrimestreEfectivo(grupo,t,disp), ap=v*w/sw, pe=ptsExtraEval(grupo,al.id,t);
+      aportes.push(ap);
+      return `<tbody class="rsn-bloque"><tr class="rsn-bh"><td>${esc(TRIMESTRES[t])}<span class="rsn-peso">${fmtPct(w/sw*100)}</span>${pe?` <span class="rsn-mut">(incluye +${fmtPts(pe)} extra)</span>`:""}</td><td class="rsn-num rsn-nota">${rsnN(v)}</td><td class="rsn-num">${rsnN(v)} × ${rsnN(w/sw)} = <b>${rsnN(ap)}</b></td></tr></tbody>`;
+    }).join("");
+    const sinNota=[0,1,2].filter(t=>!disp.includes(t));
+    if(sinNota.length) aviso=`Sin nota todavía: ${sinNota.map(t=>esc(TRIMESTRES[t])).join(", ")}. La nota final se reparte entre las evaluaciones que ya tienen nota.`;
+    sumaPesos=100;
+  }else{
+    const trim=periodo;
+    const bloques=grupo.bloques.filter(b=>grupo.actividades.some(a=>a.trimestre===trim && a.bloqueId===b.id && !a.recupera));
+    if(!bloques.length) return rsnCSS()+`<div class="rsn">${cab}<div class="rsn-aviso">No hay actividades en esta evaluación.</div></div>`;
+    const sinNotaBloques=[];
+    cuerpo=bloques.map(b=>{
+      const acts=grupo.actividades.filter(a=>a.trimestre===trim && a.bloqueId===b.id && !a.recupera);
+      const vb=notaBloque(grupo,al.id,b.id,trim), peso=Number(b.peso)||0;
+      const items=[], fuera=[];
+      acts.forEach(a=>{
+        const v=notaActividad(grupo,al.id,a), m=marcaDe(grupo,al.id,a.id);
+        if(v==null){ fuera.push(esc(a.nombre)+(m==="EX"?" (exento)":"")); return; }
+        const sinEx=notaActividadSinExtra(grupo,al.id,a), orig=notaActividadBase(grupo,al.id,a), ex=extraAplicadoActividad(grupo,al.id,a);
+        const notas=[];
+        if(m==="NP") notas.push("no presentado");
+        if(orig!=null && sinEx!=null && Math.abs(orig-sinEx)>1e-9) notas.push(`recuperación: ${rsnN(orig)} → ${rsnN(sinEx)}`);
+        else if(orig==null && sinEx!=null) notas.push("nota de la recuperación");
+        if(ex) notas.push(`+${fmtPts(ex)} extra`);
+        items.push({a,v,w:pesoActividadEnBloque(grupo,a),notas});
+      });
+      const iguales=items.every(x=>Math.abs(x.w-(items[0]?items[0].w:0))<1e-9);
+      if(vb==null || !(peso>0)){
+        if(peso>0) sinNotaBloques.push(esc(b.label));
+        return `<tbody class="rsn-bloque"><tr class="rsn-bh"><td>${esc(b.label)}<span class="rsn-peso">${fmtPct(peso)}</span></td><td class="rsn-num rsn-mut">${vb==null?"sin nota":rsnN(vb)}</td><td class="rsn-num rsn-mut">${peso>0?"no cuenta":"peso 0 %"}</td></tr></tbody>`;
+      }
+      const ap=vb*peso/100; aportes.push(ap); sumaPesos+=peso;
+      let filas;
+      if(items.length>6){
+        filas=`<tr class="rsn-act"><td colspan="3"><div class="rsn-chips">${items.map(x=>`<span>${esc(x.a.nombre)}: <b>${rsnN(x.v)}</b>${x.notas.length?` <span class="rsn-mut">(${esc(x.notas.join("; "))})</span>`:""}</span>`).join("")}</div></td></tr>`;
+      }else{
+        filas=items.map(x=>`<tr class="rsn-act"><td>${esc(x.a.nombre)}${!iguales?` <span class="rsn-mut">· peso ${fmtPct(x.w)}</span>`:""}${x.notas.length?` <span class="rsn-mut">(${esc(x.notas.join("; "))})</span>`:""}</td><td class="rsn-num rsn-nota">${rsnN(x.v)}</td><td></td></tr>`).join("");
+      }
+      const fueraTxt=fuera.length?`<tr class="rsn-act"><td colspan="3" class="rsn-mut">No cuentan (sin nota): ${fuera.join(", ")}</td></tr>`:"";
+      return `<tbody class="rsn-bloque">
+        <tr class="rsn-bh"><td>${esc(b.label)}<span class="rsn-peso">${fmtPct(peso)}</span></td><td class="rsn-num">${rsnN(vb)}</td><td class="rsn-num"><b>${rsnN(ap)}</b></td></tr>
+        ${filas}${fueraTxt}
+        <tr class="rsn-calc"><td>Media del bloque</td><td class="rsn-num">${rsnMediaTexto(items,vb)}</td><td class="rsn-num">${rsnN(vb)} × ${rsnFactor(peso)} = <b>${rsnN(ap)}</b></td></tr>
+      </tbody>`;
+    }).join("");
+    if(sinNotaBloques.length) aviso=`Sin ninguna nota en: ${sinNotaBloques.join(", ")}. La nota se calcula solo con los bloques que tienen nota (sus pesos suman el ${fmtPct(sumaPesos)}).`;
+  }
+  // Suma final
+  const ajuste=!esFinal && sumaPesos>0 && Math.abs(sumaPesos-100)>0.01;
+  const suma=aportes.length>1?`${aportes.map(rsnN).join(" + ")} = ${rsnN(aportes.reduce((s,x)=>s+x,0))}`:(aportes.length?rsnN(aportes[0]):"—");
+  const sumaTxt=ajuste?`(${aportes.map(rsnN).join(" + ")}) / ${rsnFactor(sumaPesos)} = ${rsnN(base)}`:suma;
+  const periodoExtra=esFinal?"final":periodo;
+  const pe=base==null?0:ptsExtraEval(grupo,al.id,periodoExtra), eE=extraEval(grupo,al.id,periodoExtra);
+  const filaBase=pe?`<tr class="rsn-extra"><td>${esFinal?"Media de las evaluaciones":"Suma de los bloques"}</td><td class="rsn-num" colspan="2">${sumaTxt}</td></tr>
+    <tr class="rsn-extra"><td>Puntos extra${eE&&eE.motivo?` <span class="rsn-mut">· ${esc(eE.motivo)}</span>`:""}</td><td class="rsn-num" colspan="2">${rsnN(base)} + ${fmtPts(pe)}${base+pe>EXTRA_TOPE?' <span class="rsn-mut">(máximo 10)</span>':""} = ${rsnN(nota)}</td></tr>`:"";
+  const totalCalc=pe?"":`<span class="rsn-mut" style="font-weight:400;margin-right:10px">${sumaTxt} →</span>`;
+  return rsnCSS()+`<div class="rsn">${cab}
+    <table>
+      <thead><tr><th>${esFinal?"Evaluación":"Bloque y actividades"}</th><th class="rsn-num">Nota</th><th class="rsn-num">Aporta a la nota</th></tr></thead>
+      ${cuerpo}
+      <tfoot>${filaBase}<tr><td>${esFinal?"Nota final":"Nota de la evaluación"}</td><td class="rsn-num" colspan="2">${totalCalc}<span class="rsn-final">${nota==null?"—":fmt(nota)}</span>${nota==null?"":pillCuant(nota,grupo)}</td></tr></tfoot>
+    </table>
+    ${aviso?`<div class="rsn-aviso">${aviso}</div>`:""}
+  </div>`;
+}
+
 /* ---- Nota cuantitativa: desglose ---- */
 function desgloseNotaActividadHTML(grupo,al,a){
   if(a.esExamen){
@@ -157,16 +289,24 @@ function desgloseBloqueHTML(grupo,al,b,trim){
     const conRec=recs.length && va!=null && (vb==null || Math.abs(va-vb)>1e-9);
     let celda=m==="EX"?"Exento":(conRec?`${vb==null?"—":fmt(vb)} → <strong>${fmt(va)}</strong>`:(va==null?"—":fmt(va)))+(m==="NP"?" (NP)":"");
     if(ex) celda+=` + ${fmtPts(ex)} extra = <strong>${fmt(notaActividad(grupo,al.id,a))}</strong>`;
-    return `<tr>
-        <td>${esc(a.nombre)}<span class="dsg-tag">${esc(a.tipo)}</span>${conRec?`<div class="dsg-muted" style="font-size:11.5px">Recuperada con: ${recs.map(r=>esc(r.nombre)).join(", ")}</div>`:""}${ex?`<div class="dsg-muted" style="font-size:11.5px">Puntos extra: +${fmtPts(ex)}${exE&&exE.motivo?" · "+esc(exE.motivo):""}</div>`:""}</td>
-        <td style="text-align:right;white-space:nowrap">${celda}</td>
-        <td style="text-align:right;white-space:nowrap">${fmtPct(w)}</td>
-      </tr>
-      <tr><td colspan="3" style="padding:0 14px 14px">${desgloseNotaActividadHTML(grupo,al,a)}</td></tr>`;
-  }).join("");
+    // Cada actividad (fila + su desglose) es una pieza que no se parte entre dos páginas.
+    return `<div class="dsg-act">
+        <div class="dsg-act-fila">
+          <div>${esc(a.nombre)}<span class="dsg-tag">${esc(a.tipo)}</span>${conRec?`<div class="dsg-muted" style="font-size:11.5px">Recuperada con: ${recs.map(r=>esc(r.nombre)).join(", ")}</div>`:""}${ex?`<div class="dsg-muted" style="font-size:11.5px">Puntos extra: +${fmtPts(ex)}${exE&&exE.motivo?" · "+esc(exE.motivo):""}</div>`:""}</div>
+          <div class="dsg-act-num">${celda}</div>
+          <div class="dsg-act-num">${fmtPct(w)}</div>
+        </div>
+        <div class="dsg-act-det">${desgloseNotaActividadHTML(grupo,al,a)}</div>
+      </div>`;
+  });
+  // La cabecera del bloque va pegada a su primera actividad: nunca se queda sola al pie de una página.
   return `<div class="dsg-bloque">
-    <div class="dsg-bloque-head"><span>${esc(b.label)}</span><span>${v==null?"—":fmt(v)} <small>peso ${fmtPct(b.peso)} del trimestre</small></span></div>
-    <table class="dsg-tabla"><thead><tr><th>Actividad</th><th style="text-align:right">Nota</th><th style="text-align:right">Peso en el bloque</th></tr></thead><tbody>${filas}</tbody></table>
+    <div class="dsg-bloque-cab">
+      <div class="dsg-bloque-head"><span>${esc(b.label)}</span><span>${v==null?"—":fmt(v)} <small>peso ${fmtPct(b.peso)} del trimestre</small></span></div>
+      <div class="dsg-act-fila dsg-act-th"><div>Actividad</div><div class="dsg-act-num">Nota</div><div class="dsg-act-num">Peso en el bloque</div></div>
+      ${filas[0]||""}
+    </div>
+    ${filas.slice(1).join("")}
   </div>`;
 }
 function desgloseTrimestreHTML(grupo,al,trim){
@@ -359,7 +499,14 @@ function dsgReportCSS(){
     .dsg-report .dsg-subtitle{ font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--mu); font-weight:700; margin:0 0 10px; padding-top:4px; }
     .dsg-report .dsg-muted{ color:var(--mu); font-size:13px; }
     .dsg-report .dsg-note{ font-size:12.5px; color:var(--mu); margin:2px 0 10px; }
-    .dsg-report .dsg-bloque{ border:1px solid var(--ln); border-radius:10px; margin:0 0 14px; overflow:hidden; page-break-inside:avoid; }
+    .dsg-report .dsg-bloque{ border:1px solid var(--ln); border-radius:10px; margin:0 0 14px; overflow:hidden; -webkit-box-decoration-break:clone; box-decoration-break:clone; }
+    .dsg-report .dsg-bloque-cab, .dsg-report .dsg-act{ break-inside:avoid; page-break-inside:avoid; }
+    .dsg-report .dsg-act-fila{ display:grid; grid-template-columns:minmax(0,1fr) 190px 130px; gap:12px; padding:8px 14px; font-size:13px; align-items:start; }
+    .dsg-report .dsg-act + .dsg-act .dsg-act-fila, .dsg-report .dsg-bloque-cab + .dsg-act .dsg-act-fila{ border-top:1px solid var(--ln); }
+    .dsg-report .dsg-act-th{ font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--mu); font-weight:700; border-bottom:1px solid var(--ln); }
+    .dsg-report .dsg-act-num{ text-align:right; }
+    .dsg-report .dsg-act-det{ padding:0 14px 12px; }
+    .dsg-report .dsg-act-det .dsg-mini{ margin-bottom:2px; }
     .dsg-report .dsg-bloque-head{ display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--sf2); font-size:13.5px; font-weight:700; }
     .dsg-report .dsg-bloque-head small{ font-weight:400; color:var(--mu); font-size:11.5px; }
     .dsg-report .dsg-tabla{ width:100%; border-collapse:collapse; font-size:13px; }
@@ -379,6 +526,16 @@ function dsgReportCSS(){
     .dsg-report .dsg-criterio-head{ display:flex; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:600; margin-bottom:4px; }
     .dsg-report .dsg-criterio-head small{ font-weight:400; color:var(--mu); }
     .dsg-report .dsg-chart-box{ border:1px solid var(--ln); border-radius:12px; padding:16px 18px; background:#fff; page-break-inside:avoid; }
+    /* Maquetación al imprimir: ningún título se queda solo al pie de una página
+       y los cuadros no se parten (si uno no cabe en una página entera, se parte
+       entre actividades o criterios y el borde se repite en cada trozo). */
+    .dsg-report .dsg-h2, .dsg-report .dsg-subtitle, .dsg-report .dsg-formula, .dsg-report .dsg-bloque-head,
+    .dsg-report .dsg-ce-head, .dsg-report .dsg-criterio-head, .dsg-report .dsg-trim-block h3{ break-after:avoid; page-break-after:avoid; }
+    .dsg-report .dsg-total{ break-before:avoid; page-break-before:avoid; break-inside:avoid; }
+    .dsg-report .dsg-resumen, .dsg-report .dsg-criterio, .dsg-report .dsg-mini tr, .dsg-report .dsg-tabla tr{ break-inside:avoid; page-break-inside:avoid; }
+    .dsg-report .dsg-ce{ -webkit-box-decoration-break:clone; box-decoration-break:clone; }
+    .dsg-report .dsg-mini thead{ display:table-header-group; }
+    .dsg-report p{ orphans:3; widows:3; }
     @page{ margin:2.3cm 2cm; }
   </style>`;
 }
@@ -397,6 +554,7 @@ function informeDetalladoBodyHTML(grupo,al,periodo,opts){
       <div><div class="dsg-resumen-label">Nota cuantitativa</div><div class="dsg-resumen-valor">${notaC==null?"—":fmt(notaC)}<small> / 10</small></div></div>
       <div>${pillCuant(notaC)}</div>
     </div>
+    ${resumenCalculoNotaHTML(grupo,al,periodo)}
     <div class="dsg-chart-box" style="margin-bottom:28px">
       <div class="dsg-subtitle" style="text-align:center">Evolución de la nota cuantitativa</div>
       ${graficoEvolucionNotaHTML(grupo,al,periodo)}

@@ -192,6 +192,39 @@ window.progSetActividadCriterioPeso=(actId,critId,peso)=>{
   const c=(a.criterios||[]).find(x=>x.critId===critId); if(c) c.peso=Number(peso)||0;
   save();
 };
+/* Situaciones de Aprendizaje que cubre una actividad. Solo hace falta elegirlas
+   en los exámenes (que pueden ser conjuntos de varias SdA): las demás actividades
+   se crean ya dentro de su SdA. Por eso la sección solo sale en los exámenes, y
+   además va plegada. Excepción: una actividad que no es examen pero no está en
+   ninguna SdA, o está en varias (p. ej. dejó de ser examen), la sigue mostrando
+   para que se pueda colocar o corregir. */
+window.progToggleActividadSdas=(actId)=>{
+  if(!state.ui.progActSdasAbiertas||typeof state.ui.progActSdasAbiertas!=="object") state.ui.progActSdasAbiertas={};
+  const m=state.ui.progActSdasAbiertas;
+  if(m[actId]) delete m[actId]; else m[actId]=true;
+  save(); render();
+};
+function progActividadSdasHTML(a,p){
+  const ids=(a.sdaIds||[]).filter(id=>p.sdas.some(s=>s.id===id));
+  if(!a.esExamen && ids.length===1) return "";
+  const abierta=!!(state.ui.progActSdasAbiertas&&state.ui.progActSdasAbiertas[a.id]);
+  const etq=s=>`${TRIMESTRES[s.trimestre].replace("ª evaluación","ª ev.")} · ${esc(s.titulo||"(sin título)")}`;
+  const marcadas=p.sdas.filter(s=>ids.includes(s.id));
+  const resumen=marcadas.length?marcadas.map(etq).join(" · "):"ninguna marcada";
+  return `<div style="margin-top:8px">
+    <button class="ghost" style="border:1px solid var(--line);text-align:left" aria-expanded="${abierta}" onclick="progToggleActividadSdas('${a.id}')">
+      <span style="display:inline-block;width:12px">${abierta?"▾":"▸"}</span> Situaciones de Aprendizaje que cubre — ${marcadas.length} marcada${marcadas.length===1?"":"s"}
+    </button>
+    ${abierta?`<div style="margin-top:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px">
+      <div class="sub" style="margin:0 0 6px">${a.esExamen?"Marca varias si es un examen conjunto.":"Esta actividad no es un examen: déjala marcada solo en la SdA a la que pertenece."}</div>
+      <div class="flex" style="flex-wrap:wrap;gap:10px">
+        ${p.sdas.map(s=>`<label style="font-size:12.5px;display:flex;align-items:center;gap:5px">
+          <input type="checkbox" ${ids.includes(s.id)?"checked":""} onchange="progToggleActividadSda('${a.id}','${s.id}',this.checked)"> ${etq(s)}
+        </label>`).join("")||'<span class="sub">Crea antes alguna SdA.</span>'}
+      </div>
+    </div>`:`<span class="sub" style="margin-left:8px;font-size:12px">${resumen}</span>`}
+  </div>`;
+}
 window.progToggleActividadAbierta=(actId)=>{ state.ui.progActividadAbierta = state.ui.progActividadAbierta===actId?null:actId; save(); render(); };
 function progActividadCardHTML(idx,a,p,grupoId,iAct,totalGrupo){
   const abierta=state.ui.progActividadAbierta===a.id;
@@ -216,14 +249,7 @@ function progActividadCardHTML(idx,a,p,grupoId,iAct,totalGrupo){
     ${a.esExamen&&(a.rubrica||[]).length?(()=>{ const n=cxItemsFlat(a.rubrica).length, tot=cxMaxTotal(a.rubrica);
       return `<div style="font-size:12.5px;color:var(--mut);margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">📌 Rúbrica guardada: ${a.rubrica.length} apartado${a.rubrica.length===1?"":"s"}, ${n} ítem${n===1?"":"s"}, ${String(Math.round(tot*100)/100).replace(".",",")} pts${(a.variantes||[]).length?`, con ${a.variantes.length===1?"versión adaptada":a.variantes.length+" versiones adaptadas"} (${a.variantes.map(v=>esc(v.nombre||"Adaptada")).join(", ")})`:""} — se usará al traer este examen a cualquier grupo.
         <button class="ghost danger small" style="padding:2px 8px" onclick="progQuitarRubrica('${a.id}')">Quitar</button></div>`; })():""}
-    <div style="margin-top:8px">
-      <div class="section-eyebrow" style="margin:0 0 4px">Situaciones de Aprendizaje que cubre (marca varias si es un examen conjunto)</div>
-      <div class="flex" style="flex-wrap:wrap;gap:10px">
-        ${p.sdas.map(s=>`<label style="font-size:12.5px;display:flex;align-items:center;gap:5px">
-          <input type="checkbox" ${(a.sdaIds||[]).includes(s.id)?"checked":""} onchange="progToggleActividadSda('${a.id}','${s.id}',this.checked)"> ${TRIMESTRES[s.trimestre].replace("ª evaluación","ª ev.")} · ${esc(s.titulo||"(sin título)")}
-        </label>`).join("")||'<span class="sub">Crea antes alguna SdA.</span>'}
-      </div>
-    </div>
+    ${progActividadSdasHTML(a,p)}
     <button class="ghost" style="border:1px solid var(--line);margin-top:8px" onclick="progToggleActividadAbierta('${a.id}')">${abierta?"Ocultar":"Elegir"} criterios de evaluación — ${nCrit} marcado${nCrit===1?"":"s"}</button>
     ${abierta?(()=>{
       const permitidas=progCEsPermitidasActividad(p,a);

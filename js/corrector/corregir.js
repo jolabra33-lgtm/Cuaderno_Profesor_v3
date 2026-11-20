@@ -210,13 +210,17 @@ function renderCxGradingAlumno(grupo,act,al){
   </div>
   <div class="card">
     <h2 style="font-size:15px">Comentario (opcional)</h2>
-    <textarea class="in" style="width:100%;min-height:70px;resize:vertical" id="cxComentario" placeholder="Comentario para este alumno/a en este examen…">${esc(grupo.examComentarios?.[al.id]?.[act.id]||"")}</textarea>
+    <div id="cxComentario">${comentEditorHTML(grupo.examComentarios?.[al.id]?.[act.id]||"",`cxComentGeneral('${al.id}','${act.id}',comentValorDe(this))`,"Comentario para este alumno/a en este examen…","cx-coment-general")}</div>
   </div>`;
-  document.getElementById("cxComentario").addEventListener("change",e=>{
-    grupo.examComentarios[al.id]=grupo.examComentarios[al.id]||{};
-    grupo.examComentarios[al.id][act.id]=e.target.value; save();
-  });
 }
+window.cxComentGeneral=(alId,actId,v)=>{
+  const grupo=grupoActual(); if(!grupo) return;
+  if(!grupo.examComentarios) grupo.examComentarios={};
+  const m=(grupo.examComentarios[alId]=grupo.examComentarios[alId]||{}), t=String(v||"").trim();
+  if((m[actId]||"")===t) return;
+  if(t) m[actId]=t; else delete m[actId];
+  save();
+};
 window.cxSetItemScore=(alId,actId,itemId,v)=>{
   const grupo=grupoActual(); const act=grupo.actividades.find(a=>a.id===actId); if(!act) return;
   const item=cxItemsFlat(cxRubricaDe(act,alId)).find(it=>it.id===itemId); if(!item) return;
@@ -283,7 +287,7 @@ function cxRubricaPrintCSS(){
     .cx-total-value small{ font-size:14px; font-weight:400; color:#8a6a2a; }
     .cx-comentario{ margin-top:8px; padding:14px 17px; background:#f6f7f9; border-left:3px solid #b3893a; border-radius:0 8px 8px 0; page-break-inside:avoid; }
     .cx-comentario h2{ font-size:12.5px; margin:0 0 6px; border:none; padding:0; color:#141b28; text-transform:none; letter-spacing:0; }
-    .cx-comentario p{ margin:0; font-size:13.5px; color:#333; }
+    .cx-comentario p, .cx-comentario .cx-comentario-txt{ margin:0; font-size:13.5px; color:#333; }
     .cx-portada-table td, .cx-portada-table th{ padding:10px 13px; }
   </style>`;
 }
@@ -323,7 +327,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
       return `<tr><td>
           ${it.unico&&!it.label?"":`<div class="cx-item-label">${esc(it.label||"(sin enunciado)")}</div>`}
           ${desc}
-          ${(grupo.examComentarios?.[al.id]?.[act.id+"|"+it.id]||"").trim()?`<div class="cx-item-desc" style="font-style:italic;white-space:pre-wrap">✎ ${esc(grupo.examComentarios[al.id][act.id+"|"+it.id])}</div>`:""}
+          ${(grupo.examComentarios?.[al.id]?.[act.id+"|"+it.id]||"").trim()?`<div class="cx-item-desc cx-coment-item" style="font-style:italic">✎ ${comentRicoHTML(grupo.examComentarios[al.id][act.id+"|"+it.id])}</div>`:""}
         </td>
         <td style="text-align:right;white-space:nowrap;vertical-align:top">
           <span class="cx-item-score">${val==null?"—":fmt(Number(val))}</span>
@@ -354,7 +358,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
       ${(x=>x?`<div><div class="cx-total-label">Puntos extra${(extraActividad(grupo,al.id,act.id).motivo||"").trim()?" · "+esc(extraActividad(grupo,al.id,act.id).motivo):""}</div><div class="cx-total-value">+${fmtPts(x)} <small>→ nota del examen</small> ${fmt(_sumarExtra(vc,x))}</div></div>`:"")(extraAplicadoActividad(grupo,al.id,act))}
       <div>${pillCuant(_sumarExtra(vc,extraAplicadoActividad(grupo,al.id,act)))}</div>
     </div>
-    ${comentario?`<div class="cx-comentario"><h2>Comentario del profesor/a</h2><p style="white-space:pre-wrap">${esc(comentario)}</p></div>`:""}
+    ${comentario?`<div class="cx-comentario"><h2>Comentario del profesor/a</h2><div class="cx-comentario-txt">${comentRicoHTML(comentario)}</div></div>`:""}
     </div>`;
 }
 window.cxImprimirRubrica=(alId,actId,resumida)=>{

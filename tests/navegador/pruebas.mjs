@@ -1170,4 +1170,60 @@ export const PRUEBAS = [
     t.ok(r3.sinAct && r3.actVuelve, 'borrar y restaurar la actividad conserva sus extras', JSON.stringify(r3));
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.slice(0, 3).join('; '));
   } },
+
+  { nombre: 'comentarios-sda-resumen', descripcion: 'Comentarios de la rúbrica con color, SdA plegable solo en exámenes y resumen del cálculo de la nota en los informes', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const ids = await cuadernoConGrupo(p, t.url);
+    await p.evaluate(ids => {
+      const g = state.grupos[0], cr = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
+      g.bloques = [{ id: 'b0', label: 'Exámenes', peso: 70 }, { id: 'b1', label: 'Actividades diarias', peso: 30 }];
+      g.actividades = [
+        { id: 'e1', nombre: 'Examen 1', tipo: TIPOS[0], trimestre: 0, bloqueId: 'b0', esExamen: true, criterios: [{ critId: cr, peso: 100 }],
+          rubrica: [{ id: 's1', title: 'A', items: [{ id: 'i1', label: 'Pregunta 1', max: 10, critId: cr }] }] },
+        { id: 'e2', nombre: 'Examen 2', tipo: TIPOS[0], trimestre: 0, bloqueId: 'b0', esExamen: true, criterios: [{ critId: cr, peso: 100 }] },
+        { id: 'a1', nombre: 'Actividad 1', tipo: TIPOS[0], trimestre: 0, bloqueId: 'b1', esExamen: false, criterios: [{ critId: cr, peso: 100 }] }];
+      g.notasCuant = { [ids[0]]: { e1: 7, e2: 9 } }; g.rubricScores = { [ids[0]]: { e1: { i1: 7 } } }; g.notas = { [ids[0]]: { a1: { [cr]: 8 } } };
+      g.examComentarios = { [ids[1]]: { 'e1|i1': 'a < b\nsegunda <img src=x onerror=top.__x()>' } };
+      state.ui.appMode = 'corrector'; state.ui.corTab = 'corregir'; state.ui.corExamId = 'e1'; state.ui.corAlId = ids[0]; save(); render();
+    }, ids);
+    await esperar(300);
+    // 1) Comentario de un ítem: parte en rojo y salto de línea
+    const ed = p.locator('.ex-coment .coment-rico-ed').first();
+    await ed.click(); await p.keyboard.type('Bien. Revisa la fecha');
+    await p.evaluate(() => { const e = document.querySelector('.ex-coment .coment-rico-ed'), n = e.firstChild, i = n.textContent.indexOf('Revisa');
+      const r = document.createRange(); r.setStart(n, i); r.setEnd(n, n.textContent.length); getSelection().removeAllRanges(); getSelection().addRange(r); });
+    await p.locator('.ex-coment').first().getByRole('button', { name: 'Letra en rojo' }).click();
+    await p.locator('.cx-coment-general .coment-rico-ed').click();
+    await p.keyboard.type('Comentario general');
+    await p.mouse.click(5, 5); await esperar(200);
+    const r1 = await p.evaluate(ids => { const g = state.grupos[0], c = g.examComentarios[ids[0]];
+      return { c, imp: cxRubricaBodyHTML(g, g.actividades[0], g.alumnos[0], {}), viejo: cxRubricaBodyHTML(g, g.actividades[0], g.alumnos[1], {}) }; }, ids);
+    t.ok(/<span style="color: ?rgb\(185, 28, 28\);?">Revisa la fecha<\/span>/.test(r1.c['e1|i1']) && /^Bien\. /.test(r1.c['e1|i1']), 'el comentario del ítem guarda el texto en rojo', JSON.stringify(r1.c));
+    t.ok(r1.c.e1 === 'Comentario general', 'el comentario general sin formato se guarda como texto, como antes', JSON.stringify(r1.c));
+    t.ok(/color: ?rgb\(185, 28, 28\)/.test(r1.imp) && /Comentario general/.test(r1.imp), 'la rúbrica impresa lleva el color');
+    t.ok(/a &lt; b<br>segunda &lt;img/.test(r1.viejo), 'un comentario antiguo de texto plano se imprime igual (con < y saltos de línea)', r1.viejo.match(/✎[^\n]*/)?.[0]);
+    // 2) Programación: la sección de SdA solo sale en los exámenes y va plegada
+    await p.evaluate(() => {
+      const pr = progNueva('Prog', 'GeH_1ESO'), s1 = progSdaDefault(0), s2 = progSdaDefault(0); s1.titulo = 'SdA Uno'; s2.titulo = 'SdA Dos'; pr.sdas = [s1, s2];
+      const a1 = progActividadDefault(); a1.nombre = 'Normal'; a1.sdaIds = [s1.id];
+      const a2 = progActividadDefault(); a2.nombre = 'Conjunto'; a2.esExamen = true; a2.sdaIds = [s1.id, s2.id];
+      pr.actividades = [a1, a2]; state.programaciones = [pr];
+    });
+    const r2 = await p.evaluate(() => { const pr = state.programaciones[0], [a1, a2] = pr.actividades;
+      const plegada = progActividadCardHTML(0, a2, pr, pr.sdas[0].id, 0, 2);
+      progToggleActividadSdas(a2.id);
+      const abierta = progActividadCardHTML(0, a2, pr, pr.sdas[0].id, 0, 2);
+      return { normal: progActividadCardHTML(0, a1, pr, pr.sdas[0].id, 0, 2), plegada, abierta }; });
+    t.ok(!/Situaciones de Aprendizaje que cubre/.test(r2.normal), 'una actividad que no es examen no muestra la sección de SdA');
+    t.ok(/Situaciones de Aprendizaje que cubre — 2 marcadas/.test(r2.plegada) && !/progToggleActividadSda\(/.test(r2.plegada), 'en un examen sale plegada, con el resumen de las SdA marcadas');
+    t.ok((r2.abierta.match(/progToggleActividadSda\(/g) || []).length === 2, 'al desplegarla se pueden marcar las SdA');
+    // 3) Resumen del cálculo en los dos informes
+    const r3 = await p.evaluate(ids => { const g = state.grupos[0], al = g.alumnos[0], txt = h => { const d = document.createElement('div'); d.innerHTML = h; d.querySelectorAll('style').forEach(s => s.remove()); return d.textContent.replace(/\s+/g, ' '); };
+      return { det: txt(informeDetalladoBodyHTML(g, al, 0)), ind: txt(informeAlumnoBodyHTML(g, al)), fin: txt(resumenCalculoNotaHTML(g, al, 'final')), n: notaTrimestre(g, al.id, 0) }; }, ids);
+    t.ok(/\(7 \+ 9\) \/ 2 = 8/.test(r3.det) && /8 × 0,7 = 5,6/.test(r3.det) && /8 × 0,3 = 2,4/.test(r3.det) && /5,6 \+ 2,4 = 8/.test(r3.det) && r3.n === 8,
+      'el informe detallado explica la cuenta: (7 + 9) / 2 = 8 × 0,7 = 5,6; 8 × 0,3 = 2,4; 5,6 + 2,4 = 8', r3.det.slice(0, 600));
+    t.ok(/De dónde sale la nota/.test(r3.ind) && /5,6 \+ 2,4 = 8/.test(r3.ind), 'el informe individual lleva el mismo resumen');
+    t.ok(/Nota final/.test(r3.fin) && /Sin nota todavía: 2ª evaluación, 3ª evaluación/.test(r3.fin), 'el resumen de la nota final reparte entre las evaluaciones con nota', r3.fin);
+    t.ok(!p.errores.length && !(await p.evaluate(() => window.__x)), 'sin errores de JavaScript ni código colado', p.errores.slice(0, 3).join('; '));
+  } },
 ];
