@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { createRequire } from 'node:module';
-import { servir, nuevaPagina, esperar, cuadernoConGrupo, tutoriaConAlumnos, llenarLocalStorage, vaciarRelleno } from './utilidades.mjs';
+import { servir, nuevaPagina, esperar, elegir, cuadernoConGrupo, tutoriaConAlumnos, llenarLocalStorage, vaciarRelleno } from './utilidades.mjs';
 import { rastrearTutoria } from './texto-hostil.mjs';
 import { calcularHuella, selloActual, listaCache } from '../version/huella.mjs';
 
@@ -886,27 +886,34 @@ export const PRUEBAS = [
     await esperar(300);
     const sel = p.locator('select[aria-label^="Puntuación"]');
     t.ok(await sel.count() === 2, 'hay un desplegable por ítem', String(await sel.count()));
-    const ops = await sel.first().evaluate(s => [...s.options].map(o => o.textContent));
+    // La lista completa se crea al ir a usarlo (rapidez): antes solo están «—», «NP» y el valor guardado.
+    t.ok(await sel.first().evaluate(s => s.options.length) === 2 && await sel.nth(1).evaluate(s => s.options.length) === 3, 'antes de usarlo, el desplegable solo lleva —, NP y lo guardado');
+    const llenoCon = async (i, como) => { await p.evaluate(() => render()); const s = p.locator('select[aria-label^="Puntuación"]').nth(i); await como(s); return s.evaluate(s => s.options.length); };
+    t.ok(await llenoCon(0, s => s.dispatchEvent('pointerdown')) === 43 && await llenoCon(0, s => s.dispatchEvent('touchstart')) === 43 && await llenoCon(0, s => s.focus()) === 43,
+      'se rellena al pulsarlo con el ratón o el dedo y al llegar con el teclado');
+    { const n = await llenoCon(1, s => s.focus()), v = await sel.nth(1).inputValue(); t.ok(n === 14 && v === '0.33', 'al rellenarse (de 0 a 0,5) conserva lo elegido, aunque no caiga en la rejilla', n + ' ' + v); }
+    await p.evaluate(() => render());
+    const ops = await sel.first().evaluate(s => { s.dispatchEvent(new Event('focusin', { bubbles: true })); return [...s.options].map(o => o.textContent); });
     t.ok(ops.length === 43 && ops[0] === '—' && ops[1] === 'NP' && ops[2] === '0' && ops[3] === '0,05' && ops[4] === '0,1' && ops[42] === '2', 'va de 0 a 2 de 0,05 en 0,05 y tiene NP', ops.join(' '));
     t.ok(await sel.nth(1).inputValue() === '0.33', 'conserva una nota guardada que no cae en la rejilla (0,33)');
-    await sel.first().selectOption('1.75'); await esperar(200);
+    await elegir(sel.first(), '1.75'); await esperar(200);
     t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.rubricScores[g.alumnos[0].id].e1.i1; }) === 1.75, 'guarda la puntuación elegida (1,75)');
     t.ok(await p.locator('select[aria-label^="Puntuación"]').first().inputValue() === '1.75', 'el desplegable muestra lo elegido tras redibujar');
-    await p.locator('select[aria-label^="Puntuación"]').first().selectOption('NP'); await esperar(200);
+    await elegir(p.locator('select[aria-label^="Puntuación"]').first(), 'NP'); await esperar(200);
     t.ok(await p.evaluate(() => { const g = state.grupos[0], A = g.alumnos[0].id; return g.marcas[A].e1 === 'NP' && g.notasCuant[A].e1 === 0; }), '«NP» marca No presentado y la nota del examen es 0');
     t.ok(await p.locator('select[aria-label^="Puntuación"]').first().inputValue() === 'NP', 'con NP marcado el desplegable muestra NP');
-    await p.locator('select[aria-label^="Puntuación"]').first().selectOption('1.5'); await esperar(200);
+    await elegir(p.locator('select[aria-label^="Puntuación"]').first(), '1.5'); await esperar(200);
     t.ok(await p.evaluate(() => { const g = state.grupos[0], A = g.alumnos[0].id; return !(g.marcas[A] || {}).e1 && g.rubricScores[A].e1.i1 === 1.5; }), 'elegir una puntuación quita la marca NP');
     await p.evaluate(() => { state.ui.corAlId = ''; state.ui.corModoPreg = true; state.ui.corPregSel = 'i1'; save(); render(); });
     await esperar(300);
     const filas = p.locator('select.ex-preg-in');
     t.ok(await filas.count() === 3, 'por pregunta: un desplegable por alumno/a');
-    await filas.nth(1).selectOption('0.45'); await esperar(200);
+    await elegir(filas.nth(1), '0.45'); await esperar(200);
     t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.rubricScores[g.alumnos[1].id].e1.i1; }) === 0.45, 'por pregunta: guarda la puntuación');
-    await p.locator('select.ex-preg-in').nth(2).selectOption('NP'); await esperar(200);
+    await elegir(p.locator('select.ex-preg-in').nth(2), 'NP'); await esperar(200);
     t.ok(await p.evaluate(() => { const g = state.grupos[0], C = g.alumnos[2].id; return g.marcas[C].e1 === 'NP' && g.notasCuant[C].e1 === 0; }), 'por pregunta: NP marca No presentado (nota 0)');
     t.ok(await p.locator('select.ex-preg-in').nth(2).inputValue() === 'NP', 'por pregunta: la fila muestra NP');
-    await filas.nth(1).selectOption(''); await esperar(200);
+    await elegir(filas.nth(1), ''); await esperar(200);
     t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.rubricScores[g.alumnos[1].id].e1.i1; }) === undefined, '«—» deja el ítem sin puntuar');
   } },
 
@@ -970,7 +977,7 @@ export const PRUEBAS = [
     t.ok(r.c[cr[0]] === 7.5 && r.c[cr[1]] === 10, 'la nota de cada criterio sale de su categoría', JSON.stringify(r.c));
     t.ok(await p.locator('table.cxn-corr td.cxn-op.on').count() === 2 && await p.locator('table.cxn-corr td.cxn-op.on button[aria-pressed="true"]').count() === 2, 'las casillas elegidas se marcan (también para lectores de pantalla)');
     // Afinar con el desplegable.
-    await p.locator('table.cxn-corr tbody tr').first().locator('select').selectOption('3.4'); await esperar(200);
+    await elegir(p.locator('table.cxn-corr tbody tr').first().locator('select'), '3.4'); await esperar(200);
     r = await nota();
     t.ok(r.sc[ids.c1] === 3.4 && r.n === 8.4, 'afinar: 3,4 puntos', JSON.stringify(r));
     t.ok((await p.locator('.cxn-entre').first().textContent()).includes('entre Avanzado y Aprendiz') && await p.locator('td.cxn-op.parcial').count() === 2, 'una nota afinada se ve «entre» dos niveles');

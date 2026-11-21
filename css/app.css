@@ -336,6 +336,11 @@
     .modal-box{max-width:calc(100vw - 20px)!important;width:auto}
     .hero{padding:18px!important}
   }
+  /* iPad en vertical: las pestañas de grupo, en una sola línea (sin la materia debajo, como en el teléfono). */
+  @media (min-width:641px) and (max-width:900px){
+    #groupTabs .gpill .mat{display:none}
+    #groupTabs .gpill{padding-top:3px;padding-bottom:3px}
+  }
   .act-row.act-drop{box-shadow:0 0 0 2px var(--accent-2)} .act-row.act-arrastrando{opacity:.45}
   .alert-box{background:var(--warning-soft);border:1px solid var(--warning);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--warning-ink);display:block;line-height:1.5}
   @media(max-width:560px){ h1{font-size:17px} main{padding:14px} .hero-title{font-size:27px} .hero{padding:22px 20px 18px} }
@@ -621,3 +626,12 @@
   .cxn-mini{display:inline-flex;flex-wrap:wrap;gap:4px;vertical-align:middle;margin-right:4px}
   .cxn-mini-btn{font:inherit;font-size:12.5px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);border-left:4px solid var(--cxn);background:var(--surface);color:var(--ink);cursor:pointer}
   .cxn-mini-btn.on{background:var(--cxn);color:var(--cxn-tinta);border-color:var(--cxn-tinta);font-weight:700}
+  /* Pantallas táctiles (iPad, móvil): tamaños mínimos para el dedo. Van al final a propósito: el bloque
+     «@media (pointer:coarse)» del principio ya los pedía, pero las reglas generales de .gpillx y de las casillas,
+     escritas más abajo, los anulaban (la × de cada grupo se quedaba en 22 px y las casillas en 18 px). */
+  @media (pointer:coarse){
+    .gpillx{width:34px;height:34px;font-size:18px}
+    input[type=checkbox]{width:22px;height:22px}
+  }
+  /* Una casilla junto a un texto largo (p. ej. los criterios de una actividad) no se encoge. */
+  input[type=checkbox]{flex-shrink:0}

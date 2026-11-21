@@ -141,18 +141,16 @@ window.aplicarArreglosDiagnostico=async()=>{
 };
 
 /* v3 · Tarjeta de novedades: se ve una vez tras actualizar, y se cierra. */
-const NOVEDADES_VERSION="v3-5";
+const NOVEDADES_VERSION="v3-6";
 window.cerrarNovedades=()=>{ state.novedadesVistas=NOVEDADES_VERSION; save(); render(); };
 const NOVEDADES_V3=[
-  ["🔀 Modelo B de verdad","sigue siempre al examen general, repartes quién hace A o B en Corregir (también según el plano de aula) y la rúbrica sale en el orden de cada modelo."],
-  ["🧩 Exámenes adaptados más fáciles","«+ Examen adaptado (NESE)» en el Diseño, aviso si un alumno NESE haría el examen general, y la versión adaptada se guarda en la Programación para los demás grupos."],
-  ["🎓 Empezar curso nuevo","aquí arriba: archiva el curso que termina y deja grupos, programaciones y horario listos para el siguiente."],
-  ["🙈 Modo proyector","el botón 👁️ de la cabecera difumina los nombres del alumnado y las notas mientras proyectas."],
-  ["🔒 Bloqueo con PIN","en 🛟 Copias: la app pide un PIN al abrirla y tras unos minutos sin usarla (también Tutoría)."],
-  ["🎲 Sorteo y grupos","en el botón del cronómetro: elegir a alguien al azar y repartir la clase en equipos."],
-  ["☁️ Copias cifradas","la copia automática en carpeta se puede cifrar con contraseña (🛟 Copias → «Cifrar las copias»)."],
-  ["💾 Más sitio y más seguro","los datos ya no dependen del límite de 5 MB del navegador; las fotos de Tutoría tampoco."],
-  ["📱 Más cómodo","en el móvil la cabecera ocupa la mitad; en el ordenador, las secciones del grupo están a la vista."]
+  ["▦ Rúbrica por niveles de logro","en el Corrector, una tabla de categorías × niveles (Experto, Avanzado…) que se corrige pinchando casillas; ideal para exposiciones y trabajos."],
+  ["🔀 Modelos A, B y C","el mismo examen con las preguntas en otro orden; repartes quién hace cada uno en Corregir (por lista o según el plano)."],
+  ["📅 Examen «otro día»","para quien faltó al examen: otras preguntas, con su fecha y su propia rúbrica, dentro del mismo examen."],
+  ["➕ Puntos extra","en Calificar, el Corrector y Resultados: suman a la nota sin tocar lo corregido y se ven en los informes."],
+  ["🎨 Comentarios con color","el comentario de cada pregunta y el general del examen admiten negrita y letra en color."],
+  ["🧮 De dónde sale la nota","los informes de Resultados empiezan con una tabla que explica cómo se calcula la nota."],
+  ["⚡ Más ágil en el iPad","corregir con rúbrica responde antes, y en pantallas táctiles las casillas y botones pequeños son más fáciles de tocar."]
 ];
 function novedadesHTML(){
   if(state.novedadesVistas===NOVEDADES_VERSION) return "";
