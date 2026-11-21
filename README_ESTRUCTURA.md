@@ -300,4 +300,5 @@ Las tres usan los cálculos de siempre (`notaTrimestre`, `notaActa`, `scoreCrite
 - Botones: «📱 Para la familia» en la ventana del ojo (`pfDescargarAlumno(alId,periodo)`) y «📱 Informes para las familias» en Resultados (`pfDescargarGrupo`, periodo de «Informes de»), que guarda un `.zip` sin compresión hecho a mano (`pfZip`, CRC-32, nombres UTF-8). Nombres de archivo sin tildes (`pfSinTildes`).
 - **Comentario final de curso**: `alumno.comentarioFinal` (en `normalizarAlumno`; «Empezar curso nuevo» lo vacía), editable en el informe de cada alumno de Resultados; sale en el informe final y en el panel final.
 - La tabla «De dónde sale la nota» (`rsnCSS`) se compacta por debajo de 600 px (también en la app).
-- Prueba: `panel-familias`.
+- **Todas las actividades** con las que se ha evaluado cada competencia y criterio: la pestaña Competencias las lista («Evaluado con: …») y el informe oficial del panel se genera con `{actsCompletas:true}`, sin el «+N más» de `abrevActs`. Los informes PDF de siempre siguen abreviando a 4.
+- Pruebas: `panel-familias` y `panel-familias-actividades`.

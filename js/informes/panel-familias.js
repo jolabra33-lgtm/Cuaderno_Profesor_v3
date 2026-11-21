@@ -113,14 +113,20 @@ function pfCompetenciasHTML(grupo,al,periodo){
                          : conTrim(Number(periodo),()=>scoreCriterio(grupo,al.id,cid));
   const valCE=id=> fin? scoreCEAnual(grupo,al.id,id) : conTrim(Number(periodo),()=>scoreCE(grupo,al.id,id));
   const valCC=cc=> fin? scoreCCAnual(grupo,al.id,cc) : conTrim(Number(periodo),()=>scoreCC(grupo,al.id,cc));
+  // Con qué actividades y exámenes se ha evaluado (todas: las familias deben poder ver el detalle).
+  const unir=f=>{ const s=new Set(); (fin?[0,1,2]:[Number(periodo)]).forEach(t=>conTrim(t,f).forEach(n=>s.add(n))); return [...s]; };
+  const actsCrit=cid=>unir(()=>actividadesDeCriterio(grupo,al.id,cid));
+  const actsCE=id=>unir(()=>actividadesDeCE(grupo,al.id,id));
+  const actsCC=cc=>unir(()=>actividadesDeCC(grupo,al.id,cc));
+  const conQue=l=>l.length? `<div class="pf-con">Evaluado con: ${l.map(esc).join(" · ")}</div>` : "";
   const ces=idx.cat.ces.map(ce=>({ce,p:valCE(ce.id),crits:ce.criterios.map(c=>({c,p:valCrit(c.id)})).filter(x=>x.p!=null)})).filter(x=>x.p!=null||x.crits.length);
   const ccs=Object.keys(COMP_CLAVE).filter(cc=>idx.cat.ces.some(ce=>ce.cc.includes(cc))).map(cc=>({cc,p:valCC(cc)})).filter(x=>x.p!=null);
   if(!ces.length&&!ccs.length) return `<div class="pf-tarjeta pf-vacio">Todavía no hay competencias evaluadas en este periodo.</div>`;
   return `<div class="pf-tarjeta"><p class="pf-explica">La evaluación por competencias dice <b>qué ha aprendido</b>, no solo qué nota ha sacado. Cada criterio sale de las actividades y pruebas en las que se ha trabajado: <b>Excelente</b> (${u.excelente} % o más), <b>Adecuado</b> (${u.adecuado} %), <b>En proceso</b> (${u.enProceso} %) y <b>Necesita mejorar</b> (menos del ${u.enProceso} %).</p></div>
-    ${ccs.length?`<h3 class="pf-eval">Competencias clave</h3><div class="pf-tarjeta pf-lista">${ccs.map(x=>`<div class="pf-item"><div class="pf-fila"><span class="pf-nom">${esc(COMP_CLAVE[x.cc])}<small>${esc(x.cc)}</small></span>${pfNivelChip(grupo,x.p)}</div></div>`).join("")}</div>`:""}
+    ${ccs.length?`<h3 class="pf-eval">Competencias clave</h3><div class="pf-tarjeta pf-lista">${ccs.map(x=>`<div class="pf-item"><div class="pf-fila"><span class="pf-nom">${esc(COMP_CLAVE[x.cc])}<small>${esc(x.cc)}</small></span>${pfNivelChip(grupo,x.p)}</div>${conQue(actsCC(x.cc))}</div>`).join("")}</div>`:""}
     <h3 class="pf-eval">Competencias específicas y criterios</h3>
-    ${ces.map(x=>`<div class="pf-tarjeta pf-lista"><div class="pf-item"><div class="pf-fila"><span class="pf-nom"><b>${esc(x.ce.id)}</b> ${esc(x.ce.titulo||"")}</span>${x.p!=null?pfNivelChip(grupo,x.p):""}</div></div>
-      ${x.crits.map(c=>`<div class="pf-item pf-crit"><div class="pf-fila"><span class="pf-nom"><b>${esc(c.c.id)}</b> ${esc(c.c.texto||"")}</span>${pfNivelChip(grupo,c.p)}</div></div>`).join("")}</div>`).join("")}`;
+    ${ces.map(x=>`<div class="pf-tarjeta pf-lista"><div class="pf-item"><div class="pf-fila"><span class="pf-nom"><b>${esc(x.ce.id)}</b> ${esc(x.ce.titulo||"")}</span>${x.p!=null?pfNivelChip(grupo,x.p):""}</div>${conQue(actsCE(x.ce.id))}</div>
+      ${x.crits.map(c=>`<div class="pf-item pf-crit"><div class="pf-fila"><span class="pf-nom"><b>${esc(c.c.id)}</b> ${esc(c.c.texto||"")}</span>${pfNivelChip(grupo,c.p)}</div>${conQue(actsCrit(c.c.id))}</div>`).join("")}</div>`).join("")}`;
 }
 function pfAsistenciaHTML(grupo,al,periodo){
   const r=pfRango(grupo,periodo), c=asistContarPeriodo(grupo,al.id,r.desde,r.hasta);
@@ -147,7 +153,8 @@ function pfConvivenciaHTML(grupo,al,periodo){
     </div>`).join("")}</div>`;
 }
 function pfInformeHTML(grupo,al,periodo){
-  const cuerpo=pfEsFinal(periodo)? informeFinalAlumnoBodyHTML(grupo,al) : conTrim(Number(periodo),()=>informeAlumnoBodyHTML(grupo,al));
+  // actsCompletas: en las competencias, todas las actividades y exámenes con los que se ha evaluado (sin «+N más»).
+  const cuerpo=pfEsFinal(periodo)? informeFinalAlumnoBodyHTML(grupo,al,{actsCompletas:true}) : conTrim(Number(periodo),()=>informeAlumnoBodyHTML(grupo,al,{actsCompletas:true}));
   return `<p class="pf-nota-pie pf-solo-pantalla">Para guardarlo en PDF o imprimirlo: menú del navegador → <b>Imprimir</b> (o Compartir → Imprimir). Solo se imprime este informe.</p>
     <div class="pf-informe">${cuerpo}</div>`;
 }
@@ -192,6 +199,7 @@ function pfCSS(n){
   .pf-val{flex-shrink:0;font-weight:800;font-size:14px;padding:3px 10px;border-radius:999px}
   .pf-bien{background:#dcece0;color:#1e5631} .pf-medio{background:#f6eccf;color:#8a5a12} .pf-mal{background:#f3dcdc;color:#912525} .pf-azul{background:#d9e6f2;color:#1d4e74}
   .pf-crit .pf-nom{font-size:13px;color:#33405a}
+  .pf-con{margin-top:5px;font-size:12px;color:#5b6b82}
   .pf-sub{font-size:12.5px;color:#5b6b82;margin-top:4px}
   .pf-sda{margin:10px 0 0;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11.5px}
   .pf-eval{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#7d5a12;margin:16px 0 8px}

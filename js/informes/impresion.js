@@ -199,10 +199,10 @@ function informeAlumnoBodyHTML(grupo,al,opts){
     ${htmlActsPDF}
     <h2>Competencias clave trabajadas</h2>
     ${ccT.length?`<table><thead><tr><th>Competencia clave</th><th>Adquisición</th><th>Actividades y exámenes utilizados</th></tr></thead><tbody>
-      ${ccT.map(x=>`<tr><td>${x.cc} · ${COMP_CLAVE[x.cc]}</td><td>${pillPlain(grupo,x.p)}</td><td style="font-size:12px;color:#555">${esc(abrevActs(actividadesDeCC(grupo,al.id,x.cc),4))}</td></tr>`).join("")}</tbody></table>`:"<p>Sin datos en este periodo.</p>"}
+      ${ccT.map(x=>`<tr><td>${x.cc} · ${COMP_CLAVE[x.cc]}</td><td>${pillPlain(grupo,x.p)}</td><td style="font-size:12px;color:#555">${esc(abrevActs(actividadesDeCC(grupo,al.id,x.cc),opts.actsCompletas?Infinity:4))}</td></tr>`).join("")}</tbody></table>`:"<p>Sin datos en este periodo.</p>"}
     <h2>Competencias específicas trabajadas</h2>
     ${ceT.length?`<table><thead><tr><th>Competencia específica</th><th>Adquisición</th><th>Actividades y exámenes utilizados</th></tr></thead><tbody>
-      ${ceT.map(x=>`<tr><td>${x.ce.id} · ${esc(x.ce.titulo)}</td><td>${pillPlain(grupo,x.p)}</td><td style="font-size:12px;color:#555">${esc(abrevActs(actividadesDeCE(grupo,al.id,x.ce.id),4))}</td></tr>`).join("")}</tbody></table>`:"<p>Sin datos en este periodo.</p>"}
+      ${ceT.map(x=>`<tr><td>${x.ce.id} · ${esc(x.ce.titulo)}</td><td>${pillPlain(grupo,x.p)}</td><td style="font-size:12px;color:#555">${esc(abrevActs(actividadesDeCE(grupo,al.id,x.ce.id),opts.actsCompletas?Infinity:4))}</td></tr>`).join("")}</tbody></table>`:"<p>Sin datos en este periodo.</p>"}
     </div>
   `;
 }
