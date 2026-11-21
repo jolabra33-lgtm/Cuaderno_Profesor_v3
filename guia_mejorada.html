@@ -154,7 +154,7 @@
   <div class="card"><h4>✏️ Pestaña Diseño</h4><p>Editor de exámenes con vista de página real (A4), apartados, preguntas, subpreguntas, tablas, imágenes, líneas de respuesta… Se guarda solo. <a href="#cx-diseno">Ver 6.3</a></p></div>
   <div class="card"><h4>📋 Del examen a la rúbrica</h4><p>«Importar a la rúbrica →» copia apartados, preguntas y subpreguntas, con sus puntos y los criterios que marques en cada pregunta. Si retocas el examen, reimportas sin perder notas. <a href="#cx-importar">Ver 6.4</a></p></div>
   <div class="card"><h4>📊 Cobertura de criterios</h4><p>Qué criterios evalúa el examen y con qué peso; avisa de preguntas sin criterio, de puntos que no suman 10 y de apartados que no cuadran.</p></div>
-  <div class="card"><h4>🧩 NESE y 🔀 Versión B</h4><p>Un examen adaptado para cada rúbrica adaptada, y una versión B con las preguntas barajadas que comparte rúbrica. <a href="#cx-nese">Ver 6.6</a></p></div>
+  <div class="card"><h4>🧩 Exámenes alternativos y 🔀 modelos A, B y C</h4><p>Un examen alternativo (para quien faltó o adaptado NESE) con su propia rúbrica, y hasta tres modelos con las preguntas en otro orden que comparten rúbrica. <a href="#cx-nese">Ver 6.6</a></p></div>
   <div class="card"><h4>↕ Corregir por pregunta</h4><p>Una misma pregunta para todo el grupo seguida, con <span class="kbd">Intro</span> para bajar. Cada ítem muestra su enunciado y admite un comentario para el alumno/a. <a href="#cx-corregir">Ver 6.7</a></p></div>
   <div class="card"><h4>📈 Análisis</h4><p>Porcentaje de acierto por pregunta y por criterio, y las preguntas por debajo del 50 %. <a href="#cx-analisis">Ver 6.8</a></p></div>
   <div class="card"><h4>📦 Paquetes de examen</h4><p>Examen + rúbrica + adaptaciones en un archivo, para otro grupo, otro curso o un compañero. Sin alumnado ni notas. <a href="#cx-reutilizar">Ver 6.10</a></p></div>
@@ -396,19 +396,22 @@
   <li><strong>Desde el Corrector</strong>: <span class="kbd">Nuevo examen</span> → nombre, bloque de calificación, Situación de Aprendizaje (opcional), fecha (opcional: crea su evento en el calendario), criterios previstos y, si quieres, «Empezar la rúbrica desde» una plantilla guardada.</li>
   <li><strong>Desde un paquete</strong>: en <span class="kbd">Nuevo examen</span>, <span class="kbd">📥 Importar paquete</span> (<a href="#cx-reutilizar">6.10</a>).</li>
 </ul>
-<p>En la lista de <strong>Exámenes</strong>, cada examen tiene botones directos: <span class="kbd">✏️ Diseño</span>, <span class="kbd">Rúbrica</span>, <span class="kbd">Corregir</span> y <span class="kbd">⬇ CSV</span>.</p>
+<p>En la lista de <strong>Exámenes</strong>, cada examen tiene botones directos: <span class="kbd">✏️ Diseño</span>, <span class="kbd">Rúbrica</span>, <span class="kbd">Corregir</span> y <span class="kbd">⬇ CSV</span>. Para <strong>cambiarle el nombre</strong>, pulsa sobre el nombre en su tarjeta de la lista y escríbelo de nuevo.</p>
+<p>Si creaste el examen a mano y el grupo tiene Programación, <span class="kbd">🔗 Vincular a una actividad de la Programación…</span> lo asocia a la actividad de examen correspondiente sin crear otro examen (y <span class="kbd">Desvincular</span> lo deshace).</p>
 
 <h3 id="cx-diseno">6.3 Diseñar el examen (pestaña Diseño)</h3>
 <p>La pestaña Diseño tiene una barra de herramientas del Cuaderno y, debajo, el editor de exámenes.</p>
 <table>
   <tr><th>Botón (barra del Cuaderno)</th><th>Para qué sirve</th></tr>
-  <tr><td><strong>Examen general · Versión B · adaptadas</strong></td><td>Qué versión del examen estás editando (<a href="#cx-nese">6.6</a>).</td></tr>
+  <tr><td><strong>Examen general · Modelo B · Modelo C · alternativos</strong></td><td>Qué versión del examen estás editando: el general (modelo A), sus modelos y sus exámenes alternativos (<a href="#cx-nese">6.6</a>).</td></tr>
+  <tr><td><strong>+ Modelo B / + Modelo C</strong></td><td>Crea otro modelo con las mismas preguntas en otro orden (como máximo tres). <strong>Quitar modelo</strong> lo elimina y su alumnado pasa al A.</td></tr>
+  <tr><td><strong>+ Examen alternativo</strong></td><td>Otro examen, con su rúbrica, para quien faltó («📅 Otro día») o para el alumnado NESE («🧩 Adaptado»).</td></tr>
   <tr><td><strong>Importar a la rúbrica →</strong></td><td>Crea o actualiza la rúbrica a partir del examen (<a href="#cx-importar">6.4</a>).</td></tr>
   <tr><td><strong>💾 Plantilla de la Programación</strong></td><td>Guarda este diseño en la actividad de la Programación, para que los demás grupos vinculados lo encuentren ya hecho. Solo para exámenes abiertos desde la Programación.</td></tr>
-  <tr><td><strong>🔀 Mezclar de nuevo</strong></td><td>Solo en Versión B: vuelve a barajar las preguntas.</td></tr>
+  <tr><td><strong>🔀 Mezclar de nuevo</strong></td><td>Solo en los modelos B y C: vuelve a barajar las preguntas.</td></tr>
   <tr><td><strong>📊 Cobertura</strong></td><td>Qué criterios evalúa el examen, cuántos puntos y qué porcentaje pesa cada uno; avisos si algo no cuadra.</td></tr>
   <tr><td><strong>⛶ Pantalla completa</strong></td><td>El editor ocupa toda la pantalla (muy útil en el iPad). Para volver, <span class="kbd">✕ Salir de pantalla completa</span>, abajo a la izquierda.</td></tr>
-  <tr><td><strong>📦 Exportar paquete</strong></td><td>Descarga examen, rúbrica, adaptaciones y versión B en un archivo (<a href="#cx-reutilizar">6.10</a>).</td></tr>
+  <tr><td><strong>📦 Exportar paquete</strong></td><td>Descarga examen, rúbrica, exámenes alternativos y modelos en un archivo, sin alumnado ni notas (<a href="#cx-reutilizar">6.10</a>).</td></tr>
 </table>
 <p>Junto a los botones verás <em>«Guardado · 10:42»</em>: el diseño se guarda solo mientras escribes. No hay que pulsar nada.</p>
 
@@ -455,7 +458,7 @@
   <div class="step"><b>1.</b> Organiza el examen en <em>apartados</em> y, dentro, sus <em>ítems</em> de corrección (si vienen del Diseño, los bloques se llaman Apartado, Pregunta o Subpregunta, igual que en el examen). Si el examen no tiene apartados, la rúbrica muestra solo las preguntas; <span class="kbd">Usar apartado</span> los activa (y permite «elegir X de Y», p. ej. «contesta 2 de 3») y <span class="kbd">Sin apartado</span> los quita.</div>
   <div class="step"><b>2.</b> Cada ítem tiene su <strong>puntuación máxima</strong>. Lo normal es que sumen <strong>10</strong>; si no (p. ej. 20 puntos), marca «Convertir la puntuación a nota sobre 10». Nunca sale una nota por encima de 10.</div>
   <div class="step"><b>3.</b> <span class="kbd">Vincular criterios</span> en cada ítem: ninguno (p. ej. presentación y ortografía), uno o varios con distinto peso. Si el examen tiene criterios previstos, la app avisa de los que se quedan sin vincular.</div>
-  <div class="step"><b>4.</b> (Opcional) <em>Descriptores</em>: qué esperas encontrar para dar la puntuación completa. Los verás al corregir.</div>
+  <div class="step"><b>4.</b> (Opcional) <em>Descriptores</em>: qué esperas encontrar para dar la puntuación completa, una línea por cada uno. Los botones de debajo ponen <span class="kbd">• Viñeta</span>, <span class="kbd">◦ Subviñeta</span> (o Tab al principio de la línea) y <span class="kbd">Sin viñeta</span>, y <strong>negrita</strong>, <em>cursiva</em> y <u>subrayado</u>. Los verás al corregir y salen así en la rúbrica impresa.</div>
 </div>
 <div class="tip"><strong>💾 Guardar como plantilla</strong> guarda la rúbrica (ítems, puntos y descriptores) para empezar otro examen desde ella («Nuevo examen» → «Empezar la rúbrica desde»). Los criterios solo se copian si existen en el catálogo del grupo donde la apliques.</div>
 <div class="tip">Puedes <strong>editar la rúbrica después de haber corregido</strong>: las notas se recalculan solas, y si bajas el máximo de un ítem por debajo de puntuaciones ya puestas, se ajustan al nuevo máximo.</div>
@@ -498,7 +501,7 @@
   <div class="step"><b>3.</b> <strong>↕ Por pregunta</strong> (opcional): eliges una pregunta y la puntúas para todo el grupo seguido; <span class="kbd">Intro</span> salta al siguiente alumno/a. Si alguien tiene rúbrica adaptada sin esa pregunta, se indica. <span class="kbd">← Corregir por alumno/a</span> vuelve al modo normal.</div>
   <div class="step"><b>4.</b> <span class="kbd">NP</span> (no presentado: cuenta 0) y <span class="kbd">Exento</span> (no le cuenta) en cada alumno/a.</div>
   <div class="step"><b>5.</b> Todo se guarda solo, al instante. Puedes corregir a medias y seguir otro día.</div>
-  <div class="step"><b>6.</b> <span class="kbd">🖨️ Imprimir rúbrica</span> (de un alumno/a) o <span class="kbd">🖨️ Imprimir rúbricas</span> (de todos) para devolverlas con comentarios; <span class="kbd">⬇ CSV</span> exporta las notas del examen.</div>
+  <div class="step"><b>6.</b> <span class="kbd">🖨️ Imprimir rúbrica</span> (de un alumno/a) o <span class="kbd">🖨️ Imprimir rúbricas</span> (de todos) para devolverlas con comentarios. <span class="kbd">📄 Rúbrica resumida</span> (y <span class="kbd">📄 Rúbricas resumidas</span>) imprime solo las puntuaciones y los comentarios, sin el detalle de lo que había que contestar: gasta menos papel. <span class="kbd">⬇ CSV</span> exporta las notas del examen.</div>
 </div>
 <div class="tip">Cada ítem tiene un <strong>desplegable</strong> que va de 0 al máximo de 0,05 en 0,05, para corregir solo con el ratón o el dedo. <code>—</code> deja el ítem sin puntuar y <code>NP</code> marca todo el examen como no presentado (cuenta 0). Con el teclado, las flechas cambian la puntuación y, en «Por pregunta», <span class="kbd">Intro</span> pasa al siguiente alumno/a. Una nota antigua que no caiga en la rejilla (por ejemplo, 0,33) se conserva tal cual.</div>
 
@@ -516,7 +519,7 @@
 <table>
   <tr><th>Quiero…</th><th>Usa</th></tr>
   <tr><td>Que el mismo examen esté en mis otros grupos del mismo nivel (con la misma Programación)</td><td><span class="kbd">💾 Plantilla de la Programación</span> en el examen general. Cuando abras ese examen en otro grupo vinculado, su Diseño arrancará con este.</td></tr>
-  <tr><td>Llevarlo a otro grupo, a otro curso escolar o dárselo a un compañero</td><td><span class="kbd">📦 Exportar paquete</span> → en el destino, «Nuevo examen» → <span class="kbd">📥 Importar paquete</span>. Lleva examen, rúbrica, adaptaciones NESE y versión B; nunca alumnado ni notas. Hay que volver a asignar el alumnado NESE a las rúbricas adaptadas.</td></tr>
+  <tr><td>Llevarlo a otro grupo, a otro curso escolar o dárselo a un compañero</td><td><span class="kbd">📦 Exportar paquete</span> → en el destino, «Nuevo examen» → <span class="kbd">📥 Importar paquete</span>. Lleva examen, rúbrica, exámenes alternativos y modelos; nunca alumnado ni notas. Hay que volver a asignar el alumnado NESE a las rúbricas adaptadas.</td></tr>
   <tr><td>Reutilizar solo la rúbrica</td><td><span class="kbd">💾 Guardar como plantilla</span> en la pestaña Rúbrica (<a href="#cx-rubrica">6.5</a>).</td></tr>
 </table>
 <div class="warn"><strong>Paquete de otro curso.</strong> Los criterios se enlazan por su número (1.1, 2.3…). Si importas un paquete de, por ejemplo, 2.º ESO en un grupo de 3.º, la app te pregunta: <em>Conservar vínculos</em> (solo si los criterios coinciden en ambos cursos, como suele pasar entre 3.º y 4.º ESO) o <em>Quitar vínculos</em> (y los marcas de nuevo).</div>
@@ -539,7 +542,8 @@
   <li><strong>Lista de alumnado.</strong> En cada grupo de Tutoría, el botón <strong>📥 Del Cuaderno</strong> copia los nombres y fechas de nacimiento de un grupo de tu Cuaderno (sin notas). No duplica a quien ya está y se deshace con Ctrl+Z. Solo funciona en el mismo dispositivo y navegador donde tienes el Cuaderno.</li>
 </ul>
 <div class="tip">Los suspensos se emparejan por nombre («Apellidos, Nombre»). Si el tutor/a crea la lista con <strong>📥 Del Cuaderno</strong>, los nombres coinciden exactamente y no queda nadie «sin encontrar».</div>
-<div class="tip">Para que sus gráficos y la vista previa de PDF funcionen sin conexión, sigue una única vez las instrucciones de <code>tutoria/vendor/LEEME.txt</code> (descargar 3 archivos). Sin ese paso, todo lo demás funciona igual.</div>
+<div class="tip">Sus gráficos y la vista previa de PDF funcionan también sin conexión: las librerías ya vienen incluidas en la app.</div>
+<p>En su menú del curso, <strong>📧 Exportar para el Claustro</strong> guarda una <em>versión fosilizada</em> del curso: un único archivo .html con todos los datos, los estilos y los gráficos, que se abre en cualquier ordenador sin instalar nada ni tener conexión. Útil para enviarlo por correo o archivarlo al acabar el curso.</p>
 <p>Su sección <strong>📅 Calendario</strong> tiene dos cosas a la vez:</p>
 <ul>
   <li><strong>Las sesiones de evaluación</strong> de cada nivel (su función principal), que se configuran en la pestaña "⚙ Configurar" y se pintan como <strong>círculos</strong> de color.</li>
@@ -699,7 +703,7 @@
 <h2 id="copias">18. Copias de seguridad (imprescindible)</h2>
 <p>Los datos viven en el almacenamiento del navegador del dispositivo. Eso significa que <strong>borrar los datos de navegación puede borrar tus notas</strong>. La defensa es sencilla:</p>
 <ul>
-  <li>Pulsa <strong>Exportar copia</strong> (barra superior, disponible en cualquier pantalla incluida Inicio) con regularidad. Descarga un archivo <code>.json</code> con absolutamente todo: grupos, alumnado, actividades, rúbricas, notas, comentarios, planes, calendario, tu horario semanal y los <strong>exámenes diseñados</strong> (con sus adaptaciones y versión B).</li>
+  <li>Pulsa <strong>Exportar copia</strong> (barra superior, disponible en cualquier pantalla incluida Inicio) con regularidad. Descarga un archivo <code>.json</code> con absolutamente todo: grupos, alumnado, actividades, rúbricas, notas, comentarios, planes, calendario, tu horario semanal y los <strong>exámenes diseñados</strong> (con sus exámenes alternativos y modelos) y los <strong>PDF</strong> del Modelo de Programación de Aula y de la Propuesta Pedagógica.</li>
   <li>Guarda ese archivo fuera del navegador: en Archivos/iCloud (iPad), en una carpeta del PC, en Drive…</li>
   <li>Para recuperar: <strong>Importar copia</strong> y eliges el archivo. También puedes usarlo para <strong>pasar tus datos a otro dispositivo</strong> (exporta en uno, importa en el otro).</li>
   <li><strong>Copia automática en una carpeta (v3, ordenador con Chrome o Edge):</strong> en <strong>🛟 Copias</strong> → «Elegir carpeta». La app guarda sola una copia (el mismo archivo que «Exportar copia») unos minutos después de cada cambio, una por día y dispositivo, y conserva las 10 más recientes. Si eliges una carpeta de Drive, OneDrive o iCloud sincronizada, la copia llega a tus otros equipos: al abrir la app en otro, si hay una copia más reciente te ofrece cargarla. Si tras reiniciar el navegador sale «en pausa», pulsa «Reactivar». La copia va <strong>sin cifrar</strong>: usa una carpeta de tu cuenta, no una compartida. En el iPad, «Compartir copia» → Guardar en Archivos.</li>
@@ -710,6 +714,7 @@
   <tr><th>¿Qué va en cada copia?</th><th>Exportar copia (normal o 🔒 cifrada)</th><th>Copias automáticas 🛟</th></tr>
   <tr><td>Grupos, alumnado, notas, rúbricas, planes, calendario, horario…</td><td>✅</td><td>✅</td></tr>
   <tr><td>Exámenes diseñados (pestaña Diseño)</td><td>✅</td><td>❌ — tienen su propia copia diaria (<a href="#cx-reutilizar">6.10</a>)</td></tr>
+  <tr><td>PDF del Modelo y de la Propuesta Pedagógica (<a href="#prog-documentos">4</a>)</td><td>✅</td><td>❌</td></tr>
   <tr><td>Versiones y Banco de bloques del editor</td><td>❌ (solo en el dispositivo)</td><td>❌</td></tr>
   <tr><td>Tema oscuro, ancho de pantalla, columnas ocultas</td><td>❌ (preferencias del dispositivo)</td><td>❌</td></tr>
 </table>
@@ -777,8 +782,8 @@
 <p>No. El Diseño es opcional: puedes crear la rúbrica a mano como siempre. La ventaja de diseñar en la app es que la rúbrica sale sola, los enunciados aparecen al corregir y el Análisis puede decirte qué pregunta ha fallado.</p>
 <h3>Cambié los puntos de una pregunta después de corregir. ¿Qué pasa con las notas?</h3>
 <p>Al reimportar, la app te enseña qué cambia antes de hacerlo. Las puntuaciones que superen el nuevo máximo se ajustan a él y las notas se recalculan solas (<a href="#cx-importar">6.4</a>).</p>
-<h3>¿La Versión B necesita otra rúbrica?</h3>
-<p>No: comparte la del examen general, porque son las mismas preguntas en otro orden. Para un examen <em>distinto</em> (adaptado), crea una rúbrica adaptada (<a href="#cx-nese">6.6</a>).</p>
+<h3>¿Los modelos B y C necesitan otra rúbrica?</h3>
+<p>No: comparten la del examen general, porque son las mismas preguntas en otro orden; al corregir, la rúbrica sale en el orden del modelo de cada alumno/a. Para un examen <em>distinto</em> (para quien faltó o adaptado NESE), crea un examen alternativo, que tiene su propia rúbrica (<a href="#cx-nese">6.6</a>).</p>
 <h3>El PDF del examen sale cortado o en varias páginas de más.</h3>
 <p>Revisa en el cuadro de impresión: márgenes <strong>Ninguno</strong>, escala <strong>100 %</strong>, el mismo tamaño de papel que el examen y sin encabezados ni pies del navegador. Usa <span class="kbd">Validar</span> en el editor para localizar bloques que no caben en una página.</p>
 <h3>He abierto la app en otro ordenador y está vacía. ¿Se ha perdido algo?</h3>
