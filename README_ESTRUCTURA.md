@@ -73,6 +73,7 @@ Completan el repositorio: `manifest.json` e `icons/` (instalación como app), `.
 | `js/programacion/programacion-aula.js` | Programación de aula: lista, SdA y recursos |
 | `js/programacion/actividades-y-texto-rico.js` | Editor de texto enriquecido y actividades de la programación |
 | `js/programacion/detalle-imprimir.js` | Detalle de la programación e impresión |
+| `js/programacion/documentos-referencia.js` | Modelo de Programación de Aula y Propuesta Pedagógica de cada programación: enlace y PDF guardado en la app, visor con pdf.js |
 | `js/programacion/planificacion-temporal.js` | Planificación temporal de la materia (herramienta incrustada) |
 | `js/memoria/memoria-curso.js` | Memoria de curso |
 | `js/ajustes/ajustes-grupo.js` | Ajustes del grupo |
@@ -247,3 +248,13 @@ Medido con un curso grande ficticio (6 grupos × 30 alumnos × 60 actividades, y
 - **Pantallas táctiles.** El bloque `@media (pointer:coarse)` del principio de `css/app.css` pedía casillas de 22 px y la × de cada grupo de 34 px, pero las reglas generales escritas después lo anulaban; ahora se repite al final de la hoja. Las casillas no se encogen junto a un texto largo (`flex-shrink:0`). En el iPad en vertical (641–900 px), las pestañas de grupo no muestran la materia y caben en una fila. Actividades ya no se sale de la pantalla en el móvil (desplegable de bloque con `max-width:100%`).
 - **Novedades.** La tarjeta de Inicio (`NOVEDADES_V3`, versión `v3-6`) y la guía (`guia_mejorada.html`: «Lo más reciente», rúbrica por niveles en 6.5, desplegable de puntuación en 6.7, «De dónde sale la nota» en Resultados) recogen lo publicado desde el modelo B.
 - **Pruebas.** Playwright 1.56 → 1.63: con un Chromium más nuevo, la prueba `copia-carpeta` se cerraba a mitad.
+
+### Documentos de referencia de cada Programación (noviembre de 2026)
+
+- **Qué es.** Cada Programación de Aula tiene dos huecos fijos (`PROG_DOCS`): «Modelo de Programación de Aula» (`modelo`) y «Propuesta Pedagógica» (`propuesta`). En cada uno, un enlace (OneDrive) y/o el PDF guardado en la app. Código en `js/programacion/documentos-referencia.js`; la tarjeta sale en el detalle (`progDocsCardHTML`) y los accesos rápidos en el listado (`progDocsChipsHTML`).
+- **Datos.** En el estado solo va la referencia: `programacion.documentos[tipo] = {enlace, archivo:{id,nombre,tamano,fecha}}` (sin migración: si falta, el hueco está vacío). El PDF va como `data:application/pdf;base64,…` en la base de datos de los diseños de examen, con la clave `prog:doc:<id>`. Así entra sin más en «Exportar copia», la copia cifrada, la copia en carpeta y el archivo de «Empezar curso nuevo» (`_examenesDiseno`), y vuelve al importarlos; no infla localStorage ni la pila de deshacer. Las claves `prog:…` ya las respetan la limpieza de diseños huérfanos y «Empezar curso nuevo» (se conservan si se conservan las Programaciones). La copia diaria de diseños (`exCopiaDiaria`) no los incluye.
+- **Archivos.** Cada PDF subido recibe un id nuevo, así que un id es siempre el mismo contenido: «Duplicar» comparte el archivo y `progDocBorrarSiNoSeUsa` solo lo borra cuando ninguna programación lo usa (al quitarlo, cambiarlo o eliminar la programación). Deshacer devuelve la referencia pero no el archivo: el visor avisa y pide volver a guardarlo.
+- **Exportar/importar una programación.** El .json lleva `documentosPDF: {id: datos}`; al importar, cada PDF válido se guarda con un id nuevo (`progDocsDeImportada`).
+- **Seguridad.** Solo se aceptan PDF (cabecera `%PDF-`, máximo 25 MB) y enlaces `http(s)`; el enlace se vuelve a comprobar al mostrarlo (`progDocEnlace`), por si una copia manipulada trae `javascript:`.
+- **Visor.** `progDocVer` abre una ventana dentro de la app y dibuja las páginas con pdf.js (`tutoria/vendor/`, ya en la caché sin conexión), solo las que se acercan a la vista. Prueba: `documentos-programacion`.
+- De paso: el desplegable «📋 Programación (SdA, metodología, recursos…)» ya no ensancha la página en el móvil.

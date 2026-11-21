@@ -37,8 +37,9 @@ function progDetalleHTML(root){
       </label>
     </div>
   </div>
+  ${progDocsCardHTML(p)}
   <div class="card" style="padding:10px 14px">
-    <select class="in" style="font-weight:600;min-width:260px" onchange="progSetDetTab(this.value)">
+    <select class="in" style="font-weight:600;min-width:min(260px,100%);max-width:100%" aria-label="Parte de la programación" onchange="progSetDetTab(this.value)">
       <option value="general" ${state.ui.progDetTab==="general"?"selected":""}>📋 Programación (SdA, metodología, recursos…)</option>
       <option value="planificacion" ${state.ui.progDetTab==="planificacion"?"selected":""}>🗓️ Planificación temporal de la materia</option>
     </select>

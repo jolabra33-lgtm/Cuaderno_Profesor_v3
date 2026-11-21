@@ -111,6 +111,7 @@ window.progExportar=(id)=>{
   const p=progPorId(id); if(!p) return;
   const cat=getCatalogo(p.catalogoKey);
   const paquete={tipo:"geohist-programacion-aula",version:1,exportadoEl:new Date().toISOString(),programacion:p};
+  const pdfs=progDocsParaExportar(p); if(Object.keys(pdfs).length) paquete.documentosPDF=pdfs;   // documentos-referencia.js
   const blob=new Blob([JSON.stringify(paquete,null,2)],{type:"application/json"});
   const u=URL.createObjectURL(blob); const a=document.createElement("a");
   const nombreArchivo="programacion-"+p.nombre.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".json";
@@ -120,7 +121,7 @@ window.progExportar=(id)=>{
 window.progImportarArchivo=inp=>{
   const file=inp.files[0]; if(!file) return;
   const rd=new FileReader();
-  rd.onload=()=>{
+  rd.onload=async()=>{
     let datos;
     try{ datos=JSON.parse(rd.result); }
     catch(e){ mostrarAviso("El archivo no es un JSON válido."); inp.value=""; return; }
@@ -141,6 +142,9 @@ window.progImportarArchivo=inp=>{
       recursos:{...(original.recursos||progRecursosDefault())}, cursoEscolar:original.cursoEscolar||cursoAcademicoActual(),
       profesorNombre:original.profesorNombre||"",
       metodologia:progTextoAHTML(original.metodologia||""), criteriosCalifCualitativa:progTextoAHTML(original.criteriosCalifCualitativa||""), criteriosCalifCuantitativa:progTextoAHTML(original.criteriosCalifCuantitativa||"")};
+    // Modelo y Propuesta Pedagógica: enlaces y PDF (que se guardan con un id nuevo). documentos-referencia.js
+    const docs=await progDocsDeImportada(original, datos&&typeof datos.documentosPDF==="object"? datos.documentosPDF : null);
+    if(Object.keys(docs).length) copia.documentos=docs;
     if(!Array.isArray(state.programaciones)) state.programaciones=[];
     state.programaciones.push(copia);
     save(); render();
@@ -157,6 +161,7 @@ window.progDuplicar=(id)=>{
   const copia={id:uid(), nombre:orig.nombre+" (copia)", catalogoKey:orig.catalogoKey, sdas:nuevasSdas, actividades:nuevasActividades,
     recursos:{...(orig.recursos||progRecursosDefault())}, cursoEscolar:"", profesorNombre:orig.profesorNombre||"",
     metodologia:orig.metodologia||"", criteriosCalifCualitativa:orig.criteriosCalifCualitativa||"", criteriosCalifCuantitativa:orig.criteriosCalifCuantitativa||""};
+  if(orig.documentos) copia.documentos=JSON.parse(JSON.stringify(orig.documentos));   // comparte los PDF (mismo id = mismo archivo)
   if(!Array.isArray(state.programaciones)) state.programaciones=[];
   state.programaciones.push(copia);
   save(); render();
@@ -166,10 +171,12 @@ window.progEliminar=async (id)=>{
   const usada=(state.grupos||[]).some(g=>g.programacionId===id);
   if(usada && !await confirmar("Hay grupos vinculados a esta Programación. Si la eliminas, esos grupos se quedarán sin Programación de Aula vinculada (sus actividades ya creadas no se ven afectadas). ¿Continuar?")) return;
   if(!usada && !await confirmar("¿Eliminar esta Programación de Aula? No se puede deshacer.")) return;
+  const pdfs=PROG_DOCS.map(d=>progDocArchivo(progPorId(id),d.id)).filter(Boolean).map(a=>a.id);
   state.programaciones=(state.programaciones||[]).filter(p=>p.id!==id);
   (state.grupos||[]).forEach(g=>{ if(g.programacionId===id) g.programacionId=""; });
   state.ui.progId=""; state.ui.progTab="lista";
   save(); render();
+  for(const pid of pdfs) await progDocBorrarSiNoSeUsa(pid);   // sus PDF, si ninguna otra programación los usa
   mostrarToast("Programación eliminada","info");
 };
 window.progAbrirDetalle=(id)=>{ state.ui.progTab="detalle"; state.ui.progId=id; save(); render(); };
@@ -226,6 +233,7 @@ function progListaHTML(root){
             <strong style="font-size:14.5px">${esc(p.nombre)}</strong>
             <div class="sub" style="margin:2px 0 0">${esc(cat.materia)} · ${esc(cat.curso)} · ${p.sdas.length} SdA · ${p.actividades.length} actividad${p.actividades.length===1?"":"es"}</div>
             <div class="sub" style="margin:2px 0 0">${gruposVinculados.length? "Vinculada a: "+gruposVinculados.map(esc).join(", ") : "Sin grupos vinculados todavía"}</div>
+            ${progDocsChipsHTML(p)}
           </div>
           <div class="flex" onclick="event.stopPropagation()">
             <button class="ghost" style="border:1px solid var(--line)" onclick="progExportar('${p.id}')">Exportar (.json)</button>

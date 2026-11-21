@@ -1233,4 +1233,89 @@ export const PRUEBAS = [
     t.ok(/Nota final/.test(r3.fin) && /Sin nota todavía: 2ª evaluación, 3ª evaluación/.test(r3.fin), 'el resumen de la nota final reparte entre las evaluaciones con nota', r3.fin);
     t.ok(!p.errores.length && !(await p.evaluate(() => window.__x)), 'sin errores de JavaScript ni código colado', p.errores.slice(0, 3).join('; '));
   } },
+
+  { nombre: 'documentos-programacion', descripcion: 'Programación de Aula: modelo y Propuesta Pedagógica con enlace y PDF guardado en la app (ver, exportar, importar, duplicar, quitar)', async fn(t) {
+    // Un PDF de verdad, de 3 páginas, hecho por el propio navegador.
+    const gen = await t.contexto.newPage();
+    await gen.setContent('<h1>Modelo de programación</h1>' + '<p style="page-break-after:always">Página</p>'.repeat(2) + '<p>Fin</p>');
+    const pdf = await gen.pdf({ format: 'A4' }); await gen.close();
+    const p = await nuevaPagina(t.contexto);
+    await p.goto(t.url + '/'); await esperar(1500);
+    await p.evaluate(() => { _mostrarBienvenida = false; const pr = progNueva('Prog 1º ESO', 'GeH_1ESO'); state.programaciones = [pr];
+      state.ui.appMode = 'programacion'; state.ui.progTab = 'detalle'; state.ui.progId = pr.id; save(); render(); });
+    await esperar(300);
+    const txt = await p.textContent('#app');
+    t.ok(txt.includes('Documentos de referencia') && txt.includes('Modelo de Programación de Aula') && txt.includes('Propuesta Pedagógica') && !/Propuesta Didáctica/i.test(txt), 'la programación tiene los dos huecos: Modelo y Propuesta Pedagógica');
+    // Guardar el PDF del modelo.
+    await p.setInputFiles('input[aria-label="⬆ Guardar el PDF en la app: Modelo de Programación de Aula"]', { name: 'modelo.pdf', mimeType: 'application/pdf', buffer: pdf });
+    await p.waitForFunction(() => progDocArchivo(state.programaciones[0], 'modelo'), null, { timeout: 5000 }).catch(() => {});
+    const r1 = await p.evaluate(async () => { const a = progDocArchivo(state.programaciones[0], 'modelo'); const rec = a && await exGet('prog:doc:' + a.id);
+      return { nombre: a && a.nombre, tam: a && a.tamano, ok: !!(rec && progDocDatosValidos(rec.doc.datos)), enLS: (localStorage.getItem(KEY) || '').includes('JVBERi0') }; });
+    t.ok(r1.nombre === 'modelo.pdf' && r1.tam === pdf.length && r1.ok, 'el PDF se guarda en la app (en la base de datos de los diseños)', JSON.stringify(r1));
+    t.ok(!r1.enLS, 'el PDF no va en localStorage ni en el estado (solo su referencia)');
+    // Un archivo que no es PDF no se guarda.
+    await p.setInputFiles('input[aria-label="⬆ Guardar el PDF en la app: Propuesta Pedagógica"]', { name: 'falso.pdf', mimeType: 'application/pdf', buffer: Buffer.from('esto no es un pdf') });
+    await esperar(400);
+    t.ok(await p.evaluate(() => !progDocArchivo(state.programaciones[0], 'propuesta')) && await p.locator('.dlg-overlay').count() === 1, 'un archivo que no es PDF se rechaza con un aviso');
+    await p.locator('.dlg-overlay button').first().click(); await esperar(200);
+    // Enlace de OneDrive: sin https se completa; uno que no es web se rechaza.
+    const enlace = p.locator('input[aria-label="Enlace: Propuesta Pedagógica"]');
+    await enlace.fill('onedrive.live.com/redir?resid=ABC'); await enlace.press('Tab'); await esperar(300);
+    t.ok(await p.evaluate(() => progDoc(state.programaciones[0], 'propuesta').enlace) === 'https://onedrive.live.com/redir?resid=ABC'
+      && await p.locator('a:has-text("Abrir en OneDrive")').getAttribute('href') === 'https://onedrive.live.com/redir?resid=ABC', 'el enlace se guarda (con https://) y sale «Abrir en OneDrive»');
+    await p.locator('input[aria-label="Enlace: Modelo de Programación de Aula"]').fill('javascript:alert(1)');
+    await p.locator('input[aria-label="Enlace: Modelo de Programación de Aula"]').press('Tab'); await esperar(300);
+    { const e = await p.evaluate(() => progDoc(state.programaciones[0], 'modelo').enlace), n = await p.locator('.dlg-overlay').count(); t.ok(!e && n === 1, 'un enlace que no es una dirección web se rechaza', JSON.stringify({ e, n, html: await p.evaluate(() => [...document.querySelectorAll('.dlg-overlay')].map(x => x.textContent.slice(0, 80))) })); }
+    await p.locator('.dlg-overlay button').first().click(); await esperar(200);
+    // Ver el PDF dentro de la app.
+    await p.click('button:has-text("Ver el PDF")');
+    await p.waitForFunction(() => document.querySelectorAll('.prog-doc-visor canvas').length > 0, null, { timeout: 15000 }).catch(() => {});
+    const v = await p.evaluate(() => ({ paginas: document.querySelectorAll('.prog-doc-visor .prog-doc-pagina').length, lienzos: document.querySelectorAll('.prog-doc-visor canvas').length, descargar: !!document.querySelector('.prog-doc-visor a[download="modelo.pdf"]') }));
+    t.ok(v.paginas === 3 && v.lienzos >= 1 && v.descargar, 'el visor muestra las 3 páginas del PDF y permite descargarlo', JSON.stringify(v));
+    await p.keyboard.press('Escape'); await esperar(200);
+    t.ok(await p.locator('.prog-doc-visor').count() === 0, 'Escape cierra el visor');
+    // Una copia manipulada con un enlace «javascript:» no se muestra como enlace.
+    await p.evaluate(() => { state.programaciones[0].documentos.propuesta.enlace = 'javascript:window.__x=1'; render(); });
+    t.ok(await p.locator('a[href^="javascript"]').count() === 0, 'un enlace «javascript:» guardado en una copia manipulada no se muestra');
+    await p.evaluate(() => { state.programaciones[0].documentos.propuesta.enlace = 'https://onedrive.live.com/redir?resid=ABC'; save(); });
+    // Las copias de seguridad completas llevan el PDF (como los diseños de examen) y lo devuelven al importarlas.
+    const r2 = await p.evaluate(async () => { const a = progDocArchivo(state.programaciones[0], 'modelo'), clave = 'prog:doc:' + a.id;
+      const copia = JSON.parse(JSON.stringify({ ...state, _examenesDiseno: exTodosSync() || await exLeerTodos() }));
+      const va = copia._examenesDiseno.some(r => r.key === clave);
+      await exBorrar(clave); const borrado = !(await exGet(clave));
+      await exGuardarVarios(copia._examenesDiseno); const vuelve = !!(await exGet(clave));
+      await exCopiaDiaria(true); const diaria = (await exTx('readonly', s => s.getAll(), 'copias')).some(c => c.disenos.some(r => r.key === clave));
+      return { va, borrado, vuelve, diaria }; });
+    t.ok(r2.va && r2.borrado && r2.vuelve, 'la copia de seguridad completa lleva el PDF y lo restaura', JSON.stringify(r2));
+    t.ok(!r2.diaria, 'la copia diaria de los diseños no duplica los PDF');
+    // Exportar la programación (.json) con su PDF e importarla: nueva programación, PDF con id nuevo.
+    await p.evaluate(() => { state.ui.progTab = 'lista'; render(); });
+    t.ok(await p.locator('button:has-text("📄 Modelo")').count() === 1 && await p.locator('button:has-text("📄 Propuesta Pedagógica")').count() === 1, 'el listado tiene accesos rápidos a los dos documentos');
+    const [desc] = await Promise.all([p.waitForEvent('download'), p.click('button:has-text("Exportar (.json)")')]);
+    const json = JSON.parse(fs.readFileSync(await desc.path(), 'utf8'));
+    const idOrig = await p.evaluate(() => progDocArchivo(state.programaciones[0], 'modelo').id);
+    t.ok(json.documentosPDF && json.documentosPDF[idOrig] && json.documentosPDF[idOrig].startsWith('data:application/pdf;base64,'), 'la programación exportada lleva el PDF dentro');
+    const tmp = path.join(os.tmpdir(), 'prog-con-pdf-' + Date.now() + '.json'); fs.writeFileSync(tmp, JSON.stringify(json));
+    await p.setInputFiles('input[type=file][onchange^="progImportarArchivo"]', tmp); await esperar(800); fs.unlinkSync(tmp);
+    const r3 = await p.evaluate(async () => { const n = state.programaciones[1]; const a = n && progDocArchivo(n, 'modelo'); const rec = a && await exGet('prog:doc:' + a.id);
+      return { hay: state.programaciones.length, id: a && a.id, ok: !!(rec && progDocDatosValidos(rec.doc.datos)), enlace: n && progDoc(n, 'propuesta').enlace }; });
+    t.ok(r3.hay === 2 && r3.id && r3.id !== idOrig && r3.ok && r3.enlace === 'https://onedrive.live.com/redir?resid=ABC', 'al importarla, llegan el PDF (con id nuevo) y el enlace', JSON.stringify(r3));
+    // Duplicar comparte el PDF; quitarlo de una no lo borra de la otra; eliminar la última que lo usa sí lo borra.
+    await p.evaluate(() => progDuplicar(state.programaciones[0].id)); await esperar(200);
+    const r4 = await p.evaluate(async () => { const [o, , d] = state.programaciones, id = progDocArchivo(o, 'modelo').id;
+      const comparte = progDocArchivo(d, 'modelo').id === id;
+      state.ui.progTab = 'detalle'; state.ui.progId = d.id; render(); return { comparte, id }; });
+    await p.click('button:has-text("Quitar PDF")'); await esperar(200); await p.locator('.dlg-overlay button:has-text("Quitar")').click(); await esperar(400);
+    const r5 = await p.evaluate(async id => ({ quitado: !progDocArchivo(state.programaciones[2], 'modelo'), sigue: !!(await exGet('prog:doc:' + id)) }), r4.id);
+    t.ok(r4.comparte && r5.quitado && r5.sigue, 'duplicar comparte el PDF y quitarlo de la copia no lo borra del original', JSON.stringify({ ...r4, ...r5 }));
+    await p.evaluate(() => { state.ui.progTab = 'lista'; render(); });
+    await p.locator('.card', { hasText: 'Prog 1º ESO' }).first().locator('button:has-text("Eliminar")').click(); await esperar(200);
+    await p.locator('.dlg-overlay button').filter({ hasNotText: 'Cancelar' }).first().click(); await esperar(500);
+    t.ok(await p.evaluate(async id => !(await exGet('prog:doc:' + id)), r4.id), 'al eliminar la última programación que lo usa, el PDF se borra del dispositivo');
+    // Deshacer devuelve la referencia, pero no el archivo: el visor lo dice en vez de fallar.
+    await p.evaluate(() => { deshacer(); state.ui.progTab = 'detalle'; state.ui.progId = state.programaciones[0].id; render(); }); await esperar(300);
+    await p.click('button:has-text("Ver el PDF")'); await esperar(400);
+    t.ok(await p.locator('.dlg-overlay', { hasText: 'no está guardado en este dispositivo' }).count() === 1, 'si el PDF ya no está (tras deshacer), se avisa de que hay que volver a guardarlo');
+    t.ok(!p.errores.length && !(await p.evaluate(() => window.__x)), 'sin errores de JavaScript', p.errores.join('; '));
+  } },
 ];
