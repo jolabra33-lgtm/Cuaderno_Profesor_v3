@@ -286,3 +286,9 @@ Las tres usan los cálculos de siempre (`notaTrimestre`, `notaActa`, `scoreCrite
 - **«Informes de»** (Resultados, `#repGrupoSel`, `resElegirPeriodo`): una evaluación cambia `state.ui.trim` (la tabla, el Periodo de la cabecera y todos los informes van a la vez); «Evaluación final» pone `state.ui.resInfFinal` y solo afecta a «Informe de grupo» e «Informes detallados». Cambiar el Periodo de la cabecera quita `resInfFinal`. Antes, el desplegable solo movía esos dos botones y parecía no hacer nada.
 - **Informe final** (`informeFinalAlumnoBodyHTML`): incluye `resumenCalculoNotaHTML(grupo,al,"final")`, «De dónde sale la nota» de la nota final, tras la tabla de evaluaciones. No se repite el de cada evaluación porque el informe final ya lleva el desglose de actividades de todo el curso.
 - Prueba: `informes-por-evaluacion`.
+
+### Redondeo de la nota de acta por curso (noviembre de 2026)
+
+- `modoRedondeoActa(grupo)` (`js/nucleo/utilidades.js`) mira primero `state.ajustesNota.redondeoPorCurso[grupo.catalogoKey]` y, si el curso no tiene regla propia, la general `state.ajustesNota.redondeoActa` (la de siempre: una copia antigua no cambia ninguna nota). Sin grupo, usa el grupo abierto. `notaActa(v,grupo)` se la pasa; en las pantallas de varios grupos (Inicio, Memoria, Resumen) se llama siempre con el grupo.
+- Ajustes del grupo guarda la regla para su materia y curso, dice qué grupos la comparten y enseña la de los demás cursos («Tus otros cursos»). La migración descarta reglas no válidas.
+- Prueba: `redondeo-por-curso`.

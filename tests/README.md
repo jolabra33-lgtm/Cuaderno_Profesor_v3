@@ -52,6 +52,7 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `riesgo-mapa-autoevaluacion` | Inicio avisa de quien suspende, baja 2 puntos o acumula NP; mapa de criterios (porcentajes, colores, media, imprimir); autoevaluación y coevaluación (tarjeta, comparación, distintivos, hojas por puntos y por niveles) sin tocar la nota |
 | `guia-descargable` | La guía: índice sin enlaces rotos y «⬇ Descargar» genera un único .html que se abre sin servidor, con el enlace a la app |
 | `informes-por-evaluacion` | Resultados: «Informes de» mueve la tabla y los informes a la vez; el informe final (uno o todo el grupo) lleva «De dónde sale la nota» de la nota final |
+| `redondeo-por-curso` | El redondeo de la nota de acta se elige por curso (materia y curso): lo comparten sus grupos y una copia antigua conserva su regla |
 | `accesibilidad` | WCAG 2 A/AA (axe-core) en todas las pestañas y modos, y contraste |
 | `actualizacion` | Aviso «Hay una versión nueva · Actualizar» |
 

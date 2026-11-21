@@ -253,6 +253,9 @@ state.ui.horModalFranjas=false;
 if(typeof state.cambiosSinCopia!=="number") state.cambiosSinCopia=0;
 if(!state.ajustesNota || typeof state.ajustesNota!=="object") state.ajustesNota={redondeoActa:"sinAprobarPorRedondeo"};
 if(!REDONDEO_MODOS.some(m=>m.id===state.ajustesNota.redondeoActa)) state.ajustesNota.redondeoActa="sinAprobarPorRedondeo";
+// Redondeo por curso (materia y curso): solo se guardan reglas válidas.
+if(!state.ajustesNota.redondeoPorCurso || typeof state.ajustesNota.redondeoPorCurso!=="object" || Array.isArray(state.ajustesNota.redondeoPorCurso)) state.ajustesNota.redondeoPorCurso={};
+Object.keys(state.ajustesNota.redondeoPorCurso).forEach(k=>{ if(!REDONDEO_MODOS.some(m=>m.id===state.ajustesNota.redondeoPorCurso[k])) delete state.ajustesNota.redondeoPorCurso[k]; });
 }
 /* Estado de guardado observable por la interfaz:
    - saveOk: false si el último intento de guardar en el dispositivo falló

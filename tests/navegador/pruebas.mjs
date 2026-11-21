@@ -1445,4 +1445,29 @@ export const PRUEBAS = [
     t.ok((await p.evaluate(() => document.querySelector('#printOverlay .print-hoja').shadowRoot.textContent)).includes('De dónde sale la nota · Nota final de curso'), 'también en «Exportar informes finales de curso» (todo el grupo)');
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
+
+  { nombre: 'redondeo-por-curso', descripcion: 'Redondeo de la nota de acta por curso: lo comparten los grupos del mismo curso y no cambia el de los demás', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await p.goto(t.url + '/'); await esperar(1500);
+    const acta = () => p.evaluate(() => state.grupos.map(g => g.nombre + ':' + notaActa(notaTrimestre(g, g.alumnos[0].id, 0), g)).join(' '));
+    await p.evaluate(() => { _mostrarBienvenida = false;
+      const nuevo = (nombre, cat) => { const g = defGrupo(nombre, cat), c = getCatalogo(cat).ces[0].criterios[0].id, al = normalizarAlumno({ id: uid(), nombre: 'Prueba, Ana' });
+        g.alumnos = [al]; g.actividades = [{ id: uid(), nombre: 'Trabajo', trimestre: 0, bloqueId: 'b1', esExamen: false, criterios: [{ critId: c, peso: 1 }] }];
+        g.notas = { [al.id]: { [g.actividades[0].id]: { [c]: 4.6 } } }; return g; };
+      state.grupos = [nuevo('1A', 'GeH_1ESO'), nuevo('1B', 'GeH_1ESO'), nuevo('2A', 'GeH_2ESO')];
+      state.ajustesNota = { redondeoActa: 'estandar' }; migrarEstado();   // copia antigua: una regla para todos
+      state.ui.trim = 0; state.ui.grupoId = state.grupos[2].id; state.ui.appMode = 'grupo'; state.ui.tab = 'ajustes'; save(); render(); });
+    await esperar(300);
+    t.ok(await acta() === '1A:5 1B:5 2A:5', 'una copia antigua conserva su regla en todos los grupos (4,6 → 5 con redondeo normal)', await acta());
+    t.ok((await p.textContent('#tabContent')).includes('todos tus grupos de Geografía e Historia · 2.º ESO'), 'Ajustes dice a qué curso se aplica');
+    await p.selectOption('select[aria-label="Regla de redondeo de la nota de acta"]', 'sinAprobarPorRedondeo'); await esperar(300);
+    t.ok(await acta() === '1A:5 1B:5 2A:4', 'cambiarla en un grupo de 2.º solo cambia 2.º', await acta());
+    await p.evaluate(() => { state.ui.grupoId = state.grupos[0].id; render(); }); await esperar(300);
+    t.ok(await p.inputValue('select[aria-label="Regla de redondeo de la nota de acta"]') === 'estandar' && (await p.textContent('#tabContent')).includes('(1A, 1B)'), 'en 1.º se ve su propia regla y los grupos que la comparten');
+    await p.selectOption('select[aria-label="Regla de redondeo de la nota de acta"]', 'truncar'); await esperar(300);
+    t.ok(await acta() === '1A:4 1B:4 2A:4' && await p.evaluate(() => state.ajustesNota.redondeoPorCurso.GeH_1ESO === 'truncar' && state.ajustesNota.redondeoPorCurso.GeH_2ESO === 'sinAprobarPorRedondeo'), 'cambiarla en 1.º A la cambia en 1.º B (mismo curso) y deja 2.º como estaba', await acta());
+    await p.click('summary:has-text("Tus otros cursos")'); await esperar(100);
+    t.ok((await p.textContent('#tabContent')).includes('2.º ESO: Redondeo normal, pero sin aprobar por redondeo'), '«Tus otros cursos» enseña la regla de cada curso');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
 ];

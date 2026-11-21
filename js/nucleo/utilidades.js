@@ -11,7 +11,10 @@
    como suspenso. Ahora la calificación oficial es SIEMPRE la nota de acta
    (entera, sin decimales, como exige la normativa) y de ella salen la
    etiqueta y el aprobado. La regla de redondeo es configurable
-   (Ajustes del grupo → Redondeo de la nota de acta) y común a todos los grupos.
+   (Ajustes del grupo → Redondeo de la nota de acta) POR CURSO: la comparten los grupos de la
+   misma materia y curso (catalogoKey), en state.ajustesNota.redondeoPorCurso[catalogoKey].
+   Un curso sin regla propia usa la general (state.ajustesNota.redondeoActa), que es la que
+   había antes para todos: al actualizar, ninguna nota cambia.
    ================================================================= */
 const REDONDEO_MODOS=[
   {id:"sinAprobarPorRedondeo",label:"Redondeo normal, pero sin aprobar por redondeo (4,5–4,9 → 4; 6,5 → 7)"},
@@ -19,7 +22,13 @@ const REDONDEO_MODOS=[
   {id:"truncar",label:"Truncar, sin redondear (4,9 → 4; 6,9 → 6)"}
 ];
 function _limpiaFP(x){ return Number(Number(x).toPrecision(12)); }
-function modoRedondeoActa(){ return (state && state.ajustesNota && state.ajustesNota.redondeoActa) || "sinAprobarPorRedondeo"; }
+function _modoValido(m){ return REDONDEO_MODOS.some(x=>x.id===m)? m : null; }
+function modoRedondeoActa(grupo){
+  const aj=(typeof state!=="undefined" && state && state.ajustesNota)||{};
+  const g=grupo||(typeof grupoActual==="function"?grupoActual():null);
+  const propio=g && aj.redondeoPorCurso && _modoValido(aj.redondeoPorCurso[g.catalogoKey]);
+  return propio || _modoValido(aj.redondeoActa) || "sinAprobarPorRedondeo";
+}
 function _grupoEsBach(grupo){
   const g=grupo||(typeof grupoActual==="function"?grupoActual():null);
   if(!g) return false;
@@ -29,7 +38,7 @@ function _grupoEsBach(grupo){
 function notaActa(v,grupo){
   if(v==null||v===""||isNaN(Number(v))) return null;
   v=Math.max(0,Math.min(10,_limpiaFP(v)));
-  const modo=modoRedondeoActa();
+  const modo=modoRedondeoActa(grupo);
   let n;
   if(modo==="truncar") n=Math.floor(v);
   else{
