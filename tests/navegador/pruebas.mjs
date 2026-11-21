@@ -1415,4 +1415,34 @@ export const PRUEBAS = [
     t.ok(!(await p.locator('#guiaDescargar').isVisible()), 'al imprimir no salen los botones');
     t.ok(!p.errores.length && !q.errores.length, 'sin errores de JavaScript', p.errores.concat(q.errores).join('; '));
   } },
+
+  { nombre: 'informes-por-evaluacion', descripcion: 'Resultados: «Informes de» cambia la tabla y los informes a la vez, y el informe final incluye «De dónde sale la nota» de la nota final', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const [A] = await cuadernoConGrupo(p, t.url, { nombres: ['Abellón Murcia, Alma'] });
+    await p.evaluate(A => { const g = state.grupos[0], c = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
+      g.actividades = [{ id: 'a1', nombre: 'Trabajo 1', trimestre: 0, bloqueId: 'b1', esExamen: false, criterios: [{ critId: c, peso: 1 }] },
+                       { id: 'a2', nombre: 'Trabajo 2', trimestre: 1, bloqueId: 'b1', esExamen: false, criterios: [{ critId: c, peso: 1 }] }];
+      g.notas = { [A]: { a1: { [c]: 4 }, a2: { [c]: 8 } } };
+      state.ui.trim = 0; state.ui.appMode = 'grupo'; state.ui.tab = 'resultados'; save(); render(); }, A);
+    await esperar(300);
+    const col = () => p.evaluate(() => document.querySelector('#tabContent thead th:nth-child(2)').textContent + ' ' + document.querySelector('#tabContent tbody td:nth-child(2)').textContent.trim());
+    t.ok((await col()).startsWith('1ª evaluación 4,0'), 'la tabla empieza en la 1.ª evaluación', await col());
+    await p.selectOption('#repGrupoSel', '1'); await esperar(300);
+    t.ok((await col()).startsWith('2ª evaluación 8,0') && await p.inputValue('#trimSel') === '1', 'elegir la 2.ª en «Informes de» cambia la tabla y el Periodo de la cabecera', await col());
+    await p.click('tbody button:has-text("Informe")'); await esperar(300);
+    const ind = await p.evaluate(() => document.querySelector('#printOverlay .print-hoja').shadowRoot.textContent);
+    t.ok(ind.includes('2ª evaluación') && ind.includes('De dónde sale la nota · 2ª evaluación'), 'el informe del alumno/a es de la 2.ª evaluación, con «De dónde sale la nota»');
+    await p.click('#prtCerrar'); await esperar(200);
+    await p.selectOption('#repGrupoSel', 'final'); await esperar(300);
+    t.ok(await p.inputValue('#repGrupoSel') === 'final' && (await col()).startsWith('2ª evaluación'), '«Evaluación final» se queda elegida y la tabla no cambia');
+    await p.selectOption('#trimSel', '0'); await esperar(300);
+    t.ok(await p.inputValue('#repGrupoSel') === '0', 'cambiar el Periodo de la cabecera también cambia «Informes de»');
+    await p.click('tbody button:has-text("Informe final")'); await esperar(300);
+    const fin = await p.evaluate(() => document.querySelector('#printOverlay .print-hoja').shadowRoot.textContent);
+    t.ok(fin.includes('Informe final de curso') && fin.includes('De dónde sale la nota · Nota final de curso') && /1ª evaluación[\s\S]*2ª evaluación/.test(fin), 'el informe final incluye «De dónde sale la nota» de la nota final, con cada evaluación');
+    await p.click('#prtCerrar'); await esperar(200);
+    await p.click('button:has-text("Exportar informes finales de curso")'); await esperar(300);
+    t.ok((await p.evaluate(() => document.querySelector('#printOverlay .print-hoja').shadowRoot.textContent)).includes('De dónde sale la nota · Nota final de curso'), 'también en «Exportar informes finales de curso» (todo el grupo)');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
 ];

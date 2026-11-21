@@ -87,7 +87,8 @@
     <li><a href="#rapido">⏱️ Empezar en 5 minutos</a></li>
     <li><a href="#vision">1. Qué es esta suite y cómo se organiza</a></li>
     <li><a href="#primeros">2. Primeros pasos: crear un grupo y su alumnado</a></li>
-    <li><a href="#competencial">3. Evaluación por Competencias</a></li>
+    <li><a href="#competencial">3. Evaluación por Competencias</a>
+      <ol style="list-style:none;padding-left:18px;margin:2px 0 4px"><li><a href="#informes-familias">Informes para las familias: uno por evaluación y uno final</a></li></ol></li>
     <li><a href="#programacion">4. Programación de Aula</a></li>
     <li><a href="#memoria">5. Memoria de curso</a></li>
     <li><a href="#corrector">6. Corrector de Exámenes: diseñar, rúbrica y corregir</a>
@@ -312,6 +313,14 @@
   <tr><td><strong>Cobertura</strong></td><td>Qué criterios del currículo has trabajado ya este trimestre y cuáles no: tu radar de programación.</td></tr>
   <tr><td><strong>Ajustes</strong></td><td>Pesos de los bloques de calificación, pesos de los trimestres en la nota final, <strong>fechas de inicio/fin de cada evaluación</strong> (para poder filtrar Asistencia/Convivencia por trimestre en Resumen), <strong>Programación de Aula vinculada</strong>, umbrales de adquisición, duplicar la estructura del grupo, exportar/importar el grupo suelto.</td></tr>
 </table>
+
+<h3 id="informes-familias">📄 Informes para las familias: uno por evaluación y uno final</h3>
+<p>En <strong>Resultados</strong>, el selector <strong>Informes de</strong> elige la evaluación. Es el mismo «Periodo» de la cabecera: al cambiarlo cambian a la vez la tabla y todos los informes. Si una evaluación todavía no tiene actividades con nota, la tabla sale sin notas en esa columna.</p>
+<div class="flow">
+  <div class="step"><b>Cada evaluación.</b> Elige la evaluación en «Informes de» y pulsa <span class="kbd">Exportar todos los informes</span> (o <span class="kbd">Informe</span> en la fila de un alumno/a). Es el informe para la familia: notas, comentario, asistencia, convivencia, actividades, competencias y la tabla <strong>«De dónde sale la nota»</strong> de esa evaluación.</div>
+  <div class="step"><b>Final de curso.</b> <span class="kbd">Exportar informes finales de curso</span> (o <span class="kbd">Informe final</span> en una fila): las tres evaluaciones con su comentario, la nota final y <strong>«De dónde sale la nota» de la nota final</strong> (cuánto pesa y cuánto aporta cada evaluación), la asistencia del curso, todas las actividades y las competencias del curso.</div>
+  <div class="step"><b>Para ti.</b> <span class="kbd">🖨️ Informes detallados</span> y <span class="kbd">Informe de grupo</span> usan la evaluación de «Informes de»; con «Evaluación final (curso completo)» sacan los de todo el curso. La tabla sigue mostrando la última evaluación elegida.</div>
+</div>
 
 <h3 id="asistencia-detalle">Asistencia, en detalle</h3>
 <div class="flow">
@@ -849,7 +858,7 @@
 <h3>¿Dónde meto las propuestas de mejora y el seguimiento de SdA para la memoria?</h3>
 <p>En la pestaña <strong>Resumen</strong> del grupo: cada evaluación tiene su gráfico de aprobados/suspensos, su porcentaje de Situaciones de Aprendizaje impartidas (calculado solo si el grupo tiene una Programación de Aula vinculada) y su cuadro de propuestas de mejora; y hay un bloque de evaluación final para la valoración de curso.</p>
 <h3>¿Cómo saco el informe de grupo de cada evaluación?</h3>
-<p>En Resultados, junto al botón <strong>Informe de grupo</strong> hay un selector con <em>1ª, 2ª, 3ª evaluación</em> y <em>Evaluación final (curso completo)</em>. Los informes de cada evaluación contienen solo lo de esa evaluación (resumen, notas, competencias y propuestas de mejora del periodo), sin ninguna referencia a la final. El de <strong>evaluación final</strong> es el más completo — resumen de las tres evaluaciones, notas de todo el curso, competencias anuales y todas las propuestas de mejora — y es el pensado para entregar a las familias.</p>
+<p>En Resultados, el selector <strong>Informes de</strong> (junto a <strong>Informe de grupo</strong>) tiene <em>1ª, 2ª, 3ª evaluación</em> y <em>Evaluación final (curso completo)</em>. Los informes de cada evaluación contienen solo lo de esa evaluación (resumen, notas, competencias y propuestas de mejora del periodo), sin ninguna referencia a la final. El de <strong>evaluación final</strong> es el más completo — resumen de las tres evaluaciones, notas de todo el curso, competencias anuales y todas las propuestas de mejora — y es el pensado para entregar a las familias.</p>
 <h3>¿Qué ha cambiado «por dentro» en esta versión?</h3>
 <p>Nada de lo que ves ni de lo que guardas: tus datos, copias y paquetes son los mismos. Solo está mejor organizada: en lugar de un único archivo enorme, la app son carpetas con archivos pequeños (<code>js/</code>, <code>css/</code>, <code>editor/</code>, <code>tools/</code>), lo que hace más fácil mantenerla y corregir errores. La contrapartida es que hay que publicarla con todas sus carpetas (mira <a href="#offline">20</a>) y que ya no se abre bien con doble clic.</p>
 <h3>¿Tengo que usar el Diseño para corregir con rúbrica?</h3>

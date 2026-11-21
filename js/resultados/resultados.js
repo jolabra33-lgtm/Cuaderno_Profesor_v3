@@ -114,9 +114,10 @@ function renderResultados(grupo){
         <button class="ghost" style="border:1px solid var(--line)" title="Borradores de comentario para quien todavía no tenga (no sobrescribe)" onclick="comSugerirGrupo('es')">💬 Comentarios vacíos</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Esborranys de comentari en valencià per a qui encara no en tinga" onclick="comSugerirGrupo('va')">💬 En valencià</button>
         <span class="flex" style="gap:6px;align-items:center">
-          <select class="in" id="repGrupoSel" style="padding:6px 9px">
-            ${TRIMESTRES.map((t,i)=>`<option value="${i}" ${i===state.ui.trim?"selected":""}>${t}</option>`).join("")}
-            <option value="final">Evaluación final (curso completo)</option>
+          <label for="repGrupoSel" class="sub" style="margin:0;font-weight:600">Informes de</label>
+          <select class="in" id="repGrupoSel" style="padding:6px 9px" title="Evaluación de la tabla y de los informes (es el mismo «Periodo» de la cabecera)" onchange="resElegirPeriodo(this.value)">
+            ${TRIMESTRES.map((t,i)=>`<option value="${i}" ${state.ui.resInfFinal!==true&&i===state.ui.trim?"selected":""}>${t}</option>`).join("")}
+            <option value="final" ${state.ui.resInfFinal===true?"selected":""}>Evaluación final (curso completo)</option>
           </select>
           <button class="btn" onclick="exportarInformeGrupo(document.getElementById('repGrupoSel').value)">Informe de grupo</button>
           <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesDetalladosTodos(document.getElementById('repGrupoSel').value)">🖨️ Informes detallados</button>
@@ -282,4 +283,12 @@ function renderResultados(grupo){
   </div>`;
   document.getElementById("resComentario").addEventListener("change",e=>{ al.comentariosEval[trim]=e.target.value; save(); });
 }
-
+/* Selector «Informes de» de Resultados. Una evaluación (1.ª, 2.ª, 3.ª) es el mismo «Periodo» de la cabecera: cambia la
+   tabla y todos los informes a la vez. «Evaluación final» solo cambia el informe de grupo y los detallados (la tabla
+   sigue con la última evaluación elegida). Antes, este desplegable solo afectaba a esos dos botones y parecía no
+   hacer nada. */
+window.resElegirPeriodo=v=>{
+  if(v==="final") state.ui.resInfFinal=true;
+  else { state.ui.resInfFinal=false; state.ui.trim=Number(v)||0; }
+  save(); render();
+};

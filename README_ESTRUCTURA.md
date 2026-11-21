@@ -280,3 +280,9 @@ Las tres usan los cálculos de siempre (`notaTrimestre`, `notaActa`, `scoreCrite
 - `guia_mejorada.html` sigue siendo un único archivo sin dependencias (estilos dentro, sin imágenes ni scripts externos). Botones nuevos en la cabecera: **⬇ Descargar** (vuelve a pedir la propia página y la guarda como `Guia-Cuaderno-del-profesor.html`, con el botón «Inicio» apuntando a la dirección completa de la app; si se abre como archivo sin esa dirección, «Inicio» se oculta) e **🖨️ Imprimir** (los botones no salen en papel). El nombre del archivo va sin tildes ni espacios: con ellos, Chrome descarta el nombre y guarda «download».
 - Secciones nuevas: Planificación temporal (en 4), 21 Inicio (Hoy, Qué me falta, Alumnado en riesgo, avisos), 22 Herramientas de clase, 23 Modo proyector y PIN, 24 Empezar curso nuevo y Revisar mis datos, 25 Deshacer; Preguntas frecuentes pasa a 26.
 - Prueba `guia-descargable`: índice sin enlaces rotos, descarga, apertura como archivo suelto e impresión.
+
+### Informes por evaluación y final (noviembre de 2026)
+
+- **«Informes de»** (Resultados, `#repGrupoSel`, `resElegirPeriodo`): una evaluación cambia `state.ui.trim` (la tabla, el Periodo de la cabecera y todos los informes van a la vez); «Evaluación final» pone `state.ui.resInfFinal` y solo afecta a «Informe de grupo» e «Informes detallados». Cambiar el Periodo de la cabecera quita `resInfFinal`. Antes, el desplegable solo movía esos dos botones y parecía no hacer nada.
+- **Informe final** (`informeFinalAlumnoBodyHTML`): incluye `resumenCalculoNotaHTML(grupo,al,"final")`, «De dónde sale la nota» de la nota final, tras la tabla de evaluaciones. No se repite el de cada evaluación porque el informe final ya lleva el desglose de actividades de todo el curso.
+- Prueba: `informes-por-evaluacion`.
