@@ -130,7 +130,7 @@ function renderCorLista(grupo){
         </div>
       </div>
     </div>`;
-  }).join("") : '<div class="card"><p class="sub" style="margin:0">Todavía no hay ningún examen con rúbrica en este periodo.</p></div>'}
+  }).join("") : vacioHTML("Todavía no hay ningún examen con rúbrica en este periodo.","columna")}
   ${cxPendientesHTML(grupo)}`;
 }
 /* Exámenes que aún no se corrigen con rúbrica: los del grupo sin rúbrica y los

@@ -95,7 +95,7 @@ function renderReListaHTML(root){
         </div>
       </div>
     </div>`;
-  }).join("") : `<div class="card"><p class="sub" style="margin:0">${total===0?"Todavía no has registrado ninguna reunión.":"Sin resultados con este filtro/búsqueda."}</p></div>`;
+  }).join("") : (total===0? vacioHTML("Todavía no has registrado ninguna reunión.","columna") : `<div class="card"><p class="sub" style="margin:0">Sin resultados con este filtro/búsqueda.</p></div>`);
 
   root.innerHTML=`
   <div class="card">

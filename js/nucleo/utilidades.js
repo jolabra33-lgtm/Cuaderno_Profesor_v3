@@ -54,6 +54,11 @@ const OLD_KEY="hmc_eval_local_v1";
    en España, entre medianoche y la 1–2 h (o con una fecha creada a las 00:00) devuelve el día anterior. */
 function fechaISOLocal(d){ d=d||new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 const uid=()=>Math.random().toString(36).slice(2,9);
+/* Pantalla vacía con un dibujo a línea de Geografía e Historia (img/vacio-globo.svg, img/vacio-columna.svg).
+   texto y extra son HTML ya preparado por quien llama (textos fijos de la app). */
+function vacioHTML(texto,dibujo,extra){
+  return `<div class="card vacio"><img src="img/vacio-${dibujo==="columna"?"columna":"globo"}.svg" alt="" width="96" height="96"><p class="sub">${texto}</p>${extra||""}</div>`;
+}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 /* Texto que va entre comillas simples dentro del código de un botón (onclick="f('…')"). Ahí esc() no basta:
    el navegador convierte «&#39;» en un apóstrofo antes de ejecutar el código. */
