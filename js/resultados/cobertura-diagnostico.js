@@ -144,6 +144,7 @@ window.aplicarArreglosDiagnostico=async()=>{
 const NOVEDADES_VERSION="v3-6";
 window.cerrarNovedades=()=>{ state.novedadesVistas=NOVEDADES_VERSION; save(); render(); };
 const NOVEDADES_V3=[
+  ["📎 Modelo y Propuesta Pedagógica","en cada Programación de Aula, guarda el PDF (se ve sin conexión) y el enlace de OneDrive de los dos documentos."],
   ["▦ Rúbrica por niveles de logro","en el Corrector, una tabla de categorías × niveles (Experto, Avanzado…) que se corrige pinchando casillas; ideal para exposiciones y trabajos."],
   ["🔀 Modelos A, B y C","el mismo examen con las preguntas en otro orden; repartes quién hace cada uno en Corregir (por lista o según el plano)."],
   ["📅 Examen «otro día»","para quien faltó al examen: otras preguntas, con su fecha y su propia rúbrica, dentro del mismo examen."],

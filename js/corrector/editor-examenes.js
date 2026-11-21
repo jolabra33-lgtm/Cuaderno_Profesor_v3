@@ -339,7 +339,8 @@ async function exCopiaDiaria(forzar){
   try{
     const hoy=fechaISOLocal();
     if(!forzar && localStorage.getItem(EX_COPIA_DIA)===hoy) return;
-    const todos=await exLeerTodos(); if(!todos.length) return;
+    const todos=(await exLeerTodos()).filter(r=>!String(r.key).startsWith("prog:doc:"));   // los PDF de las Programaciones no (van en las copias completas)
+    if(!todos.length) return;
     await exTx("readwrite",s=>s.put({ts:Date.now(),fecha:hoy,disenos:todos}),"copias");
     const ts=(await exTx("readonly",s=>s.getAllKeys(),"copias"))||[]; ts.sort((a,b)=>b-a);
     for(const k of ts.slice(3)) await exTx("readwrite",s=>s.delete(k),"copias");

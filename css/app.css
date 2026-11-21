@@ -635,3 +635,9 @@
   }
   /* Una casilla junto a un texto largo (p. ej. los criterios de una actividad) no se encoge. */
   input[type=checkbox]{flex-shrink:0}
+  /* Visor de PDF de los documentos de referencia de una Programación (js/programacion/documentos-referencia.js). */
+  .prog-doc-visor{padding:12px}
+  .prog-doc-visor .modal-box.prog-doc-caja{max-width:min(1000px,100%);width:100%;height:calc(100vh - 24px);height:calc(100dvh - 24px);max-height:none;overflow:hidden;display:flex;flex-direction:column;gap:10px;padding:14px 16px}
+  .prog-doc-paginas{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;background:var(--surface-2);border-radius:12px;padding:8px}
+  .prog-doc-pagina{background:#fff;margin:0 auto 10px;box-shadow:var(--shadow-sm);border-radius:4px;overflow:hidden}
+  .prog-doc-pagina canvas{display:block}
