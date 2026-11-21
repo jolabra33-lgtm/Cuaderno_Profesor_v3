@@ -31,6 +31,10 @@ export async function nuevaPagina(ctx) {
 }
 export const esperar = ms => new Promise(r => setTimeout(r, ms));
 
+/* Elige una opción como lo haría una persona: primero toca el desplegable (así se rellenan los de puntuación
+   del Corrector, que solo crean su lista al ir a usarse) y luego elige. */
+export async function elegir(locator, valor) { await locator.focus(); return locator.selectOption(valor); }
+
 /* Cuaderno con un grupo de prueba ya creado (devuelve los ids de los alumnos). */
 export async function cuadernoConGrupo(p, url, { nombres = ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria'] } = {}) {
   await p.goto(url + '/'); await esperar(1500);

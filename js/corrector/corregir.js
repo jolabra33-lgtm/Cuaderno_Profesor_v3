@@ -120,18 +120,37 @@ window.cxToggleEstadisticas=()=>{ state.ui.cxVerEstadisticas=!state.ui.cxVerEsta
 /* Desplegable de puntuación de un ítem (de 0,05 en 0,05 hasta el máximo) para poder corregir solo con el ratón.
    Los valores van con punto (cxSetItemScore los acepta) y se muestran con coma. «NP» aplica la marca
    «No presentado» a todo el examen del alumno/a (cuenta como 0). Si la nota guardada no cae en la
-   rejilla de 0,05 (p. ej. 0,33 de antes), se añade como opción para no perderla. */
+   rejilla de 0,05 (p. ej. 0,33 de antes), se añade como opción para no perderla.
+   Rapidez: un examen largo tiene más de mil opciones en pantalla y la mitad del tiempo de cada clic se iba en
+   volver a crearlas. Por eso el desplegable se pinta solo con «—», «NP» y el valor guardado, y la lista completa
+   se rellena en el momento en que se va a usar (al tocarlo, pulsarlo o llegar a él con el teclado):
+   cxRellenarPuntuacion(), llamada desde los avisos de más abajo. */
 function cxSelectPuntuacionHTML(max,v,clase,attrs,np){
   max=Number(max)||0;
   const pasos=Math.floor(max*20+1e-9);
   if(pasos>1000) return `<input class="in miniw ${clase||""}" type="text" inputmode="decimal" autocomplete="off" style="width:70px" value="${v==null?'':String(v).replace('.',',')}" ${attrs}>`;
+  const actual=np||v==null||v===""?null:Number(v);
+  const opts=actual!=null&&isFinite(actual)?`<option value="${actual}" selected>${cxFmtPts(actual)}</option>`:"";
+  return `<select class="in miniw ${clase||""}" style="width:84px" aria-label="Puntuación (máximo ${cxFmtPts(max)})" data-cx-max="${max}" ${attrs}>${cxOpcionesFijasHTML(actual,np)}${opts}</select>`;
+}
+function cxOpcionesFijasHTML(actual,np){
+  return `<option value=""${actual==null&&!np?" selected":""}>—</option><option value="NP"${np?" selected":""} title="No presentado: cuenta como 0">NP</option>`;
+}
+/* Lista completa de puntuaciones de un desplegable creado por cxSelectPuntuacionHTML (solo la primera vez). */
+function cxRellenarPuntuacion(sel){
+  if(!sel || sel.tagName!=="SELECT" || !sel.hasAttribute("data-cx-max") || sel.hasAttribute("data-cx-lleno")) return;
+  sel.setAttribute("data-cx-lleno","1");
+  const max=Number(sel.getAttribute("data-cx-max"))||0, pasos=Math.floor(max*20+1e-9);
+  const np=sel.value==="NP", actual=np||sel.value===""?null:Number(sel.value);
   const vals=[]; for(let i=0;i<=pasos;i++) vals.push(Math.round(i*5)/100);
   if(Math.abs(vals[vals.length-1]-max)>1e-9) vals.push(max);
-  const actual=np||v==null||v===""?null:Number(v);
   if(actual!=null&&isFinite(actual)&&!vals.some(x=>Math.abs(x-actual)<1e-9)){ vals.push(actual); vals.sort((a,b)=>a-b); }
-  const opts=vals.map(x=>`<option value="${x}"${actual!=null&&Math.abs(x-actual)<1e-9?" selected":""}>${cxFmtPts(x)}</option>`).join("");
-  return `<select class="in miniw ${clase||""}" style="width:84px" aria-label="Puntuación (máximo ${cxFmtPts(max)})" ${attrs}><option value=""${actual==null&&!np?" selected":""}>—</option><option value="NP"${np?" selected":""} title="No presentado: cuenta como 0">NP</option>${opts}</select>`;
+  sel.innerHTML=cxOpcionesFijasHTML(actual,np)+vals.map(x=>`<option value="${x}"${actual!=null&&Math.abs(x-actual)<1e-9?" selected":""}>${cxFmtPts(x)}</option>`).join("");
 }
+// Antes de que se abra la lista (ratón, dedo o lápiz) o de que se use con el teclado (Tab, flechas, Intro).
+["pointerdown","mousedown","touchstart","focusin","keydown"].forEach(tipo=>document.addEventListener(tipo,e=>{
+  const t=e.target; if(t && t.tagName==="SELECT") cxRellenarPuntuacion(t);
+},{capture:true,passive:true}));
 function cxNodoCorregirHTML(sec,depth,sc,alId,actId){
   const k=cxElegirEf(sec);
   const ev=cxEvalNodo(sec,sc);

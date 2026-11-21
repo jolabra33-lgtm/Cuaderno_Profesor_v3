@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 jobs:
   pruebas:
-    # Versión fija: «ubuntu-latest» pasó a Ubuntu 26.04 y Playwright 1.56 no instala Chromium ahí.
+    # Versión fija de Ubuntu (con soporte hasta 2029): así una subida de «ubuntu-latest» no deja las pruebas en rojo
+    # sin haber tocado nada. Playwright va fijado en package.json; al actualizarlo, comprueba que `npm test` sigue en verde.
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

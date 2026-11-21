@@ -23,9 +23,9 @@ function renderActividades(grupo){
       ${prog?"":`<input class="in" id="fSdA" placeholder="Situación de Aprendizaje (opcional, ej. SdA 1)" value="${esc(f.sda||'')}">`}
     </div>
     <div class="grid" style="margin-bottom:14px">
-      <div class="flex">
-        <select class="in" id="fT">${TIPOS.map(t=>`<option ${t===f.tipo?"selected":""}>${t}</option>`).join("")}</select>
-        <select class="in" id="fB">${grupo.bloques.map(b=>`<option value="${b.id}" ${b.id===f.bloqueId?"selected":""}>${esc(b.label)} (${b.peso} %)</option>`).join("")}</select>
+      <div class="flex" style="min-width:0">
+        <select class="in" id="fT" style="max-width:100%">${TIPOS.map(t=>`<option ${t===f.tipo?"selected":""}>${t}</option>`).join("")}</select>
+        <select class="in" id="fB" style="max-width:100%">${grupo.bloques.map(b=>`<option value="${b.id}" ${b.id===f.bloqueId?"selected":""}>${esc(b.label)} (${b.peso} %)</option>`).join("")}</select>
         <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:var(--mut)">
           <input type="checkbox" id="fE" ${f.esExamen?"checked":""}> Es examen / prueba objetiva (nota cuantitativa propia)
         </label>

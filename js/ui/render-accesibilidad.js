@@ -37,13 +37,16 @@ function accesibilidadPasada(raiz){
     if(!el.hasAttribute("tabindex")) el.setAttribute("tabindex","0");
   });
   // v3: campos y desplegables sin nombre: el de su columna o el del texto que los acompaña.
+  // El texto de cada cabecera se calcula una sola vez por pasada (en una tabla de 30 filas se repetía 30 veces).
+  const cabeceras=new Map();
   raiz.querySelectorAll('input:not([type="hidden"]):not([aria-label]),select:not([aria-label]),textarea:not([aria-label])').forEach(el=>{
     if(el.title || el.getAttribute("aria-labelledby") || (el.labels && el.labels.length)) return;
-    const n=_a11yNombreCampo(el); if(n) el.setAttribute("aria-label",n);
+    const n=_a11yNombreCampo(el,cabeceras); if(n) el.setAttribute("aria-label",n);
   });
 }
 function _a11yTexto(nodo){
-  const c=nodo.cloneNode(true); c.querySelectorAll("button,select,input").forEach(x=>x.remove());
+  let c=nodo;
+  if(nodo.querySelector("button,select,input")){ c=nodo.cloneNode(true); c.querySelectorAll("button,select,input").forEach(x=>x.remove()); }
   return (c.textContent||"").replace(/\s+/g," ").trim();
 }
 /* Campos sin texto visible al lado: el contexto lo da la pantalla, así que el nombre se pone aquí. */
@@ -52,7 +55,7 @@ const _A11Y_CAMPOS={fT:"Tipo de actividad",fB:"Bloque de calificación",gpNombre
   repGrupoSel:"Periodo del informe",trimSel:"Periodo",agMesInput:"Elegir mes",gpProgramacion:"Programación de aula del grupo",
   agFiltroSel:"Filtrar el calendario por grupo",agFiltroTipoSel:"Filtrar el calendario por tipo",rfFiltroInput:"Filtrar planes de refuerzo",
   rpFiltroInput:"Filtrar planes de repetición",reFiltroInput:"Filtrar reuniones"};
-function _a11yNombreCampo(el){
+function _a11yNombreCampo(el,cabeceras){
   if(el.id && _A11Y_CAMPOS[el.id]) return _A11Y_CAMPOS[el.id];
   const td=el.closest("td");
   if(td){
@@ -60,7 +63,9 @@ function _a11yNombreCampo(el){
     if(filas && filas.length){
       let x=0; for(let c=td.previousElementSibling;c;c=c.previousElementSibling) x+=c.colSpan||1;
       for(let i=filas.length-1;i>=0;i--){ let pos=0;
-        for(const th of filas[i].cells){ const w=th.colSpan||1; if(x>=pos && x<pos+w){ const t=_a11yTexto(th); if(t) return t; break; } pos+=w; } }
+        for(const th of filas[i].cells){ const w=th.colSpan||1; if(x>=pos && x<pos+w){
+          let t=cabeceras && cabeceras.get(th); if(t==null){ t=_a11yTexto(th); if(cabeceras) cabeceras.set(th,t); }
+          if(t) return t; break; } pos+=w; } }
     }
   }
   if(el.placeholder) return el.placeholder;
