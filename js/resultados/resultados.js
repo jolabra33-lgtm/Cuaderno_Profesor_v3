@@ -105,6 +105,7 @@ function renderResultados(grupo){
     <div class="flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
       <h2 style="font-size:15px">Toda la clase</h2>
       <div class="flex res-acciones">
+        <button class="ghost" style="border:1px solid var(--line)" title="Un informe por alumno/a para enviarlo a la familia: se abre en el móvil, organizado por pestañas (de la evaluación elegida en «Informes de»)" onclick="pfDescargarGrupo(state.ui.resInfFinal===true?'final':state.ui.trim)">📱 Informes para las familias</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Tabla de color: el logro de cada alumno/a en cada criterio de esta evaluación" onclick="mapaVista(true)">▦ Mapa de criterios</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarCSVGrupo()" title="Hoja de cálculo con la media y la nota de acta (entera) de cada alumno/a, lista para pasar a ITACA">Exportar notas (CSV)</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesTodos()">Exportar todos los informes</button>
@@ -269,12 +270,15 @@ function renderResultados(grupo){
 
   <div class="card">
     <h2 style="font-size:15px">Comentarios a la calificación</h2>
-    <p class="sub">Específico de ${TRIMESTRES[trim]}. Se imprime en el informe individual, junto a la nota de este periodo.</p>
+    <p class="sub">Específico de ${TRIMESTRES[trim]}. Es opcional: si lo escribes, sale en el informe individual y en el informe para la familia (📱), junto a la nota de este periodo.</p>
     <textarea class="in" id="resComentario" style="width:100%;min-height:90px;resize:vertical" placeholder="Comentario sobre la calificación de ${TRIMESTRES[trim]}…">${esc((al.comentariosEval&&al.comentariosEval[trim])||"")}</textarea>
     <div class="flex" style="gap:6px;margin-top:8px;flex-wrap:wrap">
       <button class="ghost small" style="border:1px solid var(--line)" onclick="comSugerir('${al.id}',${trim},'es')" title="Redacta un borrador a partir de su nota, sus competencias, entregas y asistencia. Revísalo antes de imprimir.">💬 Sugerir comentario</button>
       <button class="ghost small" style="border:1px solid var(--line)" onclick="comSugerir('${al.id}',${trim},'va')" title="Redacta un esborrany en valencià. Revisa'l abans d'imprimir.">💬 Suggerir comentari (valencià)</button>
     </div>
+    <label for="resComentarioFinal" style="display:block;font-weight:700;font-size:13.5px;margin-top:14px">Comentario final de curso (opcional)</label>
+    <p class="sub" style="margin:2px 0 6px">Sale en el informe final y en el informe final para la familia, junto a la nota final.</p>
+    <textarea class="in" id="resComentarioFinal" style="width:100%;min-height:70px;resize:vertical" placeholder="Valoración del curso completo…">${esc(al.comentarioFinal||"")}</textarea>
   </div>
 
   <div class="card">
@@ -282,6 +286,7 @@ function renderResultados(grupo){
     ${renderDistribucionHTML(grupo,trim)}
   </div>`;
   document.getElementById("resComentario").addEventListener("change",e=>{ al.comentariosEval[trim]=e.target.value; save(); });
+  document.getElementById("resComentarioFinal").addEventListener("change",e=>{ al.comentarioFinal=e.target.value; save(); });
 }
 /* Selector «Informes de» de Resultados. Una evaluación (1.ª, 2.ª, 3.ª) es el mismo «Periodo» de la cabecera: cambia la
    tabla y todos los informes a la vez. «Evaluación final» solo cambia el informe de grupo y los detallados (la tabla

@@ -292,3 +292,12 @@ Las tres usan los cálculos de siempre (`notaTrimestre`, `notaActa`, `scoreCrite
 - `modoRedondeoActa(grupo)` (`js/nucleo/utilidades.js`) mira primero `state.ajustesNota.redondeoPorCurso[grupo.catalogoKey]` y, si el curso no tiene regla propia, la general `state.ajustesNota.redondeoActa` (la de siempre: una copia antigua no cambia ninguna nota). Sin grupo, usa el grupo abierto. `notaActa(v,grupo)` se la pasa; en las pantallas de varios grupos (Inicio, Memoria, Resumen) se llama siempre con el grupo.
 - Ajustes del grupo guarda la regla para su materia y curso, dice qué grupos la comparten y enseña la de los demás cursos («Tus otros cursos»). La migración descarta reglas no válidas.
 - Prueba: `redondeo-por-curso`.
+
+### Informe para la familia en el móvil (noviembre de 2026)
+
+- `js/informes/panel-familias.js`: `panelFamiliaHTML(grupo,al,periodo)` genera un documento HTML completo (periodo 0–2 o `"final"`) con 8 pestañas: Resumen, De dónde sale la nota (`resumenCalculoNotaHTML`), Pruebas objetivas (nota y `examComentarios[al][act]`, nunca los de cada pregunta), Trabajos de clase (por SdA: nota, NP, exento o sin nota), Competencias (criterios, CE y CC; en el final, media anual con `mediaAnualPonderada`), Asistencia y Convivencia (en las fechas de la evaluación de Ajustes; sin fechas, todo el curso) e Informe (`informeAlumnoBodyHTML` / `informeFinalAlumnoBodyHTML`).
+- **Sin JavaScript** (la vista previa de adjuntos del iPhone no lo ejecuta): las pestañas son `input[type=radio]` + `label` + CSS generado para N pestañas. Sin recursos externos. `@media print` muestra solo la pestaña Informe.
+- Botones: «📱 Para la familia» en la ventana del ojo (`pfDescargarAlumno(alId,periodo)`) y «📱 Informes para las familias» en Resultados (`pfDescargarGrupo`, periodo de «Informes de»), que guarda un `.zip` sin compresión hecho a mano (`pfZip`, CRC-32, nombres UTF-8). Nombres de archivo sin tildes (`pfSinTildes`).
+- **Comentario final de curso**: `alumno.comentarioFinal` (en `normalizarAlumno`; «Empezar curso nuevo» lo vacía), editable en el informe de cada alumno de Resultados; sale en el informe final y en el panel final.
+- La tabla «De dónde sale la nota» (`rsnCSS`) se compacta por debajo de 600 px (también en la app).
+- Prueba: `panel-familias`.

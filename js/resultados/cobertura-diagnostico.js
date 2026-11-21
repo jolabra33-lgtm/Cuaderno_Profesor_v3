@@ -141,14 +141,12 @@ window.aplicarArreglosDiagnostico=async()=>{
 };
 
 /* v3 · Tarjeta de novedades: se ve una vez tras actualizar, y se cierra. */
-const NOVEDADES_VERSION="v3-7";
+const NOVEDADES_VERSION="v3-8";
 window.cerrarNovedades=()=>{ state.novedadesVistas=NOVEDADES_VERSION; save(); render(); };
 const NOVEDADES_V3=[
-  ["🚦 Alumnado en riesgo","aquí en Inicio: quien va suspendiendo, quien ha bajado 2 puntos o más y quien acumula «No presentado», para actuar antes de la sesión de evaluación."],
-  ["▦ Mapa de criterios","en Resultados: una tabla de color con el logro de cada alumno/a en cada criterio de la evaluación. Se puede imprimir."],
-  ["🙋 Autoevaluación y coevaluación","en Corregir: hojas para el alumnado con la rúbrica del examen y, en cada corrección, la comparación con tu nota. No cuenta en la nota."],
-  ["📎 Modelo y Propuesta Pedagógica","en cada Programación de Aula, guarda el PDF (se ve sin conexión) y el enlace de OneDrive."],
-  ["🧭 Aspecto de Geografía e Historia","títulos de atlas, mapa de fondo, rosa de los vientos e icono nuevo."]
+  ["📱 Informe para la familia en el móvil","en Resultados («📱 Informes para las familias», todo el grupo en un .zip) o en el ojo 👁️ de cada alumno/a: un archivo por evaluación o de final de curso, con pestañas (Resumen, De dónde sale la nota, Pruebas, Trabajos, Competencias, Asistencia, Convivencia e Informe)."],
+  ["💬 Comentario final de curso","en el informe de cada alumno/a (Resultados), junto al de cada evaluación. Sale en el informe final."],
+  ["🔢 Redondeo por curso","en Ajustes del grupo: cada curso puede redondear la nota de acta a su manera."]
 ];
 function novedadesHTML(){
   if(state.novedadesVistas===NOVEDADES_VERSION) return "";

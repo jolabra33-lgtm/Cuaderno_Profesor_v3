@@ -1470,4 +1470,61 @@ export const PRUEBAS = [
     t.ok((await p.textContent('#tabContent')).includes('2.º ESO: Redondeo normal, pero sin aprobar por redondeo'), '«Tus otros cursos» enseña la regla de cada curso');
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
+
+  { nombre: 'panel-familias', descripcion: 'Informe para la familia: un .html por alumno/a con pestañas que funcionan sin JavaScript, el informe oficial al imprimir, final de curso y .zip del grupo', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const [A, B] = await cuadernoConGrupo(p, t.url, { nombres: ['García López, Lucía', 'Pérez Ruiz, Luis'] });
+    await p.evaluate(([A, B]) => { const g = state.grupos[0], c = getCatalogo('GeH_1ESO').ces[0].criterios.map(x => x.id);
+      g.actividades = [{ id: 'e1', nombre: 'Examen Prehistoria', trimestre: 0, bloqueId: 'b0', esExamen: true, criterios: [{ critId: c[0], peso: 1 }] },
+        { id: 't1', nombre: 'Mapa del Neolítico', trimestre: 0, bloqueId: 'b1', esExamen: false, sda: 'SdA 1', tipo: 'Mapa', criterios: [{ critId: c[1], peso: 1 }] },
+        { id: 't2', nombre: 'Exposición oral', trimestre: 0, bloqueId: 'b1', esExamen: false, sda: 'SdA 1', criterios: [{ critId: c[1], peso: 1 }] },
+        { id: 'e2', nombre: 'Examen Egipto', trimestre: 1, bloqueId: 'b0', esExamen: true, criterios: [{ critId: c[0], peso: 1 }] }];
+      g.notas = { [A]: { e1: { [c[0]]: 7 }, t1: { [c[1]]: 8 }, e2: { [c[0]]: 9 } } }; g.notasCuant = { [A]: { e1: 7, e2: 9 } };
+      g.marcas = { [A]: { t2: 'NP' } };
+      g.examComentarios = { [A]: { e1: 'Repasa <b>las fechas</b>', 'e1|i1': 'COMENTARIO DE PREGUNTA' } };
+      g.alumnos[0].comentariosEval[0] = 'Trabaja con constancia.'; g.alumnos[0].comentarioFinal = 'Un curso excelente.'; g.alumnos[0].observaciones = 'OBSERVACION PRIVADA';
+      g.asistencia = { '2026-10-03': { [A]: { estado: 'falta_no_justificada', nota: '' } } };
+      g.convivencia = [{ id: 'cv1', alumnoId: A, fecha: '2026-10-15', tipo: 'rc', descripcion: 'Ayuda a un compañero.' }];
+      state.ui.trim = 0; state.ui.appMode = 'grupo'; state.ui.tab = 'resultados'; save(); render(); }, [A, B]);
+    await esperar(300);
+    // Un alumno/a, desde la ventana del ojo
+    await p.locator('tbody tr').first().locator('button[title^="Ver la evolución"]').click(); await esperar(300);
+    const [d1] = await Promise.all([p.waitForEvent('download'), p.click('button:has-text("📱 Para la familia")')]);
+    const h = fs.readFileSync(await d1.path(), 'utf8');
+    t.ok(d1.suggestedFilename() === 'Informe_1a_evaluacion_1_ESO_A_Garcia_Lopez_Lucia.html', 'nombre del archivo sin tildes, con la evaluación y el alumno/a', d1.suggestedFilename());
+    t.ok(!/<script/i.test(h) && !/(src|href)="https?:/.test(h), 'no lleva código ni carga nada de fuera');
+    t.ok(['Resumen', 'De dónde sale la nota', 'Pruebas objetivas', 'Trabajos de clase', 'Competencias', 'Asistencia', 'Convivencia', 'Informe'].every(x => h.includes(`>${x}</label>`)), 'tiene las ocho pestañas');
+    t.ok(h.includes('Trabaja con constancia.') && h.includes('Repasa <b>las fechas</b>') && h.includes('No presentado') && h.includes('3/10/2026') && h.includes('Reconocimiento positivo') && h.includes('De dónde sale la nota · 1ª evaluación') && h.includes('Informe individual de evaluación'),
+      'lleva el comentario de la evaluación, el del examen, el NP, la asistencia, la convivencia, el cálculo de la nota y el informe oficial');
+    t.ok(!h.includes('OBSERVACION PRIVADA') && !h.includes('COMENTARIO DE PREGUNTA') && !h.includes('Pérez Ruiz') && !h.includes('Examen Egipto'), 'no lleva observaciones privadas, ni comentarios por pregunta, ni a otros alumnos, ni otras evaluaciones');
+    // Abierto como lo haría la vista previa de un móvil: sin JavaScript
+    const tmp = path.join(os.tmpdir(), 'panel-' + Date.now() + '.html'); fs.writeFileSync(tmp, h);
+    const mctx = await t.navegador.newContext({ viewport: { width: 390, height: 800 }, javaScriptEnabled: false });
+    const m = await mctx.newPage(); await m.goto('file://' + tmp);
+    const visibles = async () => m.evaluate(() => [...document.querySelectorAll('.pf-p')].map((s, i) => getComputedStyle(s).display !== 'none' ? i : -1).filter(i => i >= 0).join());
+    let ok = await visibles() === '0';
+    for (const i of [2, 5, 7]) { await m.click(`label[for=pf-${i}]`); ok = ok && await visibles() === String(i); }
+    t.ok(ok, 'sin JavaScript, cada pestaña muestra solo lo suyo');
+    t.ok(await m.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'cabe en la pantalla del móvil');
+    await m.emulateMedia({ media: 'print' });
+    t.ok(await visibles() === '7' && await m.evaluate(() => getComputedStyle(document.querySelector('.pf-nav')).display === 'none'), 'al imprimir sale solo el informe oficial');
+    await mctx.close(); fs.unlinkSync(tmp);
+    // Final de curso
+    await p.click('button:has-text("Evaluación final")'); await esperar(300);
+    const [d2] = await Promise.all([p.waitForEvent('download'), p.click('button:has-text("📱 Para la familia")')]);
+    const f = fs.readFileSync(await d2.path(), 'utf8');
+    t.ok(d2.suggestedFilename().startsWith('Informe_Final_de_curso_') && f.includes('Un curso excelente.') && f.includes('Examen Egipto') && f.includes('De dónde sale la nota · Nota final de curso') && f.includes('Informe final de curso'), 'el panel final lleva todo el curso, el comentario final y el informe final');
+    await p.evaluate(() => cerrarEvolucionAlumno()); await esperar(200);
+    // Todo el grupo en un .zip
+    const [d3] = await Promise.all([p.waitForEvent('download'), p.click('button:has-text("📱 Informes para las familias")')]);
+    const z = fs.readFileSync(await d3.path());
+    const eocd = z.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+    const n = z.readUInt16LE(eocd + 10), nombres = [];
+    let off = z.readUInt32LE(eocd + 16);
+    for (let i = 0; i < n; i++) { const ln = z.readUInt16LE(off + 28); nombres.push(z.slice(off + 46, off + 46 + ln).toString('utf8')); off += 46 + ln; }
+    const primero = z.slice(30 + z.readUInt16LE(26), 30 + z.readUInt16LE(26) + 15).toString('utf8');
+    t.ok(d3.suggestedFilename() === 'Informes_familias_1a_evaluacion_1_ESO_A.zip' && n === 2 && nombres.join() === 'Informe_1a_evaluacion_1_ESO_A_Garcia_Lopez_Lucia.html,Informe_1a_evaluacion_1_ESO_A_Perez_Ruiz_Luis.html' && primero === '<!DOCTYPE html>',
+      'todo el grupo en un .zip, un informe por alumno/a', d3.suggestedFilename() + ' ' + nombres.join());
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
 ];

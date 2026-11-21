@@ -53,6 +53,7 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `guia-descargable` | La guía: índice sin enlaces rotos y «⬇ Descargar» genera un único .html que se abre sin servidor, con el enlace a la app |
 | `informes-por-evaluacion` | Resultados: «Informes de» mueve la tabla y los informes a la vez; el informe final (uno o todo el grupo) lleva «De dónde sale la nota» de la nota final |
 | `redondeo-por-curso` | El redondeo de la nota de acta se elige por curso (materia y curso): lo comparten sus grupos y una copia antigua conserva su regla |
+| `panel-familias` | Informe para la familia: contenido (y lo que no debe llevar), pestañas sin JavaScript, solo el informe oficial al imprimir, final de curso y .zip del grupo |
 | `accesibilidad` | WCAG 2 A/AA (axe-core) en todas las pestañas y modos, y contraste |
 | `actualizacion` | Aviso «Hay una versión nueva · Actualizar» |
 

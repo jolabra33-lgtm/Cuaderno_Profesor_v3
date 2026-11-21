@@ -59,6 +59,7 @@ function evolucionModalHTML(grupo,al){
           <div style="font-weight:700;font-size:15px">👁️ ${esc(al.nombre)}</div>
           <div class="flex" style="flex-shrink:0;flex-wrap:wrap">
             ${entregaBtn}
+            <button class="ghost" style="border:1px solid var(--line)" title="Informe para la familia: un archivo que se abre en el móvil, organizado por pestañas" onclick="pfDescargarAlumno('${al.id}',${periodoArg})">📱 Para la familia</button>
             <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformeDetallado('${al.id}',${periodoArg})">🖨️ Imprimir</button>
             <button class="modal-close" onclick="cerrarEvolucionAlumno()" aria-label="Cerrar">×</button>
           </div>
@@ -154,6 +155,15 @@ function rsnCSS(){
     .rsn .rsn-final{ font-size:18px; }
     .rsn .rsn-aviso{ padding:8px 16px 11px; font-size:11.5px; color:var(--rm); border-top:1px solid var(--rl); background:#fff; }
     .rsn .pill{ display:inline-block; padding:2px 9px; border-radius:10px; font-size:12px; font-weight:600; margin-left:8px; vertical-align:middle; }
+    /* Móvil (y el informe para la familia): más compacta, y las cuentas pueden partirse en dos líneas. */
+    @media (max-width:600px){
+      .rsn table{ font-size:12px; }
+      .rsn th, .rsn td, .rsn tfoot td, .rsn tfoot tr.rsn-extra td{ padding-left:8px; padding-right:8px; }
+      .rsn tr.rsn-act td:first-child, .rsn tr.rsn-calc td:first-child{ padding-left:14px; }
+      .rsn .rsn-num{ white-space:normal; }
+      .rsn tr.rsn-calc td{ font-size:11.5px; }
+      .rsn .rsn-final{ font-size:16px; }
+    }
   </style>`;
 }
 /* Media de una lista {v,w}: «(7 + 9) / 2 = 8» o, con pesos distintos, «(7 × 40 + 9 × 60) / 100 = 8,2». */

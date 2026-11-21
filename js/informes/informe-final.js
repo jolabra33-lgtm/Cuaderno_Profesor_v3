@@ -63,7 +63,7 @@ function informeFinalAlumnoBodyHTML(grupo,al,opts){
     <div class="meta">${esc(cat.materia)} · ${esc(cat.curso)} · Grupo ${esc(grupo.nombre)} · Curso completo · Generado el ${new Date().toLocaleDateString("es-ES")}</div>
     <h2>Alumno/a: ${esc(al.nombre)}</h2>
     ${htmlAlertaAsimetria}
-    <table><thead><tr><th>Periodo</th><th>Nota</th><th>Calificación</th><th>Comentario a la calificación</th></tr></thead><tbody>${filas3}<tr><td><strong>Nota final</strong></td><td><strong>${notaEvalInformeHTML(grupo,al.id,"final")}</strong></td><td>${pillCuant(nf)}</td><td></td></tr></tbody></table>
+    <table><thead><tr><th>Periodo</th><th>Nota</th><th>Calificación</th><th>Comentario a la calificación</th></tr></thead><tbody>${filas3}<tr><td><strong>Nota final</strong></td><td><strong>${notaEvalInformeHTML(grupo,al.id,"final")}</strong></td><td>${pillCuant(nf)}</td><td>${String(al.comentarioFinal||"").trim()?esc(al.comentarioFinal):""}</td></tr></tbody></table>
     <p style="font-size:12px;color:#666;margin-top:-2px">La nota final es la media ponderada de las evaluaciones con datos disponibles.</p>
     <div style="margin-top:18px">${resumenCalculoNotaHTML(grupo,al,"final")}</div>
     ${htmlAsistenciaFinal}

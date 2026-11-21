@@ -120,6 +120,7 @@ function normalizarAlumno(a){
   if(a.observaciones===undefined) a.observaciones=a.comentario||"";
   if(!Array.isArray(a.comentariosEval)) a.comentariosEval=["","",""];
   while(a.comentariosEval.length<3) a.comentariosEval.push("");
+  if(typeof a.comentarioFinal!=="string") a.comentarioFinal="";   // comentario de la nota final (informe final)
   delete a.comentario;
   if(a.apellidos===undefined || a.nombreP===undefined){
     const partes=splitApellidosNombre(a.nombre||"");
