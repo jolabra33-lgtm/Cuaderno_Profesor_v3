@@ -1396,4 +1396,23 @@ export const PRUEBAS = [
     t.ok(ops.join('|') === '—|Experto (10)|Aprendiz (5)', 'en la tarjeta, con rúbrica por niveles se elige el nivel (en el orden de la rúbrica)', ops.join('|'));
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
+
+  { nombre: 'guia-descargable', descripcion: 'Guía de uso: «Descargar» guarda un único .html que se abre solo, sin conexión, con el enlace a la app', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await p.goto(t.url + '/guia_mejorada.html'); await esperar(500);
+    const indice = await p.evaluate(() => [...document.querySelectorAll('nav.toc a[href^="#"]')].filter(a => !document.getElementById(a.getAttribute('href').slice(1))).map(a => a.getAttribute('href')));
+    t.ok(!indice.length, 'cada entrada del índice lleva a una sección que existe', indice.join(', '));
+    const [desc] = await Promise.all([p.waitForEvent('download'), p.click('#guiaDescargar')]);
+    const html = fs.readFileSync(await desc.path(), 'utf8');
+    t.ok(desc.suggestedFilename() === 'Guia-Cuaderno-del-profesor.html' && html.includes('26. Preguntas frecuentes') && html.includes(`id="guiaInicio" href="${t.url}/index.html"`), 'descarga la guía completa con el enlace a la app', [desc.suggestedFilename(), html.includes('26. Preguntas frecuentes'), html.includes(`id="guiaInicio" href="${t.url}/index.html"`), html.length].join(' '));
+    t.ok(!/<(script|link|img)[^>]+(src|href)="(?!https?:|#|data:)[^"]+"/i.test(html.replace(/id="guiaInicio" href="[^"]+"/, '')), 'no necesita ningún otro archivo');
+    // Abierta como archivo suelto, sin servidor.
+    const tmp = path.join(os.tmpdir(), 'guia-' + Date.now() + '.html'); fs.writeFileSync(tmp, html);
+    const q = await nuevaPagina(t.contexto); await q.goto('file://' + tmp); await esperar(300);
+    t.ok((await q.textContent('h1')).includes('Guía de uso') && await q.locator('#guiaInicio').isVisible() && await q.locator('h2#privacidad').count() === 1, 'el archivo descargado se abre solo y conserva el botón «Inicio» a la app');
+    fs.unlinkSync(tmp);
+    await p.emulateMedia({ media: 'print' });
+    t.ok(!(await p.locator('#guiaDescargar').isVisible()), 'al imprimir no salen los botones');
+    t.ok(!p.errores.length && !q.errores.length, 'sin errores de JavaScript', p.errores.concat(q.errores).join('; '));
+  } },
 ];
