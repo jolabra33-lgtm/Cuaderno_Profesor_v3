@@ -65,6 +65,7 @@ function informeFinalAlumnoBodyHTML(grupo,al,opts){
     ${htmlAlertaAsimetria}
     <table><thead><tr><th>Periodo</th><th>Nota</th><th>Calificación</th><th>Comentario a la calificación</th></tr></thead><tbody>${filas3}<tr><td><strong>Nota final</strong></td><td><strong>${notaEvalInformeHTML(grupo,al.id,"final")}</strong></td><td>${pillCuant(nf)}</td><td></td></tr></tbody></table>
     <p style="font-size:12px;color:#666;margin-top:-2px">La nota final es la media ponderada de las evaluaciones con datos disponibles.</p>
+    <div style="margin-top:18px">${resumenCalculoNotaHTML(grupo,al,"final")}</div>
     ${htmlAsistenciaFinal}
     ${htmlActsPDF}
     <h2>Competencias clave trabajadas (media del curso)</h2>

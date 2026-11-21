@@ -23,7 +23,7 @@ function renderCorCorregir(grupo){
     return `<tr>
       ${mbCeldaHTML(act,al)}
       <td>${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}${cxVarianteDeAlumno(act,al.id)?(v=>` <span class="badge" title="${v.tipo==="ausencia"?"Hace un examen alternativo (otro día)":"Hace un examen adaptado"} y se corrige con su propia rúbrica">${v.tipo==="ausencia"?"📅 ":""}${esc(v.nombre||"Adaptada")}${v.fecha?" · "+esc(cxFechaCorta(v.fecha)):""}</span>`)(cxVarianteDeAlumno(act,al.id)):""}</td>
-      <td style="font-weight:600">${hecho?fmt(vc):"—"}${extraBadgeHTML(grupo,al.id,act)}</td>
+      <td style="font-weight:600">${hecho?fmt(vc):"—"}${extraBadgeHTML(grupo,al.id,act)}${aeBadgeHTML(grupo,al.id,act)}</td>
       <td>${hecho?pillCuant(vc):'<span class="badge">Sin corregir</span>'}</td>
       <td><button class="btn small" onclick="cxIrAlumno('${al.id}')">${hecho?"Revisar":"Corregir"}</button>${hecho?` <button class="ghost small" style="border:1px solid var(--line)" title="Imprimir la rúbrica de este alumno/a" onclick="cxImprimirRubrica('${al.id}','${act.id}')">🖨️</button> <button class="ghost small" style="border:1px solid var(--line)" title="Imprimir la rúbrica resumida de este alumno/a: solo puntuaciones y anotaciones, para gastar menos papel" onclick="cxImprimirRubrica('${al.id}','${act.id}',true)">📄 Resumida</button>`:""}</td>
     </tr>`;
@@ -43,6 +43,7 @@ function renderCorCorregir(grupo){
         <button class="ghost" style="border:1px solid var(--line)" title="Corregir una pregunta de todo el grupo seguida (opcional)" onclick="exTogglePreg()">↕ Por ${cxEsNiveles(act.rubrica)?"categoría":"pregunta"}</button>
         <select class="in" id="cxExamSel">${exams.map(a=>`<option value="${a.id}" ${a.id===act.id?"selected":""}>${esc(a.nombre)}</option>`).join("")}</select>
         <button class="ghost" style="border:1px solid var(--line)" onclick="cxIrEditor('${act.id}')">✏️ Editar rúbrica</button>
+        <button class="ghost" style="border:1px solid var(--line)" title="Hojas de autoevaluación o coevaluación con la rúbrica de este examen, para el alumnado (no cuentan en la nota)" onclick="aeAbrirHojas('${act.id}')">🙋 Autoevaluación</button>
         ${act.recupera?"":`<button class="ghost" style="border:1px solid var(--line)" title="Sumar puntos a la nota de este examen (p. ej. +0,5 por presentarse voluntario/a)" onclick="abrirExtrasActividad('${act.id}')">➕ Puntos extra</button>`}
         ${notas.length?`<button class="ghost" style="border:1px solid var(--line)" onclick="cxImprimirRubricasTodos('${act.id}')">🖨️ Imprimir rúbricas</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Rúbricas resumidas de todo el alumnado corregido: solo puntuaciones y anotaciones, para gastar menos papel" onclick="cxImprimirRubricasTodos('${act.id}',true)">📄 Rúbricas resumidas</button>`:""}
@@ -56,6 +57,7 @@ function renderCorCorregir(grupo){
       <div><div style="font-size:12.5px;color:var(--mut)">Media</div><span class="big" style="font-size:24px">${fmt(media)}</span></div>
       <div><div style="font-size:12.5px;color:var(--mut)">Aprobados</div><span class="big" style="font-size:24px">${aprob}/${notas.length}</span></div>
     </div>`:""}
+    ${aeResumenGrupoHTML(grupo,act)}
   </div>
   <div class="card">
     <div class="flex" style="justify-content:space-between;align-items:center">
@@ -227,6 +229,7 @@ function renderCxGradingAlumno(grupo,act,al){
     <p class="sub">Se calcula sola a partir de los ítems vinculados a cada criterio. Se guarda automáticamente en Evaluación por Competencias.</p>
     ${critPanel}
   </div>
+  ${aeTarjetaHTML(grupo,act,al)}
   <div class="card">
     <h2 style="font-size:15px">Comentario (opcional)</h2>
     <div id="cxComentario">${comentEditorHTML(grupo.examComentarios?.[al.id]?.[act.id]||"",`cxComentGeneral('${al.id}','${act.id}',comentValorDe(this))`,"Comentario para este alumno/a en este examen…","cx-coment-general")}</div>

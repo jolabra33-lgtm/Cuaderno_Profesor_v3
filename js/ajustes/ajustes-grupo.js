@@ -3,11 +3,22 @@
    js/ajustes/ajustes-grupo.js
    ============================================================================ */
 
+/* Regla de redondeo del curso del grupo (materia y curso): la comparten sus grupos. Ver modoRedondeoActa(). */
 window.setRedondeoActa=v=>{
+  const grupo=grupoActual(); if(!grupo||!REDONDEO_MODOS.some(m=>m.id===v)) return;
   if(!state.ajustesNota) state.ajustesNota={};
-  state.ajustesNota.redondeoActa=v; save(); render();
-  mostrarToast("✓ Regla de redondeo actualizada en todos los grupos");
+  if(!state.ajustesNota.redondeoPorCurso||typeof state.ajustesNota.redondeoPorCurso!=="object") state.ajustesNota.redondeoPorCurso={};
+  state.ajustesNota.redondeoPorCurso[grupo.catalogoKey]=v; save(); render();
+  const cat=getCatalogo(grupo.catalogoKey), n=state.grupos.filter(g=>g.catalogoKey===grupo.catalogoKey).length;
+  mostrarToast(`✓ Regla de redondeo actualizada en ${cat.materia} · ${cat.curso}${n>1?` (${n} grupos)`:""}`);
 };
+function redondeoOtrosCursosHTML(grupo){
+  const vistos=new Set([grupo.catalogoKey]), filas=[];
+  state.grupos.forEach(g=>{ if(vistos.has(g.catalogoKey)) return; vistos.add(g.catalogoKey);
+    const c=getCatalogo(g.catalogoKey), m=REDONDEO_MODOS.find(x=>x.id===modoRedondeoActa(g));
+    filas.push(`<li>${esc(c.materia)} · ${esc(c.curso)}: ${esc(m?m.label.replace(/\s*\(.*$/,""):"")}</li>`); });
+  return filas.length? `<details style="margin-top:8px"><summary class="sub" style="margin:0;cursor:pointer">Tus otros cursos</summary><ul class="sub" style="margin:6px 0 0 18px">${filas.join("")}</ul></details>` : "";
+}
 function renderAjustes(grupo){
   const idx=catIndex(grupo.catalogoKey);
   const c=document.getElementById("tabContent");
@@ -41,10 +52,11 @@ function renderAjustes(grupo){
 
   <div class="card">
     <h2>Redondeo de la nota de acta</h2>
-    <p class="sub">La calificación oficial (Insuficiente…Sobresaliente, aprobado/suspenso) sale siempre de la <strong>nota de acta</strong>, entera y sin decimales, como en ITACA. Aquí eliges cómo se pasa de la media con decimales a esa nota. Se aplica a <strong>todos tus grupos</strong>. En ESO la nota mínima de acta es 1; en Bachillerato, 0.</p>
+    <p class="sub">La calificación oficial (Insuficiente…Sobresaliente, aprobado/suspenso) sale siempre de la <strong>nota de acta</strong>, entera y sin decimales, como en ITACA. Aquí eliges cómo se pasa de la media con decimales a esa nota. Se aplica a <strong>todos tus grupos de ${esc(idx.cat.materia)} · ${esc(idx.cat.curso)}</strong>${(()=>{ const gs=state.grupos.filter(g=>g.catalogoKey===grupo.catalogoKey); return gs.length>1?` (${gs.map(g=>esc(g.nombre)).join(", ")})`:""; })()}; cada curso puede tener la suya. En ESO la nota mínima de acta es 1; en Bachillerato, 0.</p>
     <select class="in" style="min-width:260px;max-width:100%" onchange="setRedondeoActa(this.value)" aria-label="Regla de redondeo de la nota de acta">
-      ${REDONDEO_MODOS.map(m=>`<option value="${m.id}" ${modoRedondeoActa()===m.id?"selected":""}>${esc(m.label)}</option>`).join("")}
+      ${REDONDEO_MODOS.map(m=>`<option value="${m.id}" ${modoRedondeoActa(grupo)===m.id?"selected":""}>${esc(m.label)}</option>`).join("")}
     </select>
+    ${redondeoOtrosCursosHTML(grupo)}
   </div>
 
   <div class="card">

@@ -55,7 +55,9 @@
   .tabs3 span.on{background:linear-gradient(135deg,#d7b463,#b3893a);color:#fff;border-color:transparent}
   .check li{list-style:none;margin-left:-18px}
   .check li::before{content:"☐ ";color:#8a6a24;font-weight:700}
-  @media print{ header{position:static} nav.toc{break-after:page} .tip,.warn,.card,.flow .step{break-inside:avoid} }
+  /* Al saltar desde el índice, el título no queda tapado por la cabecera fija. */
+  h2[id],h3[id],h4[id]{scroll-margin-top:150px}
+  @media print{ header{position:static} .guia-botones{display:none!important} nav.toc{break-after:page} .tip,.warn,.card,.flow .step{break-inside:avoid} h2,h3,h4{break-after:avoid} }
   footer{color:var(--mut);font-size:13px;text-align:center;padding:20px;border-top:1px solid var(--line);margin-top:40px}
 </style>
 </head>
@@ -67,7 +69,11 @@
         <h1>Guía de uso</h1>
         <p class="sub">Cuaderno del profesor · Evaluación por Competencias · Corrector y diseño de exámenes · Gestor de Tutoría</p>
       </div>
-      <a href="index.html" style="flex-shrink:0;text-decoration:none;color:rgba(244,236,216,.92);border:1px solid rgba(215,180,99,.35);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;background:rgba(215,180,99,.08);white-space:nowrap">🏠 Inicio</a>
+      <div class="guia-botones" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" id="guiaDescargar" style="flex-shrink:0;text-decoration:none;color:rgba(244,236,216,.92);border:1px solid rgba(215,180,99,.35);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;background:rgba(215,180,99,.08);white-space:nowrap;cursor:pointer;font-family:inherit" title="Guarda la guía en un único archivo .html que se abre en cualquier ordenador, sin conexión">⬇ Descargar</button>
+        <button type="button" onclick="window.print()" style="flex-shrink:0;text-decoration:none;color:rgba(244,236,216,.92);border:1px solid rgba(215,180,99,.35);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;background:rgba(215,180,99,.08);white-space:nowrap;cursor:pointer;font-family:inherit" title="Imprimir o guardar como PDF">🖨️ Imprimir</button>
+        <a id="guiaInicio" href="index.html" style="flex-shrink:0;text-decoration:none;color:rgba(244,236,216,.92);border:1px solid rgba(215,180,99,.35);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;background:rgba(215,180,99,.08);white-space:nowrap">🏠 Inicio</a>
+      </div>
     </div>
   </div>
 </header>
@@ -81,7 +87,8 @@
     <li><a href="#rapido">⏱️ Empezar en 5 minutos</a></li>
     <li><a href="#vision">1. Qué es esta suite y cómo se organiza</a></li>
     <li><a href="#primeros">2. Primeros pasos: crear un grupo y su alumnado</a></li>
-    <li><a href="#competencial">3. Evaluación por Competencias</a></li>
+    <li><a href="#competencial">3. Evaluación por Competencias</a>
+      <ol style="list-style:none;padding-left:18px;margin:2px 0 4px"><li><a href="#informes-familias">Informes para las familias: uno por evaluación y uno final</a></li></ol></li>
     <li><a href="#programacion">4. Programación de Aula</a></li>
     <li><a href="#memoria">5. Memoria de curso</a></li>
     <li><a href="#corrector">6. Corrector de Exámenes: diseñar, rúbrica y corregir</a>
@@ -111,7 +118,12 @@
     <li><a href="#copias"><strong>18. Copias de seguridad (imprescindible)</strong></a></li>
     <li><a href="#papelera">19. Papelera: recuperar lo borrado por error</a></li>
     <li><a href="#offline">20. Uso sin conexión, instalación y actualizaciones</a></li>
-    <li><a href="#faq">21. Preguntas frecuentes</a></li>
+    <li><a href="#inicio-panel">21. La pantalla de Inicio: tu día, lo pendiente y quién va mal</a></li>
+    <li><a href="#herramientas">22. Herramientas de clase: cronómetro, sorteo y grupos</a></li>
+    <li><a href="#privacidad">23. Privacidad en el aula: modo proyector y PIN</a></li>
+    <li><a href="#curso-nuevo">24. Empezar un curso nuevo y revisar tus datos</a></li>
+    <li><a href="#deshacer">25. Deshacer y rehacer</a></li>
+    <li><a href="#faq">26. Preguntas frecuentes</a></li>
   </ol>
 </nav>
 
@@ -119,6 +131,9 @@
 <p>Tus datos de siempre funcionan igual: la v3 se abre con lo que ya tenías en este navegador.</p>
 <h3>Lo más reciente</h3>
 <div class="grid2">
+  <div class="card"><h4>🚦 Alumnado en riesgo</h4><p>En Inicio, para la evaluación elegida arriba: quien va suspendiendo (nota de acta por debajo de 5), quien ha bajado 2 puntos o más respecto a la evaluación anterior y quien acumula 2 o más «No presentado». Primero lo más grave; «Ver» abre su informe en Resultados.</p></div>
+  <div class="card"><h4>▦ Mapa de criterios</h4><p>En Resultados, una tabla de color: una fila por alumno/a, una columna por criterio trabajado en la evaluación y su porcentaje de logro con el color de su nivel. Abajo, la media del grupo; a la derecha, cuántos criterios tiene en rojo. Se imprime en horizontal.</p></div>
+  <div class="card"><h4>🙋 Autoevaluación y coevaluación</h4><p>Con la rúbrica de un examen: hojas para que el alumnado se puntúe o puntúe a un compañero/a, y en la corrección, la comparación con tu nota. No cuenta en la nota. <a href="#cx-autoeval">Ver 6.7</a></p></div>
   <div class="card"><h4>🧭 Aspecto de Geografía e Historia</h4><p>Títulos en letra Lora, como un atlas; un mapa con meridianos, paralelos y curvas de nivel en la cabecera y en Inicio; la rosa de los vientos como emblema y como icono de la app, y dibujos de un globo terráqueo y una columna clásica en las pantallas vacías. Las tablas y el Corrector no cambian.</p></div>
   <div class="card"><h4>📎 Modelo y Propuesta Pedagógica</h4><p>Cada Programación de Aula guarda su Modelo de Programación de Aula y su Propuesta Pedagógica: el PDF dentro de la app, para verlo sin conexión, y el enlace de OneDrive. <a href="#prog-documentos">Ver 4</a></p></div>
   <div class="card"><h4>▦ Rúbrica por niveles de logro</h4><p>Además de la rúbrica por puntos, el Corrector admite una <strong>tabla de categorías × niveles</strong> (Experto, Avanzado, Aprendiz…), como una matriz analítica. Se corrige pinchando la casilla del nivel alcanzado y la nota sale sola. <a href="#cx-niveles">Ver 6.5</a></p></div>
@@ -174,7 +189,7 @@
 <h3>Notas más fiables</h3>
 <ul>
   <li><strong>Nota de acta.</strong> La calificación oficial (Insuficiente…Sobresaliente, aprobado/suspenso) sale siempre de una <strong>nota entera</strong>, como en ITACA. Las etiquetas lo muestran así: <span class="pill">Notable · 7</span>. Ya no puede ocurrir que un 4,93 aparezca como "Suficiente" y cuente como suspenso.</li>
-  <li><strong>Regla de redondeo</strong> (Ajustes del grupo → Redondeo de la nota de acta, común a todos los grupos): <em>redondeo normal sin aprobar por redondeo</em> (por defecto: 4,5–4,9 → 4; 6,5 → 7), <em>redondeo normal</em> (4,5 → 5) o <em>truncar</em>. En ESO la nota mínima es 1; en Bachillerato, 0.</li>
+  <li><strong>Regla de redondeo</strong> (Ajustes del grupo → Redondeo de la nota de acta, <strong>por curso</strong>: la comparten tus grupos de la misma materia y curso, por ejemplo 1.º ESO A y 1.º ESO B, y cada curso puede tener la suya): <em>redondeo normal sin aprobar por redondeo</em> (por defecto: 4,5–4,9 → 4; 6,5 → 7), <em>redondeo normal</em> (4,5 → 5) o <em>truncar</em>. En ESO la nota mínima es 1; en Bachillerato, 0.</li>
   <li><strong>NP y Exento.</strong> En Calificar (y en el Corrector) cada alumno/a tiene los botones <span class="kbd">NP</span> (no presentado: cuenta 0) y <span class="kbd">Exento</span> (esa actividad no le cuenta). El relleno masivo ⚡ respeta las marcas.</li>
   <li><strong>Puntos extra.</strong> Con <span class="kbd">➕ Puntos extra</span> (en Calificar y en el Corrector) sumas, por ejemplo, 0,5 o 1 punto a la nota de un examen o actividad, con un motivo («Voluntario/a en la exposición»). En Resultados, el mismo botón (o los campos de la ficha del alumno/a) los suma a la nota de una evaluación o a la nota final. Se guardan aparte: la nota corregida no cambia y se ve la cuenta (6,5 + 1 = 7,5). Se aplican después de la recuperación, nunca pasan de 10, no se suman con NP ni Exento y no cambian los niveles de competencias. Aparecen en los informes.</li>
   <li><strong>Aviso de bloque vacío.</strong> Si a alguien le falta un bloque entero (p. ej. ningún examen), aparece ⚠️ en Resultados: su media saldría solo del resto de bloques.</li>
@@ -289,7 +304,7 @@
   <tr><td><strong>Plano de aula</strong></td><td>Distribución de mesas: toca un alumno/a (de la lista de "sin colocar" o ya sentado) y luego toca una mesa — si está libre, se sienta ahí; si ya tiene a alguien, se intercambian. Sin arrastrar, para que funcione bien también en iPad. Tamaño de la cuadrícula ajustable, e imprimible en formato "vista desde la pizarra".</td></tr>
   <tr><td><strong>Actividades</strong></td><td>Si el grupo tiene una Programación de Aula vinculada: eliges la Situación de Aprendizaje y luego la actividad ya planificada, y se copia aquí con sus criterios y pesos. Si no la tiene: creación libre de siempre (tarea, trabajo, exposición, examen…, asignada a un bloque de calificación, con sus criterios y pesos).</td></tr>
   <tr><td><strong>Calificar</strong></td><td>Poner nota a una actividad para todo el grupo de una vez.</td></tr>
-  <tr><td><strong>Resultados</strong></td><td>Lo primero que ves es <strong>Toda la clase</strong>: una tabla con la nota de cada alumno/a (de un vistazo) y los botones de exportación de grupo. Toca cualquier alumno/a para desplegar debajo su informe completo — nota, desglose de actividades editable, competencias, comentarios—; vuelve a tocarlo (o pulsa "← Ver toda la clase") para plegarlo. El informe detallado y el informe individual empiezan con <strong>«De dónde sale la nota»</strong>: cada bloque con su peso, sus notas, su media y lo que aporta, y la suma final con los puntos extra.</td></tr>
+  <tr><td><strong>Resultados</strong></td><td>Lo primero que ves es <strong>Toda la clase</strong>: una tabla con la nota de cada alumno/a (de un vistazo) y los botones de exportación de grupo. Toca cualquier alumno/a para desplegar debajo su informe completo — nota, desglose de actividades editable, competencias, comentarios—; vuelve a tocarlo (o pulsa "← Ver toda la clase") para plegarlo. <strong>▦ Mapa de criterios</strong> cambia la tabla por un mapa de color con el logro de cada alumno/a en cada criterio de la evaluación (tocar un nombre abre su informe; «🖨️ Imprimir» lo saca en horizontal). El informe detallado y el informe individual empiezan con <strong>«De dónde sale la nota»</strong>: cada bloque con su peso, sus notas, su media y lo que aporta, y la suma final con los puntos extra.</td></tr>
   <tr><td><strong>Asistencia</strong></td><td>Pasar lista cualquier día, y un resumen de faltas justificadas, no justificadas y retrasos por semana, mes o curso completo.</td></tr>
   <tr><td><strong>Convivencia</strong></td><td>Registro de AC (falta de actitud y comportamiento), RC (reconocimiento positivo) y PA (parte de amonestación, con las categorías oficiales del Decreto 193/2025).</td></tr>
   <tr><td><strong>Familias</strong></td><td>Registro rápido de contacto con la familia (llamada, email, nota escrita, reunión informal…), independiente de las notas académicas.</td></tr>
@@ -298,6 +313,14 @@
   <tr><td><strong>Cobertura</strong></td><td>Qué criterios del currículo has trabajado ya este trimestre y cuáles no: tu radar de programación.</td></tr>
   <tr><td><strong>Ajustes</strong></td><td>Pesos de los bloques de calificación, pesos de los trimestres en la nota final, <strong>fechas de inicio/fin de cada evaluación</strong> (para poder filtrar Asistencia/Convivencia por trimestre en Resumen), <strong>Programación de Aula vinculada</strong>, umbrales de adquisición, duplicar la estructura del grupo, exportar/importar el grupo suelto.</td></tr>
 </table>
+
+<h3 id="informes-familias">📄 Informes para las familias: uno por evaluación y uno final</h3>
+<p>En <strong>Resultados</strong>, el selector <strong>Informes de</strong> elige la evaluación. Es el mismo «Periodo» de la cabecera: al cambiarlo cambian a la vez la tabla y todos los informes. Si una evaluación todavía no tiene actividades con nota, la tabla sale sin notas en esa columna.</p>
+<div class="flow">
+  <div class="step"><b>Cada evaluación.</b> Elige la evaluación en «Informes de» y pulsa <span class="kbd">Exportar todos los informes</span> (o <span class="kbd">Informe</span> en la fila de un alumno/a). Es el informe para la familia: notas, comentario, asistencia, convivencia, actividades, competencias y la tabla <strong>«De dónde sale la nota»</strong> de esa evaluación.</div>
+  <div class="step"><b>Final de curso.</b> <span class="kbd">Exportar informes finales de curso</span> (o <span class="kbd">Informe final</span> en una fila): las tres evaluaciones con su comentario, la nota final y <strong>«De dónde sale la nota» de la nota final</strong> (cuánto pesa y cuánto aporta cada evaluación), la asistencia del curso, todas las actividades y las competencias del curso.</div>
+  <div class="step"><b>Para ti.</b> <span class="kbd">🖨️ Informes detallados</span> y <span class="kbd">Informe de grupo</span> usan la evaluación de «Informes de»; con «Evaluación final (curso completo)» sacan los de todo el curso. La tabla sigue mostrando la última evaluación elegida.</div>
+</div>
 
 <h3 id="asistencia-detalle">Asistencia, en detalle</h3>
 <div class="flow">
@@ -359,6 +382,14 @@
   <div class="step"><b>9.</b> En <strong>Diario</strong>, cada entrada puede enlazarse a una SdA de la Programación vinculada.</div>
   <div class="step"><b>10.</b> En <strong>Resumen</strong>, el porcentaje de "SdA impartidas" se calcula solo: SdA con al menos una sesión del Diario enlazada, dividido entre las SdA planificadas para esa evaluación (o el curso completo) — sin que tengas que teclear ningún número.</div>
 </div>
+
+<h3 id="planificacion-temporal">🗓️ Planificación temporal de la materia</h3>
+<p>Dentro de cada Programación, el desplegable de arriba cambia a <strong>🗓️ Planificación temporal de la materia</strong>: una herramienta de secuenciación del curso. Pones las fechas de inicio y fin de curso y de cada trimestre, los días de la semana que tienes la materia y los periodos no lectivos (vacaciones y festivos), y la lista de situaciones de aprendizaje con sus sesiones. <span class="kbd">🔀 Distribuir sesiones automáticamente</span> reparte las sesiones disponibles entre las situaciones (las marcadas como «fija» no se tocan) y dibuja el calendario.</p>
+<ul>
+  <li><span class="kbd">⬇️ Traer situaciones desde la Programación</span> copia en la planificación las SdA que ya tienes en la Programación, para no escribirlas dos veces.</li>
+  <li><span class="kbd">⬆️ Traer situaciones desde la Planificación temporal</span> hace lo contrario: crea o actualiza las SdA de la Programación con las sesiones calculadas.</li>
+  <li>Se guarda sola junto con la Programación. Desde la propia herramienta puedes guardar su configuración (.json) o exportar una copia final sin edición para entregarla.</li>
+</ul>
 
 <h3>Los dos tipos de calificación</h3>
 <ul>
@@ -505,6 +536,14 @@
   <div class="step"><b>6.</b> <span class="kbd">🖨️ Imprimir rúbrica</span> (de un alumno/a) o <span class="kbd">🖨️ Imprimir rúbricas</span> (de todos) para devolverlas con comentarios. <span class="kbd">📄 Rúbrica resumida</span> (y <span class="kbd">📄 Rúbricas resumidas</span>) imprime solo las puntuaciones y los comentarios, sin el detalle de lo que había que contestar: gasta menos papel. <span class="kbd">⬇ CSV</span> exporta las notas del examen.</div>
 </div>
 <div class="tip">Cada ítem tiene un <strong>desplegable</strong> que va de 0 al máximo de 0,05 en 0,05, para corregir solo con el ratón o el dedo. <code>—</code> deja el ítem sin puntuar y <code>NP</code> marca todo el examen como no presentado (cuenta 0). Con el teclado, las flechas cambian la puntuación y, en «Por pregunta», <span class="kbd">Intro</span> pasa al siguiente alumno/a. Una nota antigua que no caiga en la rejilla (por ejemplo, 0,33) se conserva tal cual.</div>
+
+<h4 id="cx-autoeval">🙋 Autoevaluación y coevaluación</h4>
+<p>Para que el alumnado aprenda a valorar su trabajo con los mismos criterios que tú. <strong>No cambia ninguna nota.</strong></p>
+<div class="flow">
+  <div class="step"><b>1.</b> En la lista de Corregir, <span class="kbd">🙋 Autoevaluación</span>: eliges <em>Autoevaluación</em> (cada uno se puntúa) o <em>Coevaluación</em> (puntúa a un compañero/a); hojas <em>con el nombre</em> de cada alumno/a (en el orden de su modelo A, B o C, y con su rúbrica si hace un examen alternativo) o <em>en blanco</em>; y si incluyes lo que se valora y unas preguntas para reflexionar. Con una rúbrica por puntos, cada pregunta tiene una casilla para los puntos; con una por niveles, se marca con una X la casilla del nivel.</div>
+  <div class="step"><b>2.</b> Al corregir a cada alumno/a, despliega <strong>🙋 Autoevaluación y coevaluación</strong> y copia lo que puso en la hoja (y, en la coevaluación, quién le evaluó). Al lado de cada ítem verás la diferencia con tu corrección: <span class="pill" style="background:#fdf1de;color:#5c3a08">+1</span> si se pone más, <span class="pill" style="background:#d9e6f2;color:#1d4e74">−1</span> si se pone menos.</div>
+  <div class="step"><b>3.</b> En la lista aparece 🙋 con la nota que se pone (y 👥 con la del compañero/a), y arriba, la media del grupo frente a la tuya. Solo cuentan las hojas completas: con una a medias pone «…».</div>
+</div>
 
 <h3 id="cx-analisis">6.8 Análisis de resultados</h3>
 <p><span class="kbd">📈 Análisis</span> (en la barra del examen) resume lo corregido: alumnado corregido, nota media, <strong>porcentaje medio de acierto por pregunta</strong> y <strong>por criterio de evaluación</strong> (en verde, ámbar o rojo), y una lista de las preguntas con menos del 50 % de acierto. Útil para decidir qué repasar o qué preguntas reformular. NP y exentos no cuentan.</p>
@@ -760,7 +799,50 @@
 </div>
 <div class="tip">Actualizar los archivos no toca tus datos: los grupos, notas y diseños están en el navegador, no en GitHub. Aun así, la copia del paso 1 es tu red de seguridad.</div>
 
-<h2 id="faq">21. Preguntas frecuentes</h2>
+<h2 id="inicio-panel">21. La pantalla de Inicio: tu día, lo pendiente y quién va mal</h2>
+<p>Inicio es el punto de partida. Debajo de los datos del centro (curso escolar, profesor/a, centro y código, que salen en las portadas de todos los documentos) aparecen, solo cuando tienen algo que decir, estas tarjetas:</p>
+<table>
+  <tr><th>Tarjeta</th><th>Qué hace</th></tr>
+  <tr><td><strong>Hoy</strong></td><td>Tus clases de hoy según <a href="#horario">Mi horario</a>, con la que está en curso resaltada, y los eventos del calendario. En cada clase: <span class="kbd">✅ Lista</span> (pasar lista), <span class="kbd">📝 Diario</span>, <span class="kbd">✍️ Calificar</span> y <span class="kbd">🪑 Plano</span>, que te llevan directamente a ese grupo.</td></tr>
+  <tr><td><strong>📝 Qué me falta</strong></td><td>Lo que tienes a medias en la evaluación elegida: actividades corregidas solo a parte del grupo (con quién falta) y alumnado con nota pero sin comentario de evaluación (solo en los grupos donde ya escribes comentarios).</td></tr>
+  <tr><td><strong>🚦 Alumnado en riesgo</strong></td><td>Para actuar antes de la sesión de evaluación. Avisa de quien <strong>va suspendiendo</strong> (su nota de la evaluación, en nota de acta, por debajo de 5), de quien <strong>ha bajado 2 puntos o más</strong> respecto a la evaluación anterior y de quien acumula <strong>2 o más «No presentado»</strong>. Primero lo más grave. <span class="kbd">Ver</span> abre su informe en Resultados. Usa las mismas notas que Resultados.</td></tr>
+  <tr><td><strong>Avisos de los últimos 30 días</strong></td><td>Faltas sin justificar, partes de convivencia y planes de refuerzo o repetición activos de todos tus grupos.</td></tr>
+  <tr><td><strong>Cobertura y copias</strong></td><td>Si a una evaluación le faltan evidencias de algún criterio, o si otro dispositivo dejó una copia más reciente en tu carpeta de copias.</td></tr>
+</table>
+<p>Más abajo están las secciones de la app (Evaluación, Corrector, Programación, Tutoría, planes…), que se pueden plegar.</p>
+
+<h2 id="herramientas">22. Herramientas de clase: cronómetro, sorteo y grupos</h2>
+<p>El botón redondo ⏱️ de abajo a la derecha está siempre a mano, en cualquier pantalla. Tiene tres pestañas:</p>
+<div class="grid2">
+  <div class="card"><h4>⏱️ Cronómetro</h4><p>Cuenta atrás para una actividad o un examen. Sigue corriendo aunque cierres el panel o cambies de pantalla, y el botón muestra el tiempo que queda. Avisa al terminar.</p></div>
+  <div class="card"><h4>🎲 Sorteo</h4><p>Elige a alguien del grupo al azar. Por defecto <em>no repite</em> hasta que hayan salido todos y <em>deja fuera a quien falta hoy</em> (según Asistencia); las dos cosas se pueden desmarcar. <span class="kbd">↺ Empezar de nuevo</span> reinicia la ronda.</p></div>
+  <div class="card"><h4>👥 Grupos</h4><p>Reparte la clase al azar en un <em>número de grupos</em> o en grupos de un <em>número de personas</em>, lo más igualados posible. <span class="kbd">📋 Copiar los grupos</span> los copia para pegarlos donde quieras.</p></div>
+</div>
+<div class="tip">Nada de esto se guarda ni cambia tus datos. Está pensado para proyectarlo: el modo proyector no difumina los nombres del sorteo ni de los grupos.</div>
+
+<h2 id="privacidad">23. Privacidad en el aula: modo proyector y PIN</h2>
+<div class="grid2">
+  <div class="card"><h4>👁️ Modo proyector</h4><p>El botón 👁️ de la cabecera difumina los nombres del alumnado y de sus familias, y las notas de su misma fila, en todas las pantallas y en el buscador. Así puedes proyectar la app (por ejemplo, el calendario o una rúbrica) sin enseñar datos personales. Un campo difuminado se ve mientras escribes en él, y al imprimir todo sale normal. No cambia ningún dato y se recuerda en el dispositivo.</p></div>
+  <div class="card"><h4>🔒 Bloqueo con PIN</h4><p>En <strong>🛟 Copias</strong> → «Activar el PIN». Desde entonces la app (el Cuaderno y Tutoría) se abre tapada y pide el PIN. Se bloquea sola tras los minutos que elijas sin usarla o en segundo plano, y al momento con 🔒 en la cabecera. Tras 5 intentos fallidos hay que esperar 30 segundos.</p></div>
+</div>
+<div class="warn"><strong>Apunta el código de recuperación</strong> que se muestra una sola vez al activar el PIN: es lo que permite quitarlo si lo olvidas. El PIN es un cierre de pantalla para descuidos, no un cifrado: el dispositivo debe tener su propia contraseña. Para que una copia de seguridad no se pueda leer, usa «🔒 Exportar copia cifrada» o «Cifrar las copias» (<a href="#copias">18</a>).</div>
+
+<h2 id="curso-nuevo">24. Empezar un curso nuevo y revisar tus datos</h2>
+<h3>🎓 Empezar curso nuevo (cada septiembre)</h3>
+<div class="flow">
+  <div class="step"><b>1.</b> En Inicio, <span class="kbd">🎓 Empezar curso nuevo</span>. La app propone el curso siguiente.</div>
+  <div class="step"><b>2.</b> Eliges qué conservar: <strong>los grupos, vacíos</strong> (nombre, materia, bloques de calificación, pesos y umbrales; sin alumnado ni notas), si quieres <strong>también su alumnado</strong> (solo los datos de cada persona, sin notas ni observaciones), las <strong>Programaciones de Aula</strong> (con sus SdA, actividades, rúbricas y documentos de referencia), el <strong>horario semanal</strong> y los <strong>festivos</strong>.</div>
+  <div class="step"><b>3.</b> <span class="kbd">Preparar el archivo del curso →</span> guarda un archivo con el curso que termina, entero, y, <strong>solo cuando se ha guardado</strong>, vacía lo que es de un único curso: notas, actividades, asistencia, diario, convivencia, familias, reuniones, planes, autoevaluaciones… Puedes cifrar ese archivo con una contraseña (recomendado si va a salir del dispositivo).</div>
+</div>
+<div class="tip">Queda además una copia interna en 🛟 Copias y se puede deshacer con ↶. Para consultar el curso pasado, abre su archivo con «Importar copia» en otro navegador o después de exportar el curso actual.</div>
+<h3>🩺 Revisar mis datos</h3>
+<p>En Inicio, <span class="kbd">🩺 Revisar mis datos</span> repasa tu Cuaderno y separa lo que encuentra en tres grupos: <strong>se pueden arreglar automáticamente</strong> (por ejemplo, casillas del horario, eventos del calendario o reuniones que apuntan a un grupo que ya no existe: un botón lo arregla todo), <strong>para revisar tú</strong> y <strong>sugerencias</strong> (como hacer una copia si hace tiempo que no la exportas). No cambia nada sin que lo pulses, y lo que arregla se puede deshacer.</p>
+
+<h2 id="deshacer">25. Deshacer y rehacer</h2>
+<p>Los botones <span class="kbd">↶</span> y <span class="kbd">↷</span> de la cabecera deshacen y rehacen los últimos cambios de datos (hasta 30 pasos): una nota mal puesta, una actividad borrada, un grupo eliminado… También con el teclado: <span class="kbd">Ctrl/Cmd + Z</span> para deshacer y <span class="kbd">Ctrl/Cmd + Mayús + Z</span> (o <span class="kbd">Ctrl + Y</span>) para rehacer. Si estás escribiendo en un campo, <span class="kbd">Ctrl + Z</span> deshace el texto de ese campo, como siempre.</p>
+<div class="tip">Lo que se deshace son los datos, no la navegación. Al recargar la app la lista de pasos empieza de cero; para volver más atrás están las copias de <a href="#copias">18</a> y la <a href="#papelera">papelera</a>.</div>
+
+<h2 id="faq">26. Preguntas frecuentes</h2>
 <h3>¿Puedo usar la app en el iPad y en el PC a la vez?</h3>
 <p>Sí, pero <strong>cada dispositivo tiene sus propios datos</strong> (no se sincronizan solos). El puente es Exportar copia en uno → Importar copia en el otro. Recomendación práctica: trabaja habitualmente en un solo dispositivo y usa el otro para consultar tras importar.</p>
 <h3>¿Un ítem de la rúbrica puede no tener criterio vinculado?</h3>
@@ -776,7 +858,7 @@
 <h3>¿Dónde meto las propuestas de mejora y el seguimiento de SdA para la memoria?</h3>
 <p>En la pestaña <strong>Resumen</strong> del grupo: cada evaluación tiene su gráfico de aprobados/suspensos, su porcentaje de Situaciones de Aprendizaje impartidas (calculado solo si el grupo tiene una Programación de Aula vinculada) y su cuadro de propuestas de mejora; y hay un bloque de evaluación final para la valoración de curso.</p>
 <h3>¿Cómo saco el informe de grupo de cada evaluación?</h3>
-<p>En Resultados, junto al botón <strong>Informe de grupo</strong> hay un selector con <em>1ª, 2ª, 3ª evaluación</em> y <em>Evaluación final (curso completo)</em>. Los informes de cada evaluación contienen solo lo de esa evaluación (resumen, notas, competencias y propuestas de mejora del periodo), sin ninguna referencia a la final. El de <strong>evaluación final</strong> es el más completo — resumen de las tres evaluaciones, notas de todo el curso, competencias anuales y todas las propuestas de mejora — y es el pensado para entregar a las familias.</p>
+<p>En Resultados, el selector <strong>Informes de</strong> (junto a <strong>Informe de grupo</strong>) tiene <em>1ª, 2ª, 3ª evaluación</em> y <em>Evaluación final (curso completo)</em>. Los informes de cada evaluación contienen solo lo de esa evaluación (resumen, notas, competencias y propuestas de mejora del periodo), sin ninguna referencia a la final. El de <strong>evaluación final</strong> es el más completo — resumen de las tres evaluaciones, notas de todo el curso, competencias anuales y todas las propuestas de mejora — y es el pensado para entregar a las familias.</p>
 <h3>¿Qué ha cambiado «por dentro» en esta versión?</h3>
 <p>Nada de lo que ves ni de lo que guardas: tus datos, copias y paquetes son los mismos. Solo está mejor organizada: en lugar de un único archivo enorme, la app son carpetas con archivos pequeños (<code>js/</code>, <code>css/</code>, <code>editor/</code>, <code>tools/</code>), lo que hace más fácil mantenerla y corregir errores. La contrapartida es que hay que publicarla con todas sus carpetas (mira <a href="#offline">20</a>) y que ya no se abre bien con doble clic.</p>
 <h3>¿Tengo que usar el Diseño para corregir con rúbrica?</h3>
@@ -792,7 +874,30 @@
 <h3>He borrado los datos del navegador y lo he perdido todo. ¿Hay solución?</h3>
 <p>Primero abre la app: si solo se ha borrado el almacenamiento principal, recupera los datos sola desde la copia interna (verás un aviso). Si no, mira en <strong>🛟 Copias</strong>. Y si se ha borrado todo el sitio web del navegador, necesitas una copia exportada: Importar copia y listo (si es cifrada, te pedirá la contraseña). Por eso el <a href="#copias">apartado 18</a> es el más importante de esta guía.</p>
 
-<footer>Guía de uso · Cuaderno del profesor · Incluye el diseño de exámenes · Los datos nunca salen de tu dispositivo</footer>
+<footer>Guía de uso · Cuaderno del profesor · Actualizada en noviembre de 2026 · Los datos nunca salen de tu dispositivo</footer>
 </main>
+<script>
+/* «⬇ Descargar»: guarda esta guía en un único archivo .html (no necesita nada más para abrirse). El botón
+   «Inicio» del archivo descargado apunta a la dirección completa de la app; si la guía se abre desde un
+   archivo sin esa dirección, se oculta. */
+(function(){
+  var inicio=document.getElementById("guiaInicio");
+  if(location.protocol==="file:" && inicio && !/^https?:/i.test(inicio.getAttribute("href")||"")) inicio.style.display="none";
+  var boton=document.getElementById("guiaDescargar"); if(!boton) return;
+  boton.addEventListener("click",function(){
+    var app=/^https?:/i.test(location.protocol)? new URL("index.html",location.href).href : null;
+    function guardar(html){
+      if(app) html=html.replace('id="guiaInicio" href="index.html"','id="guiaInicio" href="'+app+'"');
+      var url=URL.createObjectURL(new Blob([html],{type:"text/html;charset=utf-8"}));
+      var a=document.createElement("a"); a.href=url; a.download="Guia-Cuaderno-del-profesor.html";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); },10000);
+    }
+    var copia=function(){ return "<!DOCTYPE html>\n"+document.documentElement.outerHTML; };
+    if(!window.fetch || location.protocol==="file:") return guardar(copia());
+    fetch(location.href.split("#")[0]).then(function(r){ return r.ok? r.text() : copia(); }).then(guardar,function(){ guardar(copia()); });
+  });
+})();
+</script>
 </body>
 </html>

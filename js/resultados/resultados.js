@@ -96,6 +96,8 @@ function renderResultados(grupo){
   if(state.ui.resAl && !grupo.alumnos.find(a=>a.id===state.ui.resAl)) state.ui.resAl="";
   const al=grupo.alumnos.find(a=>a.id===state.ui.resAl)||null;
   const trim=state.ui.trim;
+  // ---- Mapa de criterios (js/resultados/mapa-criterios.js): sustituye a la tabla de notas mientras está abierto ----
+  if(state.ui.resVista==="mapa"){ c.innerHTML=mapaCriteriosHTML(grupo); return; }
 
   // ---- "Toda la clase": tabla siempre visible, cada fila abre el detalle del alumno debajo ----
   const htmlClase=`
@@ -103,6 +105,7 @@ function renderResultados(grupo){
     <div class="flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
       <h2 style="font-size:15px">Toda la clase</h2>
       <div class="flex res-acciones">
+        <button class="ghost" style="border:1px solid var(--line)" title="Tabla de color: el logro de cada alumno/a en cada criterio de esta evaluación" onclick="mapaVista(true)">▦ Mapa de criterios</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarCSVGrupo()" title="Hoja de cálculo con la media y la nota de acta (entera) de cada alumno/a, lista para pasar a ITACA">Exportar notas (CSV)</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesTodos()">Exportar todos los informes</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesFinalesTodos()">Exportar informes finales de curso</button>
@@ -111,9 +114,10 @@ function renderResultados(grupo){
         <button class="ghost" style="border:1px solid var(--line)" title="Borradores de comentario para quien todavía no tenga (no sobrescribe)" onclick="comSugerirGrupo('es')">💬 Comentarios vacíos</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Esborranys de comentari en valencià per a qui encara no en tinga" onclick="comSugerirGrupo('va')">💬 En valencià</button>
         <span class="flex" style="gap:6px;align-items:center">
-          <select class="in" id="repGrupoSel" style="padding:6px 9px">
-            ${TRIMESTRES.map((t,i)=>`<option value="${i}" ${i===state.ui.trim?"selected":""}>${t}</option>`).join("")}
-            <option value="final">Evaluación final (curso completo)</option>
+          <label for="repGrupoSel" class="sub" style="margin:0;font-weight:600">Informes de</label>
+          <select class="in" id="repGrupoSel" style="padding:6px 9px" title="Evaluación de la tabla y de los informes (es el mismo «Periodo» de la cabecera)" onchange="resElegirPeriodo(this.value)">
+            ${TRIMESTRES.map((t,i)=>`<option value="${i}" ${state.ui.resInfFinal!==true&&i===state.ui.trim?"selected":""}>${t}</option>`).join("")}
+            <option value="final" ${state.ui.resInfFinal===true?"selected":""}>Evaluación final (curso completo)</option>
           </select>
           <button class="btn" onclick="exportarInformeGrupo(document.getElementById('repGrupoSel').value)">Informe de grupo</button>
           <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesDetalladosTodos(document.getElementById('repGrupoSel').value)">🖨️ Informes detallados</button>
@@ -279,4 +283,12 @@ function renderResultados(grupo){
   </div>`;
   document.getElementById("resComentario").addEventListener("change",e=>{ al.comentariosEval[trim]=e.target.value; save(); });
 }
-
+/* Selector «Informes de» de Resultados. Una evaluación (1.ª, 2.ª, 3.ª) es el mismo «Periodo» de la cabecera: cambia la
+   tabla y todos los informes a la vez. «Evaluación final» solo cambia el informe de grupo y los detallados (la tabla
+   sigue con la última evaluación elegida). Antes, este desplegable solo afectaba a esos dos botones y parecía no
+   hacer nada. */
+window.resElegirPeriodo=v=>{
+  if(v==="final") state.ui.resInfFinal=true;
+  else { state.ui.resInfFinal=false; state.ui.trim=Number(v)||0; }
+  save(); render();
+};

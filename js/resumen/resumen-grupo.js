@@ -95,7 +95,7 @@ function distribucionCalificacionesHTML(grupo){
   const notas=grupo.alumnos.map(al=>notaTrimestre(grupo,al.id,trim)).filter(v=>v!=null);
   const total=notas.length;
   const filas=NIVCUANT.map(n=>{
-    const cnt=notas.filter(v=>etiquetaNota(v)===n).length;
+    const cnt=notas.filter(v=>etiquetaNota(v,grupo)===n).length;
     const pct=total? (cnt/total*100) : null;
     return barraHorizontalHTML(`${n.etq} (${cnt})`,pct,n.fg);
   }).join("");

@@ -1318,4 +1318,156 @@ export const PRUEBAS = [
     t.ok(await p.locator('.dlg-overlay', { hasText: 'no está guardado en este dispositivo' }).count() === 1, 'si el PDF ya no está (tras deshacer), se avisa de que hay que volver a guardarlo');
     t.ok(!p.errores.length && !(await p.evaluate(() => window.__x)), 'sin errores de JavaScript', p.errores.join('; '));
   } },
+
+  { nombre: 'riesgo-mapa-autoevaluacion', descripcion: 'Aviso de alumnado en riesgo en Inicio, mapa de criterios en Resultados y autoevaluación/coevaluación con la rúbrica', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const [A, B, C] = await cuadernoConGrupo(p, t.url, { nombres: ['Alba Baja, Ana', 'Beltrán Suspende, Blas', 'Cano Faltas, Carla'] });
+    const cr = await p.evaluate(() => { const g = state.grupos[0], c = getCatalogo('GeH_1ESO').ces[0].criterios.map(x => x.id), [A, B, C] = g.alumnos.map(a => a.id);
+      const act = (id, t, crits) => ({ id, nombre: 'Actividad ' + id, trimestre: t, bloqueId: 'b1', esExamen: false, criterios: crits.map(x => ({ critId: x, peso: 1 })) });
+      g.actividades = [act('a1', 0, [c[0]]), act('b1', 1, [c[0]]), act('b2', 1, [c[1]]), act('b3', 1, [c[1]])];
+      g.notas = { [A]: { a1: { [c[0]]: 8 }, b1: { [c[0]]: 5 }, b2: { [c[1]]: 5 }, b3: { [c[1]]: 5 } },
+                  [B]: { a1: { [c[0]]: 6 }, b1: { [c[0]]: 3 }, b2: { [c[1]]: 3 }, b3: { [c[1]]: 3 } },
+                  [C]: { a1: { [c[0]]: 9 }, b1: { [c[0]]: 9 }, b2: {}, b3: {} } };
+      g.marcas = { [C]: { b2: 'NP', b3: 'NP' } };
+      state.ui.trim = 1; state.ui.appMode = 'inicio'; state.novedadesVistas = NOVEDADES_VERSION; save(); render(); return c; });
+    await esperar(300);
+    // 2 · Aviso temprano
+    const txt = (await p.textContent('.aviso-riesgo')) || '';
+    t.ok(/Alba Baja, Ana:[^·]*ha bajado de 8,0 a 5,0 respecto a la 1/.test(txt) && !/Alba Baja, Ana: 🔴/.test(txt), 'avisa de quien ha bajado 2 puntos o más (y no la da por suspensa con un 5)', txt);
+    t.ok(/Beltrán Suspende, Blas: 🔴\ssuspende \(3,0\)/.test(txt), 'avisa de quien va suspendiendo, con su nota', txt);
+    t.ok(/Cano Faltas, Carla:.*2 «No presentado»/.test(txt), 'avisa de quien acumula «No presentado»', txt);
+    t.ok(txt.indexOf('Beltrán') < txt.indexOf('Alba'), 'primero lo más grave (suspende antes que baja)');
+    await p.locator('.aviso-riesgo button:has-text("Ver")').nth(txt.indexOf('Beltrán') < txt.indexOf('Cano') ? 0 : 1).click(); await esperar(300);
+    t.ok(await p.evaluate(B => state.ui.tab === 'resultados' && state.ui.resAl === B, B), '«Ver» abre Resultados con el informe de ese alumno/a');
+    // 1 · Mapa de criterios
+    await p.click('button:has-text("Mapa de criterios")'); await esperar(300);
+    const m = await p.evaluate(() => ({ filas: document.querySelectorAll('.mc-tabla tbody tr').length, cols: [...document.querySelectorAll('.mc-tabla .mc-crit')].map(x => x.textContent),
+      celdas: [...document.querySelectorAll('.mc-tabla tbody tr')].map(tr => [...tr.querySelectorAll('.mc-c')].map(td => td.textContent)),
+      media: [...document.querySelectorAll('.mc-tabla tfoot .mc-c')].map(td => td.textContent), rojos: [...document.querySelectorAll('.mc-tabla tbody .mc-bajos')].map(td => td.textContent),
+      fondoRojo: getComputedStyle(document.querySelectorAll('.mc-tabla tbody tr')[1].querySelector('.mc-c')).backgroundColor }));
+    t.ok(m.filas === 3 && m.cols.join() === cr.slice(0, 2).join(), 'una fila por alumno/a y una columna por cada criterio trabajado en la evaluación', JSON.stringify(m));
+    t.ok(m.celdas[0].join() === '50,50' && m.celdas[1].join() === '30,30' && m.celdas[2][0] === '90', 'cada casilla lleva el porcentaje de logro del criterio', JSON.stringify(m.celdas));
+    t.ok(m.fondoRojo === 'rgb(243, 220, 220)' && m.rojos[1] === '2', 'color del nivel («Necesita mejorar» en rojo) y cuántos criterios tiene en rojo', JSON.stringify(m));
+    t.ok(m.media[0] === '57', 'la última fila es la media del grupo en cada criterio', m.media.join());
+    await p.click('button.mc-al:has-text("Cano Faltas")'); await esperar(300);
+    t.ok(await p.evaluate(C => state.ui.resVista === '' && state.ui.resAl === C, C), 'tocar un nombre del mapa abre su informe');
+    await p.evaluate(() => mapaVista(true)); await p.click('button:has-text("Imprimir")'); await esperar(300);
+    t.ok(await p.locator('#printOverlay .mc-tabla').count() === 1, 'el mapa se puede imprimir');
+    await p.click('#prtCerrar'); await esperar(200);
+    // 4 · Autoevaluación y coevaluación
+    await p.evaluate(([A, c]) => { const g = state.grupos[0];
+      g.actividades.push({ id: 'e1', nombre: 'Examen 2', trimestre: 1, bloqueId: 'b0', esExamen: true, criterios: [{ critId: c[0], peso: 1 }],
+        rubrica: [{ id: 's1', title: 'Pregunta 1', items: [{ id: 'i1', label: 'Ítem 1', max: 6, links: [{ critId: c[0], peso: 1 }] }, { id: 'i2', label: 'Ítem 2', max: 4, links: [] }], subs: [] }] });
+      g.rubricScores = { [A]: { e1: { i1: 4, i2: 3 } } }; cxRecalcAlumno(g, g.actividades.find(a => a.id === 'e1'), A);
+      state.ui.appMode = 'corrector'; state.ui.corTab = 'corregir'; state.ui.corExamId = 'e1'; state.ui.corAlId = A; state.ui.aeAbierto = true; save(); render(); }, [A, cr]);
+    await esperar(300);
+    await elegir(p.locator('select[aria-label="Autoevaluación: Ítem 1"]'), '5'); await esperar(200);
+    t.ok((await p.textContent('.ae-detalles')).includes('Copiados 1 de 2 ítems'), 'con la hoja a medias, dice cuántos ítems lleva copiados en vez de comparar');
+    await elegir(p.locator('select[aria-label="Autoevaluación: Ítem 2"]'), '4'); await esperar(200);
+    await elegir(p.locator('select[aria-label="Coevaluación: Ítem 1"]'), '3'); await esperar(200);
+    const r = await p.evaluate(A => { const g = state.grupos[0]; return { auto: g.autoeval[A].e1.auto.items, nota: g.notasCuant[A].e1, txt: document.querySelector('.ae-detalles').textContent }; }, A);
+    t.ok(r.auto.i1 === 5 && r.auto.i2 === 4 && /Se pone: 9,0 · tu nota: 7,0\s*\+2/.test(r.txt), 'compara la autoevaluación con tu nota (9 frente a 7: +2)', JSON.stringify(r));
+    t.ok(r.nota === 7, 'no cambia la nota del examen');
+    await p.evaluate(() => { state.ui.corAlId = ''; render(); }); await esperar(300);
+    const lista = await p.textContent('#tabContent');
+    t.ok(lista.includes('🙋 9,0') && lista.includes('👥 …') && /9,0 frente a tu 7,0/.test(lista) && !/Coevaluación ·/.test(lista), 'la lista lleva los distintivos y el resumen del grupo solo cuenta hojas completas', lista.slice(0, 600));
+    // Hojas para el alumnado: coevaluación en blanco (una por alumno/a) y autoevaluación con nombre.
+    await p.click('button:has-text("🙋 Autoevaluación")'); await esperar(200);
+    await p.check('input[name=aeTipo][value=co]'); await p.check('input[name=aeHojas][value=blanco]');
+    await p.click('button:has-text("Preparar las hojas")'); await esperar(400);
+    const h = await p.evaluate(() => { const o = document.querySelector('#printOverlay .print-hoja').shadowRoot; return { n: o.querySelectorAll('.ae-hoja').length, txt: o.textContent, cajas: o.querySelectorAll('.ae-hoja')[0].querySelectorAll('.ae-caja').length }; });
+    t.ok(h.n === 3 && h.txt.includes('Evalúo a:') && h.txt.includes('Le doy') && h.cajas === 3, 'hojas de coevaluación en blanco: una por alumno/a, con casilla por ítem y total', JSON.stringify({ n: h.n, cajas: h.cajas }));
+    await p.click('#prtCerrar'); await esperar(200);
+    await p.evaluate(() => aeImprimirHojas('e1', { tipo: 'auto', hojas: 'nombre', desc: true, refl: true })); await esperar(300);
+    const h2 = await p.evaluate(() => document.querySelector('#printOverlay .print-hoja').shadowRoot.textContent);
+    t.ok(h2.includes('Nombre: Alba Baja, Ana') && h2.includes('Me doy') && h2.includes('Lo que tengo que mejorar'), 'hojas de autoevaluación con el nombre de cada alumno/a y preguntas para reflexionar');
+    await p.click('#prtCerrar'); await esperar(200);
+    // Rúbrica por niveles: en la hoja se marca la casilla del nivel; en la tarjeta se elige el nivel.
+    await p.evaluate(A => { const g = state.grupos[0], e = g.actividades.find(a => a.id === 'e1');
+      e.rubrica = [{ id: 'n', title: '', sinTitulo: true, formato: 'niveles', niveles: [{ id: 'l1', nombre: 'Experto', valor: 4 }, { id: 'l2', nombre: 'Aprendiz', valor: 2 }],
+        items: [{ id: 'c1', label: 'Contenido', max: 10, desc: [], links: [], celdas: { l1: 'Lo explica todo', l2: 'Lo explica en parte' } }], subs: [] }];
+      aeImprimirHojas('e1', { tipo: 'auto', hojas: 'blanco', desc: true, refl: false }); }, A);
+    await esperar(300);
+    const h3 = await p.evaluate(() => { const o = document.querySelector('#printOverlay .print-hoja').shadowRoot, hoja = o.querySelector('.ae-hoja'); return { niv: !!hoja.querySelector('.ae-niv'), txt: hoja.textContent, cajas: hoja.querySelectorAll('.ae-caja').length }; });
+    t.ok(h3.niv && h3.txt.includes('Experto') && h3.txt.includes('Lo explica todo') && h3.cajas === 2 && h3.txt.includes('marca con una X'), 'con rúbrica por niveles, la hoja tiene la tabla de niveles con una casilla en cada uno', JSON.stringify(h3));
+    await p.click('#prtCerrar'); await esperar(200);
+    await p.evaluate(A => { state.ui.corAlId = A; render(); }, A); await esperar(300);
+    const ops = await p.locator('select[aria-label="Autoevaluación: Contenido"]').evaluate(s => [...s.options].map(o => o.textContent));
+    t.ok(ops.join('|') === '—|Experto (10)|Aprendiz (5)', 'en la tarjeta, con rúbrica por niveles se elige el nivel (en el orden de la rúbrica)', ops.join('|'));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'guia-descargable', descripcion: 'Guía de uso: «Descargar» guarda un único .html que se abre solo, sin conexión, con el enlace a la app', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await p.goto(t.url + '/guia_mejorada.html'); await esperar(500);
+    const indice = await p.evaluate(() => [...document.querySelectorAll('nav.toc a[href^="#"]')].filter(a => !document.getElementById(a.getAttribute('href').slice(1))).map(a => a.getAttribute('href')));
+    t.ok(!indice.length, 'cada entrada del índice lleva a una sección que existe', indice.join(', '));
+    const [desc] = await Promise.all([p.waitForEvent('download'), p.click('#guiaDescargar')]);
+    const html = fs.readFileSync(await desc.path(), 'utf8');
+    t.ok(desc.suggestedFilename() === 'Guia-Cuaderno-del-profesor.html' && html.includes('26. Preguntas frecuentes') && html.includes(`id="guiaInicio" href="${t.url}/index.html"`), 'descarga la guía completa con el enlace a la app', [desc.suggestedFilename(), html.includes('26. Preguntas frecuentes'), html.includes(`id="guiaInicio" href="${t.url}/index.html"`), html.length].join(' '));
+    t.ok(!/<(script|link|img)[^>]+(src|href)="(?!https?:|#|data:)[^"]+"/i.test(html.replace(/id="guiaInicio" href="[^"]+"/, '')), 'no necesita ningún otro archivo');
+    // Abierta como archivo suelto, sin servidor.
+    const tmp = path.join(os.tmpdir(), 'guia-' + Date.now() + '.html'); fs.writeFileSync(tmp, html);
+    const q = await nuevaPagina(t.contexto); await q.goto('file://' + tmp); await esperar(300);
+    t.ok((await q.textContent('h1')).includes('Guía de uso') && await q.locator('#guiaInicio').isVisible() && await q.locator('h2#privacidad').count() === 1, 'el archivo descargado se abre solo y conserva el botón «Inicio» a la app');
+    fs.unlinkSync(tmp);
+    await p.emulateMedia({ media: 'print' });
+    t.ok(!(await p.locator('#guiaDescargar').isVisible()), 'al imprimir no salen los botones');
+    t.ok(!p.errores.length && !q.errores.length, 'sin errores de JavaScript', p.errores.concat(q.errores).join('; '));
+  } },
+
+  { nombre: 'informes-por-evaluacion', descripcion: 'Resultados: «Informes de» cambia la tabla y los informes a la vez, y el informe final incluye «De dónde sale la nota» de la nota final', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const [A] = await cuadernoConGrupo(p, t.url, { nombres: ['Abellón Murcia, Alma'] });
+    await p.evaluate(A => { const g = state.grupos[0], c = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
+      g.actividades = [{ id: 'a1', nombre: 'Trabajo 1', trimestre: 0, bloqueId: 'b1', esExamen: false, criterios: [{ critId: c, peso: 1 }] },
+                       { id: 'a2', nombre: 'Trabajo 2', trimestre: 1, bloqueId: 'b1', esExamen: false, criterios: [{ critId: c, peso: 1 }] }];
+      g.notas = { [A]: { a1: { [c]: 4 }, a2: { [c]: 8 } } };
+      state.ui.trim = 0; state.ui.appMode = 'grupo'; state.ui.tab = 'resultados'; save(); render(); }, A);
+    await esperar(300);
+    const col = () => p.evaluate(() => document.querySelector('#tabContent thead th:nth-child(2)').textContent + ' ' + document.querySelector('#tabContent tbody td:nth-child(2)').textContent.trim());
+    t.ok((await col()).startsWith('1ª evaluación 4,0'), 'la tabla empieza en la 1.ª evaluación', await col());
+    await p.selectOption('#repGrupoSel', '1'); await esperar(300);
+    t.ok((await col()).startsWith('2ª evaluación 8,0') && await p.inputValue('#trimSel') === '1', 'elegir la 2.ª en «Informes de» cambia la tabla y el Periodo de la cabecera', await col());
+    await p.click('tbody button:has-text("Informe")'); await esperar(300);
+    const ind = await p.evaluate(() => document.querySelector('#printOverlay .print-hoja').shadowRoot.textContent);
+    t.ok(ind.includes('2ª evaluación') && ind.includes('De dónde sale la nota · 2ª evaluación'), 'el informe del alumno/a es de la 2.ª evaluación, con «De dónde sale la nota»');
+    await p.click('#prtCerrar'); await esperar(200);
+    await p.selectOption('#repGrupoSel', 'final'); await esperar(300);
+    t.ok(await p.inputValue('#repGrupoSel') === 'final' && (await col()).startsWith('2ª evaluación'), '«Evaluación final» se queda elegida y la tabla no cambia');
+    await p.selectOption('#trimSel', '0'); await esperar(300);
+    t.ok(await p.inputValue('#repGrupoSel') === '0', 'cambiar el Periodo de la cabecera también cambia «Informes de»');
+    await p.click('tbody button:has-text("Informe final")'); await esperar(300);
+    const fin = await p.evaluate(() => document.querySelector('#printOverlay .print-hoja').shadowRoot.textContent);
+    t.ok(fin.includes('Informe final de curso') && fin.includes('De dónde sale la nota · Nota final de curso') && /1ª evaluación[\s\S]*2ª evaluación/.test(fin), 'el informe final incluye «De dónde sale la nota» de la nota final, con cada evaluación');
+    await p.click('#prtCerrar'); await esperar(200);
+    await p.click('button:has-text("Exportar informes finales de curso")'); await esperar(300);
+    t.ok((await p.evaluate(() => document.querySelector('#printOverlay .print-hoja').shadowRoot.textContent)).includes('De dónde sale la nota · Nota final de curso'), 'también en «Exportar informes finales de curso» (todo el grupo)');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'redondeo-por-curso', descripcion: 'Redondeo de la nota de acta por curso: lo comparten los grupos del mismo curso y no cambia el de los demás', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await p.goto(t.url + '/'); await esperar(1500);
+    const acta = () => p.evaluate(() => state.grupos.map(g => g.nombre + ':' + notaActa(notaTrimestre(g, g.alumnos[0].id, 0), g)).join(' '));
+    await p.evaluate(() => { _mostrarBienvenida = false;
+      const nuevo = (nombre, cat) => { const g = defGrupo(nombre, cat), c = getCatalogo(cat).ces[0].criterios[0].id, al = normalizarAlumno({ id: uid(), nombre: 'Prueba, Ana' });
+        g.alumnos = [al]; g.actividades = [{ id: uid(), nombre: 'Trabajo', trimestre: 0, bloqueId: 'b1', esExamen: false, criterios: [{ critId: c, peso: 1 }] }];
+        g.notas = { [al.id]: { [g.actividades[0].id]: { [c]: 4.6 } } }; return g; };
+      state.grupos = [nuevo('1A', 'GeH_1ESO'), nuevo('1B', 'GeH_1ESO'), nuevo('2A', 'GeH_2ESO')];
+      state.ajustesNota = { redondeoActa: 'estandar' }; migrarEstado();   // copia antigua: una regla para todos
+      state.ui.trim = 0; state.ui.grupoId = state.grupos[2].id; state.ui.appMode = 'grupo'; state.ui.tab = 'ajustes'; save(); render(); });
+    await esperar(300);
+    t.ok(await acta() === '1A:5 1B:5 2A:5', 'una copia antigua conserva su regla en todos los grupos (4,6 → 5 con redondeo normal)', await acta());
+    t.ok((await p.textContent('#tabContent')).includes('todos tus grupos de Geografía e Historia · 2.º ESO'), 'Ajustes dice a qué curso se aplica');
+    await p.selectOption('select[aria-label="Regla de redondeo de la nota de acta"]', 'sinAprobarPorRedondeo'); await esperar(300);
+    t.ok(await acta() === '1A:5 1B:5 2A:4', 'cambiarla en un grupo de 2.º solo cambia 2.º', await acta());
+    await p.evaluate(() => { state.ui.grupoId = state.grupos[0].id; render(); }); await esperar(300);
+    t.ok(await p.inputValue('select[aria-label="Regla de redondeo de la nota de acta"]') === 'estandar' && (await p.textContent('#tabContent')).includes('(1A, 1B)'), 'en 1.º se ve su propia regla y los grupos que la comparten');
+    await p.selectOption('select[aria-label="Regla de redondeo de la nota de acta"]', 'truncar'); await esperar(300);
+    t.ok(await acta() === '1A:4 1B:4 2A:4' && await p.evaluate(() => state.ajustesNota.redondeoPorCurso.GeH_1ESO === 'truncar' && state.ajustesNota.redondeoPorCurso.GeH_2ESO === 'sinAprobarPorRedondeo'), 'cambiarla en 1.º A la cambia en 1.º B (mismo curso) y deja 2.º como estaba', await acta());
+    await p.click('summary:has-text("Tus otros cursos")'); await esperar(100);
+    t.ok((await p.textContent('#tabContent')).includes('2.º ESO: Redondeo normal, pero sin aprobar por redondeo'), '«Tus otros cursos» enseña la regla de cada curso');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
 ];

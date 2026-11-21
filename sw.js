@@ -18,10 +18,10 @@
 // Cuaderno_Profesor_v2), que comparte el mismo almacenamiento del navegador.
 
 const CACHE_PREFIJO = 'cuaderno-v3-';
-const CACHE_NAME = CACHE_PREFIJO + '37';
+const CACHE_NAME = CACHE_PREFIJO + '47';
 // Resumen de todos los archivos de esta versión. No lo cambies a mano: «npm run sellar» lo recalcula y, si
 // algún archivo ha cambiado, sube CACHE_NAME. La prueba «version-cache» falla si se sube un cambio sin sellar.
-const HUELLA = '36406b43b174fafe';
+const HUELLA = '372a75c2cd9578a6';
 
 // El "esqueleto" de las dos apps: HTML, manifest e iconos.
 const APP_SHELL = [
@@ -59,6 +59,7 @@ const APP_SHELL = [
   './js/alumnado/alumnos-nese.js',
   './js/inicio/horario.js',
   './js/inicio/alertas-home.js',
+  './js/inicio/aviso-riesgo.js',
   './js/ui/grupo-y-copias.js',
   './js/alumnado/plano-aula.js',
   './js/alumnado/ficha-familia.js',
@@ -67,6 +68,7 @@ const APP_SHELL = [
   './js/evaluacion/puntos-extra.js',
   './js/resultados/informe-detallado.js',
   './js/resultados/resultados.js',
+  './js/resultados/mapa-criterios.js',
   './js/resultados/cobertura-diagnostico.js',
   './js/clase/asistencia.js',
   './js/clase/convivencia.js',
@@ -89,6 +91,7 @@ const APP_SHELL = [
   './js/corrector/editor-rubrica.js',
   './js/corrector/corregir.js',
   './js/corrector/rubrica-niveles.js',
+  './js/corrector/autoevaluacion.js',
   './js/corrector/modelo-b.js',
   './js/nucleo/nuevo-curso.js',
   './js/ui/buscador.js',
