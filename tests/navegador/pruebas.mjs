@@ -1527,4 +1527,23 @@ export const PRUEBAS = [
       'todo el grupo en un .zip, un informe por alumno/a', d3.suggestedFilename() + ' ' + nombres.join());
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
+
+  { nombre: 'panel-familias-actividades', descripcion: 'Informe para la familia: en las competencias salen todas las actividades con las que se ha evaluado, sin «+N más»', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const [A] = await cuadernoConGrupo(p, t.url, { nombres: ['García López, Lucía'] });
+    const r = await p.evaluate(A => { const g = state.grupos[0], c = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
+      g.actividades = [1, 2, 3, 4, 5, 6].map(i => ({ id: 'a' + i, nombre: 'Actividad número ' + i, trimestre: 0, bloqueId: 'b1', esExamen: false, criterios: [{ critId: c, peso: 1 }] }));
+      g.notas = { [A]: Object.fromEntries(g.actividades.map(a => [a.id, { [c]: 7 }])) }; state.ui.trim = 0; save();
+      const html = panelFamiliaHTML(g, g.alumnos[0], 0), fin = panelFamiliaHTML(g, g.alumnos[0], 'final');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const tab = id => doc.getElementById('pp-' + id).textContent;
+      return { comp: tab(4), inf: tab(7), fin, pdf: informeAlumnoBodyHTML(g, g.alumnos[0]) };
+    }, A);
+    const todas = txt => [1, 2, 3, 4, 5, 6].every(i => txt.includes('Actividad número ' + i));
+    t.ok(todas(r.comp) && /Evaluado con:/.test(r.comp), 'la pestaña Competencias dice con qué actividades se ha evaluado cada competencia y criterio');
+    t.ok(todas(r.inf) && !/\+\d+ más/.test(r.inf), 'el informe oficial del panel lista todas las actividades, sin «+N más»');
+    t.ok(!/\+\d+ más/.test(r.fin) && todas(r.fin), 'también en el panel de final de curso');
+    t.ok(/\+2 más/.test(r.pdf), 'el informe PDF de siempre no cambia');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
 ];
