@@ -41,7 +41,7 @@ function renderBienvenidaHTML(){
   const botonEntrar=`<button class="btn" onclick="entrarDesdeBienvenida()">Entrar →</button>`;
   const botonAbrir=`<label class="file">📂 Abrir archivo…<input type="file" accept="application/json,.json" style="display:none" onchange="importarTodo(this)"></label>`;
   return `<div class="bienvenida-wrap" ondragover="event.preventDefault();this.classList.add('bienvenida-sobre')" ondragleave="this.classList.remove('bienvenida-sobre')" ondrop="_bienvenidaSoltarArchivo(event)">
-    <div class="bienvenida-emblema">🗂️</div>
+    <div class="bienvenida-emblema"><img src="img/rosa-vientos.svg" alt=""></div>
     <div class="bienvenida-eyebrow">${_bienvenidaSaludo()} · Geografía e Historia · Evaluación</div>
     <h1 class="bienvenida-title">Cuaderno del profesor</h1>
     <p class="bienvenida-tag">Programación de aula, evaluación por competencias, corrección con rúbricas y el seguimiento diario de tu alumnado — todo en un mismo sitio, sin cuentas y sin conexión.</p>

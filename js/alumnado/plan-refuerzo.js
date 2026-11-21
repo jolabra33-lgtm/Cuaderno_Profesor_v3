@@ -103,8 +103,8 @@ function renderRfListaHTML(root){
         <span class="badge">${(p.seguimiento||[]).length} entrada${(p.seguimiento||[]).length===1?"":"s"}</span>
       </div>
     </div>`;
-  }).join("") : `<div class="card" style="text-align:center;padding:34px 18px">
-    <div style="font-size:34px;margin-bottom:8px;opacity:.8">📈</div>
+  }).join("") : `<div class="card${total===0?" vacio":""}" style="text-align:center;padding:34px 18px">
+    ${total===0?'<img src="img/vacio-columna.svg" alt="" width="96" height="96">':'<div style="font-size:34px;margin-bottom:8px;opacity:.8">📈</div>'}
     <p class="sub" style="margin:0">${total===0?"Todavía no has creado ningún plan de refuerzo.":"Sin resultados con este filtro/búsqueda."}</p>
     ${total===0?'<button class="btn small" style="margin-top:12px" onclick="rfAbrirModalNueva()">+ Crear el primero</button>':""}
   </div>`;

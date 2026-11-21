@@ -7,7 +7,7 @@
 function renderCorCorregir(grupo){
   const c=document.getElementById("tabContent");
   const exams=cxExamenesRubrica(grupo);
-  if(!exams.length){ c.innerHTML='<div class="card"><h2>Corregir</h2><p class="sub">Todavía no hay ningún examen con rúbrica en este periodo.</p><button class="btn" onclick="cxIrCrear()">+ Nuevo examen</button></div>'; return; }
+  if(!exams.length){ c.innerHTML=vacioHTML("Todavía no hay ningún examen con rúbrica en este periodo.","columna",'<button class="btn" style="margin-top:12px" onclick="cxIrCrear()">+ Nuevo examen</button>'); return; }
   if(!exams.find(a=>a.id===state.ui.corExamId)) state.ui.corExamId=exams[0].id;
   const act=exams.find(a=>a.id===state.ui.corExamId);
   if(state.ui.corAlId){

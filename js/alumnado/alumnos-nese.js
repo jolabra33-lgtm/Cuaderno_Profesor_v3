@@ -64,7 +64,7 @@ function renderNeListaHTML(root){
   const totalNese=gruposConNese.reduce((s,x)=>s+x.alumnos.length,0);
   const totalPlanes=(state.planesNESE||[]).length;
   if(!gruposConNese.length){
-    root.innerHTML=`<div class="card"><p class="sub" style="margin:0">Todavía no hay alumnado marcado como NESE. Márcalo desde Evaluación por Competencias → Alumnado (columna NESE), y aparecerá aquí automáticamente.</p></div>`;
+    root.innerHTML=vacioHTML("Todavía no hay alumnado marcado como NESE. Márcalo desde Evaluación por Competencias → Alumnado (columna NESE), y aparecerá aquí automáticamente.","globo");
     return;
   }
   const bloques=gruposConNese.map(({g,alumnos})=>{

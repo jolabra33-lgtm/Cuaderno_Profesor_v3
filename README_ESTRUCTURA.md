@@ -258,3 +258,11 @@ Medido con un curso grande ficticio (6 grupos × 30 alumnos × 60 actividades, y
 - **Seguridad.** Solo se aceptan PDF (cabecera `%PDF-`, máximo 25 MB) y enlaces `http(s)`; el enlace se vuelve a comprobar al mostrarlo (`progDocEnlace`), por si una copia manipulada trae `javascript:`.
 - **Visor.** `progDocVer` abre una ventana dentro de la app y dibuja las páginas con pdf.js (`tutoria/vendor/`, ya en la caché sin conexión), solo las que se acercan a la vista. Prueba: `documentos-programacion`.
 - De paso: el desplegable «📋 Programación (SdA, metodología, recursos…)» ya no ensancha la página en el móvil.
+
+### Aspecto de Geografía e Historia (noviembre de 2026)
+
+El personaje va en el «marco» (cabecera, Inicio, bienvenida, icono, pantallas vacías); las pantallas de trabajo no cambian.
+- **Letra.** Títulos (`h1`, `h2`, `.hero-title`, `.bienvenida-title`) en Lora (`--font-serif`), con los archivos del editor (`editor/fonts/lora-*.woff`, ya en la caché sin conexión). El resto, la letra del sistema.
+- **Dibujos** en `img/` (SVG, en `APP_SHELL`): `mapa-fondo.svg` (retícula de una proyección cónica y curvas de nivel; fondo de la cabecera, `.hero` y la bienvenida, con máscara que lo aparta del texto), `rosa-vientos.svg` (junto al título de la cabecera, emblema de la bienvenida y marca de agua de Inicio, que gira muy despacio salvo con «reducir movimiento»), `vacio-globo.svg` y `vacio-columna.svg` (pantallas vacías: `vacioHTML(texto, dibujo, extra)` en `js/nucleo/utilidades.js`). Son decorativos (`alt=""`).
+- **Icono** (`icons/icon-*.png`): la rosa de los vientos sobre el azul marino con el mapa tenue, con margen para el recorte «maskable». Tutoría conserva el suyo.
+- El servidor de las pruebas (`tests/navegador/utilidades.mjs`) sirve ahora `.svg` como `image/svg+xml`.

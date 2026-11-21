@@ -242,7 +242,7 @@ function progListaHTML(root){
           </div>
         </div>
       </div>`;
-    }).join("") : `<div class="card"><p class="sub" style="margin:0">Todavía no has creado ninguna Programación de Aula.</p></div>`}
+    }).join("") : vacioHTML("Todavía no has creado ninguna Programación de Aula.","globo")}
   ${renderGestionCatalogosHTML()}
   `;
   bindGestionCatalogosEventos();

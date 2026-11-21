@@ -6,6 +6,10 @@
      de contenido se adapta. Mismos selectores que el tema anterior:
      solo cambian valores y se añaden un puñado de reglas de cristal.
      ================================================================== */
+  /* Títulos en Lora, letra con serifa de atlas o de libro de historia (la misma de los documentos «lapislázuli y oro»).
+     Los archivos son los del editor de exámenes: no se descarga nada más. */
+  @font-face{font-family:"Lora";src:url(../editor/fonts/lora-400.woff) format("woff");font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:"Lora";src:url(../editor/fonts/lora-700.woff) format("woff");font-weight:700;font-style:normal;font-display:swap}
   :root{
     /* Marca — constante, es el "chasis" del instrumento */
     --brand-1:#0a1120; --brand-2:#152a44; --brand-3:#25456b;
@@ -22,7 +26,7 @@
     --gpill-on-1:var(--brand-1); --gpill-on-2:var(--brand-3); --overlay-hover:rgba(10,17,32,.08);
     --glass-bg:rgba(255,255,255,.9); --glass-border:rgba(255,255,255,.6); --glass-blur:18px;
 
-    --font-serif:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --font-serif:"Lora",Georgia,"Times New Roman",serif;
     --shadow-sm:0 1px 2px rgba(10,17,32,.05),0 1px 3px rgba(10,17,32,.07);
     --shadow-md:0 6px 16px -4px rgba(10,17,32,.12),0 3px 6px -2px rgba(10,17,32,.06);
     --shadow-lg:0 20px 40px -8px rgba(10,17,32,.20),0 6px 12px -4px rgba(10,17,32,.10);
@@ -70,8 +74,8 @@
   header .in{border:none;box-shadow:var(--shadow-sm)}
   header label.file{color:rgba(244,236,216,.92)}
   .wrap{max-width:var(--content-max,1100px);margin:0 auto;padding:14px max(20px, env(safe-area-inset-right)) 14px max(20px, env(safe-area-inset-left))}
-  h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.02em;font-family:var(--font-serif)}
-  h2{margin:0 0 4px;font-size:17px;font-weight:800;letter-spacing:-.015em}
+  h1{margin:0;font-size:19px;font-weight:700;letter-spacing:0;font-family:var(--font-serif)}
+  h2{margin:0 0 4px;font-size:17px;font-weight:700;letter-spacing:0;font-family:var(--font-serif)}
   .sub{margin:0 0 16px;color:var(--mut);font-size:13.5px;line-height:1.55}
   main{max-width:var(--content-max,1100px);margin:0 auto;padding:20px max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
   .card{background:var(--card);border:1px solid var(--border-soft);border-radius:18px;padding:18px;box-shadow:var(--shadow-sm);min-width:0}
@@ -211,21 +215,24 @@
   .modal-close:hover{color:var(--ink);background:var(--surface-2)}
   .hero{background:linear-gradient(120deg,var(--brand-1) 0%,var(--brand-2) 55%,var(--brand-3) 100%);
     border-radius:26px;padding:32px 32px 26px;margin-bottom:4px;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+  /* v3 · Geografía e Historia: un mapa de fondo (img/mapa-fondo.svg: retícula de una proyección cónica y curvas de
+     nivel) que se desvanece hacia el texto, y la rosa de los vientos (img/rosa-vientos.svg) como marca de agua. */
   .hero::before{
-    content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
-    background-image:
-      repeating-linear-gradient(0deg, rgba(215,180,99,.09) 0 1px, transparent 1px 64px),
-      repeating-linear-gradient(90deg, rgba(215,180,99,.09) 0 1px, transparent 1px 64px);
-    -webkit-mask-image:radial-gradient(760px 420px at 82% 8%, #000 0%, transparent 72%);
-    mask-image:radial-gradient(760px 420px at 82% 8%, #000 0%, transparent 72%);
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.42;
+    background:url(../img/mapa-fondo.svg) right center/cover no-repeat;
+    -webkit-mask-image:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.35) 30%, #000 70%);
+    mask-image:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.35) 30%, #000 70%);
   }
-  .hero::after{content:"";position:absolute;right:-60px;top:-90px;width:280px;height:280px;border-radius:50%;
-    background:radial-gradient(circle, rgba(215,180,99,.30), transparent 70%);pointer-events:none;filter:blur(2px);
-    animation:heroGlow 7s ease-in-out infinite}
+  .hero::after{content:"";position:absolute;right:-46px;bottom:-56px;width:250px;height:250px;pointer-events:none;
+    background:url(../img/rosa-vientos.svg) center/contain no-repeat;opacity:.16;
+    animation:heroRosa 120s linear infinite}
+  @keyframes heroRosa{to{transform:rotate(360deg)}}
+  .hero > *{position:relative;z-index:1}
   @keyframes heroGlow{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
   @media(prefers-reduced-motion:reduce){ .hero::after{animation:none} }
+  @media(max-width:640px){ .hero::after{width:170px;height:170px;right:-40px;bottom:-40px} .hero::before{opacity:.22} .bienvenida-wrap::before{opacity:.26} }
   .hero-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;font-weight:800}
-  .hero-title{font-family:var(--font-serif);font-size:35px;font-weight:800;margin:0 0 10px;letter-spacing:-.035em;color:#f7f2e4}
+  .hero-title{font-family:var(--font-serif);font-size:36px;font-weight:700;margin:0 0 10px;letter-spacing:-.01em;color:#f7f2e4}
   .hero-tag{font-size:15px;color:rgba(247,242,228,.86);margin:0 0 8px;max-width:540px;line-height:1.55;position:relative}
   .hero .btn{background:linear-gradient(135deg,#f7f2e4,#e9dcb8);color:var(--brand-1);box-shadow:0 6px 20px rgba(0,0,0,.25);margin-top:10px}
   .hero .btn:hover:not(:disabled){filter:none;background:linear-gradient(135deg,#fffaf0,#f2e6c4)}
@@ -236,20 +243,19 @@
     transition:box-shadow .2s ease}
   .bienvenida-wrap.bienvenida-sobre{box-shadow:0 0 0 3px var(--accent),var(--shadow-lg)}
   .bienvenida-wrap::before{
-    content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
-    background-image:
-      repeating-linear-gradient(0deg, rgba(215,180,99,.10) 0 1px, transparent 1px 64px),
-      repeating-linear-gradient(90deg, rgba(215,180,99,.10) 0 1px, transparent 1px 64px);
-    -webkit-mask-image:radial-gradient(900px 520px at 50% 0%, #000 0%, transparent 75%);
-    mask-image:radial-gradient(900px 520px at 50% 0%, #000 0%, transparent 75%);
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.38;
+    background:url(../img/mapa-fondo.svg) center/cover no-repeat;
+    -webkit-mask-image:radial-gradient(closest-side at 50% 50%, rgba(0,0,0,.25) 0%, #000 100%);
+    mask-image:radial-gradient(closest-side at 50% 50%, rgba(0,0,0,.25) 0%, #000 100%);
   }
   .bienvenida-wrap::after{content:"";position:absolute;left:50%;top:-120px;width:420px;height:420px;border-radius:50%;
     transform:translateX(-50%);background:radial-gradient(circle, rgba(215,180,99,.32), transparent 70%);
     pointer-events:none;filter:blur(2px);animation:heroGlow 7s ease-in-out infinite}
   @media(prefers-reduced-motion:reduce){ .bienvenida-wrap::after{animation:none} }
-  .bienvenida-emblema{font-size:44px;line-height:1;margin-bottom:18px;position:relative}
+  .bienvenida-emblema{width:92px;height:92px;margin-bottom:18px;position:relative;filter:drop-shadow(0 6px 18px rgba(0,0,0,.35))}
+  .bienvenida-emblema img{width:100%;height:100%;display:block}
   .bienvenida-eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-weight:800;position:relative}
-  .bienvenida-title{font-family:var(--font-serif);font-size:46px;font-weight:800;margin:0 0 14px;letter-spacing:-.035em;color:#f7f2e4;position:relative}
+  .bienvenida-title{font-family:var(--font-serif);font-size:48px;font-weight:700;margin:0 0 14px;letter-spacing:-.01em;color:#f7f2e4;position:relative}
   .bienvenida-tag{font-size:16px;color:rgba(247,242,228,.88);margin:0 0 30px;max-width:560px;line-height:1.6;position:relative}
   .bienvenida-resumen{font-size:13px;font-weight:700;color:#f7f2e4;background:rgba(255,255,255,.1);border:1px solid rgba(247,242,228,.3);border-radius:999px;padding:6px 16px;margin:-8px 0 26px;position:relative}
   .bienvenida-botones{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;position:relative}
@@ -641,3 +647,14 @@
   .prog-doc-paginas{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;background:var(--surface-2);border-radius:12px;padding:8px}
   .prog-doc-pagina{background:#fff;margin:0 auto 10px;box-shadow:var(--shadow-sm);border-radius:4px;overflow:hidden}
   .prog-doc-pagina canvas{display:block}
+  /* v3 · Geografía e Historia: el mapa también en la cabecera, muy tenue, y la rosa de los vientos junto al título. */
+  header::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;
+    background:url(../img/mapa-fondo.svg) right center/cover no-repeat}
+  header > *{position:relative;z-index:1}
+  header h1::before{content:"";display:inline-block;width:1.25em;height:1.25em;margin-right:.4em;vertical-align:-.27em;
+    background:url(../img/rosa-vientos.svg) center/contain no-repeat}
+  /* Pantallas vacías: un dibujo a línea (globo terráqueo, columna…) encima del texto. vacioHTML() en js/nucleo/utilidades.js. */
+  .vacio{text-align:center;padding:26px 18px}
+  .vacio img{width:96px;height:96px;display:block;margin:0 auto 12px;opacity:.9}
+  .vacio .sub{margin:0 auto;max-width:520px}
+  body[data-tema="oscuro"] .vacio img{opacity:.95}
