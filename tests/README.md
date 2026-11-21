@@ -49,6 +49,7 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `rubrica-niveles` | Rúbrica por niveles de logro: crear, corregir pinchando casillas, afinar, cambiar valores y pesos, imprimir, por categoría, plantillas, cambio de tipo y accesibilidad |
 | `rubrica-niveles-programacion` | Examen traído de la Programación: al abrirlo en el Corrector pregunta el tipo de rúbrica y pasa a niveles con una categoría por criterio |
 | `documentos-programacion` | Programación de Aula: Modelo y Propuesta Pedagógica con enlace y PDF guardado (ver, rechazar lo que no es PDF ni web, copia de seguridad, exportar/importar, duplicar, quitar, eliminar) |
+| `riesgo-mapa-autoevaluacion` | Inicio avisa de quien suspende, baja 2 puntos o acumula NP; mapa de criterios (porcentajes, colores, media, imprimir); autoevaluación y coevaluación (tarjeta, comparación, distintivos, hojas por puntos y por niveles) sin tocar la nota |
 | `accesibilidad` | WCAG 2 A/AA (axe-core) en todas las pestañas y modos, y contraste |
 | `actualizacion` | Aviso «Hay una versión nueva · Actualizar» |
 

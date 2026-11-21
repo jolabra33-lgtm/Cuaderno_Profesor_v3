@@ -96,6 +96,8 @@ function renderResultados(grupo){
   if(state.ui.resAl && !grupo.alumnos.find(a=>a.id===state.ui.resAl)) state.ui.resAl="";
   const al=grupo.alumnos.find(a=>a.id===state.ui.resAl)||null;
   const trim=state.ui.trim;
+  // ---- Mapa de criterios (js/resultados/mapa-criterios.js): sustituye a la tabla de notas mientras está abierto ----
+  if(state.ui.resVista==="mapa"){ c.innerHTML=mapaCriteriosHTML(grupo); return; }
 
   // ---- "Toda la clase": tabla siempre visible, cada fila abre el detalle del alumno debajo ----
   const htmlClase=`
@@ -103,6 +105,7 @@ function renderResultados(grupo){
     <div class="flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
       <h2 style="font-size:15px">Toda la clase</h2>
       <div class="flex res-acciones">
+        <button class="ghost" style="border:1px solid var(--line)" title="Tabla de color: el logro de cada alumno/a en cada criterio de esta evaluación" onclick="mapaVista(true)">▦ Mapa de criterios</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarCSVGrupo()" title="Hoja de cálculo con la media y la nota de acta (entera) de cada alumno/a, lista para pasar a ITACA">Exportar notas (CSV)</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesTodos()">Exportar todos los informes</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesFinalesTodos()">Exportar informes finales de curso</button>

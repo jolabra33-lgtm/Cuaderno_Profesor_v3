@@ -146,6 +146,7 @@ function renderHome(){
   ${coberturaAvisosInicioHTML()}
   ${typeof ccAvisoInicioHTML==="function"?ccAvisoInicioHTML():""}
   ${queMeFaltaHTML()}
+  ${avisoRiesgoHTML()}
   ${homeAlertasHTML()}
 
   ${homeSeccionHeaderHTML("evaluacion","Evaluación y corrección")}

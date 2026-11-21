@@ -658,3 +658,36 @@
   .vacio img{width:96px;height:96px;display:block;margin:0 auto 12px;opacity:.9}
   .vacio .sub{margin:0 auto;max-width:520px}
   body[data-tema="oscuro"] .vacio img{opacity:.95}
+  /* Mapa de criterios (js/resultados/mapa-criterios.js): alumnado × criterios, con el nombre fijo a la izquierda. */
+  .mc-scroll{overflow:auto;max-height:70vh;margin-top:10px;border:1px solid var(--line);border-radius:12px}
+  .mc-tabla{border-collapse:separate;border-spacing:0;font-size:13px;width:auto;min-width:100%}
+  .mc-tabla th,.mc-tabla td{padding:6px 8px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);text-align:center;white-space:nowrap}
+  .mc-tabla thead th{position:sticky;top:0;background:var(--surface-2);color:var(--ink);font-size:12px;z-index:2}
+  .mc-tabla thead tr:nth-child(2) th{top:31px}
+  .mc-tabla .mc-ce{color:var(--accent-texto);letter-spacing:.04em}
+  .mc-tabla .mc-nombre{position:sticky;left:0;background:var(--card);text-align:left;z-index:1;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+  .mc-tabla thead .mc-nombre{z-index:3;background:var(--surface-2)}
+  .mc-tabla .mc-c{color:var(--mc-fg);font-weight:700;font-variant-numeric:tabular-nums;min-width:40px}
+  .mc-tabla .mc-hay-bajos{color:var(--danger);font-weight:700}
+  .mc-tabla .mc-vacia{color:var(--mut);font-weight:400}
+  .mc-tabla tfoot th,.mc-tabla tfoot td{border-top:2px solid var(--muted-border);font-weight:700}
+  .mc-tabla tfoot .mc-nombre{background:var(--surface)}
+  .mc-tabla .mc-bajos{font-variant-numeric:tabular-nums;color:var(--mut)}
+  .mc-al{border:none;background:none;padding:0;font:inherit;font-weight:600;color:var(--ink);cursor:pointer;text-align:left;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .mc-al:hover{text-decoration:underline}
+  .mc-leyenda{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;margin-top:10px;color:var(--mut)}
+  .mc-leyenda i{display:inline-block;width:13px;height:13px;border:1px solid;border-radius:4px;vertical-align:-2px;margin-right:5px}
+  /* Autoevaluación y coevaluación (js/corrector/autoevaluacion.js). */
+  .ae-detalles>summary{cursor:pointer;list-style-position:outside}
+  .ae-dos{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+  .ae-bloque{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:8px;align-content:start}
+  .ae-items{display:grid;gap:6px}
+  .ae-item{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .ae-item-txt{font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .ae-dif{display:inline-block;min-width:38px;text-align:center;font-size:12px;font-weight:700;border-radius:999px;padding:1px 7px;font-variant-numeric:tabular-nums}
+  .ae-mas{background:var(--warning-soft);color:var(--warning-ink)}
+  .ae-menos{background:#d9e6f2;color:#1d4e74}
+  .ae-igual{background:#dcece0;color:#1e5631}
+  .ae-opciones{border:1px solid var(--line);border-radius:12px;padding:8px 12px 10px;margin:0 0 10px;display:grid;gap:6px}
+  .ae-opciones legend{font-size:12.5px;color:var(--mut);font-weight:700;padding:0 4px}
+  .ae-opciones label{display:flex;gap:8px;align-items:center;font-size:13.5px}

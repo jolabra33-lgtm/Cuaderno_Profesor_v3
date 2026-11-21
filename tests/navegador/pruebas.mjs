@@ -1318,4 +1318,82 @@ export const PRUEBAS = [
     t.ok(await p.locator('.dlg-overlay', { hasText: 'no está guardado en este dispositivo' }).count() === 1, 'si el PDF ya no está (tras deshacer), se avisa de que hay que volver a guardarlo');
     t.ok(!p.errores.length && !(await p.evaluate(() => window.__x)), 'sin errores de JavaScript', p.errores.join('; '));
   } },
+
+  { nombre: 'riesgo-mapa-autoevaluacion', descripcion: 'Aviso de alumnado en riesgo en Inicio, mapa de criterios en Resultados y autoevaluación/coevaluación con la rúbrica', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const [A, B, C] = await cuadernoConGrupo(p, t.url, { nombres: ['Alba Baja, Ana', 'Beltrán Suspende, Blas', 'Cano Faltas, Carla'] });
+    const cr = await p.evaluate(() => { const g = state.grupos[0], c = getCatalogo('GeH_1ESO').ces[0].criterios.map(x => x.id), [A, B, C] = g.alumnos.map(a => a.id);
+      const act = (id, t, crits) => ({ id, nombre: 'Actividad ' + id, trimestre: t, bloqueId: 'b1', esExamen: false, criterios: crits.map(x => ({ critId: x, peso: 1 })) });
+      g.actividades = [act('a1', 0, [c[0]]), act('b1', 1, [c[0]]), act('b2', 1, [c[1]]), act('b3', 1, [c[1]])];
+      g.notas = { [A]: { a1: { [c[0]]: 8 }, b1: { [c[0]]: 5 }, b2: { [c[1]]: 5 }, b3: { [c[1]]: 5 } },
+                  [B]: { a1: { [c[0]]: 6 }, b1: { [c[0]]: 3 }, b2: { [c[1]]: 3 }, b3: { [c[1]]: 3 } },
+                  [C]: { a1: { [c[0]]: 9 }, b1: { [c[0]]: 9 }, b2: {}, b3: {} } };
+      g.marcas = { [C]: { b2: 'NP', b3: 'NP' } };
+      state.ui.trim = 1; state.ui.appMode = 'inicio'; state.novedadesVistas = NOVEDADES_VERSION; save(); render(); return c; });
+    await esperar(300);
+    // 2 · Aviso temprano
+    const txt = (await p.textContent('.aviso-riesgo')) || '';
+    t.ok(/Alba Baja, Ana:[^·]*ha bajado de 8,0 a 5,0 respecto a la 1/.test(txt) && !/Alba Baja, Ana: 🔴/.test(txt), 'avisa de quien ha bajado 2 puntos o más (y no la da por suspensa con un 5)', txt);
+    t.ok(/Beltrán Suspende, Blas: 🔴\ssuspende \(3,0\)/.test(txt), 'avisa de quien va suspendiendo, con su nota', txt);
+    t.ok(/Cano Faltas, Carla:.*2 «No presentado»/.test(txt), 'avisa de quien acumula «No presentado»', txt);
+    t.ok(txt.indexOf('Beltrán') < txt.indexOf('Alba'), 'primero lo más grave (suspende antes que baja)');
+    await p.locator('.aviso-riesgo button:has-text("Ver")').nth(txt.indexOf('Beltrán') < txt.indexOf('Cano') ? 0 : 1).click(); await esperar(300);
+    t.ok(await p.evaluate(B => state.ui.tab === 'resultados' && state.ui.resAl === B, B), '«Ver» abre Resultados con el informe de ese alumno/a');
+    // 1 · Mapa de criterios
+    await p.click('button:has-text("Mapa de criterios")'); await esperar(300);
+    const m = await p.evaluate(() => ({ filas: document.querySelectorAll('.mc-tabla tbody tr').length, cols: [...document.querySelectorAll('.mc-tabla .mc-crit')].map(x => x.textContent),
+      celdas: [...document.querySelectorAll('.mc-tabla tbody tr')].map(tr => [...tr.querySelectorAll('.mc-c')].map(td => td.textContent)),
+      media: [...document.querySelectorAll('.mc-tabla tfoot .mc-c')].map(td => td.textContent), rojos: [...document.querySelectorAll('.mc-tabla tbody .mc-bajos')].map(td => td.textContent),
+      fondoRojo: getComputedStyle(document.querySelectorAll('.mc-tabla tbody tr')[1].querySelector('.mc-c')).backgroundColor }));
+    t.ok(m.filas === 3 && m.cols.join() === cr.slice(0, 2).join(), 'una fila por alumno/a y una columna por cada criterio trabajado en la evaluación', JSON.stringify(m));
+    t.ok(m.celdas[0].join() === '50,50' && m.celdas[1].join() === '30,30' && m.celdas[2][0] === '90', 'cada casilla lleva el porcentaje de logro del criterio', JSON.stringify(m.celdas));
+    t.ok(m.fondoRojo === 'rgb(243, 220, 220)' && m.rojos[1] === '2', 'color del nivel («Necesita mejorar» en rojo) y cuántos criterios tiene en rojo', JSON.stringify(m));
+    t.ok(m.media[0] === '57', 'la última fila es la media del grupo en cada criterio', m.media.join());
+    await p.click('button.mc-al:has-text("Cano Faltas")'); await esperar(300);
+    t.ok(await p.evaluate(C => state.ui.resVista === '' && state.ui.resAl === C, C), 'tocar un nombre del mapa abre su informe');
+    await p.evaluate(() => mapaVista(true)); await p.click('button:has-text("Imprimir")'); await esperar(300);
+    t.ok(await p.locator('#printOverlay .mc-tabla').count() === 1, 'el mapa se puede imprimir');
+    await p.click('#prtCerrar'); await esperar(200);
+    // 4 · Autoevaluación y coevaluación
+    await p.evaluate(([A, c]) => { const g = state.grupos[0];
+      g.actividades.push({ id: 'e1', nombre: 'Examen 2', trimestre: 1, bloqueId: 'b0', esExamen: true, criterios: [{ critId: c[0], peso: 1 }],
+        rubrica: [{ id: 's1', title: 'Pregunta 1', items: [{ id: 'i1', label: 'Ítem 1', max: 6, links: [{ critId: c[0], peso: 1 }] }, { id: 'i2', label: 'Ítem 2', max: 4, links: [] }], subs: [] }] });
+      g.rubricScores = { [A]: { e1: { i1: 4, i2: 3 } } }; cxRecalcAlumno(g, g.actividades.find(a => a.id === 'e1'), A);
+      state.ui.appMode = 'corrector'; state.ui.corTab = 'corregir'; state.ui.corExamId = 'e1'; state.ui.corAlId = A; state.ui.aeAbierto = true; save(); render(); }, [A, cr]);
+    await esperar(300);
+    await elegir(p.locator('select[aria-label="Autoevaluación: Ítem 1"]'), '5'); await esperar(200);
+    t.ok((await p.textContent('.ae-detalles')).includes('Copiados 1 de 2 ítems'), 'con la hoja a medias, dice cuántos ítems lleva copiados en vez de comparar');
+    await elegir(p.locator('select[aria-label="Autoevaluación: Ítem 2"]'), '4'); await esperar(200);
+    await elegir(p.locator('select[aria-label="Coevaluación: Ítem 1"]'), '3'); await esperar(200);
+    const r = await p.evaluate(A => { const g = state.grupos[0]; return { auto: g.autoeval[A].e1.auto.items, nota: g.notasCuant[A].e1, txt: document.querySelector('.ae-detalles').textContent }; }, A);
+    t.ok(r.auto.i1 === 5 && r.auto.i2 === 4 && /Se pone: 9,0 · tu nota: 7,0\s*\+2/.test(r.txt), 'compara la autoevaluación con tu nota (9 frente a 7: +2)', JSON.stringify(r));
+    t.ok(r.nota === 7, 'no cambia la nota del examen');
+    await p.evaluate(() => { state.ui.corAlId = ''; render(); }); await esperar(300);
+    const lista = await p.textContent('#tabContent');
+    t.ok(lista.includes('🙋 9,0') && lista.includes('👥 …') && /9,0 frente a tu 7,0/.test(lista) && !/Coevaluación ·/.test(lista), 'la lista lleva los distintivos y el resumen del grupo solo cuenta hojas completas', lista.slice(0, 600));
+    // Hojas para el alumnado: coevaluación en blanco (una por alumno/a) y autoevaluación con nombre.
+    await p.click('button:has-text("🙋 Autoevaluación")'); await esperar(200);
+    await p.check('input[name=aeTipo][value=co]'); await p.check('input[name=aeHojas][value=blanco]');
+    await p.click('button:has-text("Preparar las hojas")'); await esperar(400);
+    const h = await p.evaluate(() => { const o = document.querySelector('#printOverlay .print-hoja').shadowRoot; return { n: o.querySelectorAll('.ae-hoja').length, txt: o.textContent, cajas: o.querySelectorAll('.ae-hoja')[0].querySelectorAll('.ae-caja').length }; });
+    t.ok(h.n === 3 && h.txt.includes('Evalúo a:') && h.txt.includes('Le doy') && h.cajas === 3, 'hojas de coevaluación en blanco: una por alumno/a, con casilla por ítem y total', JSON.stringify({ n: h.n, cajas: h.cajas }));
+    await p.click('#prtCerrar'); await esperar(200);
+    await p.evaluate(() => aeImprimirHojas('e1', { tipo: 'auto', hojas: 'nombre', desc: true, refl: true })); await esperar(300);
+    const h2 = await p.evaluate(() => document.querySelector('#printOverlay .print-hoja').shadowRoot.textContent);
+    t.ok(h2.includes('Nombre: Alba Baja, Ana') && h2.includes('Me doy') && h2.includes('Lo que tengo que mejorar'), 'hojas de autoevaluación con el nombre de cada alumno/a y preguntas para reflexionar');
+    await p.click('#prtCerrar'); await esperar(200);
+    // Rúbrica por niveles: en la hoja se marca la casilla del nivel; en la tarjeta se elige el nivel.
+    await p.evaluate(A => { const g = state.grupos[0], e = g.actividades.find(a => a.id === 'e1');
+      e.rubrica = [{ id: 'n', title: '', sinTitulo: true, formato: 'niveles', niveles: [{ id: 'l1', nombre: 'Experto', valor: 4 }, { id: 'l2', nombre: 'Aprendiz', valor: 2 }],
+        items: [{ id: 'c1', label: 'Contenido', max: 10, desc: [], links: [], celdas: { l1: 'Lo explica todo', l2: 'Lo explica en parte' } }], subs: [] }];
+      aeImprimirHojas('e1', { tipo: 'auto', hojas: 'blanco', desc: true, refl: false }); }, A);
+    await esperar(300);
+    const h3 = await p.evaluate(() => { const o = document.querySelector('#printOverlay .print-hoja').shadowRoot, hoja = o.querySelector('.ae-hoja'); return { niv: !!hoja.querySelector('.ae-niv'), txt: hoja.textContent, cajas: hoja.querySelectorAll('.ae-caja').length }; });
+    t.ok(h3.niv && h3.txt.includes('Experto') && h3.txt.includes('Lo explica todo') && h3.cajas === 2 && h3.txt.includes('marca con una X'), 'con rúbrica por niveles, la hoja tiene la tabla de niveles con una casilla en cada uno', JSON.stringify(h3));
+    await p.click('#prtCerrar'); await esperar(200);
+    await p.evaluate(A => { state.ui.corAlId = A; render(); }, A); await esperar(300);
+    const ops = await p.locator('select[aria-label="Autoevaluación: Contenido"]').evaluate(s => [...s.options].map(o => o.textContent));
+    t.ok(ops.join('|') === '—|Experto (10)|Aprendiz (5)', 'en la tarjeta, con rúbrica por niveles se elige el nivel (en el orden de la rúbrica)', ops.join('|'));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
 ];
