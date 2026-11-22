@@ -681,7 +681,21 @@ export const PRUEBAS = [
     await p.click('#actaCalifOv [data-acc="ver"]'); await esperar(400);
     const vista = await p.frameLocator('#tdocOverlay iframe').locator('table.acta').innerText();
     t.ok(/Andrés Lozano, Claudia/.test(vista) && /HE/.test(vista), '«Ver e imprimir» la abre en la vista de documentos, para imprimir o guardar en PDF', vista.slice(0, 120));
-    await p.evaluate(() => { __cerrarVistaDocT(); closeDatosMateria(); openActaOficialMenu('2º Bach.', 'HS'); }); await esperar(150);
+    // Abreviaturas propias, como en Itaca: se guardan, sirven para todos los grupos y viajan en los archivos.
+    await p.evaluate(() => { __cerrarVistaDocT(); abrirActaCalificaciones('2º Bach.', 'HS', '1'); }); await esperar(150);
+    await p.click('#acAbrevs summary');
+    t.ok(await p.getAttribute('#actaCalifOv input[aria-label="Abreviatura de Historia del Arte"]', 'placeholder') === 'HA', 'cada materia muestra la abreviatura automática como sugerencia');
+    await p.fill('#actaCalifOv input[aria-label="Abreviatura de Historia del Arte"]', 'HART'); await p.press('#actaCalifOv input[aria-label="Abreviatura de Historia del Arte"]', 'Enter');
+    await p.fill('#actaCalifOv input[aria-label="Abreviatura de Historia de España"]', 'HA'); await p.press('#actaCalifOv input[aria-label="Abreviatura de Historia de España"]', 'Tab');
+    await esperar(1300);
+    const ab = await p.evaluate(() => datosActaCalificaciones('2º Bach.', 'HS', '1').abrevs);
+    t.ok(JSON.stringify(ab) === JSON.stringify(['HA', 'LCL II', 'HART']), 'el acta usa las abreviaturas escritas (y no las cambia aunque se parezcan a otra automática)', JSON.stringify(ab));
+    await p.reload(); await esperar(1500);
+    t.ok(await p.evaluate(() => _abrevMaterias['Historia del Arte'] === 'HART' && buildState().abrevMaterias['Historia de España'] === 'HA' && /<th scope="col" class="m" title="Historia del Arte">HART<\/th>/.test(actaCalificacionesHTML('2º Bach.', 'HS', '1'))),
+      'se conservan al recargar, van en el archivo y salen en el acta');
+    t.ok(await p.evaluate(() => { const st = buildState(); delete st.abrevMaterias; applyFilePayload(st); const vacio = !Object.keys(_abrevMaterias).length;
+      st.abrevMaterias = { 'Historia del Arte': 'HART' }; applyFilePayload(st); return vacio && _abrevMaterias['Historia del Arte'] === 'HART'; }), 'un archivo sin abreviaturas vuelve a las automáticas, y uno con ellas las trae');
+    await p.evaluate(() => { hideWelcomeScreen(); currentGrupos['2º Bach.'] = 'HS'; selectNivel('2º Bach.'); openActaOficialMenu('2º Bach.', 'HS'); }); await esperar(150);
     t.ok(await p.isVisible('#actaMenuOverlay button:has-text("Acta de calificaciones")'), 'también está en el menú del Acta Oficial');
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },

@@ -29,10 +29,23 @@ function _acAbrev(m) {
   ab = ab.normalize('NFD').replace(/[̀-ͯ]/g, '') || '?';
   return num ? ab + ' ' + num : ab;
 }
-// Abreviaturas sin repetir dentro del acta.
+// La abreviatura que ha puesto el tutor/a para esa materia (como en Itaca), o '' si no hay.
+function _acAbrevPropia(m) {
+  const k = Object.keys(_abrevMaterias).find(x => _tNorm(x) === _tNorm(m));
+  return k ? _abrevMaterias[k] : '';
+}
+function _acPonerAbrev(m, ab) {
+  Object.keys(_abrevMaterias).filter(x => _tNorm(x) === _tNorm(m)).forEach(x => delete _abrevMaterias[x]);
+  ab = String(ab || '').trim().slice(0, 12);
+  if (ab) _abrevMaterias[String(m).trim()] = ab;
+  markDirty();
+}
+// Abreviaturas del acta: las propias tal cual; las automáticas, sin repetir ninguna.
 function _acAbrevs(materias) {
-  const usadas = {};
-  return materias.map(m => {
+  const propias = materias.map(_acAbrevPropia), usadas = {};
+  propias.forEach(a => { if (a) usadas[a] = true; });
+  return materias.map((m, i) => {
+    if (propias[i]) return propias[i];
     let ab = _acAbrev(m), base = ab, n = 2;
     while (usadas[ab]) ab = base + n++;
     usadas[ab] = true;
@@ -169,7 +182,7 @@ function _acNombreArchivo(nivel, grupo, k) {
 window.abrirActaCalificaciones = function(nivel, grupo, k) {
   if (!data[nivel]?.[grupo]?.length) { showToast('⚠ No hay alumnos en este grupo'); return; }
   k = String(k || (typeof _sesEvalPropuesta === 'function' ? _sesEvalPropuesta(nivel) : '1'));
-  let sinNombres = false;
+  let sinNombres = false, abrevAbierto = false;
   const ov = document.createElement('div');
   ov.className = 'tdlg-ov'; ov.style.zIndex = String(++_tDlgZ); ov.id = 'actaCalifOv';
   const pintar = () => {
@@ -180,6 +193,12 @@ window.abrirActaCalificaciones = function(nivel, grupo, k) {
       <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px">Evaluación
         <select class="tdlg-in" style="width:auto;margin:0" id="acEval">${['1', '2', '3'].map(x => `<option value="${x}" ${x === k ? 'selected' : ''}>${FT_NOMBRE_EVAL[x]}</option>`).join('')}</select></label>
       <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px"><input type="checkbox" id="acSinNombres" ${sinNombres ? 'checked' : ''}> Sin los nombres (solo el número de orden)</label>
+      ${D.porMateria.length ? `<details id="acAbrevs" style="margin-top:10px;font-size:13px" ${abrevAbierto ? 'open' : ''}><summary style="cursor:pointer;font-weight:600">✏️ Abreviaturas de las materias (como en Itaca)</summary>
+        <p style="font-size:12px;color:var(--text2);margin:6px 0">Escribe la abreviatura que quieres en el acta (por ejemplo, MATCS2 o EDN). Vacía: se pone sola. Sirven para todos los grupos.</p>
+        <div style="max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:8px"><table class="inf-tabla" style="margin:0"><tbody>
+        ${D.porMateria.map((m, j) => `<tr><th scope="row" style="font-weight:500;text-align:left;padding:3px 8px">${_tEsc(m.materia)}</th>
+          <td style="width:120px;padding:3px 6px"><input class="tdlg-in" style="margin:0;padding:4px 8px;width:110px" data-abrev="${j}" maxlength="12" value="${_tEsc(_acAbrevPropia(m.materia))}" placeholder="${_tEsc(_acAbrev(m.materia))}" aria-label="Abreviatura de ${_tEsc(m.materia)}"></td></tr>`).join('')}
+        </tbody></table></div></details>` : ''}
       <p style="font-size:12.5px;margin:10px 0 0;padding:8px 10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border)">${conDatos
         ? `✅ ${conDatos} de ${D.porMateria.length} materias con calificaciones.${D.sinCalificar.length ? ` Faltan: ${_tEsc(D.sinCalificar.join(', '))}.` : ''}`
         : '🕐 Todavía no hay calificaciones de esta evaluación: llegan con los archivos del Cuaderno o con «✍️ Introducir datos de una materia».'}</p>
@@ -191,6 +210,11 @@ window.abrirActaCalificaciones = function(nivel, grupo, k) {
       </div></div>`;
     ov.querySelector('#acEval').onchange = ev => { k = ev.target.value; pintar(); };
     ov.querySelector('#acSinNombres').onchange = ev => { sinNombres = ev.target.checked; };
+    const det = ov.querySelector('#acAbrevs'); if (det) det.ontoggle = () => { abrevAbierto = det.open; };
+    ov.querySelectorAll('input[data-abrev]').forEach(inp => {
+      inp.onchange = () => { _acPonerAbrev(D.porMateria[+inp.dataset.abrev].materia, inp.value); showToast('✏️ Abreviatura guardada'); };
+      inp.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); inp.blur(); } };
+    });
     ov.querySelector('[data-acc="cerrar"]').onclick = () => ov.remove();
     ov.querySelector('[data-acc="manual"]').onclick = () => { ov.remove(); if (!document.getElementById('datosMateriaOverlay')?.classList.contains('open')) openDatosMateria(nivel, grupo, k); };
     ov.querySelector('[data-acc="ver"]').onclick = () => { ov.remove(); const w = _ventanaDoc(); w.document.write(actaCalificacionesHTML(nivel, grupo, k, { sinNombres })); w.document.close(); };

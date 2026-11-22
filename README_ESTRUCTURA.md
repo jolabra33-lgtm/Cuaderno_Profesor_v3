@@ -214,7 +214,9 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 - **📑 Acta de calificaciones** (`tutoria/js/29-acta-calificaciones.js`): hoja como el acta de evaluación de Itaca a partir de
   `porMateria` (notas del Cuaderno o introducidas a mano; en la 3.ª, `final` y si no `3`) y de las suspensas de la evaluación.
   Materias en el orden del catálogo del nivel (`getMateriasParaNivel`) y solo las que tienen calificaciones o están en el
-  equipo docente. Sin claves nuevas en el estado.
+  equipo docente. Abreviaturas propias (como las de Itaca) en `_abrevMaterias` (02-datos.js), clave nueva y opcional
+  `abrevMaterias` del estado: `buildState`, `applyFilePayload`, `loadFromLocalStorage`, `_tutEstadoEnBlanco`, archivo del curso
+  (14) e importar/combinar (08); los archivos sin ella cargan igual. Se editan en la ventana del acta (`_acPonerAbrev`).
 - **«✍️ Datos de una materia»**: el campo de materia era un `<input list>` y el navegador solo sugería las que coincidían con lo
   escrito, así que no se podía cambiar de materia. Ahora es un `<select>` con dos grupos (`_dmMateriasGrupos`: del grupo /
   otras del nivel) y «➕ Otra materia…»; «Guardar y siguiente» (`_dmGuardarYSiguiente`). `guardarDatosMateria` devuelve `true` si guarda.
