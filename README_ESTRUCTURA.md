@@ -127,7 +127,7 @@ Antes era un único `index.html` de casi 20.000 líneas. En la v3 está dividido
 | `js/19-seguimiento.js` | Seguimiento individual del alumnado |
 | `js/20-equipo-docente.js` | Equipo docente |
 | `js/21-asistencia.js` | Asistencia a la sesión de evaluación |
-| `js/22-importar-del-cuaderno.js` | Botón «📥 Del Cuaderno»: copia nombres y fechas de nacimiento de un grupo del Cuaderno |
+| `js/22-importar-del-cuaderno.js` | Botón «📥 Del Cuaderno»: añade el alumnado de un grupo del Cuaderno y completa fecha de nacimiento, NESE y repetición de quien ya estaba (con vista previa) |
 
 Los bloques de HTML que había entre los scripts (ventanas de historial, asistencia, plano…) siguen en
 `tutoria/index.html`, en el mismo sitio, para que cada script encuentre lo que necesita al cargarse.
@@ -135,7 +135,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 31 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 47 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.
@@ -197,6 +197,26 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
   29 pantallas revisadas con axe-core (WCAG 2 A/AA) no dan ningún error (no se ha revisado el contraste de color).
 
 ## Cambios recientes
+
+### Tutoría · fase 1 de mejoras (noviembre de 2026)
+
+**Fallos corregidos**
+- **«📥 Del Cuaderno» no rellenaba nada a quien ya estaba en el grupo** (p. ej. cargado antes por CSV): solo lo vinculaba,
+  y la fecha de nacimiento se quedaba vacía. Además, un nombre escrito de otra forma («ANA GARCÍA LÓPEZ» frente a
+  «García López, Ana») se duplicaba. Ahora (`tutoria/js/22-importar-del-cuaderno.js`, `_planImportarCuaderno`) se empareja
+  por identificador, por nombre y por las mismas palabras en otro orden; a quien ya está se le completan fecha de
+  nacimiento, NESE y repetición; un dato distinto solo se cambia si se marca «Sustituir»; los nombres parecidos se
+  preguntan; y antes de aplicar se ve qué pasará con cada alumno/a.
+- **«Buscar alumno…» no encontraba a nadie**: buscaba en el texto de la fila y el nombre está en una casilla editable.
+  `applySearch` busca en el nombre, sin tildes ni mayúsculas.
+- **Suspensos del Cuaderno**: al reenviar un aprobado, la materia salía de la lista pero el número de suspensas no bajaba.
+- **CSV de Excel en Windows**: se leían como UTF-8 y las tildes salían como «�». `_tLeerTextoArchivo` prueba UTF-8 y, si no
+  lo es, Windows-1252. Una columna sin título ya no se asigna a ningún campo.
+- **Fechas de evaluación**: cambiarlas no se guardaba hasta tocar otra cosa (`_tFijarFechaEval`); en Seguimientos y Actas no
+  Oficiales se quedaba la barra del nivel anterior; si las tres son iguales (sin poner) se avisa.
+- **Interfaz**: los niveles van justo después de Inicio (antes quedaban fuera de la pantalla en un portátil); ✏ y ✕ de cada
+  grupo, en la fila del nombre y visibles en tema claro; en el móvil la cabecera cabe en dos filas y nada se sale por la derecha.
+
 
 ### Auditoría y mejoras (noviembre de 2026)
 

@@ -9,13 +9,15 @@ function syncDateInputs() {
   const bar = document.getElementById('evalDatesBar');
   if (!bar) return;
   const nivel = currentNivel;
-  const SPECIAL = ['__home__', '__materias__', '__calendario__', '__convivencia__', '__informe__', '__vacantes__'];
-  if (SPECIAL.includes(nivel)) {
+  // Solo en la pantalla de un nivel (antes, en Seguimientos y Actas no Oficiales se quedaban las del nivel anterior).
+  if (!GRUPOS_POR_NIVEL[nivel]) {
     bar.style.display = 'none';
     return;
   }
   bar.style.display = 'flex';
   const d = getDates(nivel);
+  // Recién creado el nivel, las tres fechas son la de ese día: es que aún no se han puesto.
+  const sinPoner = d.eval1 === d.eval2 && d.eval2 === d.eval3;
   const inp = (id, val, color, label, field) =>
     `<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);">
       <span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span>
@@ -23,7 +25,7 @@ function syncDateInputs() {
       <input type="date" id="${id}"
         style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:inherit;font-size:12px;"
         value="${val}"
-        onchange="evalDates['${jsAttr(nivel)}']['${field}']=this.value;refreshAges()" />
+        onchange="_tFijarFechaEval('${jsAttr(nivel)}','${field}',this.value)" />
     </label>`;
   bar.innerHTML =
     `<span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">
@@ -32,7 +34,18 @@ function syncDateInputs() {
     inp('dateEval1', d.eval1, 'var(--accent)', 'I Evaluación',  'eval1') +
     inp('dateEval2', d.eval2, 'var(--green)',  'II Evaluación', 'eval2') +
     inp('dateEval3', d.eval3, 'var(--orange)', 'III Evaluación','eval3') +
-    `<span style="font-size:11px;color:var(--text3);margin-left:auto;">La edad se calcula en la fecha de cada sesión de evaluación</span>`;
+    (sinPoner
+      ? `<span role="status" style="font-size:11.5px;color:var(--yellow);font-weight:600;margin-left:auto;">⚠️ Pon la fecha de cada sesión: ahora las tres son iguales y la edad se calcula con ellas</span>`
+      : `<span style="font-size:11px;color:var(--text3);margin-left:auto;">La edad se calcula en la fecha de cada sesión de evaluación</span>`);
+}
+
+// Cambiar una fecha de evaluación se guarda (antes solo se guardaba si después se tocaba otra cosa).
+function _tFijarFechaEval(nivel, campo, valor) {
+  if (!evalDates[nivel]) evalDates[nivel] = { ...getDates(nivel) };
+  evalDates[nivel][campo] = valor;
+  markDirty();
+  refreshAges();
+  syncDateInputs();
 }
 
 function refreshAges() {
@@ -529,9 +542,8 @@ function icHandleFile(e) {
 }
 
 function icReadFile(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    icState.rawText = e.target.result;
+  _tLeerTextoArchivo(file, texto => {
+    icState.rawText = texto;
     icState.delimiter = autoDetectDelimiter(icState.rawText);
     // Sync radio
     document.querySelectorAll('input[name="icDelim"]').forEach(r => {
@@ -540,8 +552,7 @@ function icReadFile(file) {
     icParseCSV();
     icState.step = 2;
     renderICStep();
-  };
-  reader.readAsText(file, 'UTF-8');
+  });
 }
 
 function icParseCSV() {
@@ -574,7 +585,7 @@ function icParseCSV() {
   const headers = icState.headers.map(h => h.toLowerCase().trim().replace(/[_\-\.]/g,' '));
   icState.mapping = {};
   Object.entries(FIELD_SYNONYMS).forEach(([key, syns]) => {
-    const idx = headers.findIndex(h => syns.some(s => h===s||h.includes(s)||s.includes(h)));
+    const idx = headers.findIndex(h => h && syns.some(s => h===s||h.includes(s)||(h.length>=3&&s.includes(h))));   // sin títulos vacíos
     icState.mapping[key] = idx;
   });
   icState.mapping.apellido1 = headers.findIndex(h => ['apellido1','apellido 1','primer apellido'].some(s=>h===s||h.includes(s)));

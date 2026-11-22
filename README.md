@@ -137,5 +137,7 @@ Actualizar los archivos no toca tus datos: viven en el navegador, no en GitHub.
     acta de cada alumno/a por evaluación. El tutor/a lo carga en Tutoría → ⚙️ Gestión del Curso →
     «Importar suspensos del Cuaderno», y las materias suspensas se marcan como pendientes.
     Funciona entre profesores y dispositivos distintos. Empareja por nombre («Apellidos, Nombre»).
-  - **📥 Del Cuaderno** (en cada grupo de Tutoría) copia la lista de alumnado (nombres y fechas
-    de nacimiento) de un grupo del Cuaderno. Solo en el mismo dispositivo y navegador.
+  - **📥 Del Cuaderno** (en cada grupo de Tutoría) copia la lista de alumnado de un grupo del Cuaderno
+    con su fecha de nacimiento, NESE y repetición. A quien ya está en Tutoría le completa lo que le
+    falte, sin duplicarlo aunque su nombre esté escrito de otra forma, y antes de aplicar enseña qué
+    va a cambiar. Solo en el mismo dispositivo y navegador.

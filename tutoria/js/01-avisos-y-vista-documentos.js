@@ -135,6 +135,22 @@ document.addEventListener('keydown',e=>{
    quita a quien la ha aprobado. El nº de materias no superadas de cada
    evaluación se sube si queda por debajo de las materias marcadas.
    ================================================================= */
+/* Texto de un archivo (CSV, TXT…) con sus tildes bien. Excel en Windows guarda los
+   CSV en «ANSI» (Windows-1252), no en UTF-8: si el archivo no es UTF-8 válido, se lee
+   como Windows-1252 en vez de dejar «Garc�a». Quita la marca BOM del principio. */
+function _tTextoDeBytes(buf){
+  const bytes=new Uint8Array(buf);
+  let texto;
+  try{ texto=new TextDecoder('utf-8',{fatal:true}).decode(bytes); }
+  catch(e){ texto=new TextDecoder('windows-1252').decode(bytes); }
+  return texto.replace(/^\uFEFF/,'');
+}
+function _tLeerTextoArchivo(file,alLeer){
+  const rd=new FileReader();
+  rd.onload=e=>alLeer(_tTextoDeBytes(e.target.result));
+  rd.onerror=()=>mostrarAviso('No se ha podido leer el archivo.');
+  rd.readAsArrayBuffer(file);
+}
 function _tNorm(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); }
 /* Parecido entre dos nombres (0 a 1): el mayor entre «contiene todas las palabras del
    más corto» (Ana ↔ Ana María) y la coincidencia de pares de letras (Lopes ↔ López). */
@@ -249,9 +265,14 @@ function _tImpCuadernoAplicar(p){
   p.emparejados.forEach(({a,idCuaderno})=>{ if(idCuaderno!=null && !(a.idsCuaderno||[]).includes(idCuaderno)) a.idsCuaderno=(a.idsCuaderno||[]).concat(idCuaderno); });
   p.emparejados.forEach(({a,ops})=>ops.forEach(op=>{
     if(!Array.isArray(a[op.campo])) a[op.campo]=[];
+    const antes=a[op.campo].length;
     if(op.accion==='add') a[op.campo].push(p.materia);
     else a[op.campo]=a[op.campo].filter(m=>_tNorm(m)!==_tNorm(p.materia));
-    const n=a[op.campo].length; if((+a[op.evalCampo]||0)<n) a[op.evalCampo]=n;
+    const n=a[op.campo].length, cuenta=+a[op.evalCampo]||0;
+    // El número de suspensas sube si hay más materias en la lista y baja una si se quita una
+    // (p. ej. el profesor/a corrige la nota y reenvía el archivo). Nunca queda por debajo de la lista.
+    if(cuenta<n) a[op.evalCampo]=n;
+    else if(n<antes) a[op.evalCampo]=Math.max(n,cuenta-(antes-n));
   }));
   markDirty(); renderAll();
 }

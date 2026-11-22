@@ -71,6 +71,28 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'las pestañas generales se abren sin errores', p.errores.join('; '));
   } },
 
+  { nombre: 'tutoria-interfaz', descripcion: 'Tutoría: niveles junto a Inicio, fechas de evaluación (aviso y guardado), botones de los grupos y móvil sin desbordar', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana']);
+    const pest = await p.evaluate(() => [...document.querySelectorAll('#nivelTabs .nivel-tab')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
+    const iNivel = pest.findIndex(x => x.startsWith('1º ESO')), iCal = pest.findIndex(x => x.includes('Calendario'));
+    t.ok(pest[0].includes('Inicio') && iNivel === 1 && iCal > iNivel, 'los niveles van justo después de Inicio, antes de las herramientas', JSON.stringify(pest));
+    t.ok(await p.evaluate(() => !!document.querySelector('.grupo-tab .tab-top-row .grupo-tab-edit')), 'el ✏ del grupo está en la fila del nombre');
+    t.ok(/Pon la fecha de cada sesión/.test(await p.textContent('#evalDatesBar')), 'avisa si las tres fechas de evaluación son iguales');
+    await p.fill('#dateEval1', '2026-12-18'); await p.dispatchEvent('#dateEval1', 'change'); await esperar(1300);
+    t.ok(!/Pon la fecha de cada sesión/.test(await p.textContent('#evalDatesBar')), 'el aviso se va al poner una fecha distinta');
+    await p.reload(); await esperar(1500);
+    t.ok(await p.evaluate(() => evalDates['1º ESO'].eval1) === '2026-12-18', 'la fecha de evaluación se guarda sin tocar nada más');
+    await p.evaluate(() => { hideWelcomeScreen(); selectNivel('1º ESO'); selectNivel('__segfam__'); }); await esperar(300);
+    t.ok(await p.evaluate(() => getComputedStyle(document.getElementById('evalDatesBar')).display === 'none'), 'en Seguimientos no se quedan las fechas del nivel anterior');
+    await p.setViewportSize({ width: 390, height: 844 });
+    await p.evaluate(() => selectNivel('1º ESO')); await esperar(400);
+    const ancho = await p.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
+    t.ok(ancho[0] <= ancho[1], 'en el móvil (390 px) la página no se sale por la derecha', JSON.stringify(ancho));
+    await p.setViewportSize({ width: 1280, height: 800 });
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
   { nombre: 'tutoria-manifiesto', descripcion: 'Tutoría solo declara su manifiesto fuera de la app instalada del Cuaderno', async fn(t) {
     // Dentro de la ventana de la app del Cuaderno, un manifiesto distinto hacía que Chrome
     // mostrara sin fin «Actualización de aplicación disponible».
@@ -207,17 +229,38 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
-  { nombre: 'del-cuaderno', descripcion: 'Tutoría: «📥 Del Cuaderno» copia la lista sin duplicar y se puede deshacer', async fn(t) {
+  { nombre: 'del-cuaderno', descripcion: 'Tutoría: «📥 Del Cuaderno» añade a quien falta, completa fecha, NESE y repetición de quien ya estaba, no duplica y se puede deshacer', async fn(t) {
     const p = await nuevaPagina(t.contexto);
-    await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis'] });
-    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['garcia lopez, ana']);
+    await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria', 'Lopes Vidal, Marta'] });
+    await p.evaluate(() => { const al = state.grupos[0].alumnos;
+      al[0].fechaNacimiento = '2012-03-15'; al[0].nese = true;
+      al[1].fechaNacimiento = '2012-11-02'; al[1].repetidor = true;
+      al[2].fechaNacimiento = '2013-01-20'; al[3].fechaNacimiento = '2012-05-05'; save(); });
+    await esperar(1200);
+    // En Tutoría ya están tres, sin fecha y con el nombre escrito de otra forma; una tiene ya otra fecha.
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['garcia lopez, ana', 'LUIS PÉREZ RUIZ', 'López Vidal, Marta']);
+    await p.evaluate(() => { data['1º ESO'].A[1].fecha = '2012-01-01'; });
+    const tabla = () => p.evaluate(() => data['1º ESO'].A.map(a => ({ n: a.nombre, f: a.fecha, nese: a.nese, rep: a.repetidor, ids: (a.idsCuaderno || []).length })));
     await p.evaluate(() => abrirImportarDelCuaderno('1º ESO', 'A')); await esperar(500);
+    const vista = (await p.textContent('#impCuadPlan')).replace(/\s+/g, ' ');
+    t.ok(/2 nuevos/.test(vista) && /se completa/i.test(vista) && /distint/i.test(vista), 'la vista previa dice qué se añade, qué se completa y qué es distinto', vista.slice(0, 300));
+    t.ok(await p.isChecked('#importCuadernoOverlay [data-duda]') === false, 'un nombre solo parecido (Lopes ↔ López) se pregunta y no se marca de entrada');
+    await p.check('#importCuadernoOverlay [data-duda]'); await esperar(200);
     await p.click('#importCuadernoOverlay button:has-text("Importar")'); await esperar(1200);
-    const lista = await p.evaluate(() => data['1º ESO'].A.map(a => [a.nombre, (a.idsCuaderno || []).length]));
-    t.ok(lista.length === 2, 'no duplica a quien ya estaba (por nombre, sin tildes ni mayúsculas)', JSON.stringify(lista));
-    t.ok(lista.every(([, n]) => n === 1), 'todos quedan vinculados con su identificador del Cuaderno', JSON.stringify(lista));
-    await p.evaluate(() => _undoPop()); await esperar(300);
-    t.ok(await p.evaluate(() => data['1º ESO'].A.length) === 1, 'Ctrl+Z deshace la importación');
+    let l = await tabla();
+    t.ok(l.length === 4, 'no duplica a quien ya estaba aunque el nombre esté en mayúsculas o en otro orden', JSON.stringify(l));
+    t.ok(l[0].f === '2012-03-15' && l[0].nese === 'Sí', 'a quien ya estaba se le completan la fecha de nacimiento y NESE', JSON.stringify(l[0]));
+    t.ok(l[1].f === '2012-01-01' && l[1].rep === 'Sí', 'un dato distinto no se cambia sin pedirlo; lo vacío sí se completa', JSON.stringify(l[1]));
+    t.ok(l[2].f === '2012-05-05' && l[2].n === 'López Vidal, Marta', 'el nombre parecido confirmado se completa sin cambiarle el nombre', JSON.stringify(l[2]));
+    t.ok(l[3].n === 'Sanz Martí, Íria' && l[3].f === '2013-01-20', 'quien falta se añade con su fecha de nacimiento', JSON.stringify(l[3]));
+    t.ok(l.every(a => a.ids === 1), 'todos quedan vinculados con su identificador del Cuaderno', JSON.stringify(l));
+    await p.evaluate(() => abrirImportarDelCuaderno('1º ESO', 'A')); await esperar(500);
+    await p.check('#impCuadSustituir'); await p.click('#importCuadernoOverlay button:has-text("Importar")'); await esperar(800);
+    t.ok((await tabla())[1].f === '2012-11-02', '«Sustituir los datos distintos» pone el dato del Cuaderno');
+    await p.evaluate(() => { _undoPop(); _undoPop(); }); await esperar(300);
+    l = await tabla();
+    t.ok(l.length === 3 && !l[0].f, 'Ctrl+Z deshace la importación', JSON.stringify(l));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
   { nombre: 'suspensos', descripcion: 'Tutoría: importar suspensos por identificador y por nombre parecido', async fn(t) {
@@ -235,6 +278,48 @@ export const PRUEBAS = [
     await p.click('#impCOk'); await esperar(600);
     const pend = await p.evaluate(() => data['1º ESO'].A.map(a => a.pendientes1.length));
     t.ok(JSON.stringify(pend) === '[1,0,1]', 'suspensos: Ana (por identificador) y Íria (por parecido); Luis aprueba', JSON.stringify(pend));
+    // El profesor/a corrige la nota de Ana (3 → 6) y reenvía el archivo: la materia sale y el número baja.
+    archivo.alumnos[0].notas = { 1: 6 };
+    await p.evaluate(o => _tImpCuadernoModal(o, 'para-tutoria.json'), archivo); await esperar(500);
+    await p.click('#impCOk'); await esperar(600);
+    const ana = await p.evaluate(() => { const a = data['1º ESO'].A[0]; return [a.pendientes1.length, a.eval1]; });
+    t.ok(JSON.stringify(ana) === '[0,0]', 'al reenviar un aprobado, se quita la materia y baja el número de suspensas', JSON.stringify(ana));
+  } },
+
+  { nombre: 'tutoria-csv', descripcion: 'Tutoría: un CSV de Excel en Windows (ANSI) conserva las tildes y una columna sin título no se confunde', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', []);
+    const leer = (bytes) => p.evaluate(async bytes => {
+      openImportModal();
+      readCSVFile(new File([new Uint8Array(bytes)], 'lista.csv'));
+      await new Promise(r => setTimeout(r, 300));
+      return { cab: importState.headers, filas: importState.rows, nombre: importState.mapping.nombre, fecha: importState.mapping.fecha };
+    }, bytes);
+    // «;García Núñez, Íñigo;12/03/2012» en Windows-1252 (como lo guarda Excel en español), con una primera columna sin título.
+    const ansi = [...Buffer.from(';Alumno;Fecha de nacimiento\r\n;García Núñez, Íñigo;12/03/2012\r\n', 'latin1')];
+    let r = await leer(ansi);
+    t.ok(r.filas[0] && r.filas[0][1] === 'García Núñez, Íñigo', 'las tildes y la ñ se leen bien en un CSV ANSI', JSON.stringify(r.filas));
+    t.ok(r.nombre === 1 && r.fecha === 2, 'la columna sin título no se asigna al nombre ni a la fecha', JSON.stringify([r.nombre, r.fecha]));
+    const utf8 = [0xEF, 0xBB, 0xBF, ...Buffer.from('Alumno;Fecha\r\nSanz Martí, Íria;20/01/2013\r\n', 'utf8')];
+    r = await leer(utf8);
+    t.ok(r.cab[0] === 'Alumno' && r.filas[0][0] === 'Sanz Martí, Íria', 'un CSV en UTF-8 con BOM se sigue leyendo bien', JSON.stringify(r));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-buscar', descripcion: 'Tutoría: «Buscar alumno…» encuentra por el nombre, sin tildes ni mayúsculas', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria']);
+    await p.fill('#alumnoSearch', 'GARCIA'); await esperar(300);
+    const vis = () => p.evaluate(() => [...document.querySelectorAll('#mainContent table tbody tr[data-idx]')].filter(r => getComputedStyle(r).display !== 'none').map(r => data['1º ESO'].A[+r.dataset.idx].nombre));
+    let v = await vis();
+    t.ok(v.length === 1 && v[0] === 'García López, Ana', '«GARCIA» encuentra solo a García López', JSON.stringify(v));
+    t.ok(/1\/3/.test(await p.textContent('#searchResultCount')), 'el contador dice 1/3');
+    await p.fill('#alumnoSearch', 'iria'); await esperar(300);
+    v = await vis();
+    t.ok(v.length === 1 && v[0] === 'Sanz Martí, Íria', '«iria» encuentra a Íria', JSON.stringify(v));
+    await p.fill('#alumnoSearch', ''); await esperar(300);
+    t.ok((await vis()).length === 3, 'al borrar la búsqueda se ve todo el grupo');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
   { nombre: 'dos-ventanas', descripcion: 'Una sola ventana guarda a la vez; relevo con «Usar esta ventana»', async fn(t) {

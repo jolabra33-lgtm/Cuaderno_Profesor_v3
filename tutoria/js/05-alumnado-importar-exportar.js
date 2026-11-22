@@ -616,9 +616,8 @@ function handleFileSelect(e) {
 }
 
 function readCSVFile(file) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    importState.rawText = e.target.result;
+  _tLeerTextoArchivo(file, texto => {
+    importState.rawText = texto;
     // Autodetect delimiter from first line
     importState.delimiter = autoDetectDelimiter(importState.rawText);
     // Sync radio button UI if it's visible
@@ -631,8 +630,7 @@ function readCSVFile(file) {
     autoDetectMapping();
     applyGrupoEquivToTarget();
     setImportStep(2);
-  };
-  reader.readAsText(file, 'UTF-8');
+  });
 }
 
 function autoDetectDelimiter(text) {
@@ -726,7 +724,8 @@ function autoDetectMapping() {
   const headers = importState.headers.map(h => h.toLowerCase().trim().replace(/[_\-\.]/g,' '));
 
   Object.entries(FIELD_SYNONYMS).forEach(([fieldKey, synonyms]) => {
-    const idx = headers.findIndex(h => synonyms.some(s => h === s || h.includes(s) || s.includes(h)));
+    // Una columna sin título (o de una o dos letras) no se asigna a ningún campo: «''» está dentro de cualquier palabra.
+    const idx = headers.findIndex(h => h && synonyms.some(s => h === s || h.includes(s) || (h.length >= 3 && s.includes(h))));
     importState.mapping[fieldKey] = idx; // -1 if not found
   });
 

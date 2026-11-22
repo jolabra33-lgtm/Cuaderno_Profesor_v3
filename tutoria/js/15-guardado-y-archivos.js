@@ -297,15 +297,25 @@ addAlumno = function(...args) { _origAddAlumno(...args); markDirty(); };
 
 // ===================== SEARCH =====================
 
+/* Busca en el NOMBRE de cada alumno/a (que está dentro de una casilla editable,
+   no en el texto de la fila) y en el resto de lo que se ve en la fila. Sin
+   distinguir tildes ni mayúsculas: «garcia» encuentra a «García». */
+function _buscable(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
 function applySearch() {
-  const q = _searchQuery.toLowerCase().trim();
-  const tbl = document.querySelector('table tbody');
+  const q = _buscable(_searchQuery).trim();
+  const grupo = currentGrupos[currentNivel];
+  const tbl = document.getElementById(`tbl-${currentNivel}-${grupo}`)?.tBodies[0];
   if (!tbl) return;
-  tbl.querySelectorAll('tr').forEach(row => {
+  const alumnos = (data[currentNivel] && data[currentNivel][grupo]) || [];
+  const filas = tbl.querySelectorAll('tr[data-idx]');
+  filas.forEach(row => {
     if (!q) {
       row.classList.remove('search-hidden','search-match');
     } else {
-      const text = row.textContent.toLowerCase();
+      const a = alumnos[+row.dataset.idx];
+      const text = _buscable((a ? a.nombre + ' ' : '') + row.textContent);
       if (text.includes(q)) {
         row.classList.remove('search-hidden');
         row.classList.add('search-match');
@@ -318,8 +328,8 @@ function applySearch() {
   // Update visible count indicator
   const countEl = document.getElementById('searchResultCount');
   if (countEl && q) {
-    const visible = tbl.querySelectorAll('tr:not(.search-hidden)').length;
-    const total = tbl.querySelectorAll('tr').length;
+    const visible = [...filas].filter(r => !r.classList.contains('search-hidden')).length;
+    const total = filas.length;
     countEl.textContent = `${visible}/${total}`;
     countEl.style.display = '';
   } else if (countEl) {

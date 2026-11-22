@@ -402,6 +402,11 @@
   .grupo-tab:not(.active) .grupo-tab-edit { color: var(--text3); }
   .grupo-tab-edit:hover { background: rgba(255,255,255,0.2); color: #fff; }
   .grupo-tab:not(.active) .grupo-tab-edit:hover { background: rgba(79,142,247,0.15); color: var(--accent); }
+  /* ✏ y ✕ van en la fila del nombre, a la derecha. Sobre fondo claro (grupo no activo, pestañas
+     de nivel) la ✕ blanca no se veía: se pinta con el color del texto. */
+  .tab-top-row .grupo-tab-edit { margin-left: auto; }
+  .grupo-tab:not(.active) .grupo-tab-del, .nivel-tab .grupo-tab-del[data-nivel] { background: var(--border); color: var(--text2); }
+  .grupo-tab .grupo-tab-del:hover, .nivel-tab .grupo-tab-del[data-nivel]:hover { background: rgba(247,110,110,0.85); color: #fff; }
 
   /* Drag & drop */
   .grupo-tab[draggable] { cursor: grab; }
@@ -2849,4 +2854,18 @@
   .autosave-indicator #autosaveLabel, .file-indicator .file-status { display: none; }
   .file-indicator { max-width: 120px; }
   .header-ies-name { display: none; }
+}
+
+/* ---- Fase 1 · Pestañas: separador entre los niveles y las herramientas ---- */
+.nivel-tab-sep { flex: 0 0 1px; align-self: stretch; margin: 12px 10px; background: var(--border); }
+
+/* ---- Fase 1 · Móvil (≤ 560 px): la cabecera pasa a dos filas y nada se sale por la derecha ---- */
+@media (max-width: 560px) {
+  .header { height: auto; flex-wrap: wrap; padding: 8px 12px; row-gap: 8px; }
+  .header-left { flex: 1 1 100%; }
+  .header-actions { flex: 1 1 100%; flex-wrap: wrap; justify-content: flex-end; }
+  .file-indicator { max-width: none; flex: 1 1 auto; }
+  .nivel-tabs { padding: 0 8px; }
+  .nivel-tab { padding: 12px 14px; }
+  .mas-menu-lista { max-width: calc(100vw - 32px); }
 }

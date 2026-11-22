@@ -24,8 +24,11 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `tutoria-texto-hostil` | Tutoría: ningún nombre, grupo, materia u observación con HTML o comillas se cuela como código ni se escapa dos veces |
 | `cuaderno-texto-hostil` | Cuaderno: lo mismo en 20 pantallas y el buscador; una copia con identificadores manipulados no se carga |
 | `tutoria-actas-guardadas` | Un acta guardada conserva su formato y no puede traer código dentro |
-| `del-cuaderno` | «📥 Del Cuaderno»: sin duplicar, vinculando identificadores, deshacer |
-| `suspensos` | Importar suspensos por identificador y por nombre parecido |
+| `del-cuaderno` | «📥 Del Cuaderno»: añade a quien falta, completa fecha de nacimiento, NESE y repetición de quien ya estaba (nombre en otro orden o en mayúsculas), no cambia datos distintos sin pedirlo, pregunta por nombres parecidos, deshacer |
+| `suspensos` | Importar suspensos por identificador y por nombre parecido; al reenviar un aprobado, la materia sale y el número de suspensas baja |
+| `tutoria-csv` | Un CSV de Excel en Windows (ANSI) conserva tildes y ñ; una columna sin título no se asigna a ningún campo; UTF-8 con BOM |
+| `tutoria-buscar` | «Buscar alumno…» encuentra por el nombre, sin tildes ni mayúsculas, y el contador cuadra |
+| `tutoria-interfaz` | Niveles junto a Inicio, aviso y guardado de las fechas de evaluación, barra de fechas solo en los niveles, botones de los grupos, móvil sin desbordar |
 | `dos-ventanas` | Una sola ventana guarda; relevo con «Usar esta ventana» |
 | `almacen-lleno` | Cuaderno: con localStorage lleno por otra app, se guarda y se abre desde IndexedDB sin avisos ni pérdidas |
 | `tutoria-almacen` | Tutoría: fotos y actas en IndexedDB, localStorage ligero, datos de la versión anterior, fotos reducidas |
