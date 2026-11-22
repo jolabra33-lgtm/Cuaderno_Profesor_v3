@@ -729,15 +729,21 @@ export const PRUEBAS = [
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url, { nombres: ['Desde A, Alumna'] });
     // La «carpeta» es el almacenamiento privado de archivos del navegador (el selector real necesita a una persona).
+    // No se guarda en IndexedDB: Chrome 153 (el de GitHub Actions) se cierra entero al volver a leer de IndexedDB
+    // una carpeta de este almacenamiento privado (la que se elige con el selector es de otro tipo). Se le da a la app
+    // directamente, como hace ccIniciar() al abrir con la carpeta guardada.
+    const darCarpeta = () => p.evaluate(async () => {
+      _ccHandle = await (await navigator.storage.getDirectory()).getDirectoryHandle('copias', { create: true }); _ccEstado = 'activa'; });
     await p.evaluate(async () => { localStorage.setItem('cc_dispositivo', 'aaaaa');
       const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle('copias', { create: true });
-      for (let i = 1; i <= 12; i++) { const f = await dir.getFileHandle(`copia-cuaderno-auto-2026-01-${String(i).padStart(2, '0')}-aaaaa.json`, { create: true }); const w = await f.createWritable(); await w.write('{"grupos":[]}'); await w.close(); }
-      _ccHandle = dir; await idbPut('kv', dir, 'carpetaCopias'); _ccEstado = 'activa'; });
+      for (let i = 1; i <= 12; i++) { const f = await dir.getFileHandle(`copia-cuaderno-auto-2026-01-${String(i).padStart(2, '0')}-aaaaa.json`, { create: true }); const w = await f.createWritable(); await w.write('{"grupos":[]}'); await w.close(); } });
+    await darCarpeta();
     t.ok(await p.evaluate(() => ccEscribir()), 'escribe la copia de hoy');
     const n = await p.evaluate(async () => { let n = 0; for await (const _ of _ccHandle.entries()) n++; return n; });
     t.ok(n === 10, 'conserva las 10 más recientes de este dispositivo', 'hay ' + n);
     await p.evaluate(() => { localStorage.setItem('cc_dispositivo', 'bbbbb'); state._guardadoEn = Date.now() - 3600e3; localStorage.setItem(KEY, JSON.stringify(state)); });
     await p.reload(); await esperar(3500);
+    await darCarpeta(); await p.evaluate(() => ccBuscarMasReciente());
     t.ok(await p.evaluate(() => !!_ccMasReciente), 'otro dispositivo ve que hay una copia más reciente');
   } },
 
