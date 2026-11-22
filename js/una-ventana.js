@@ -34,19 +34,26 @@
 
   let estado = 'pendiente';   // 'pendiente' → 'activa' | 'bloqueada'
   let miN = null;
+  // El turno tal como quedó guardado al hacerse activa. Si localStorage está lleno (otra app lo ha ocupado),
+  // escribirlo puede fallar y queda el de la ventana anterior: por eso se compara con lo que realmente quedó,
+  // no con lo que se intentó escribir. Si no, la ventana se bloquearía a sí misma creyendo que otra la ha relevado.
+  let miTurno = null;
   const pendientes = new Map();   // escrituras en localStorage mientras se decide (se aplican si queda activa)
   const antesDeCeder = [];
 
-  function leerTurno() { try { return JSON.parse(getOriginal.call(ls, CLAVE)); } catch (e) { return null; } }
+  function leerTurnoTal() { try { return getOriginal.call(ls, CLAVE); } catch (e) { return null; } }
+  function leerTurno() { try { return JSON.parse(leerTurnoTal()); } catch (e) { return null; } }
   function escribirTurno(t) { try { setOriginal.call(ls, CLAVE, JSON.stringify(t)); } catch (e) {} }
+  // Escribe el turno de esta ventana y anota cómo ha quedado (el suyo o, si no cabía, el que ya había).
+  function tomarTurno() { escribirTurno({ id: yo, n: miN }); miTurno = leerTurnoTal(); }
 
-  // ¿Sigue siendo esta la ventana activa? Si otra ha tomado el control, se bloquea.
+  // ¿Sigue siendo esta la ventana activa? Si otra ha tomado el control (ha cambiado el turno), se bloquea.
   function sigoActiva() {
     if (estado !== 'activa') return false;
-    const t = leerTurno();
-    if (t && t.n !== miN) { bloquear('relevada'); return false; }
-    if (!t) escribirTurno({ id: yo, n: miN });   // alguien borró los datos del sitio: se recupera el turno
-    return true;
+    const t = leerTurnoTal();
+    if (t === miTurno) return true;
+    if (t === null) { tomarTurno(); return true; }   // alguien borró los datos del sitio: se recupera el turno
+    bloquear('relevada'); return false;
   }
 
   /* ---------- Almacenamiento protegido ---------- */
@@ -159,7 +166,7 @@
   function hacerseActiva() {
     const t = leerTurno();
     miN = ((t && t.n) || 0) + 1;
-    escribirTurno({ id: yo, n: miN });
+    tomarTurno();
     estado = 'activa';
     // Lo escrito mientras se decidía se guarda ahora. Si alguna escritura no cabe (localStorage lleno), la app
     // no se ha enterado —se le dijo que sí—, así que se le avisa para que vuelva a guardar por su vía normal.

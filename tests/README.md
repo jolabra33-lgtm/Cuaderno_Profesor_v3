@@ -37,7 +37,7 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `tutoria-informacion-equipo` | «📬 Información del equipo docente»: recibido y pendiente por materia, recordatorio por correo, vista por alumno/a y relleno del seguimiento |
 | `tutoria-interfaz` | Niveles junto a Inicio, aviso y guardado de las fechas de evaluación, barra de fechas solo en los niveles, botones de los grupos, móvil sin desbordar |
 | `dos-ventanas` | Una sola ventana guarda; relevo con «Usar esta ventana» |
-| `almacen-lleno` | Cuaderno: con localStorage lleno por otra app, se guarda y se abre desde IndexedDB sin avisos ni pérdidas |
+| `almacen-lleno` | Cuaderno: con localStorage lleno por otra app, se guarda y se abre desde IndexedDB sin avisos ni pérdidas; aunque no quepa ni el turno de la ventana, esta no se bloquea a sí misma |
 | `tutoria-almacen` | Tutoría: fotos y actas en IndexedDB, localStorage ligero, datos de la versión anterior, fotos reducidas |
 | `version-del-curso` | El .html de «Guardar versión del curso» se abre sin servidor |
 | `sin-conexion` | Todas las páginas funcionan sin conexión (se apaga el servidor), también la Planificación con sus letras |
