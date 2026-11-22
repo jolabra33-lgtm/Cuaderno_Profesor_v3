@@ -153,7 +153,7 @@ function renderAsistBody() {
             onclick="_asistToggle(${i})">
             <span>${stateIcon}</span>
           </div>
-          <div class="asist-prof-name">${_tEsc((p.nombre||'—'))}</div>
+          <div class="asist-prof-name">${_tEsc((p.nombre||'—'))}${p.esTutor ? ' <span style="font-size:11px;color:var(--text3)">· tutor/a</span>' : ''}</div>
           <div class="asist-prof-mat" style="margin-left:auto">${_tEsc((p.materia||'—'))}</div>
           <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;flex-shrink:0;
             background:${s.asistio===true?'rgba(45,212,160,0.12)':s.asistio===false?'rgba(247,110,110,0.12)':'var(--surface3)'};
@@ -275,18 +275,8 @@ window._asistUpdateProf = function(idx, field, val) {
 
 window._asistImportTutor = function() {
   const { nivel, grupo } = _asistCtx;
-  const t = tutores[`${nivel}-${grupo}`];
-  if (!t) { showToast('ℹ No hay tutor/a asignado/a a este grupo'); return; }
-  const d = _getAsistenciaData(nivel, grupo);
-  if (d.profesores.some(p => p.nombre === t)) { showToast('ℹ El tutor/a ya está en la lista'); return; }
-  d.profesores.push({ id: 'prof' + Math.random().toString(36).slice(2, 9), nombre: t, materia: 'Tutoría', correo: '' });
-  ['eval1','eval2','eval3'].forEach(k => {
-    if (!d.sesiones[k]) d.sesiones[k] = [];
-    d.sesiones[k].push({ asistio: null, justificacion: '' });
-  });
-  markDirty();
+  showToast(_eqAsegurarTutor(nivel, grupo));   // 20-equipo-docente.js: el tutor/a, una sola vez y con su materia
   renderAsistBody();
-  showToast(`✅ ${t} añadido/a al equipo docente`);
 };
 
 function saveAsistencia() {

@@ -110,6 +110,27 @@ export const PRUEBAS = [
     const r = await p.evaluate(() => { const d = _getAsistenciaData('1º ESO', 'A'); return { nombres: d.profesores.map(x => x.nombre), asistio: d.sesiones.eval1.map(x => x.asistio) }; });
     t.ok(JSON.stringify(r.nombres) === JSON.stringify(['López Martín, Ana', 'Zapata Ruiz, Luis']), 'ordena por apellidos', JSON.stringify(r));
     t.ok(r.asistio[1] === true && r.asistio[0] !== true, 'la asistencia a la sesión se mueve con cada profesor/a', JSON.stringify(r));
+    // El tutor/a es uno más del equipo docente (con su materia), enlazado con el tutor/a del grupo.
+    await p.evaluate(() => { const d = _getAsistenciaData('1º ESO', 'A'); d.profesores[1].materia = 'Matemáticas';
+      d.profesores.push({ id: 'pt', nombre: 'Zapata Ruiz, Luis', materia: 'Tutoría', correo: 'zapata@gva.es' });
+      ['eval1', 'eval2', 'eval3'].forEach(k => d.sesiones[k].push({ asistio: k === 'eval2' ? true : null, justificacion: '' }));
+      d.sesiones.eval2[1].asistio = null; tutores['1º ESO-A'] = 'Zapata Ruiz, Luis'; renderEquipoDocenteBody(); }); await esperar(150);
+    let tu = await p.evaluate(() => _getAsistenciaData('1º ESO', 'A').profesores.map(x => (x.esTutor ? '*' : '') + x.materia));
+    t.ok(tu[1] === '*Matemáticas', 'los datos de antes: se marca como tutor/a la fila del mismo nombre que tiene materia', JSON.stringify(tu));
+    t.ok(/aparece 2 veces/.test(await p.textContent('#eqDocenteBody')), 'avisa de que el tutor/a está repetido');
+    await p.click('#eqDocenteBody button:has-text("Dejarlo una sola vez")'); await esperar(150);
+    tu = await p.evaluate(() => { const d = _getAsistenciaData('1º ESO', 'A'); return { n: d.profesores.length, correo: d.profesores[1].correo, as: d.sesiones.eval2[1].asistio, ses: d.sesiones.eval1.length }; });
+    t.ok(tu.n === 2 && tu.correo === 'zapata@gva.es' && tu.as === true && tu.ses === 2, 'al unirlo queda una sola vez, con el correo y la asistencia de la fila repetida', JSON.stringify(tu));
+    await p.locator('#eqDocenteBody input[placeholder^="Apellidos, Nombre"]').nth(1).fill('Zapata Ruiz, Luisa'); await esperar(100);
+    t.ok(await p.evaluate(() => tutores['1º ESO-A']) === 'Zapata Ruiz, Luisa', 'cambiar el nombre en el equipo docente cambia el del tutor/a del grupo');
+    await p.locator('#eqDocenteBody .eq-tutor input').nth(0).check(); await esperar(150);
+    tu = await p.evaluate(() => ({ t: tutores['1º ESO-A'], marcados: _getAsistenciaData('1º ESO', 'A').profesores.filter(x => x.esTutor).length }));
+    t.ok(tu.t === 'López Martín, Ana' && tu.marcados === 1, 'marcar a otro profesor/a como tutor/a lo cambia (solo hay uno)', JSON.stringify(tu));
+    await p.evaluate(() => { closeEquipoDocente(); currentGrupos['1º ESO'] = 'A'; selectNivel('1º ESO'); }); await esperar(200);
+    await p.fill('#mainContent input[placeholder^="Apellidos, Nombre del tutor"]', 'López Martín, Ana María'); await esperar(1300);
+    await p.reload(); await esperar(1500);
+    tu = await p.evaluate(() => ({ t: tutores['1º ESO-A'], prof: _getAsistenciaData('1º ESO', 'A').profesores[0].nombre }));
+    t.ok(tu.t === 'López Martín, Ana María' && tu.prof === 'López Martín, Ana María', 'el nombre escrito en la cabecera del grupo se guarda y cambia también el del profesor/a', JSON.stringify(tu));
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
@@ -525,6 +546,45 @@ export const PRUEBAS = [
     t.ok(/De la tutoría[\s\S]*Plan de refuerzo en Matemáticas/.test(await p.textContent('body')), 'la ficha del alumno/a en el Cuaderno muestra lo acordado en la sesión');
     await p.evaluate(() => { state.ui.fichaAlumnoId = ''; state.ui.tab = 'resultados'; render(); }); await esperar(300);
     t.ok(/Acuerdos de la sesión de evaluación/.test(await p.textContent('body')), 'y Resultados, los acuerdos del grupo');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-informe-equipo', descripcion: 'Tutoría: informe HTML para el equipo docente (previo y tras la sesión): suspensas por alumno/a y por materia, más y menos suspensos, evolución, casos, sin datos privados', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '2º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria', 'Vidal Roca, Pau']);
+    const D = await p.evaluate(() => {
+      const al = data['2º ESO'].A;
+      Object.assign(al[0], { eval1: 3, pendientes1: ['Matemáticas', 'Inglés', 'Música'], eval2: 4, pendientes2: ['Matemáticas', 'Inglés', 'Música', 'Física y Química'], faltasInjust2: 6, nese: 'Sí',
+        familia: [{ parentesco: 'Madre', nombre: 'Contacto Privado', email: 'privado@correo.es', telefono: '' }], entrevistas: [{ id: 'e1', fecha: _hoyLocal(), motivo: 'Entrevista privada' }] });
+      Object.assign(al[1], { eval1: 2, pendientes1: ['Música', 'Inglés'], eval2: 1, pendientes2: ['Música'] });
+      Object.assign(al[3], { eval1: 1, pendientes1: ['Matemáticas'], eval2: 3, pendientes2: ['Matemáticas', 'Inglés', 'Música'] });
+      al[0].porMateria = { 'Matemáticas': { profesor: 'Zapata Ruiz, Luis', notas: { 2: 3 }, comentarios: { 2: 'No entrega las tareas.' } } };
+      al[2].porMateria = { 'Matemáticas': { profesor: 'Zapata Ruiz, Luis', notas: { 2: 8 }, comentarios: {} } };
+      const d = _getAsistenciaData('2º ESO', 'A'); d.profesores.push({ id: 'p1', nombre: 'Zapata Ruiz, Luis', materia: 'Matemáticas', correo: 'z@gva.es', esTutor: true }, { id: 'p2', nombre: 'Gil Mora, Eva', materia: 'Tecnología', correo: '' });
+      ['eval1', 'eval2', 'eval3'].forEach(k => d.sesiones[k].push({ asistio: null, justificacion: '' }, { asistio: null, justificacion: '' }));
+      const D = datosInformeEquipo('2º ESO', 'A', '2');
+      return { dist: D.dist, mas: D.mas.map(m => m.materia + m.suspensos), menos: D.menos.map(m => m.materia), sin: D.sinSuspensos, mates: D.materias.find(m => m.materia === 'Matemáticas'),
+        cambios: D.alumnos.map(x => x.cambio), casos: D.casos.map(c => c.nombre), tras: D.trasSesion, mejoran: D.mejoran, empeoran: D.empeoran };
+    });
+    t.ok(JSON.stringify(D.dist) === '[1,1,0,1,1,0]', 'reparte al alumnado por número de suspensas', JSON.stringify(D.dist));
+    t.ok(D.mas[0] === 'Música3' && D.sin.includes('Tecnología') && !D.menos.some(m => D.mas.map(x => x.replace(/\d+$/, '')).includes(m)), 'materias con más y menos suspensos (sin repetirse) y las que no tienen', JSON.stringify(D));
+    t.ok(D.mates.suspensos === 2 && D.mates.media === 5.5 && D.mates.profesor === 'Zapata Ruiz, Luis' && D.mates.antes === 2, 'cada materia: suspensos, nota media recibida, profesor/a y evolución', JSON.stringify(D.mates));
+    t.ok(JSON.stringify(D.cambios) === '[1,-1,0,2]' && D.mejoran === 1 && D.empeoran === 2, 'compara con la evaluación anterior', JSON.stringify(D));
+    t.ok(D.casos.includes('García López, Ana') && D.casos.includes('Vidal Roca, Pau') && !D.tras, 'propone los casos para comentar; sin sesión, es la versión previa', JSON.stringify(D.casos));
+    await p.evaluate(() => { currentGrupos['2º ESO'] = 'A'; selectNivel('2º ESO'); });
+    await p.click('#mainContent .mas-menu > summary'); await p.click('#mainContent button:has-text("Informe para el equipo docente")'); await esperar(200);
+    await p.selectOption('#informeEquipoOv #ieEval', '2'); await esperar(100);
+    t.ok(/Versión previa a la sesión/.test(await p.textContent('#informeEquipoOv')), 'la ventana avisa de que es la versión previa');
+    const bajada = p.waitForEvent('download');
+    await p.click('#informeEquipoOv button:has-text("Descargar")');
+    const arch = await bajada; const fs = await import('node:fs');
+    const html = fs.readFileSync(await arch.path(), 'utf8');
+    t.ok(/previo\.html$/.test(arch.suggestedFilename()) && /Informe previo a la sesión/.test(html) && /García López, Ana/.test(html) && /No entrega las tareas/.test(html) && !/<script/i.test(html), 'descarga un .html sin scripts, con el alumnado y los comentarios del profesorado', arch.suggestedFilename());
+    t.ok(!/Contacto Privado|privado@correo|Entrevista privada/.test(html), 'y sin contactos de la familia ni entrevistas');
+    await p.evaluate(() => { const al = data['2º ESO'].A; al[0].propuesta2 = { tipo: 'Promoción', destino: '' }; al[0].sesionEval = { 2: { acuerdos: 'Plan de refuerzo en Matemáticas.', revisado: true } };
+      _getAsistenciaData('2º ESO', 'A').actasSesion = { 2: { valoracion: 'Grupo trabajador.', acuerdosGrupo: 'Cambiar las mesas.' } }; });
+    const tras = await p.evaluate(() => informeEquipoHTML('2º ESO', 'A', '2'));
+    t.ok(/Actualizado tras la sesión/.test(tras) && /Plan de refuerzo en Matemáticas/.test(tras) && /Promoción/.test(tras) && /Cambiar las mesas/.test(tras), 'tras la sesión lleva propuestas, acuerdos y la valoración del grupo');
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 

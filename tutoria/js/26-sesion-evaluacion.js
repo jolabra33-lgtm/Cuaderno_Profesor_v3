@@ -97,6 +97,7 @@ function renderSesion() {
       </select>
       <span class="ses-progreso" aria-live="polite">${revisados} de ${alumnos.length} revisados${fecha ? ' · ' + _tEsc(fmtDate(fecha)) : ''}</span>
       <span style="flex:1"></span>
+      <button class="btn btn-ghost btn-sm" onclick="abrirInformeEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')" title="Resultados del grupo para el profesorado (previo a la sesión o actualizado tras ella)">📊 Informe para el equipo</button>
       <button class="btn btn-ghost btn-sm" onclick="generarActaSesion('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')">📝 Acta de la sesión</button>
       <button class="btn btn-ghost btn-sm" onclick="exportarFichaGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')">📤 Ficha para el profesorado</button>
       <button class="btn btn-primary btn-sm" onclick="closeSesionEvaluacion()">✕ Salir</button>
@@ -139,7 +140,7 @@ function _sesGrupoHTML() {
   const profes = d.profesores.map((p, i) => {
     const s = ses[i] || {};
     return `<div class="ses-prof">
-      <span style="flex:1;min-width:0"><strong>${_tEsc(p.nombre || '—')}</strong> <span style="color:var(--text3)">${_tEsc(p.materia || '')}</span></span>
+      <span style="flex:1;min-width:0"><strong>${_tEsc(p.nombre || '—')}</strong> <span style="color:var(--text3)">${_tEsc(p.materia || '')}${p.esTutor ? ' · tutor/a' : ''}</span></span>
       <label><input type="radio" name="sesAs${i}" ${s.asistio === true ? 'checked' : ''} onchange="_sesAsistencia(${i},true)"> Asiste</label>
       <label><input type="radio" name="sesAs${i}" ${s.asistio === false ? 'checked' : ''} onchange="_sesAsistencia(${i},false)"> No asiste</label>
       ${s.asistio === false ? `<input class="tdlg-in" style="margin:0;flex:1 1 160px" placeholder="Motivo" aria-label="Motivo de la ausencia" value="${_tEsc(s.justificacion || '')}" oninput="_sesJustificacion(${i},this.value)">` : ''}
@@ -290,7 +291,7 @@ window.generarActaSesion = function(nivel, grupo, k) {
       <h1>Acta de la sesión de evaluación · ${FT_NOMBRE_EVAL[k]}</h1>
       <div class="sub">${_tEsc(nivel)} · Grupo ${_tEsc(grupo)}${fecha ? ' · ' + _tEsc(fmtDate(fecha)) : ''}${acta.horaInicio ? ' · de ' + _tEsc(acta.horaInicio) + (acta.horaFin ? ' a ' + _tEsc(acta.horaFin) : '') : ''}${tutor ? ' · Tutor/a: ' + _tEsc(tutor) : ''}</div>
       <h2>Asistentes</h2>
-      ${asisten.length ? `<p>${asisten.map(p => `${_tEsc(p.nombre)}${p.materia ? ' (' + _tEsc(p.materia) + ')' : ''}`).join('; ')}.</p>` : '<p style="color:#999">—</p>'}
+      ${asisten.length ? `<p>${asisten.map(p => `${_tEsc(p.nombre)}${p.materia || p.esTutor ? ' (' + [p.materia, p.esTutor ? 'tutor/a' : ''].filter(Boolean).map(_tEsc).join(', ') + ')' : ''}`).join('; ')}.</p>` : '<p style="color:#999">—</p>'}
       ${faltan.length ? `<p><strong>No asisten:</strong> ${faltan.map(x => `${_tEsc(x.p.nombre)}${x.p.materia ? ' (' + _tEsc(x.p.materia) + ')' : ''}${x.s.justificacion ? ': ' + _tEsc(x.s.justificacion) : ''}`).join('; ')}.</p>` : ''}
       ${sinMarcar.length ? `<p style="color:#999">Sin anotar: ${sinMarcar.map(p => _tEsc(p.nombre)).join('; ')}.</p>` : ''}
       <h2>Resultados</h2>

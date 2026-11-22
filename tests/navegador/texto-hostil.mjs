@@ -147,6 +147,8 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
       ['SESIÓN · alumno/a', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '1'); _sesIr(0); }],
       ['SESIÓN · final', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '3'); _sesIr(0); }],
       ['ACTA DE LA SESIÓN', () => { selectNivel(nivH); generarActaSesion(nivH, gH, '1'); }],
+      ['INFORME PARA EL EQUIPO · ventana', () => { currentGrupos[nivH] = gH; selectNivel(nivH); abrirInformeEquipo(nivH, gH, '1'); }],
+      ['INFORME PARA EL EQUIPO · documento', () => { selectNivel(nivH); const w = _ventanaDoc(); w.document.write(informeEquipoHTML(nivH, gH, '1')); w.document.close(); }],
     ];
     for (const [nombre, poner] of extra) { try { await pantalla(nombre, poner); } catch (err) { fallos.push(nombre + ': ' + err.message); } }
     const lista = o => Object.entries(o).map(([k, v]) => `${k}   ← ${typeof v === 'string' ? v : Object.keys(v)[0]}`);

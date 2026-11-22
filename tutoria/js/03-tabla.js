@@ -259,7 +259,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
             type="text"
             placeholder="Apellidos, Nombre del tutor/a…"
             value="${_tEsc(tutores[key] || '')}"
-            oninput="tutores['${jsAttr(key)}']=this.value"
+            oninput="_eqTutorDesdeCabecera('${jsAttr(nivel)}','${jsAttr(grupo)}',this.value)"
             style="background:transparent;border:none;color:var(--text);font-family:inherit;font-size:13px;font-weight:500;width:220px;outline:none;"
           />
         </div>
@@ -296,6 +296,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
             <button role="menuitem" onclick="openAsistencia('${jsAttr(nivel)}','${jsAttr(grupo)}')">👥 Asistencia a la sesión${_getAsistenciaIndicator(nivel, grupo)}</button>
             <button role="menuitem" onclick="openEquipoDocente('${jsAttr(nivel)}','${jsAttr(grupo)}')">👨‍🏫 Equipo docente</button>
             <button role="menuitem" onclick="openInformacionEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📬 Información del equipo docente</button>
+            <button role="menuitem" onclick="abrirInformeEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📊 Informe para el equipo docente</button>
             <button role="menuitem" onclick="exportarFichaGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}',_sesEvalPropuesta('${jsAttr(nivel)}'))">📤 Ficha del grupo para el profesorado</button>
             <button role="menuitem" onclick="openObservacionesGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📝 Observaciones del grupo${(window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : ''}</button>
             <button role="menuitem" onclick="openPlanoGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">🪑 Plano del grupo</button>

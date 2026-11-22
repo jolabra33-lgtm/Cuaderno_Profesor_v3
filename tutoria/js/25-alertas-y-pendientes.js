@@ -131,7 +131,8 @@ function _qmfHTML() {
     // Próxima sesión
     if (!_alFechasPuestas(nivel)) items.push(_qmfLi('📅', `<button class="qmf-link" onclick="_qmfIr('${jsAttr(nivel)}','${jsAttr(grupo)}')">Pon las fechas de evaluación de ${_tEsc(nivel)}</button>`));
     else if (prox) items.push(_qmfLi('📅', `${_AL_EVAL_NOMBRE[prox.k]}: <strong>${_tEsc(fmtDate(prox.fecha))}</strong> ${prox.dias === 0 ? '(hoy)' : `(en ${prox.dias} día${prox.dias === 1 ? '' : 's'})`}` +
-      (prox.dias <= 7 && typeof openSesionEvaluacion === 'function' ? ` · <button class="qmf-link" onclick="_qmfIr('${jsAttr(nivel)}','${jsAttr(grupo)}');openSesionEvaluacion('${jsAttr(nivel)}','${jsAttr(grupo)}','${prox.k}')">🎓 Abrir la sesión</button>` : '')));
+      (prox.dias <= 7 && typeof openSesionEvaluacion === 'function' ? ` · <button class="qmf-link" onclick="_qmfIr('${jsAttr(nivel)}','${jsAttr(grupo)}');openSesionEvaluacion('${jsAttr(nivel)}','${jsAttr(grupo)}','${prox.k}')">🎓 Abrir la sesión</button>` : '') +
+      (prox.dias <= 7 && typeof abrirInformeEquipo === 'function' ? ` · <button class="qmf-link" onclick="abrirInformeEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}','${prox.k}')">📊 Informe previo para el equipo</button>` : '')));
     // Materias sin datos para la próxima sesión (cuando faltan 3 semanas o menos)
     if (prox && prox.dias <= 21 && typeof _infResumenMateria === 'function') {
       const periodo = prox.k === 3 ? 'final' : String(prox.k);
