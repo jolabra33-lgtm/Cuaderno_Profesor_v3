@@ -2869,3 +2869,10 @@
   .nivel-tab { padding: 12px 14px; }
   .mas-menu-lista { max-width: calc(100vw - 32px); }
 }
+
+/* ---- Fase 2 · 📬 Información del equipo docente ---- */
+.inf-tabla th, .inf-tabla td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+/* La regla general de la tabla del grupo corta el texto con «…»: aquí se lee entero. */
+.inf-tabla td { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+.inf-tabla td:first-child { min-width: 150px; }
+.inf-tabla tbody tr:hover td { background: var(--surface2); }

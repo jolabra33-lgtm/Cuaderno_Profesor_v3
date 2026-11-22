@@ -51,6 +51,7 @@ function _alumnoNuevo(campos) {
     noRecuperadasAnteriores: [],
     historial: [],
     seguimientos: [],
+    familia: [],       // contactos de la familia: [{parentesco, nombre, email, telefono}]
     faltasJust1: 0, faltasInjust1: 0, ac1: 0, partes1: 0, expedientes1: 0,
     faltasJust2: 0, faltasInjust2: 0, ac2: 0, partes2: 0, expedientes2: 0,
     faltasJust3: 0, faltasInjust3: 0, ac3: 0, partes3: 0, expedientes3: 0,

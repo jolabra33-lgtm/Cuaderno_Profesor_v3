@@ -172,29 +172,63 @@ function _tNivelDeCurso(curso){
   const c=_tNorm(curso).replace(/o(?=eso|bach)/,'');
   return NIVELES.find(n=>{ const k=_tNorm(n).replace(/o(?=eso|bach)/,''); return k===c || c.startsWith(k) || k.startsWith(c); }) || '';
 }
+/* ---- Del Cuaderno a Tutoría: paquetes «Para la tutoría» (formato en js/comun/formato-tutoria.js) ----
+   Cada paquete trae, de UN grupo y UNA materia: notas de acta (→ materias suspensas),
+   y desde la versión 2 faltas, convivencia y comentarios de cada evaluación, que se guardan
+   en alumno.porMateria[materia] (se ven en «📬 Información del equipo docente»). El profesor/a
+   se añade solo al equipo docente del grupo. Se pueden elegir VARIOS archivos a la vez:
+   se revisan uno detrás de otro. */
 function importarDelCuaderno(){
   let inp=document.getElementById('impCuadernoFile');
-  if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json'; inp.id='impCuadernoFile'; inp.style.display='none'; document.body.appendChild(inp); }
+  if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json'; inp.multiple=true; inp.id='impCuadernoFile'; inp.style.display='none'; document.body.appendChild(inp); }
   inp.value='';
-  inp.onchange=()=>{ const f=inp.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ let o; try{ o=JSON.parse(rd.result); }catch(e){ mostrarAviso('El archivo no se puede leer.'); return; } _tImpCuadernoModal(o,f.name); }; rd.readAsText(f); };
+  inp.onchange=async()=>{
+    const archivos=[...inp.files]; if(!archivos.length) return;
+    const leidos=[], malos=[];
+    for(const f of archivos){
+      try{ const o=ftNormalizarPaquete(JSON.parse(await f.text())); if(o) leidos.push({o,nombre:f.name}); else malos.push(f.name); }
+      catch(e){ malos.push(f.name); }
+    }
+    if(malos.length) mostrarAviso(`${malos.length===1?'Este archivo no viene':'Estos archivos no vienen'} del Cuaderno del profesor («👥 Para la tutoría» en Resultados) y no se ${malos.length===1?'carga':'cargan'}:\n\n${malos.join('\n')}`);
+    _tImpCuadernoCola(leidos);
+  };
   inp.click();
 }
-function _tImpCuadernoModal(o,nombreArchivo){
-  if(!o || o.formato!=='cuaderno-a-tutoria' || !Array.isArray(o.alumnos)){ mostrarAviso('Este archivo no viene del Cuaderno del Profesor («👥 Para la tutoría» en Resultados).'); return; }
-  const nivelSug=_tNivelDeCurso(o.curso) || (NIVELES.includes(currentNivel)?currentNivel:NIVELES[0]);
-  const letra=(String(o.grupo||'').trim().split(/\s+/).pop()||'');
+// Revisa los paquetes de uno en uno (cada uno con su ventana).
+function _tImpCuadernoCola(lista,opciones){
+  let i=0, hechos=0;
+  const siguiente=(importado)=>{
+    if(importado) hechos++;
+    if(i>=lista.length){ if(lista.length>1) showToast(`✓ ${hechos} de ${lista.length} archivos importados`); return; }
+    const {o,nombre}=lista[i++];
+    _tImpCuadernoModal(o,nombre,Object.assign({},opciones||{},{n:i,total:lista.length,alTerminar:siguiente}));
+  };
+  siguiente(false);
+}
+function _tImpCuadernoModal(o,nombreArchivo,opc){
+  opc=opc||{};
+  o=ftNormalizarPaquete(o);
+  if(!o){ mostrarAviso('Este archivo no viene del Cuaderno del Profesor («👥 Para la tutoría» en Resultados).'); if(opc.alTerminar) opc.alTerminar(false); return; }
+  const nivelSug=(opc.nivel && NIVELES.includes(opc.nivel)) ? opc.nivel : (_tNivelDeCurso(o.curso) || (NIVELES.includes(currentNivel)?currentNivel:NIVELES[0]));
+  const letra=opc.grupo || (String(o.grupo||'').trim().split(/\s+/).pop()||'');
   const ov=document.createElement('div'); ov.className='tdlg-ov'; ov.style.zIndex=String(++_tDlgZ); ov.id='impCuadernoOv';
   const opcNivel=NIVELES.map(n=>`<option ${n===nivelSug?'selected':''}>${_tEsc(n)}</option>`).join('');
-  ov.innerHTML=`<div class="tdlg-box" role="dialog" aria-modal="true" aria-labelledby="impCT" style="max-width:560px">
-    <h2 id="impCT">📥 Suspensos de ${_tEsc(o.materia)} — ${_tEsc(o.grupo)}</h2>
-    <div class="tdlg-msg" style="font-size:13px">${[o.alumnos.length+' alumnos', o.profesor?_tEsc(o.profesor):'', 'generado el '+_tEsc(new Date(o.generado).toLocaleDateString('es-ES'))].filter(Boolean).join(' · ')}. Elige a qué grupo de Tutoría corresponde:</div>
+  const trae=['notas'];
+  if(o.alumnos.some(a=>Object.keys(a.faltas).length)) trae.push('faltas');
+  if(o.alumnos.some(a=>Object.keys(a.convivencia).length)) trae.push('convivencia');
+  if(o.alumnos.some(a=>Object.keys(a.comentarios).length)) trae.push('comentarios');
+  const cola=opc.total>1?` <span style="font-size:13px;font-weight:400;color:var(--text2)">(archivo ${opc.n} de ${opc.total})</span>`:'';
+  ov.innerHTML=`<div class="tdlg-box" role="dialog" aria-modal="true" aria-labelledby="impCT" style="max-width:580px">
+    <h2 id="impCT">📥 ${_tEsc(o.materia||'Materia sin nombre')} — ${_tEsc(o.grupo)}${cola}</h2>
+    <div class="tdlg-msg" style="font-size:13px">${[o.alumnos.length+' alumnos', o.profesor?_tEsc(o.profesor):'', o.generado?'generado el '+_tEsc(new Date(o.generado).toLocaleDateString('es-ES')):''].filter(Boolean).join(' · ')}.
+      Trae: <strong>${trae.join(', ')}</strong>. Elige a qué grupo de Tutoría corresponde:</div>
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-      <select id="impCNivel" class="tdlg-in" style="width:auto;margin:0">${opcNivel}</select>
-      <select id="impCGrupo" class="tdlg-in" style="width:auto;margin:0"></select>
+      <select id="impCNivel" class="tdlg-in" style="width:auto;margin:0" aria-label="Nivel">${opcNivel}</select>
+      <select id="impCGrupo" class="tdlg-in" style="width:auto;margin:0" aria-label="Grupo"></select>
       <input id="impCMateria" class="tdlg-in" style="flex:1;min-width:180px;margin:0" value="${_tEsc(o.materia)}" aria-label="Nombre de la materia en Tutoría" list="impCMatList"><datalist id="impCMatList"></datalist>
     </div>
     <div id="impCResumen" class="tdlg-msg" style="font-size:12.5px;margin-top:10px;max-height:34vh;overflow:auto"></div>
-    <div class="tdlg-bar"><button class="tdlg-no">Cancelar</button><button class="tdlg-si" id="impCOk">Importar</button></div></div>`;
+    <div class="tdlg-bar"><button class="tdlg-no">${opc.total>1?'Omitir este archivo':'Cancelar'}</button><button class="tdlg-si" id="impCOk">Importar</button></div></div>`;
   document.body.appendChild(ov);
   const selN=ov.querySelector('#impCNivel'), selG=ov.querySelector('#impCGrupo'), inM=ov.querySelector('#impCMateria');
   const pintarGrupos=()=>{ const gs=GRUPOS_POR_NIVEL[selN.value]||[]; selG.innerHTML=gs.map(g=>`<option ${_tNorm(g)===_tNorm(letra)?'selected':''}>${_tEsc(g)}</option>`).join(''); const mats=getMateriasParaNivel(selN.value, selG.value)||[]; ov.querySelector('#impCMatList').innerHTML=mats.map(m=>`<option value="${_tEsc(m)}">`).join(''); const exacta=mats.find(m=>_tNorm(m)===_tNorm(o.materia)); if(exacta) inM.value=exacta; };
@@ -210,9 +244,13 @@ function _tImpCuadernoModal(o,nombreArchivo){
   };
   const pintarResumen=()=>{
     const p=plan(); const mats=getMateriasParaNivel(selN.value, selG.value)||[];
+    const prof=_tProfesorDelPaquete(selN.value,selG.value,inM.value.trim(),o.profesor);
     ov.querySelector('#impCResumen').innerHTML=
       (mats.length && !mats.some(m=>_tNorm(m)===_tNorm(inM.value))?`<div style="color:#f59e0b">⚠️ «${_tEsc(inM.value)}» no está en la lista de materias de ${_tEsc(selN.value)}. Elige la equivalente en el desplegable.</div>`:'')+
       `<div>✓ ${p.emparejados.length} alumnos encontrados en ${_tEsc(selN.value)} ${_tEsc(selG.value)} · ${p.cambios} cambios en sus pendientes.</div>`+
+      (trae.length>1?`<div style="margin-top:4px">✓ Se guardan también ${trae.slice(1).join(', ')} de ${_tEsc(inM.value)} (📬 Información del equipo docente).</div>`:'')+
+      (prof.accion==='nuevo'?`<div style="margin-top:4px">👨‍🏫 Se añade al equipo docente: <strong>${_tEsc(prof.nombre)}</strong> (${_tEsc(inM.value)}).</div>`:'')+
+      (prof.accion==='nombre'?`<div style="margin-top:4px">👨‍🏫 Equipo docente: se pone el nombre <strong>${_tEsc(prof.nombre)}</strong> en ${_tEsc(inM.value)}.</div>`:'')+
       (p.propuestas.length?`<div style="margin-top:8px"><strong>¿Son la misma persona?</strong> El nombre no coincide exactamente:</div>`+
         p.propuestas.map((pr,k)=>`<label style="display:flex;gap:8px;align-items:center;margin-top:4px;cursor:pointer"><input type="checkbox" data-prop="${k}" ${confirmados.get(pr.nombre)===pr.idx?'checked':''}> <span>«${_tEsc(pr.nombre)}» (Cuaderno) → «${_tEsc(pr.nombreTutoria)}» (Tutoría)</span></label>`).join(''):'')+
       (p.noEncontrados.filter(n=>!p.propuestas.some(pr=>pr.nombre===n)).length?`<div style="color:#f59e0b;margin-top:6px">⚠️ Sin encontrar: ${p.noEncontrados.filter(n=>!p.propuestas.some(pr=>pr.nombre===n)).map(_tEsc).join(', ')}. Comprueba que el nombre coincide («Apellidos, Nombre»).</div>`:'');
@@ -220,24 +258,41 @@ function _tImpCuadernoModal(o,nombreArchivo){
   };
   selN.onchange=()=>{ pintarGrupos(); pintarResumen(); }; selG.onchange=pintarResumen; inM.oninput=pintarResumen;
   pintarGrupos(); pintarResumen();
-  const cerrar=()=>ov.remove();
-  ov.querySelector('.tdlg-no').onclick=cerrar;
-  ov.querySelector('#impCOk').onclick=()=>{ const p=plan(); if(!p.emparejados.length){ mostrarAviso('No se ha encontrado a ningún alumno/a de este archivo en ese grupo.'); return; } _tImpCuadernoAplicar(p); cerrar();
-    showToast(`✓ ${o.materia}: ${p.cambios} cambios en ${p.emparejados.length} alumnos${p.noEncontrados.length?` · ${p.noEncontrados.length} sin encontrar`:''}`); };
-  ov.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.stopPropagation(); cerrar(); } });
+  let terminado=false;
+  const cerrar=(importado)=>{ ov.remove(); if(!terminado){ terminado=true; if(opc.alTerminar) setTimeout(()=>opc.alTerminar(!!importado),0); } };
+  ov.querySelector('.tdlg-no').onclick=()=>cerrar(false);
+  ov.querySelector('#impCOk').onclick=()=>{ const p=plan(); if(!p.emparejados.length){ mostrarAviso('No se ha encontrado a ningún alumno/a de este archivo en ese grupo.'); return; }
+    const prof=_tImpCuadernoAplicar(p,o); cerrar(true);
+    showToast(`✓ ${p.materia}: ${p.cambios} cambios en ${p.emparejados.length} alumnos${p.noEncontrados.length?` · ${p.noEncontrados.length} sin encontrar`:''}${prof.accion==='nuevo'?' · profesor/a añadido al equipo docente':''}`); };
+  ov.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.stopPropagation(); cerrar(false); } });
   setTimeout(()=>selN.focus(),20);
+}
+/* Qué pasa con el equipo docente del grupo al importar un paquete de «materia» con «profesor»:
+   'nuevo' (no hay nadie con esa materia ni con ese nombre), 'nombre' (está la materia sin nombre) o 'nada'. */
+function _tProfesorDelPaquete(nivel,grupo,materia,profesor){
+  const nombre=ftApellidosNombre(profesor);
+  if(!nombre || !materia || !GRUPOS_POR_NIVEL[nivel] || typeof _getAsistenciaData!=='function') return {accion:'nada',nombre};
+  const clave=s=>_tNorm(ftApellidosNombre(s));
+  const lista=((window._asistenciaData||{})[`${nivel}-${grupo}`]||{profesores:[]}).profesores||[];
+  if(lista.some(p=>p.nombre && clave(p.nombre)===clave(nombre))) return {accion:'nada',nombre};
+  const conMateria=lista.find(p=>_tNorm(p.materia)===_tNorm(materia));
+  if(conMateria) return {accion:conMateria.nombre?'nada':'nombre',nombre,prof:conMateria};
+  return {accion:'nuevo',nombre};
 }
 function _tImpCuadernoPlan(o,nivel,grupo,materia,confirmados){
   const lista=(data[nivel]&&data[nivel][grupo])||[];
   const idx={}; lista.forEach((a,i)=>{ idx[_tNorm(a.nombre)]=i; });
+  // Mismas palabras en otro orden o en mayúsculas («ANA GARCÍA LÓPEZ» = «García López, Ana»).
+  const pal=s=>_tPalabras(s).sort().join(' ');
+  const idxPal={}; lista.forEach((a,i)=>{ const k=pal(a.nombre); if(k && idxPal[k]==null) idxPal[k]=i; });
   const porId={}; lista.forEach((a,i)=>{ (a.idsCuaderno||[]).forEach(id=>{ porId[id]=i; }); });
   const emparejados=[], noEncontrados=[], propuestas=[]; let cambios=0;
+  const exacto=x=>(x.id!=null?porId[x.id]:undefined) ?? idx[_tNorm(x.nombre)] ?? (x.apellidos?idx[_tNorm(x.apellidos+', '+x.nombrePropio)]:undefined) ?? idxPal[pal(x.nombre)];
   // Alumnado de Tutoría que ya tiene pareja exacta: no se propone a nadie más.
-  const usados=new Set(o.alumnos.map(x=>(x.id!=null?porId[x.id]:undefined) ?? idx[_tNorm(x.nombre)] ?? (x.apellidos?idx[_tNorm(x.apellidos+', '+x.nombrePropio)]:undefined)).filter(i=>i!=null));
+  const usados=new Set(o.alumnos.map(exacto).filter(i=>i!=null));
   const CAMPOS={1:['pendientes1','eval1'],2:['pendientes2','eval2'],final:['pendientesIII','eval3']};
   o.alumnos.forEach(x=>{
-    let i=(x.id!=null && porId[x.id]!=null) ? porId[x.id] : idx[_tNorm(x.nombre)];   // primero, el identificador del Cuaderno
-    if(i==null && x.apellidos) i=idx[_tNorm(x.apellidos+', '+x.nombrePropio)];
+    let i=exacto(x);   // primero, el identificador del Cuaderno
     if(i==null){
       // Nombre que no coincide exactamente: se propone el más parecido del grupo.
       let mejor=-1, nota=0;
@@ -257,11 +312,12 @@ function _tImpCuadernoPlan(o,nivel,grupo,materia,confirmados){
       if(nota<5 && !tiene){ ops.push({campo,evalCampo,accion:'add'}); cambios++; }
       else if(nota>=5 && tiene){ ops.push({campo,evalCampo,accion:'del'}); cambios++; }
     });
-    emparejados.push({a,ops,idCuaderno:x.id});
+    emparejados.push({a,ops,idCuaderno:x.id,x});
   });
   return {nivel,grupo,materia,emparejados,noEncontrados,propuestas,cambios};
 }
-function _tImpCuadernoAplicar(p){
+function _tImpCuadernoAplicar(p,o){
+  if(data[p.nivel] && data[p.nivel][p.grupo]) _undoPush(p.nivel,p.grupo);   // Ctrl+Z deshace los cambios en el alumnado
   p.emparejados.forEach(({a,idCuaderno})=>{ if(idCuaderno!=null && !(a.idsCuaderno||[]).includes(idCuaderno)) a.idsCuaderno=(a.idsCuaderno||[]).concat(idCuaderno); });
   p.emparejados.forEach(({a,ops})=>ops.forEach(op=>{
     if(!Array.isArray(a[op.campo])) a[op.campo]=[];
@@ -274,7 +330,28 @@ function _tImpCuadernoAplicar(p){
     if(cuenta<n) a[op.evalCampo]=n;
     else if(n<antes) a[op.evalCampo]=Math.max(n,cuenta-(antes-n));
   }));
+  // Lo que ha llegado de esta materia (notas, faltas, convivencia, comentarios): sustituye a lo anterior.
+  let prof={accion:'nada'};
+  if(o && p.materia){
+    p.emparejados.forEach(({a,x})=>{
+      if(!x) return;
+      if(!a.porMateria || typeof a.porMateria!=='object') a.porMateria={};
+      a.porMateria[p.materia]={profesor:o.profesor||'', generado:o.generado||new Date().toISOString(), version:o.version||1, periodos:o.periodos||{},
+        notas:x.notas||{}, faltas:x.faltas||{}, convivencia:x.convivencia||{}, comentarios:x.comentarios||{}};
+    });
+    // El profesor/a de la materia, al equipo docente del grupo (en «Apellidos, Nombre»).
+    prof=_tProfesorDelPaquete(p.nivel,p.grupo,p.materia,o.profesor);
+    if(prof.accion!=='nada'){
+      const d=_getAsistenciaData(p.nivel,p.grupo);
+      if(prof.accion==='nombre') prof.prof.nombre=prof.nombre;
+      else {
+        d.profesores.push({id:'prof'+Math.random().toString(36).slice(2,9),nombre:prof.nombre,materia:p.materia,correo:''});
+        ['eval1','eval2','eval3'].forEach(k=>{ if(!d.sesiones[k]) d.sesiones[k]=[]; d.sesiones[k].push({asistio:null,justificacion:''}); });
+      }
+    }
+  }
   markDirty(); renderAll();
+  return prof;
 }
 
 /* ---- Accesibilidad: nombre legible en botones que solo tienen un icono ---- */

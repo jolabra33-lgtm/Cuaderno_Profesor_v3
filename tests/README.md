@@ -28,6 +28,10 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `suspensos` | Importar suspensos por identificador y por nombre parecido; al reenviar un aprobado, la materia sale y el número de suspensas baja |
 | `tutoria-csv` | Un CSV de Excel en Windows (ANSI) conserva tildes y ñ; una columna sin título no se asigna a ningún campo; UTF-8 con BOM |
 | `tutoria-buscar` | «Buscar alumno…» encuentra por el nombre, sin tildes ni mayúsculas, y el contador cuadra |
+| `tutoria-equipo-docente` | Equipo docente en «Apellidos, Nombre»: aviso sin perder el cursor, cambio automático, orden por apellidos que arrastra la asistencia a la sesión |
+| `tutoria-familia` | Contactos de la familia traídos del Cuaderno sin repetir, editables en el seguimiento y guardados |
+| `cuaderno-a-tutoria` | Paquete v2 (notas, faltas, convivencia, comentarios) en el mismo navegador y por archivos (varios a la vez); equipo docente automático; el archivo no lleva datos personales; deshacer |
+| `tutoria-informacion-equipo` | «📬 Información del equipo docente»: recibido y pendiente por materia, recordatorio por correo, vista por alumno/a y relleno del seguimiento |
 | `tutoria-interfaz` | Niveles junto a Inicio, aviso y guardado de las fechas de evaluación, barra de fechas solo en los niveles, botones de los grupos, móvil sin desbordar |
 | `dos-ventanas` | Una sola ventana guarda; relevo con «Usar esta ventana» |
 | `almacen-lleno` | Cuaderno: con localStorage lleno por otra app, se guarda y se abre desde IndexedDB sin avisos ni pérdidas |

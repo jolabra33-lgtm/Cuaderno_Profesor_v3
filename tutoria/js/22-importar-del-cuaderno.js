@@ -5,8 +5,8 @@
 
 /* Las dos aplicaciones viven en la misma dirección web, así que Tutoría puede
    LEER los datos que el Cuaderno guarda en este navegador (nunca los modifica).
-   Se copian el nombre, la fecha de nacimiento, NESE y repetición; las notas de
-   cada app siguen separadas.
+   Se copian el nombre, la fecha de nacimiento, NESE, repetición y los contactos
+   de la familia; las notas de cada app siguen separadas.
    - Quien ya está en el grupo (por su identificador del Cuaderno, o por el
      nombre aunque esté en otro orden, en mayúsculas o sin tildes) no se
      duplica: se le COMPLETA lo que le falte (p. ej. la fecha de nacimiento).
@@ -25,19 +25,22 @@ function _nombreClave(s) {
 
 // Copia interna del Cuaderno en IndexedDB. Si la base de datos no existe, se
 // cancela su creación para no dejar una vacía que estropee la del Cuaderno.
-function _leerEspejoCuaderno() {
+function _leerEspejoCuaderno() { return _leerIdbCuaderno(_CUADERNO_IDB, 'kv', 'estado'); }
+// Copia que deja el Cuaderno para Tutoría en su base propia: {generado, paquetes:[…]} (js/resultados/resultados.js).
+function _leerParaTutoriaLocal() { return _leerIdbCuaderno(FT_IDB, FT_IDB_ALMACEN, FT_IDB_CLAVE); }
+function _leerIdbCuaderno(base, almacen, clave) {
   return new Promise(resolve => {
     if (!window.indexedDB) { resolve(null); return; }
     let req;
-    try { req = indexedDB.open(_CUADERNO_IDB); } catch (e) { resolve(null); return; }
+    try { req = indexedDB.open(base); } catch (e) { resolve(null); return; }
     req.onupgradeneeded = () => { try { req.transaction.abort(); } catch (e) {} };
     req.onerror = () => resolve(null);
     req.onblocked = () => resolve(null);
     req.onsuccess = () => {
       const db = req.result;
       try {
-        if (!db.objectStoreNames.contains('kv')) { db.close(); resolve(null); return; }
-        const get = db.transaction('kv', 'readonly').objectStore('kv').get('estado');
+        if (!db.objectStoreNames.contains(almacen)) { db.close(); resolve(null); return; }
+        const get = db.transaction(almacen, 'readonly').objectStore(almacen).get(clave);
         get.onsuccess = () => { db.close(); resolve(get.result || null); };
         get.onerror = () => { db.close(); resolve(null); };
       } catch (e) { db.close(); resolve(null); }
@@ -127,9 +130,23 @@ function _planImportarCuaderno(nivel, grupo, gc, confirmados) {
       if (!actual) f.completar.push({ k, v });
       else if (actual !== v) f.distintos.push({ k, v, actual });
     });
+    f.familiaNueva = _impFamiliaNueva(f.c, a);
     f.vincular = !!(a && f.c.id != null && !(a.idsCuaderno || []).map(String).includes(String(f.c.id)));
   });
   return filas;
+}
+
+// Contactos de la familia del Cuaderno que aún no tiene el alumno/a de Tutoría (por correo o por nombre).
+function _impFamiliaNueva(c, a) {
+  const delCuaderno = (Array.isArray(c.familia) ? c.familia : [])
+    .map(x => ({ parentesco: String((x && x.parentesco) || '').trim(), nombre: String((x && x.nombre) || '').trim(), email: String((x && x.email) || '').trim(), telefono: '' }))
+    .filter(x => x.nombre || x.email);
+  const ya = (a && Array.isArray(a.familia)) ? a.familia : [];
+  const igual = (x, y) => (x.email && _nombreClave(x.email) === _nombreClave(y.email)) || (x.nombre && _nombreClave(x.nombre) === _nombreClave(y.nombre));
+  return delCuaderno.filter((x, i) => !ya.some(y => igual(x, y)) && !delCuaderno.slice(0, i).some(y => igual(x, y)));
+}
+function _impFamiliaTexto(lista) {
+  return `<strong>${lista.length} contacto${lista.length === 1 ? '' : 's'} de la familia</strong> (${_tEsc(lista.map(x => x.nombre || x.email).join(', '))})`;
 }
 
 // Propuestas de nombre parecido que se marcan de entrada (parecido muy alto).
@@ -144,10 +161,10 @@ function _impResumen(filas, sustituir) {
   const r = { nuevos: 0, completados: 0, distintos: 0, alDia: 0, dudas: 0, vincular: 0 };
   filas.forEach(f => {
     if (f.tipo === 'nuevo') { r.nuevos++; if (f.propuesta) r.dudas++; return; }
-    if (f.completar.length) r.completados++;
+    if (f.completar.length || f.familiaNueva.length) r.completados++;
     if (f.distintos.length) r.distintos++;
     if (f.vincular) r.vincular++;
-    if (!f.completar.length && !(sustituir && f.distintos.length)) r.alDia++;
+    if (!f.completar.length && !f.familiaNueva.length && !(sustituir && f.distintos.length)) r.alDia++;
   });
   return r;
 }
@@ -159,6 +176,14 @@ async function abrirImportarDelCuaderno(nivel, grupo) {
     mostrarAviso('No hay alumnado en el Cuaderno del profesor de este navegador.\n\nAñade antes la lista de tu grupo en el Cuaderno (desde el mismo dispositivo y la misma dirección web) y vuelve a intentarlo.', 'Importar del Cuaderno');
     return;
   }
+  // Lo que el Cuaderno de este navegador ha preparado para Tutoría (notas, faltas, convivencia y comentarios de su materia).
+  const copia = await _leerParaTutoriaLocal();
+  const paquetes = ((copia && copia.paquetes) || []).map(ftNormalizarPaquete).filter(Boolean);
+  const paqueteDe = g => {
+    const ids = new Set((g.alumnos || []).map(a => String(a.id)));
+    const mismos = paquetes.filter(pq => pq.grupo === String(g.nombre || '').trim());
+    return mismos.find(pq => pq.alumnos.length === ids.size && pq.alumnos.every(a => ids.has(String(a.id)))) || mismos[0] || null;
+  };
   // Grupo del Cuaderno que se propone: el que más alumnado comparte con este; si no, el de nombre más parecido.
   const objetivo = `${nivel} ${grupo}`;
   let elegido = 0, mejor = -1;
@@ -176,7 +201,7 @@ async function abrirImportarDelCuaderno(nivel, grupo) {
       <div class="modal-title" id="impCuadTitulo">📥 Importar alumnado del Cuaderno</div>
       <p style="font-size:13px;color:var(--text2);margin:0 0 12px">
         A <strong>${_tEsc(nivel)} ${_tEsc(grupo)}</strong> se añade quien falte y, a quien ya está, se le completa
-        lo que no tenga: <strong>fecha de nacimiento, NESE y repetición</strong>. Nadie se duplica ni se borra,
+        lo que no tenga: <strong>fecha de nacimiento, NESE, repetición y contactos de la familia</strong>. Nadie se duplica ni se borra,
         y las notas del Cuaderno no se copian.
       </p>
       <fieldset style="border:0;padding:0;margin:0">
@@ -188,6 +213,7 @@ async function abrirImportarDelCuaderno(nivel, grupo) {
           </label>`).join('')}
       </fieldset>
       <div id="impCuadPlan" aria-live="polite" style="margin-top:12px"></div>
+      <div id="impCuadMateria" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:12.5px"></div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
         <button type="button" class="btn btn-ghost" data-accion="cancelar">Cancelar</button>
         <button type="button" class="btn btn-primary" data-accion="importar">Importar</button>
@@ -203,13 +229,31 @@ async function abrirImportarDelCuaderno(nivel, grupo) {
     return _planImportarCuaderno(nivel, grupo, grupos[gi], confirmados);
   };
   const lista = data[nivel][grupo] || [];
+  let traerMateria = true;
+  const pintarMateria = () => {
+    const pq = paqueteDe(grupos[grupoSel()]);
+    const caja = ov.querySelector('#impCuadMateria');
+    if (!pq) {
+      caja.innerHTML = `<span style="color:var(--text2)">ℹ️ Las notas, faltas, convivencia y comentarios de tu materia también se pueden traer: abre el Cuaderno en este navegador un momento (se preparan solos) y vuelve a pulsar «📥 Del Cuaderno».</span>`;
+      return;
+    }
+    // Si el Cuaderno se ha guardado después de preparar la copia (se cerró enseguida), se avisa.
+    const atrasada = estado && estado._guardadoEn && (new Date(copia.generado).getTime() < estado._guardadoEn - 5000);
+    caja.innerHTML = (atrasada ? `<div style="color:var(--yellow);margin-bottom:6px">⚠️ Tu Cuaderno tiene cambios posteriores a estos datos: ábrelo unos segundos en este navegador para ponerlos al día.</div>` : '') +
+      `<label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer">
+        <input type="checkbox" id="impCuadTraerMateria" ${traerMateria ? 'checked' : ''} style="margin-top:2px">
+        <span>Traer también lo de tu materia, <strong>${_tEsc(pq.materia || 'sin nombre')}</strong>: suspensos, faltas, convivencia y comentarios
+        <span style="color:var(--text2)">(preparado el ${_tEsc(new Date(copia.generado).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }))}). Después de importar la lista, podrás revisarlo antes de aplicarlo.</span></span></label>`;
+    ov.querySelector('#impCuadTraerMateria').onchange = e => { traerMateria = e.target.checked; };
+  };
   const pintar = () => {
+    pintarMateria();
     const filas = plan(), r = _impResumen(filas, sustituir);
     const cambio = x => `${x.k.etiqueta} <strong>${_tEsc(x.k.ver(x.v))}</strong>`;
     const linea = (icono, nombre, texto, color) => `<li style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12.5px">
         <span aria-hidden="true">${icono}</span><span style="flex:1"><strong>${_tEsc(nombre)}</strong><br><span style="color:${color || 'var(--text2)'}">${texto}</span></span></li>`;
     const dudas = filas.filter(f => f.propuesta);
-    const conCambios = filas.filter(f => f.tipo === 'nuevo' || f.completar.length || f.distintos.length);
+    const conCambios = filas.filter(f => f.tipo === 'nuevo' || f.completar.length || f.familiaNueva.length || f.distintos.length);
     const sinCambios = filas.filter(f => !conCambios.includes(f));
     const partes = [];
     partes.push(`<div style="display:flex;flex-wrap:wrap;gap:6px;font-size:12.5px;margin-bottom:8px">
@@ -232,13 +276,16 @@ async function abrirImportarDelCuaderno(nivel, grupo) {
       partes.push(`<ul style="list-style:none;margin:10px 0 0;padding:0;max-height:34vh;overflow:auto">` + conCambios.map(f => {
         if (f.tipo === 'nuevo') {
           const datos = _IMP_CAMPOS.map(k => ({ k, v: k.valor(f.c) })).filter(x => x.v).map(cambio);
+          if (f.familiaNueva.length) datos.push(_impFamiliaTexto(f.familiaNueva));
           return linea('➕', f.nombre, 'Alumno/a nuevo' + (datos.length ? ' · ' + datos.join(' · ') : ' · el Cuaderno no tiene su fecha de nacimiento'), 'var(--green)');
         }
         const t = [];
-        if (f.completar.length) t.push('Se completa: ' + f.completar.map(cambio).join(' · '));
+        const completa = f.completar.map(cambio);
+        if (f.familiaNueva.length) completa.push(_impFamiliaTexto(f.familiaNueva));
+        if (completa.length) t.push('Se completa: ' + completa.join(' · '));
         if (f.distintos.length) t.push(`${sustituir ? 'Se cambia' : 'Distinto (no se toca)'}: ` + f.distintos.map(x => `${x.k.etiqueta} ${_tEsc(x.k.ver(x.actual))} en Tutoría, ${_tEsc(x.k.ver(x.v))} en el Cuaderno`).join(' · '));
         const nombreT = lista[f.i].nombre;
-        return linea(f.completar.length ? '✏️' : '⚠️', nombreT + (_nombreClave(nombreT) !== _nombreClave(f.nombre) ? ` ← «${f.nombre}»` : ''), t.join('<br>'), f.completar.length ? '' : 'var(--yellow)');
+        return linea(completa.length ? '✏️' : '⚠️', nombreT + (_nombreClave(nombreT) !== _nombreClave(f.nombre) ? ` ← «${f.nombre}»` : ''), t.join('<br>'), completa.length ? '' : 'var(--yellow)');
       }).join('') + `</ul>`);
     }
     if (!conCambios.length) partes.push(`<div style="font-size:12.5px;color:var(--text2)">Todo el alumnado de ese grupo ya está en ${_tEsc(nivel)} ${_tEsc(grupo)} con sus datos al día.</div>`);
@@ -259,8 +306,11 @@ async function abrirImportarDelCuaderno(nivel, grupo) {
   ov.querySelector('[data-accion="cancelar"]').onclick = cerrar;
   ov.querySelector('[data-accion="importar"]').onclick = () => {
     const filas = plan();
+    const pq = traerMateria ? paqueteDe(grupos[grupoSel()]) : null;
     cerrar();
     _importarAlumnadoCuaderno(nivel, grupo, filas, sustituir);
+    // Y después, lo de la materia (con la misma ventana que un archivo «Para la tutoría»).
+    if (pq) setTimeout(() => _tImpCuadernoModal(pq, 'Cuaderno de este navegador', { nivel, grupo }), 350);
   };
   setTimeout(() => ov.querySelector('input[name="impCuadGrupo"]:checked')?.focus(), 50);
 }
@@ -268,7 +318,7 @@ async function abrirImportarDelCuaderno(nivel, grupo) {
 // Aplica un plan de _planImportarCuaderno (se puede deshacer con Ctrl+Z).
 function _importarAlumnadoCuaderno(nivel, grupo, filas, sustituir) {
   const lista = data[nivel][grupo];
-  const hayQueHacer = filas.some(f => f.tipo === 'nuevo' || f.vincular || f.completar.length || (sustituir && f.distintos.length));
+  const hayQueHacer = filas.some(f => f.tipo === 'nuevo' || f.vincular || f.completar.length || f.familiaNueva.length || (sustituir && f.distintos.length));
   if (!hayQueHacer) { showToast('ℹ️ Todo el alumnado de ese grupo ya estaba en ' + nivel + ' ' + grupo + ' con sus datos al día'); return; }
   _undoPush(nivel, grupo);
   let nuevos = 0, completados = 0, cambiados = 0;
@@ -276,6 +326,7 @@ function _importarAlumnadoCuaderno(nivel, grupo, filas, sustituir) {
     if (f.tipo === 'nuevo') {
       const campos = { nombre: f.nombre, idsCuaderno: f.c.id != null ? [f.c.id] : [] };
       _IMP_CAMPOS.forEach(k => { const v = k.valor(f.c); if (v) campos[k.campo] = v; });
+      if (f.familiaNueva.length) campos.familia = f.familiaNueva;
       lista.push(_alumnoNuevo(campos));
       nuevos++;
       return;
@@ -283,7 +334,8 @@ function _importarAlumnadoCuaderno(nivel, grupo, filas, sustituir) {
     const a = lista[f.i];
     if (f.vincular) a.idsCuaderno = (a.idsCuaderno || []).concat(f.c.id);
     f.completar.forEach(x => { a[x.k.campo] = x.v; });
-    if (f.completar.length) completados++;
+    if (f.familiaNueva.length) a.familia = (Array.isArray(a.familia) ? a.familia : []).concat(f.familiaNueva);
+    if (f.completar.length || f.familiaNueva.length) completados++;
     if (sustituir && f.distintos.length) { f.distintos.forEach(x => { a[x.k.campo] = x.v; }); cambiados++; }
   });
   updateStats(nivel, grupo);

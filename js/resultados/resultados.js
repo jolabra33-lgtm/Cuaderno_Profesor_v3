@@ -65,30 +65,96 @@ window.comSugerirGrupo=async(lang)=>{
   save(); render(); mostrarToast(`✓ ${vacios.length} borradores escritos: revísalos antes de imprimir`);
 };
 /* =================================================================
-   v5 · DEL CUADERNO A LA TUTORÍA
-   Exporta, para este grupo, la nota de acta de tu materia en cada
-   evaluación y en la final. El tutor/a lo carga en el Gestor de Tutoría
-   (⚙️ Gestión del Curso → «Importar suspensos del Cuaderno») y la materia
-   se marca sola como suspensa (o se desmarca si está aprobada) en cada
-   alumno/a, emparejando por nombre.
+   DEL CUADERNO A LA TUTORÍA (formato en js/comun/formato-tutoria.js)
+   Para un grupo y tu materia: nota de acta de cada evaluación y la final,
+   faltas y retrasos, AC/RC/partes y el comentario de cada evaluación.
+   - «👥 Para la tutoría» (Resultados) lo guarda como archivo para enviarlo
+     al tutor/a, que lo carga en Gestor de Tutoría → Gestión del Curso.
+   - Además, el Cuaderno deja en este navegador una copia de los paquetes de
+     todos sus grupos (con fecha de nacimiento, NESE, repetición y contactos
+     de la familia) para que Tutoría los lea sin archivos («📥 Del Cuaderno»).
    ================================================================= */
+function paqueteParaTutoria(grupo,local){
+  const cat=getCatalogo(grupo.catalogoKey);
+  const ft=Array.isArray(grupo.fechasTrimestre)?grupo.fechasTrimestre:[];
+  const periodos={};
+  [0,1,2].forEach(t=>{ const f=ft[t]; periodos[t+1]=(f&&f.inicio&&f.fin)?{desde:f.inicio,hasta:f.fin}:null; });
+  const faltasEn=(alId,desde,hasta)=>{ const c=asistContarPeriodo(grupo,alId,desde,hasta); return {justificadas:c.falta_justificada,injustificadas:c.falta_no_justificada,retrasos:c.retraso}; };
+  const alumnos=grupo.alumnos.map(al=>{
+    const notas={};
+    [0,1,2].forEach(t=>{ const v=notaTrimestre(grupo,al.id,t); if(v!=null) notas[t+1]=notaActa(v,grupo); });
+    const f=notaFinal(grupo,al.id); if(f!=null && notaTrimestre(grupo,al.id,2)!=null) notas.final=notaActa(f,grupo);
+    // Faltas y convivencia: del curso hasta hoy y, si la evaluación tiene fechas (Ajustes del grupo), de esa evaluación.
+    const faltas={curso:faltasEn(al.id,"0000-01-01","9999-12-31")}, convivencia={curso:convContarTipos(grupo,al.id,"","")};
+    [1,2,3].forEach(k=>{ const p=periodos[k]; if(p){ faltas[k]=faltasEn(al.id,p.desde,p.hasta); convivencia[k]=convContarTipos(grupo,al.id,p.desde,p.hasta); } });
+    const comentarios={};
+    (al.comentariosEval||[]).forEach((c,t)=>{ if(String(c||"").trim()) comentarios[t+1]=String(c).trim(); });
+    if(String(al.comentarioFinal||"").trim()) comentarios.final=al.comentarioFinal.trim();
+    // id: Tutoría empareja por él antes que por el nombre
+    const x={id:al.id, nombre:al.nombre, apellidos:al.apellidos||"", nombrePropio:al.nombreP||"", notas, faltas, convivencia, comentarios};
+    if(local){   // solo en la copia de este navegador, nunca en el archivo que se envía
+      x.fechaNacimiento=al.fechaNacimiento||""; x.nese=!!al.nese; x.repetidor=!!al.repetidor;
+      x.familia=(al.familia||[]).filter(fm=>fm&&(fm.nombre||fm.email)).map(fm=>({parentesco:fm.parentesco||"",nombre:fm.nombre||"",email:fm.email||""}));
+    }
+    return x;
+  });
+  return {formato:FT_FORMATO,version:FT_VERSION,materia:(cat&&cat.materia)||"",curso:(cat&&cat.curso)||"",grupo:grupo.nombre,
+    profesor:typeof profesorNombreEfectivo==="function"?profesorNombreEfectivo(null):"",generado:new Date().toISOString(),
+    regla:"Nota de acta; suspenso = acta < 5",periodos,alumnos};
+}
 window.exportarParaTutoria=async()=>{
   const grupo=grupoActual(); if(!grupo) return;
-  const cat=getCatalogo(grupo.catalogoKey);
-  const alumnos=grupo.alumnos.map(al=>{
-    const n={};
-    [0,1,2].forEach(t=>{ const v=notaTrimestre(grupo,al.id,t); if(v!=null) n[t+1]=notaActa(v,grupo); });
-    const f=notaFinal(grupo,al.id); if(f!=null && notaTrimestre(grupo,al.id,2)!=null) n.final=notaActa(f,grupo);
-    return {id:al.id, nombre:al.nombre, apellidos:al.apellidos||"", nombrePropio:al.nombreP||"", notas:n};   // id: Tutoría empareja por él antes que por el nombre
-  });
-  const conNota=alumnos.filter(a=>Object.keys(a.notas).length).length;
-  if(!conNota){ mostrarAviso("Todavía no hay notas en este grupo."); return; }
-  const obj={formato:"cuaderno-a-tutoria",version:1,materia:(cat&&cat.materia)||"",curso:(cat&&cat.curso)||"",grupo:grupo.nombre,
-    profesor:profesorNombreEfectivo?profesorNombreEfectivo(null):"",generado:new Date().toISOString(),regla:"Nota de acta; suspenso = acta < 5",alumnos};
+  const obj=paqueteParaTutoria(grupo,false);
+  const hayAlgo=obj.alumnos.some(a=>Object.keys(a.notas).length || Object.keys(a.comentarios).length
+    || a.faltas.curso.justificadas+a.faltas.curso.injustificadas+a.faltas.curso.retrasos+a.convivencia.curso.ac+a.convivencia.curso.rc+a.convivencia.curso.pa>0);
+  if(!hayAlgo){ mostrarAviso("Todavía no hay notas, faltas, convivencia ni comentarios en este grupo."); return; }
   const limpio=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").toLowerCase();
   const ok=await guardarArchivo(new Blob([JSON.stringify(obj,null,2)],{type:"application/json"}),`para-tutoria-${limpio(grupo.nombre)}-${limpio(obj.materia)}.json`);
-  if(ok) mostrarToast("✓ Archivo para la tutoría guardado. El tutor/a lo carga en Gestor de Tutoría → Gestión del Curso.");
+  if(ok) mostrarToast("✓ Archivo para la tutoría guardado (notas, faltas, convivencia y comentarios). El tutor/a lo carga en Gestor de Tutoría → Gestión del Curso.");
 };
+/* Copia para Tutoría en este navegador: se rehace unos segundos después de cada cambio y al
+   abrir la app, cuando el navegador está desocupado, solo desde la ventana que guarda y nunca
+   mientras se cargan los datos. No se hace al cerrar (no retrasa la salida): si quedó algo sin
+   pasar, Tutoría lo avisa. Va en su propia base IndexedDB (FT_IDB), aparte de los datos. */
+let _ptIdbP=null;
+function _ptIdb(){
+  if(_ptIdbP) return _ptIdbP;
+  _ptIdbP=new Promise((res,rej)=>{
+    if(!window.indexedDB){ rej(new Error("IndexedDB no disponible")); return; }
+    let r; try{ r=indexedDB.open(FT_IDB,1); }catch(e){ rej(e); return; }
+    r.onupgradeneeded=()=>{ const db=r.result; if(!db.objectStoreNames.contains(FT_IDB_ALMACEN)) db.createObjectStore(FT_IDB_ALMACEN); };
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); r.onblocked=()=>rej(new Error("IndexedDB bloqueada"));
+  });
+  _ptIdbP.catch(()=>{ _ptIdbP=null; });
+  return _ptIdbP;
+}
+function _ptGuardar(valor){
+  return _ptIdb().then(db=>new Promise((res,rej)=>{
+    let tx; try{ tx=db.transaction(FT_IDB_ALMACEN,"readwrite"); }catch(e){ rej(e); return; }
+    tx.objectStore(FT_IDB_ALMACEN).put(valor,FT_IDB_CLAVE);
+    tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); tx.onabort=()=>rej(tx.error);
+  }));
+}
+let _paraTutoriaTimer=null;
+function programarCopiaParaTutoria(){
+  clearTimeout(_paraTutoriaTimer);
+  _paraTutoriaTimer=setTimeout(()=>{
+    if(window.requestIdleCallback) requestIdleCallback(()=>guardarCopiaParaTutoria(),{timeout:3000});
+    else guardarCopiaParaTutoria();
+  },4000);
+}
+function guardarCopiaParaTutoria(){
+  clearTimeout(_paraTutoriaTimer); _paraTutoriaTimer=null;
+  if(typeof _guardadoEnPausa!=="undefined" && _guardadoEnPausa){ programarCopiaParaTutoria(); return Promise.resolve(); }
+  if(window.UnaVentana && UnaVentana.estado==="pendiente"){ programarCopiaParaTutoria(); return Promise.resolve(); }   // aún no se sabe si esta ventana guarda
+  if(window.UnaVentana && UnaVentana.estado==="bloqueada") return Promise.resolve();                                   // guarda otra ventana
+  let paquetes;
+  try{
+    paquetes=(state.grupos||[]).filter(g=>g.alumnos&&g.alumnos.length).map(g=>{ try{ return paqueteParaTutoria(g,true); }catch(e){ return null; } }).filter(Boolean);
+  }catch(e){ return Promise.resolve(); }
+  return _ptGuardar({generado:new Date().toISOString(),paquetes}).catch(()=>{});
+}
+window.addEventListener("load",()=>programarCopiaParaTutoria());   // al abrir, aunque no se cambie nada
 function renderResultados(grupo){
   const c=document.getElementById("tabContent");
   const idx=catIndex(grupo.catalogoKey);

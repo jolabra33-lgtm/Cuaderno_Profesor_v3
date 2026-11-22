@@ -132,12 +132,14 @@ Actualizar los archivos no toca tus datos: viven en el navegador, no en GitHub.
   no guarda nada. Con «Usar esta ventana» pasas a trabajar en ella: la otra guarda lo
   pendiente y se bloquea. Así nunca se pisan los cambios de una ventana con los de otra. Cambiar de usuario de GitHub sí cambia la dirección y el
   almacenamiento (haz copia antes).
-- Del Cuaderno a Tutoría se pasan datos de dos formas:
-  - **👥 Para la tutoría** (Resultados de cada grupo, en el Cuaderno) crea un archivo con la nota de
-    acta de cada alumno/a por evaluación. El tutor/a lo carga en Tutoría → ⚙️ Gestión del Curso →
-    «Importar suspensos del Cuaderno», y las materias suspensas se marcan como pendientes.
-    Funciona entre profesores y dispositivos distintos. Empareja por nombre («Apellidos, Nombre»).
-  - **📥 Del Cuaderno** (en cada grupo de Tutoría) copia la lista de alumnado de un grupo del Cuaderno
-    con su fecha de nacimiento, NESE y repetición. A quien ya está en Tutoría le completa lo que le
-    falte, sin duplicarlo aunque su nombre esté escrito de otra forma, y antes de aplicar enseña qué
-    va a cambiar. Solo en el mismo dispositivo y navegador.
+- Del Cuaderno a Tutoría se pasan datos de dos formas (formato común en `js/comun/formato-tutoria.js`):
+  - **👥 Para la tutoría** (Resultados de cada grupo, en el Cuaderno) crea un archivo con, para cada
+    alumno/a y evaluación, la nota de acta, las faltas y retrasos, las AC, reconocimientos y partes, y el
+    comentario de evaluación. El tutor/a lo carga en Tutoría → ⚙️ Gestión del Curso → «Importar suspensos
+    del Cuaderno» (puede elegir varios archivos a la vez): las materias suspensas se marcan como
+    pendientes, lo demás se ve en «📬 Información del equipo docente» y el profesor/a entra solo en el
+    equipo docente del grupo. El archivo no lleva fechas de nacimiento ni contactos de las familias.
+  - **📥 Del Cuaderno** (en cada grupo de Tutoría, mismo dispositivo y navegador) copia la lista de
+    alumnado de un grupo del Cuaderno con su fecha de nacimiento, NESE, repetición y contactos de la
+    familia; a quien ya está le completa lo que le falte, sin duplicarlo, y antes de aplicar enseña qué
+    va a cambiar. Además ofrece traer lo de tu materia (lo mismo que el archivo, sin archivo).

@@ -257,7 +257,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
           <input
             id="tutor-${_tEsc(nivel)}-${_tEsc(grupo)}"
             type="text"
-            placeholder="Nombre del tutor/a…"
+            placeholder="Apellidos, Nombre del tutor/a…"
             value="${_tEsc(tutores[key] || '')}"
             oninput="tutores['${jsAttr(key)}']=this.value"
             style="background:transparent;border:none;color:var(--text);font-family:inherit;font-size:13px;font-weight:500;width:220px;outline:none;"
@@ -294,6 +294,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
             <button role="menuitem" onclick="selectNivel('__actasnooficiales__')" title="Las Actas I/II/Final de todos los grupos se gestionan en su propia pestaña">🗂️ Actas no Oficiales</button>
             <button role="menuitem" onclick="openAsistencia('${jsAttr(nivel)}','${jsAttr(grupo)}')">👥 Asistencia a la sesión${_getAsistenciaIndicator(nivel, grupo)}</button>
             <button role="menuitem" onclick="openEquipoDocente('${jsAttr(nivel)}','${jsAttr(grupo)}')">👨‍🏫 Equipo docente</button>
+            <button role="menuitem" onclick="openInformacionEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📬 Información del equipo docente</button>
             <button role="menuitem" onclick="openObservacionesGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📝 Observaciones del grupo${(window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : ''}</button>
             <button role="menuitem" onclick="openPlanoGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">🪑 Plano del grupo</button>
             <button role="menuitem" onclick="openHorarioGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">🗓️ Horario del grupo</button>

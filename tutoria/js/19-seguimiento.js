@@ -32,6 +32,68 @@ window.closeSegFamilia = function() {
 
 function _segEsc(s) { return _tEsc(s); }
 
+/* ---- Contactos de la familia (alumno.familia = [{parentesco, nombre, email, telefono}]) ----
+   Se guardan al escribir, sin esperar a «Guardar este registro». Se pueden traer del
+   Cuaderno con «📥 Del Cuaderno». Los datos antiguos sin este campo empiezan vacíos. */
+const _FAM_PARENTESCOS = ['Madre', 'Padre', 'Tutor/a legal', 'Otro familiar'];
+function _famLista(alumno) {
+  if (!Array.isArray(alumno.familia)) alumno.familia = [];
+  return alumno.familia;
+}
+function _famAlumno() { const { nivel, grupo, idx } = _segCtx; return data[nivel]?.[grupo]?.[idx]; }
+function _famContactosHTML(alumno) {
+  const est = 'box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;min-width:0';
+  const filas = _famLista(alumno).map((f, i) => `
+    <div class="fam-contacto" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+      <input list="famParentescos" style="${est};width:120px" placeholder="Parentesco" aria-label="Parentesco" value="${_segEsc(f.parentesco)}" oninput="_famSet(${i},'parentesco',this.value)">
+      <input style="${est};flex:2 1 150px" placeholder="Apellidos, Nombre" aria-label="Nombre del familiar" value="${_segEsc(f.nombre)}" oninput="_famSet(${i},'nombre',this.value)">
+      <input type="email" style="${est};flex:2 1 150px" placeholder="Correo" aria-label="Correo del familiar" value="${_segEsc(f.email)}" oninput="_famSet(${i},'email',this.value)">
+      <input type="tel" style="${est};flex:1 1 105px" placeholder="Teléfono" aria-label="Teléfono del familiar" value="${_segEsc(f.telefono)}" oninput="_famSet(${i},'telefono',this.value)">
+      <button class="btn btn-ghost btn-sm" onclick="_famEscribir(${i})" title="Escribir un correo a este contacto" aria-label="Escribir un correo a este contacto">✉</button>
+      <button class="btn btn-ghost btn-sm" onclick="_famLlamar(${i})" title="Llamar a este contacto" aria-label="Llamar a este contacto">📞</button>
+      <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:rgba(247,110,110,0.3)" onclick="_famQuitar(${i})" title="Quitar este contacto" aria-label="Quitar este contacto">🗑</button>
+    </div>`).join('');
+  return `
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;font-weight:700;margin-bottom:6px">👪 Contactos de la familia</div>
+    <datalist id="famParentescos">${_FAM_PARENTESCOS.map(x => `<option value="${x}">`).join('')}</datalist>
+    <div id="famContactos">${filas || '<div style="font-size:12.5px;color:var(--text3);padding:4px 0 8px">Sin contactos. Añádelos o tráelos del Cuaderno con «📥 Del Cuaderno».</div>'}</div>
+    <button class="btn btn-ghost btn-sm" onclick="_famAnadir()">＋ Añadir contacto</button>
+    <div style="height:1px;background:var(--border);margin:16px 0"></div>`;
+}
+window._famSet = function(i, campo, valor) {
+  const a = _famAlumno(); if (!a) return;
+  const f = _famLista(a)[i]; if (!f) return;
+  f[campo] = valor;
+  markDirty();
+};
+window._famAnadir = function() {
+  const a = _famAlumno(); if (!a) return;
+  _famLista(a).push({ parentesco: '', nombre: '', email: '', telefono: '' });
+  markDirty();
+  renderSegFamiliaBody();
+  setTimeout(() => { const c = document.querySelectorAll('#famContactos .fam-contacto'); c[c.length - 1]?.querySelector('input')?.focus(); }, 20);
+};
+window._famQuitar = async function(i) {
+  const a = _famAlumno(); if (!a) return;
+  const f = _famLista(a)[i]; if (!f) return;
+  if ((f.nombre || f.email || f.telefono) && !await confirmar(`¿Quitar el contacto «${f.nombre || f.email || f.telefono}»?`)) return;
+  _famLista(a).splice(i, 1);
+  markDirty();
+  renderSegFamiliaBody();
+};
+window._famEscribir = function(i) {
+  const a = _famAlumno(); const f = a && _famLista(a)[i];
+  const correo = f && String(f.email || '').trim();
+  if (!correo) { showToast('ℹ Este contacto no tiene correo'); return; }
+  window.location.href = 'mailto:' + encodeURIComponent(correo);
+};
+window._famLlamar = function(i) {
+  const a = _famAlumno(); const f = a && _famLista(a)[i];
+  const tel = f && String(f.telefono || '').replace(/[^\d+]/g, '');
+  if (!tel) { showToast('ℹ Este contacto no tiene teléfono'); return; }
+  window.location.href = 'tel:' + tel;
+};
+
 function renderSegFamiliaBody() {
   const { nivel, grupo, idx, draft } = _segCtx;
   const alumno = data[nivel]?.[grupo]?.[idx];
@@ -74,13 +136,18 @@ function renderSegFamiliaBody() {
     <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6;background:var(--surface2);border-radius:8px;padding:10px 14px;border:1px solid var(--border)">
       📞 Recoge aquí lo que te haya dicho cada profesor/a por correo antes de la reunión con la familia. Quita las materias que no correspondan (optativas, quien no haya contestado) y añade las que hagan falta.
     </div>
+    ${_famContactosHTML(alumno)}
     <div style="display:flex;gap:16px;align-items:center;margin-bottom:14px">
       <label style="font-size:12px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Fecha
         <input type="date" style="display:block;margin-top:4px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px"
           value="${_segEsc(draft.fecha)}" onchange="_segSetFecha(this.value)">
       </label>
     </div>
-    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;font-weight:700;margin-bottom:6px">Materias</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;font-weight:700">Materias</div>
+      <span style="flex:1"></span>
+      ${Object.keys(alumno.porMateria || {}).length ? `<button class="btn btn-ghost btn-sm" onclick="_segRellenarDelEquipo()" title="Rellena las casillas vacías con las notas, faltas, convivencia y comentarios que han llegado de cada materia">📬 Rellenar con lo recibido del equipo docente</button>` : ''}
+    </div>
     <div id="segMateriasList">${filasMaterias || '<div style="font-size:12.5px;color:var(--text3);padding:8px 0">Sin materias — añade alguna con el botón de abajo.</div>'}</div>
     <button class="btn btn-ghost btn-sm" style="margin-top:4px" onclick="_segAddMateria()">＋ Añadir materia</button>
 

@@ -23,6 +23,40 @@ function _eqRefrescarSubtitulo(d, nivel, grupo) {
   if (sub) sub.textContent = `${nivel} — Grupo ${grupo} · ${d.profesores.length} profesor${d.profesores.length !== 1 ? 'es' : ''} registrado${d.profesores.length !== 1 ? 's' : ''}`;
 }
 
+/* Los nombres del profesorado se escriben como en las actas: «Apellidos, Nombre».
+   Si un nombre no lleva coma, se propone cómo quedaría (primera palabra = nombre). */
+function _eqNecesitaFormato(nombre) {
+  const t = String(nombre || '').trim();
+  return !!t && !ftTieneFormatoApellidos(t) && t.split(/\s+/).length > 1;
+}
+function _eqHintHTML(p) {
+  if (!_eqNecesitaFormato(p.nombre)) return '';
+  const propuesta = ftApellidosNombre(p.nombre);
+  return `<span style="color:var(--yellow)">Escríbelo como «Apellidos, Nombre».</span>
+    <button type="button" class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px" onclick="_eqPasarFormato(['${jsAttr(p.id)}'])">↔ Cambiar a «${_tEsc(propuesta)}»</button>`;
+}
+window._eqPasarFormato = function(ids) {
+  const d = _getAsistenciaData(_eqCtx.nivel, _eqCtx.grupo);
+  let n = 0;
+  d.profesores.forEach(p => { if (ids.includes(p.id) && _eqNecesitaFormato(p.nombre)) { p.nombre = ftApellidosNombre(p.nombre); n++; } });
+  if (!n) return;
+  markDirty();
+  renderEquipoDocenteBody();
+  showToast(n === 1 ? '✅ Nombre en formato «Apellidos, Nombre» (revisa si el nombre es compuesto)' : `✅ ${n} nombres en formato «Apellidos, Nombre» (revisa los nombres compuestos)`);
+};
+// Ordena el equipo docente por apellidos. Las sesiones de asistencia van por posición: se reordenan igual.
+window._eqOrdenarApellidos = function() {
+  const d = _getAsistenciaData(_eqCtx.nivel, _eqCtx.grupo);
+  const orden = d.profesores.map((p, i) => i).sort((a, b) =>
+    (d.profesores[a].nombre || '\uffff').localeCompare(d.profesores[b].nombre || '\uffff', 'es', { sensitivity: 'base' }));
+  if (orden.every((v, i) => v === i)) { showToast('ℹ El equipo docente ya está ordenado por apellidos'); return; }
+  d.profesores = orden.map(i => d.profesores[i]);
+  ['eval1', 'eval2', 'eval3'].forEach(k => { const s = d.sesiones[k] || []; d.sesiones[k] = orden.map(i => s[i] || { asistio: null, justificacion: '' }); });
+  markDirty();
+  renderEquipoDocenteBody();
+  showToast('🔤 Equipo docente ordenado por apellidos');
+};
+
 function renderEquipoDocenteBody() {
   const { nivel, grupo } = _eqCtx;
   const d = _getAsistenciaData(nivel, grupo);
@@ -38,10 +72,11 @@ function renderEquipoDocenteBody() {
       <input type="checkbox" style="width:16px;height:16px;flex-shrink:0" ${marcado ? 'checked' : ''}
         onchange="_eqToggleSeleccion('${p.id}',this.checked)" title="Seleccionar para enviar correo conjunto">
       <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
-        <label style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Nombre y apellidos</label>
+        <label style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Apellidos, Nombre</label>
         <input style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;font-weight:600;"
-          placeholder="Nombre y apellidos" value="${_tEsc((p.nombre||''))}"
+          placeholder="Apellidos, Nombre (p. ej. López Martín, Ana)" value="${_tEsc((p.nombre||''))}" aria-label="Apellidos, Nombre"
           oninput="_eqUpdateProf('${p.id}','nombre',this.value)">
+        <div id="eqHint-${_tEsc(p.id)}" class="eq-hint" style="font-size:11px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">${_eqHintHTML(p)}</div>
       </div>
       <div style="width:170px;display:flex;flex-direction:column;gap:3px;">
         <label style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Materia</label>
@@ -78,6 +113,8 @@ function renderEquipoDocenteBody() {
     <div style="display:flex;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="_eqAddProf()">＋ Añadir profesor/a</button>
       <button class="btn btn-ghost btn-sm" onclick="_eqImportTutor()">📋 Añadir tutor/a del grupo</button>
+      <button class="btn btn-ghost btn-sm" ${d.profesores.length > 1 ? '' : 'disabled style="opacity:.4"'} onclick="_eqOrdenarApellidos()">🔤 Ordenar por apellidos</button>
+      ${d.profesores.some(p => _eqNecesitaFormato(p.nombre)) ? `<button class="btn btn-ghost btn-sm" onclick="_eqPasarFormato(_getAsistenciaData(_eqCtx.nivel,_eqCtx.grupo).profesores.map(p=>p.id))">↔ Pasar todos a «Apellidos, Nombre»</button>` : ''}
       <span style="flex:1"></span>
       <button class="btn btn-ghost btn-sm" ${nSel?'':'disabled style="opacity:.4"'} onclick="_eqEnviarA([..._eqCtx.seleccionados])">
         ✉ Enviar a seleccionados (${nSel})
@@ -113,6 +150,8 @@ window._eqUpdateProf = function(id, field, val) {
   if (p) p[field] = val;
   markDirty();
   _eqRefrescarSubtitulo(d, nivel, grupo);
+  // Aviso de formato al momento, sin redibujar (no se pierde el cursor del campo).
+  if (p && field === 'nombre') { const h = document.getElementById('eqHint-' + id); if (h) h.innerHTML = _eqHintHTML(p); }
 };
 window._eqAddProf = function() {
   const { nivel, grupo } = _eqCtx;
