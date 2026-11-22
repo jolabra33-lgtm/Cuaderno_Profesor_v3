@@ -2977,3 +2977,16 @@ body.sesion-abierta { overflow: hidden; }
 /* ---- Tutor/a dentro del equipo docente ---- */
 .eq-tutor { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text3); white-space: nowrap; cursor: pointer; padding: 3px 8px; border: 1px solid var(--border); border-radius: 999px; flex-shrink: 0; }
 .eq-tutor.activo { color: var(--text); border-color: var(--accent2, var(--accent)); background: var(--surface2); font-weight: 600; }
+
+/* ---- ✍️ Datos de una materia (introducidos a mano) ---- */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.dm-modal { width: 1080px; max-width: 97vw; max-height: 92vh; display: flex; flex-direction: column; }
+.dm-selectores { display: grid; grid-template-columns: 200px minmax(200px, 1fr) minmax(220px, 1fr); gap: 10px; margin-bottom: 12px; }
+@media (max-width: 760px) { .dm-selectores { grid-template-columns: 1fr; } }
+.dm-tabla th[scope="row"] { text-align: left; white-space: nowrap; font-weight: 600; }
+.dm-tabla td { padding: 3px 4px !important; }
+.dm-in { box-sizing: border-box; width: 100%; min-width: 48px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 7px; color: var(--text); font: inherit; font-size: 13px; text-align: center; }
+.dm-in.dm-com { text-align: left; min-width: 180px; }
+.dm-in:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+.dm-in.dm-mal { border-color: var(--red); background: rgba(239,68,68,.08); }
+.dm-tabla tr.dm-susp th[scope="row"] { color: var(--red); }

@@ -27,6 +27,7 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `cuaderno-texto-hostil` | Cuaderno: lo mismo en 20 pantallas y el buscador; una copia con identificadores manipulados no se carga |
 | `sesion-evaluacion` | Sesión de evaluación (asistencia, valoración, propuesta, acuerdos, revisado, teclado, deshacer), acta automática y ficha del grupo sin datos privados que el Cuaderno carga con «📥 De la tutoría» (vista previa, NESE, repite, pendiente de su materia, acuerdos en la ficha y en Resultados) |
 | `tutoria-informe-equipo` | Informe HTML para el equipo docente: distribución, más y menos suspensos, cada materia (media, profesor/a, evolución), comparación con la evaluación anterior, casos para comentar, descarga sin scripts ni datos privados, versión tras la sesión |
+| `tutoria-datos-materia` | Datos de una materia introducidos a mano: pegar columnas de Excel, «Susp.» sin nota, valores que no valen en rojo, suspensas del grupo, faltas del curso, equipo docente, «📬» e informe para el equipo, aviso al cerrar sin guardar, recarga y Ctrl+Z |
 | `tutoria-actas-guardadas` | Un acta guardada conserva su formato y no puede traer código dentro |
 | `del-cuaderno` | «📥 Del Cuaderno»: añade a quien falta, completa fecha de nacimiento, NESE y repetición de quien ya estaba (nombre en otro orden o en mayúsculas), no cambia datos distintos sin pedirlo, pregunta por nombres parecidos, deshacer |
 | `suspensos` | Importar suspensos por identificador y por nombre parecido; al reenviar un aprobado, la materia sale y el número de suspensas baja |

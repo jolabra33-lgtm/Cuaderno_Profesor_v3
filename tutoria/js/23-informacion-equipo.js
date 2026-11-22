@@ -40,7 +40,7 @@ function _infDeMateria(a, materia) {
 /* Resumen de una materia en un periodo: si ha llegado algo y cuándo, quién la da,
    y cuántos suspensos, faltas sin justificar, AC y partes suma el grupo. */
 function _infResumenMateria(nivel, grupo, materia, periodo) {
-  const r = { conDatos: 0, conNota: 0, suspensos: 0, injust: 0, ac: 0, pa: 0, generado: '', profesor: '' };
+  const r = { conDatos: 0, conNota: 0, introducido: 0, suspensos: 0, injust: 0, ac: 0, pa: 0, generado: '', profesor: '', aMano: false };
   const kReg = _infClaveRegistro(periodo);
   _infAlumnos(nivel, grupo).forEach(a => {
     const d = _infDeMateria(a, materia); if (!d) return;
@@ -48,9 +48,12 @@ function _infResumenMateria(nivel, grupo, materia, periodo) {
     if (d.generado > r.generado) { r.generado = d.generado; r.profesor = d.profesor || r.profesor; }
     const n = d.notas && d.notas[periodo];
     if (typeof n === 'number') { r.conNota++; if (n < 5) r.suspensos++; }
+    else if ((d.suspensa || {})[periodo]) r.suspensos++;   // introducido a mano: «suspensa» sin nota
+    if ((d.manual || {})[periodo]) { r.introducido++; r.aMano = true; }
     const f = d.faltas && d.faltas[kReg]; if (f) r.injust += f.injustificadas || 0;
     const c = d.convivencia && d.convivencia[kReg]; if (c) { r.ac += c.ac || 0; r.pa += c.pa || 0; }
   });
+  r.hayDatos = r.conNota > 0 || r.introducido > 0;   // ha llegado (o se ha introducido) algo de este periodo
   if (!r.profesor) {
     const p = ((window._asistenciaData || {})[`${nivel}-${grupo}`] || { profesores: [] }).profesores.find(x => _tNorm(x.materia) === _tNorm(materia));
     if (p) r.profesor = p.nombre || '';
@@ -117,33 +120,35 @@ function _infVistaMaterias() {
   const nombreP = (_INF_PERIODOS.find(x => x[0] === periodo) || [])[1];
   const filas = _infMaterias(nivel, grupo).map(m => {
     const r = _infResumenMateria(nivel, grupo, m, periodo);
-    const llegado = r.conNota > 0;
+    const llegado = r.hayDatos;
     const estado = llegado
-      ? `<span style="color:var(--green);font-weight:600">✓ Recibido</span><br><span style="font-size:11px;color:var(--text3)">${_tEsc(new Date(r.generado).toLocaleDateString('es-ES'))}</span>`
+      ? `<span style="color:var(--green);font-weight:600">${r.aMano ? '✍ Introducido a mano' : '✓ Recibido'}</span><br><span style="font-size:11px;color:var(--text3)">${_tEsc(new Date(r.generado).toLocaleDateString('es-ES'))}</span>`
       : (r.conDatos ? `<span style="color:var(--yellow);font-weight:600">Sin notas de ${_tEsc(nombreP)}</span>` : `<span style="color:var(--text3)">— Falta</span>`);
     return `<tr data-materia="${_tEsc(m)}" data-recibido="${llegado ? 1 : 0}">
       <td style="font-weight:600">${_tEsc(m)}</td>
       <td>${_tEsc(r.profesor) || '<span style="color:var(--text3)">—</span>'}</td>
       <td>${estado}</td>
-      <td style="text-align:center">${llegado ? `${r.conNota}/${total}` : '—'}</td>
+      <td style="text-align:center">${llegado ? `${Math.max(r.conNota, r.introducido)}/${total}` : '—'}</td>
       <td style="text-align:center;${r.suspensos ? 'color:var(--red);font-weight:700' : ''}">${llegado ? r.suspensos : '—'}</td>
       <td style="text-align:center">${r.conDatos ? r.injust : '—'}</td>
       <td style="text-align:center">${r.conDatos ? r.ac : '—'}</td>
       <td style="text-align:center">${r.conDatos ? r.pa : '—'}</td>
+      <td style="text-align:center"><button class="btn btn-ghost btn-sm" style="padding:3px 8px" onclick="closeInformacionEquipo();openDatosMateria('${jsAttr(nivel)}','${jsAttr(grupo)}','${periodo === 'final' ? '3' : periodo}','${jsAttr(m)}')" title="Introducir o corregir a mano los datos de ${_tEsc(m)}" aria-label="Introducir a mano los datos de ${_tEsc(m)}">✍️</button></td>
     </tr>`;
   });
-  const faltan = _infMaterias(nivel, grupo).filter(m => !_infResumenMateria(nivel, grupo, m, periodo).conNota);
+  const faltan = _infMaterias(nivel, grupo).filter(m => !_infResumenMateria(nivel, grupo, m, periodo).hayDatos);
   return `
     <div style="overflow-x:auto"><table class="inf-tabla" style="width:100%;border-collapse:collapse;font-size:12.5px">
       <thead><tr style="text-align:left;color:var(--text3);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px">
-        <th scope="col">Materia</th><th scope="col">Profesor/a</th><th scope="col">${_tEsc(nombreP)}</th><th scope="col" style="text-align:center">Con nota</th>
+        <th scope="col">Materia</th><th scope="col">Profesor/a</th><th scope="col">${_tEsc(nombreP)}</th><th scope="col" style="text-align:center">Con datos</th>
         <th scope="col" style="text-align:center">Suspensos</th><th scope="col" style="text-align:center" title="Faltas sin justificar">F. sin just.</th>
-        <th scope="col" style="text-align:center" title="Faltas de actitud y comportamiento">AC</th><th scope="col" style="text-align:center">Partes</th></tr></thead>
-      <tbody>${filas.join('') || '<tr><td colspan="8" style="color:var(--text3);padding:14px 0">No hay materias para este nivel (⚙ Materias).</td></tr>'}</tbody>
+        <th scope="col" style="text-align:center" title="Faltas de actitud y comportamiento">AC</th><th scope="col" style="text-align:center">Partes</th><th scope="col"><span class="sr-only">A mano</span></th></tr></thead>
+      <tbody>${filas.join('') || '<tr><td colspan="9" style="color:var(--text3);padding:14px 0">No hay materias para este nivel (⚙ Materias).</td></tr>'}</tbody>
     </table></div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px">
       <button class="btn btn-ghost btn-sm" onclick="_infRecordar()" ${faltan.length ? '' : 'disabled style="opacity:.45"'}>✉ Recordar a quien falta (${faltan.length})</button>
       <button class="btn btn-ghost btn-sm" onclick="closeInformacionEquipo();importarDelCuaderno()">📥 Cargar archivos «Para la tutoría»</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeInformacionEquipo();openDatosMateria('${jsAttr(nivel)}','${jsAttr(grupo)}','${periodo === 'final' ? '3' : periodo}')" title="Para quien no usa el Cuaderno: lo que te mande por correo o en un Excel">✍️ Introducir a mano</button>
       <span style="font-size:11.5px;color:var(--text3)">Las faltas y la convivencia son las registradas por cada profesor/a en su materia${periodo === 'final' ? ' en todo el curso' : ''}.</span>
     </div>`;
 }
@@ -151,7 +156,7 @@ function _infVistaMaterias() {
 /* Correo ya redactado al profesorado de las materias que aún no han enviado sus datos.
    Las direcciones salen del equipo docente (👨‍🏫); si falta alguna, se avisa. */
 function _infCorreoRecordatorio(nivel, grupo, periodo) {
-  const faltan = _infMaterias(nivel, grupo).filter(m => !_infResumenMateria(nivel, grupo, m, periodo).conNota);
+  const faltan = _infMaterias(nivel, grupo).filter(m => !_infResumenMateria(nivel, grupo, m, periodo).hayDatos);
   const equipo = ((window._asistenciaData || {})[`${nivel}-${grupo}`] || { profesores: [] }).profesores;
   const correos = [], sinCorreo = [];
   faltan.forEach(m => {

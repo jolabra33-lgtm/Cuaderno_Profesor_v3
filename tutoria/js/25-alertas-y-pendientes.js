@@ -137,7 +137,7 @@ function _qmfHTML() {
     if (prox && prox.dias <= 21 && typeof _infResumenMateria === 'function') {
       const periodo = prox.k === 3 ? 'final' : String(prox.k);
       const mats = _qmfMateriasDelGrupo(nivel, grupo);
-      const faltan = mats.filter(m => !_infResumenMateria(nivel, grupo, m, periodo).conNota);
+      const faltan = mats.filter(m => !_infResumenMateria(nivel, grupo, m, periodo).hayDatos);
       const abrir = `_qmfIr('${jsAttr(nivel)}','${jsAttr(grupo)}');openInformacionEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}')`;
       if (!mats.length) items.push(_qmfLi('📬', `<button class="qmf-link" onclick="${abrir}">Aún no ha llegado nada del equipo docente para la ${_AL_EVAL_NOMBRE[prox.k]}</button>`));
       else if (faltan.length) items.push(_qmfLi('📬', `<button class="qmf-link" onclick="${abrir}">${faltan.length} de ${mats.length} materias sin datos para la ${_AL_EVAL_NOMBRE[prox.k]}</button>`));
