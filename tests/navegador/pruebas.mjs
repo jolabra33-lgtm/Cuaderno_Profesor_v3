@@ -71,6 +71,48 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'las pestañas generales se abren sin errores', p.errores.join('; '));
   } },
 
+  { nombre: 'tutoria-interfaz', descripcion: 'Tutoría: niveles junto a Inicio, fechas de evaluación (aviso y guardado), botones de los grupos y móvil sin desbordar', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana']);
+    const pest = await p.evaluate(() => [...document.querySelectorAll('#nivelTabs .nivel-tab')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
+    const iNivel = pest.findIndex(x => x.startsWith('1º ESO')), iCal = pest.findIndex(x => x.includes('Calendario'));
+    t.ok(pest[0].includes('Inicio') && iNivel === 1 && iCal > iNivel, 'los niveles van justo después de Inicio, antes de las herramientas', JSON.stringify(pest));
+    t.ok(await p.evaluate(() => !!document.querySelector('.grupo-tab .tab-top-row .grupo-tab-edit')), 'el ✏ del grupo está en la fila del nombre');
+    t.ok(/Pon la fecha de cada sesión/.test(await p.textContent('#evalDatesBar')), 'avisa si las tres fechas de evaluación son iguales');
+    await p.fill('#dateEval1', '2026-12-18'); await p.dispatchEvent('#dateEval1', 'change'); await esperar(1300);
+    t.ok(!/Pon la fecha de cada sesión/.test(await p.textContent('#evalDatesBar')), 'el aviso se va al poner una fecha distinta');
+    await p.reload(); await esperar(1500);
+    t.ok(await p.evaluate(() => evalDates['1º ESO'].eval1) === '2026-12-18', 'la fecha de evaluación se guarda sin tocar nada más');
+    await p.evaluate(() => { hideWelcomeScreen(); selectNivel('1º ESO'); selectNivel('__segfam__'); }); await esperar(300);
+    t.ok(await p.evaluate(() => getComputedStyle(document.getElementById('evalDatesBar')).display === 'none'), 'en Seguimientos no se quedan las fechas del nivel anterior');
+    await p.setViewportSize({ width: 390, height: 844 });
+    await p.evaluate(() => selectNivel('1º ESO')); await esperar(400);
+    const ancho = await p.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
+    t.ok(ancho[0] <= ancho[1], 'en el móvil (390 px) la página no se sale por la derecha', JSON.stringify(ancho));
+    await p.setViewportSize({ width: 1280, height: 800 });
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-equipo-docente', descripcion: 'Tutoría: equipo docente en formato «Apellidos, Nombre», con aviso, cambio automático y orden por apellidos', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana']);
+    await p.evaluate(() => { openEquipoDocente('1º ESO', 'A'); _eqAddProf(); _eqAddProf(); }); await esperar(200);
+    t.ok(await p.locator('#eqDocenteBody input[placeholder^="Apellidos, Nombre"]').count() === 2, 'el campo pide «Apellidos, Nombre»');
+    const campos = p.locator('#eqDocenteBody input[placeholder^="Apellidos, Nombre"]');
+    await campos.nth(0).fill('Zapata Ruiz, Luis');
+    await campos.nth(1).fill('Ana López Martín'); await esperar(200);
+    const aviso = await p.textContent('#eqDocenteBody');
+    t.ok(/Cambiar a «López Martín, Ana»/.test(aviso), 'avisa si falta la coma y propone «López Martín, Ana»', aviso.slice(0, 200));
+    t.ok(await p.evaluate(() => document.activeElement && document.activeElement.value === 'Ana López Martín'), 'el aviso sale sin perder el cursor del campo');
+    await p.locator('#eqDocenteBody button:has-text("Cambiar a")').first().click(); await esperar(200);
+    await p.evaluate(() => { _getAsistenciaData('1º ESO', 'A').sesiones.eval1[0].asistio = true; });   // Zapata asistió
+    await p.click('#eqDocenteBody button:has-text("Ordenar por apellidos")'); await esperar(200);
+    const r = await p.evaluate(() => { const d = _getAsistenciaData('1º ESO', 'A'); return { nombres: d.profesores.map(x => x.nombre), asistio: d.sesiones.eval1.map(x => x.asistio) }; });
+    t.ok(JSON.stringify(r.nombres) === JSON.stringify(['López Martín, Ana', 'Zapata Ruiz, Luis']), 'ordena por apellidos', JSON.stringify(r));
+    t.ok(r.asistio[1] === true && r.asistio[0] !== true, 'la asistencia a la sesión se mueve con cada profesor/a', JSON.stringify(r));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
   { nombre: 'tutoria-manifiesto', descripcion: 'Tutoría solo declara su manifiesto fuera de la app instalada del Cuaderno', async fn(t) {
     // Dentro de la ventana de la app del Cuaderno, un manifiesto distinto hacía que Chrome
     // mostrara sin fin «Actualización de aplicación disponible».
@@ -134,7 +176,9 @@ export const PRUEBAS = [
       const g = state.grupos[0], cr = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
       g.nombre = '1º A ' + P('grupo');
       g.alumnos.forEach((a, i) => { a.apellidos = 'Pérez ' + P('apellidos'); a.nombreP = 'Ana' + i + P('nombreP'); a.nombre = a.apellidos + ', ' + a.nombreP; a.observaciones = P('obs'); a.comentariosEval = [P('coment'), '', ''];
-        a.nese = true; a.neseNivel = P('neseNivel'); a.familia = [{ parentesco: P('parentesco'), nombre: P('famNombre'), email: P('email') }, { parentesco: '', nombre: '', email: '' }]; });
+        a.nese = true; a.neseNivel = P('neseNivel'); a.familia = [{ parentesco: P('parentesco'), nombre: P('famNombre'), email: P('email') }, { parentesco: '', nombre: '', email: '' }];
+        a.deTutoria = { evaluacion: '1', fechaSesion: '2026-12-18', tutor: P('dt_tutor'), propuesta: { tipo: P('dt_tipo'), destino: P('dt_destino') }, medidas: [P('dt_medida')], acuerdos: P('dt_acuerdos') }; });
+      g.deTutoria = { evaluacion: '1', fechaSesion: '2026-12-18', tutor: P('dtg_tutor'), acuerdosGrupo: P('dtg_acuerdos'), valoracion: P('dtg_valoracion') };
       g.actividades = [{ id: 'e1', nombre: 'Examen ' + P('actividad'), tipo: TIPOS[0], trimestre: 0, bloqueId: 'b0', esExamen: true, sda: P('sda'), criterios: [{ critId: cr, peso: 100 }] }];
       g.notasCuant = { [g.alumnos[0].id]: { e1: 7 } };
       g.bloques.forEach(b => { b.label += P('bloque'); });
@@ -152,6 +196,11 @@ export const PRUEBAS = [
       const malos = new Set(); const mira = async d => { donde = d; _mostrarBienvenida = false; render(); await new Promise(r => setTimeout(r, 120)); inyectados().forEach(x => malos.add(x)); };
       for (const tab of ['alumnos', 'plano', 'actividades', 'calificar', 'resultados', 'resumen', 'cobertura', 'asistencia', 'diario', 'convivencia', 'familias', 'ajustes']) { state.ui.appMode = 'competencial'; state.ui.grupoId = g.id; state.ui.tab = tab; await mira('pestaña ' + tab); }
       state.ui.resAl = g.alumnos[0].id; state.ui.tab = 'resultados'; await mira('informe del alumno');
+      state.ui.resAl = ''; state.ui.tab = 'alumnos'; state.ui.fichaAlumnoId = g.alumnos[0].id; await mira('ficha del alumno (de la tutoría)'); state.ui.fichaAlumnoId = '';
+      // Ventana «📥 De la tutoría» con una ficha del grupo hostil
+      donde = 'De la tutoría'; _dtVentana(g, ftNormalizarFichaGrupo({ formato: 'tutoria-a-cuaderno', version: 1, nivel: P('f_nivel'), grupo: P('f_grupo'), tutor: P('f_tutor'), evaluacion: '1', acuerdosGrupo: P('f_acuerdos'), valoracion: P('f_val'),
+        alumnos: g.alumnos.map(a => ({ nombre: a.nombre, idsCuaderno: [a.id], nese: true, recursosNese: [P('f_rec')], acuerdos: P('f_ac'), propuesta: { tipo: P('f_tipo') } })).concat([{ nombre: P('f_sin') }]) }));
+      await new Promise(r => setTimeout(r, 100)); inyectados().forEach(x => malos.add(x)); document.getElementById('deTutoriaOv')?.remove();
       for (const m of ['inicio', 'corrector', 'programacion', 'memoria', 'nese', 'refuerzo', 'repeticion', 'reuniones']) { state.ui.appMode = m; await mira('modo ' + m); }
       state.ui.appMode = 'programacion'; state.ui.progTab = 'detalle'; state.ui.progId = 'p1'; await mira('programación abierta');
       buscarAbrir(); const inp = document.querySelector('.modal-overlay input'); if (inp) { inp.value = 'Zq'; inp.dispatchEvent(new Event('input', { bubbles: true })); } await mira('buscador');
@@ -207,17 +256,276 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
-  { nombre: 'del-cuaderno', descripcion: 'Tutoría: «📥 Del Cuaderno» copia la lista sin duplicar y se puede deshacer', async fn(t) {
+  { nombre: 'del-cuaderno', descripcion: 'Tutoría: «📥 Del Cuaderno» añade a quien falta, completa fecha, NESE y repetición de quien ya estaba, no duplica y se puede deshacer', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria', 'Lopes Vidal, Marta'] });
+    await p.evaluate(() => { const al = state.grupos[0].alumnos;
+      al[0].fechaNacimiento = '2012-03-15'; al[0].nese = true;
+      al[1].fechaNacimiento = '2012-11-02'; al[1].repetidor = true;
+      al[2].fechaNacimiento = '2013-01-20'; al[3].fechaNacimiento = '2012-05-05'; save(); });
+    await esperar(1200);
+    // En Tutoría ya están tres, sin fecha y con el nombre escrito de otra forma; una tiene ya otra fecha.
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['garcia lopez, ana', 'LUIS PÉREZ RUIZ', 'López Vidal, Marta']);
+    await p.evaluate(() => { data['1º ESO'].A[1].fecha = '2012-01-01'; });
+    const tabla = () => p.evaluate(() => data['1º ESO'].A.map(a => ({ n: a.nombre, f: a.fecha, nese: a.nese, rep: a.repetidor, ids: (a.idsCuaderno || []).length })));
+    await p.evaluate(() => abrirImportarDelCuaderno('1º ESO', 'A')); await esperar(500);
+    const vista = (await p.textContent('#impCuadPlan')).replace(/\s+/g, ' ');
+    t.ok(/2 nuevos/.test(vista) && /se completa/i.test(vista) && /distint/i.test(vista), 'la vista previa dice qué se añade, qué se completa y qué es distinto', vista.slice(0, 300));
+    t.ok(await p.isChecked('#importCuadernoOverlay [data-duda]') === false, 'un nombre solo parecido (Lopes ↔ López) se pregunta y no se marca de entrada');
+    await p.check('#importCuadernoOverlay [data-duda]'); await esperar(200);
+    await p.click('#importCuadernoOverlay button:has-text("Importar")'); await esperar(1200);
+    let l = await tabla();
+    t.ok(l.length === 4, 'no duplica a quien ya estaba aunque el nombre esté en mayúsculas o en otro orden', JSON.stringify(l));
+    t.ok(l[0].f === '2012-03-15' && l[0].nese === 'Sí', 'a quien ya estaba se le completan la fecha de nacimiento y NESE', JSON.stringify(l[0]));
+    t.ok(l[1].f === '2012-01-01' && l[1].rep === 'Sí', 'un dato distinto no se cambia sin pedirlo; lo vacío sí se completa', JSON.stringify(l[1]));
+    t.ok(l[2].f === '2012-05-05' && l[2].n === 'López Vidal, Marta', 'el nombre parecido confirmado se completa sin cambiarle el nombre', JSON.stringify(l[2]));
+    t.ok(l[3].n === 'Sanz Martí, Íria' && l[3].f === '2013-01-20', 'quien falta se añade con su fecha de nacimiento', JSON.stringify(l[3]));
+    t.ok(l.every(a => a.ids === 1), 'todos quedan vinculados con su identificador del Cuaderno', JSON.stringify(l));
+    await p.evaluate(() => abrirImportarDelCuaderno('1º ESO', 'A')); await esperar(500);
+    await p.check('#impCuadSustituir'); await p.click('#importCuadernoOverlay button:has-text("Importar")'); await esperar(800);
+    t.ok((await tabla())[1].f === '2012-11-02', '«Sustituir los datos distintos» pone el dato del Cuaderno');
+    await p.evaluate(() => { _undoPop(); _undoPop(); }); await esperar(300);
+    l = await tabla();
+    t.ok(l.length === 3 && !l[0].f, 'Ctrl+Z deshace la importación', JSON.stringify(l));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-familia', descripcion: 'Tutoría: contactos de la familia traídos del Cuaderno, editables en el seguimiento y guardados', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis'] });
-    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['garcia lopez, ana']);
+    await p.evaluate(() => { const a = state.grupos[0].alumnos[0];
+      a.familia[0] = { parentesco: 'Madre', nombre: 'López Sanz, Marta', email: 'marta@correo.es' };
+      a.familia[1] = { parentesco: 'Padre', nombre: 'García Ruiz, Juan', email: '' }; save(); });
+    await esperar(1200);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana']);
+    await p.evaluate(() => { data['1º ESO'].A[0].familia = [{ parentesco: 'Madre', nombre: 'López Sanz, Marta', email: 'MARTA@correo.es', telefono: '600111222' }]; });
     await p.evaluate(() => abrirImportarDelCuaderno('1º ESO', 'A')); await esperar(500);
-    await p.click('#importCuadernoOverlay button:has-text("Importar")'); await esperar(1200);
-    const lista = await p.evaluate(() => data['1º ESO'].A.map(a => [a.nombre, (a.idsCuaderno || []).length]));
-    t.ok(lista.length === 2, 'no duplica a quien ya estaba (por nombre, sin tildes ni mayúsculas)', JSON.stringify(lista));
-    t.ok(lista.every(([, n]) => n === 1), 'todos quedan vinculados con su identificador del Cuaderno', JSON.stringify(lista));
-    await p.evaluate(() => _undoPop()); await esperar(300);
-    t.ok(await p.evaluate(() => data['1º ESO'].A.length) === 1, 'Ctrl+Z deshace la importación');
+    t.ok(/1 contacto de la familia \(García Ruiz, Juan\)/.test(await p.textContent('#impCuadPlan')), 'la vista previa dice qué contacto falta (el que ya está no se repite)');
+    await p.click('#importCuadernoOverlay button:has-text("Importar")'); await esperar(600);
+    let fam = await p.evaluate(() => data['1º ESO'].A.map(a => (a.familia || []).map(f => f.nombre + '|' + f.telefono)));
+    t.ok(JSON.stringify(fam[0]) === JSON.stringify(['López Sanz, Marta|600111222', 'García Ruiz, Juan|']), 'añade el contacto que faltaba sin tocar el que ya estaba', JSON.stringify(fam));
+    t.ok(fam[1] && fam[1].length === 0, 'el alumno/a nuevo sin contactos en el Cuaderno empieza sin contactos', JSON.stringify(fam));
+    await p.evaluate(() => openSegFamilia('1º ESO', 'A', 0)); await esperar(300);
+    t.ok(await p.locator('#famContactos .fam-contacto').count() === 2, 'el seguimiento con familia muestra los contactos');
+    await p.locator('#famContactos .fam-contacto').nth(1).locator('input[type=tel]').fill('611 333 444');
+    await esperar(1300); await p.reload(); await esperar(1500);
+    t.ok(await p.evaluate(() => data['1º ESO'].A[0].familia[1].telefono) === '611 333 444', 'un teléfono escrito en el seguimiento se guarda');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'cuaderno-a-tutoria', descripcion: 'Del Cuaderno a Tutoría: notas, faltas, convivencia y comentarios (en el mismo navegador y por archivos, varios a la vez) y equipo docente automático', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis'] });
+    const { materia, archivo } = await p.evaluate(async () => {
+      const g = state.grupos[0], cr = getCatalogo(g.catalogoKey).ces[0].criterios[0].id, [ana, luis] = g.alumnos;
+      state.profesorNombreGlobal = 'Ana López Martín';
+      g.actividades = [{ id: 'e1', nombre: 'Examen', trimestre: 0, bloqueId: 'b0', esExamen: true, criterios: [{ critId: cr, peso: 100 }] }];
+      g.notasCuant[ana.id] = { e1: 3 }; g.notas[ana.id] = { e1: { [cr]: 3 } };
+      g.notasCuant[luis.id] = { e1: 8 }; g.notas[luis.id] = { e1: { [cr]: 8 } };
+      g.fechasTrimestre = [{ inicio: '2026-09-08', fin: '2026-12-19' }, { inicio: '', fin: '' }, { inicio: '', fin: '' }];
+      g.asistencia = { '2026-10-01': { [ana.id]: { estado: 'falta_no_justificada' } }, '2026-10-02': { [ana.id]: { estado: 'retraso' } } };
+      g.convivencia = [{ id: 'c1', alumnoId: ana.id, fecha: '2026-10-05', tipo: 'ac' }];
+      ana.comentariosEval[0] = 'Necesita organizar mejor el estudio.'; ana.fechaNacimiento = '2012-03-15';
+      ana.familia[0] = { parentesco: 'Madre', nombre: 'López Sanz, Marta', email: 'marta@correo.es' };
+      save(); await guardarCopiaParaTutoria();
+      return { materia: getCatalogo(g.catalogoKey).materia, archivo: paqueteParaTutoria(g, false) };
+    });
+    t.ok(archivo.version === 2 && !('familia' in archivo.alumnos[0]) && !('fechaNacimiento' in archivo.alumnos[0]), 'el archivo «Para la tutoría» es de la versión 2 y no lleva datos personales ni contactos');
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis']);
+    // 1) Mismo navegador, sin archivos
+    await p.evaluate(() => abrirImportarDelCuaderno('1º ESO', 'A')); await esperar(500);
+    t.ok(await p.isChecked('#impCuadTraerMateria'), '«📥 Del Cuaderno» ofrece traer también lo de tu materia');
+    await p.click('#importCuadernoOverlay button:has-text("Importar")'); await esperar(900);
+    const resumen = await p.textContent('#impCResumen');
+    t.ok(/Se añade al equipo docente: López Martín, Ana/.test(resumen), 'propone añadir al profesor/a al equipo docente en «Apellidos, Nombre»', resumen);
+    await p.click('#impCOk'); await esperar(600);
+    const r = await p.evaluate(m => { const ana = data['1º ESO'].A[0], pm = (ana.porMateria || {})[m] || {};
+      return { pend: ana.pendientes1, eval1: ana.eval1, fam: (ana.familia || []).length, faltas: pm.faltas && pm.faltas['1'], conv: pm.convivencia && pm.convivencia['1'], com: pm.comentarios && pm.comentarios['1'],
+        equipo: _getAsistenciaData('1º ESO', 'A').profesores.map(x => x.nombre + '|' + x.materia) }; }, materia);
+    t.ok(r.pend.includes(materia) && r.eval1 === 1, 'la materia suspensa queda pendiente en la I Evaluación', JSON.stringify(r));
+    t.ok(r.faltas && r.faltas.injustificadas === 1 && r.faltas.retrasos === 1, 'llegan las faltas y retrasos de la evaluación', JSON.stringify(r.faltas));
+    t.ok(r.conv && r.conv.ac === 1 && r.com === 'Necesita organizar mejor el estudio.', 'llegan la convivencia y el comentario de evaluación', JSON.stringify(r));
+    t.ok(r.fam === 1, 'y los contactos de la familia');
+    t.ok(JSON.stringify(r.equipo) === JSON.stringify(['López Martín, Ana|' + materia]), 'el profesor/a entra en el equipo docente con su materia', JSON.stringify(r.equipo));
+    // 2) Dos archivos de otras materias a la vez
+    const otro = (mat, prof) => ({ name: 'para-tutoria-' + mat + '.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ ...archivo, materia: mat, profesor: prof })) });
+    const elegir = p.waitForEvent('filechooser');
+    await p.evaluate(() => importarDelCuaderno());
+    await (await elegir).setFiles([otro('Matemáticas', 'Pérez Gil, Luis'), otro('Inglés', 'Marta Ruiz Sanz')]); await esperar(600);
+    t.ok(/archivo 1 de 2/.test(await p.textContent('#impCT')), 'con varios archivos, se revisan de uno en uno («archivo 1 de 2»)');
+    await p.click('#impCOk'); await esperar(500);
+    t.ok(/archivo 2 de 2/.test(await p.textContent('#impCT')), 'y después el siguiente');
+    await p.click('#impCOk'); await esperar(600);
+    const r2 = await p.evaluate(() => ({ mats: Object.keys(data['1º ESO'].A[0].porMateria || {}).sort(), equipo: _getAsistenciaData('1º ESO', 'A').profesores.map(x => x.nombre) }));
+    t.ok(r2.mats.length === 3 && r2.mats.includes('Inglés') && r2.mats.includes('Matemáticas'), 'cada materia guarda lo suyo', JSON.stringify(r2));
+    t.ok(r2.equipo.includes('Pérez Gil, Luis') && r2.equipo.includes('Ruiz Sanz, Marta'), 'los nombres del profesorado se pasan a «Apellidos, Nombre»', JSON.stringify(r2.equipo));
+    await p.evaluate(() => _undoPop()); await esperar(200);
+    t.ok(await p.evaluate(() => Object.keys(data['1º ESO'].A[0].porMateria || {}).length) === 2, 'Ctrl+Z deshace la última importación');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-informacion-equipo', descripcion: 'Tutoría: «📬 Información del equipo docente» (recibido y pendiente por materia, recordatorio por correo, vista por alumno/a) y relleno del seguimiento con familia', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis']);
+    const mats = await p.evaluate(() => {
+      const ms = getMateriasParaNivel('1º ESO', 'A'); const [m1, m2] = ms; const [ana, luis] = data['1º ESO'].A;
+      const reg = (n, f, c, com) => ({ profesor: 'Zapata Ruiz, Luis', generado: '2026-12-15T10:00:00.000Z', notas: { 1: n }, faltas: { 1: f, curso: f }, convivencia: { 1: c, curso: c }, comentarios: { 1: com } });
+      ana.porMateria = { [m1]: reg(3, { justificadas: 0, injustificadas: 2, retrasos: 1 }, { ac: 1, rc: 0, pa: 1 }, 'Debe entregar las tareas.') };
+      luis.porMateria = { [m1]: reg(7, { justificadas: 1, injustificadas: 0, retrasos: 0 }, { ac: 0, rc: 2, pa: 0 }, '') };
+      const d = _getAsistenciaData('1º ESO', 'A');
+      d.profesores.push({ id: 'p1', nombre: 'Zapata Ruiz, Luis', materia: m1, correo: 'zapata@gva.es' }, { id: 'p2', nombre: 'Gil Mora, Eva', materia: m2, correo: 'gil@gva.es' });
+      ['eval1', 'eval2', 'eval3'].forEach(k => d.sesiones[k].push({ asistio: null, justificacion: '' }, { asistio: null, justificacion: '' }));
+      openInformacionEquipo('1º ESO', 'A'); return [m1, m2, ms.length];
+    }); await esperar(300);
+    const fila = await p.locator(`#infEquipoBody tr[data-materia="${mats[0]}"]`).innerText();
+    t.ok(/Recibido/.test(fila) && /2\/2/.test(fila), 'la materia que ha enviado datos sale como recibida (2/2 con nota)', fila);
+    t.ok(await p.locator('#infEquipoBody tr[data-recibido="0"]').count() === mats[2] - 1, 'las demás salen como pendientes');
+    const correo = await p.evaluate(() => _infCorreoRecordatorio('1º ESO', 'A', '1'));
+    t.ok(correo.correos.length === 1 && correo.correos[0] === 'gil@gva.es' && /Para%20la%20tutor/.test(correo.url), 'el recordatorio va solo a quien falta, con el correo ya redactado', JSON.stringify(correo.correos));
+    await p.click('#infEquipoBody button:has-text("Por alumno")'); await esperar(200);
+    const vista = await p.textContent('#infEquipoBody');
+    t.ok(/2 sin justificar/.test(vista) && /1 partes/.test(vista) && /Debe entregar las tareas/.test(vista), 'la vista por alumno/a muestra faltas, convivencia y comentario', vista.slice(0, 300));
+    await p.click('#infEquipoBody button:has-text("Llevar al seguimiento")'); await esperar(400);
+    const borrador = await p.evaluate(m => _segCtx.draft.materias.find(x => x.nombre === m), mats[0]);
+    t.ok(/I Ev\.: 3/.test(borrador.examenes) && borrador.trabajo === 'Debe entregar las tareas.' && /AC: 1/.test(borrador.comportamiento), 'el seguimiento con familia se rellena con lo recibido', JSON.stringify(borrador));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-alertas', descripcion: 'Tutoría: alertas del alumnado con umbrales configurables y guardados, «🧭 Qué me falta» en Inicio e insignia en la tabla', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria']);
+    const claves = () => p.evaluate(() => data['1º ESO'].A.map(a => _alertasAlumno(a, '1º ESO').map(x => x.clave).sort().join(',')));
+    await p.evaluate(() => {
+      const [ana, luis, iria] = data['1º ESO'].A, hoy = _hoyLocal();
+      const mas = n => { const d = new Date(hoy + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+      evalDates['1º ESO'] = { eval1: mas(-40), eval2: mas(-2), eval3: mas(100) };
+      Object.assign(ana, { faltasInjust1: 6, faltasInjust2: 6 });                       // 12 en Tutoría
+      luis.porMateria = { 'Inglés': { profesor: '', generado: '', notas: {}, faltas: {}, comentarios: {}, convivencia: { curso: { ac: 0, rc: 0, pa: 2 } } } };   // 2 partes en los Cuadernos
+      Object.assign(iria, { eval1: 0, eval2: 3 });                                       // 3 suspensas en la II, venía de 0
+      iria.entrevistas = [{ id: 'e1', fecha: mas(-30), medio: 'Teléfono', proximaCita: mas(-1) }];
+      markDirty(); selectNivel('__home__');
+    }); await esperar(400);
+    let c = await claves();
+    t.ok(c[0] === 'faltas,sin-contacto', 'faltas sin justificar (Tutoría) y sin contacto con la familia', JSON.stringify(c));
+    t.ok(c[1] === 'partes,sin-contacto', 'partes recibidos de los Cuadernos', JSON.stringify(c));
+    t.ok(c[2] === 'cita-vencida,empeora,suspensas', 'suspensas en la evaluación en curso, empeora y cita vencida sin registrar', JSON.stringify(c));
+    const panel = await p.textContent('.qmf');
+    t.ok(/3 alumnos con alertas/.test(panel) && /II Evaluación|Evaluación final/.test(panel), '«Qué me falta» resume el grupo en Inicio', panel.slice(0, 300));
+    await p.click('.qmf button:has-text("Umbrales")'); await esperar(200);
+    await p.fill('#umbralesOv [data-umbral="faltasInjust"]', '20');
+    await p.uncheck('#umbralesOv [data-umbral-cb="sinContacto"]');
+    await p.click('#umbralesOv button:has-text("Guardar")'); await esperar(1300);
+    c = await claves();
+    t.ok(c[0] === '' && c[1] === 'partes', 'al subir el umbral y quitar «sin contacto», esas alertas desaparecen', JSON.stringify(c));
+    await p.reload(); await esperar(1500);
+    t.ok(await p.evaluate(() => _alertasCfg.faltasInjust === 20 && _alertasCfg.sinContacto === 0), 'los umbrales se guardan');
+    t.ok(await p.evaluate(() => buildState().alertasCfg.faltasInjust === 20), 'y viajan en el archivo y en las copias');
+    await p.evaluate(() => { hideWelcomeScreen(); currentGrupos['1º ESO'] = 'A'; selectNivel('1º ESO'); }); await esperar(300);
+    t.ok(await p.locator('#mainContent .alerta-insignia').count() === 2, 'la tabla marca con «⚠» a quien tiene alertas');
+    await p.evaluate(() => { const st = buildState(); delete st.alertasCfg; applyFilePayload(st); });
+    t.ok(await p.evaluate(() => _alertasCfg.faltasInjust === ALERTAS_CFG_DEFECTO.faltasInjust), 'un archivo sin umbrales vuelve a los de por defecto');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-ficha', descripcion: 'Tutoría: ficha completa del alumno/a (pestañas, observaciones) y entrevistas con la familia (alta, edición, acta, próxima cita, deshacer)', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis']);
+    await p.evaluate(() => { const a = data['1º ESO'].A[0]; a.familia = [{ parentesco: 'Madre', nombre: 'López Sanz, Marta', email: 'm@correo.es', telefono: '' }]; tutores['1º ESO-A'] = 'Gil Mora, Eva'; renderMain(); });
+    await p.locator('#mainContent button[aria-label="Ficha completa del alumno/a"]').first().click(); await esperar(300);
+    t.ok(/García López, Ana/.test(await p.textContent('#fichaCab')), 'el botón 👤 abre la ficha del alumno/a');
+    for (const pest of ['Académico', 'Faltas y convivencia', 'Seguimientos', 'Resumen']) { await p.click(`#fichaPestanas button:has-text("${pest}")`); await esperar(120); }
+    await p.fill('#fichaBody textarea[aria-label="Observaciones del alumno/a"]', 'Le cuesta organizarse.');
+    await p.dispatchEvent('#fichaBody textarea[aria-label="Observaciones del alumno/a"]', 'change');
+    await p.click('#fichaPestanas button:has-text("Entrevistas")');
+    await p.click('#fichaBody button:has-text("Nueva entrevista")'); await esperar(200);
+    t.ok(/López Sanz, Marta \(Madre\).*Gil Mora, Eva \(tutor\/a\)/.test(await p.inputValue('#fichaBody input[placeholder^="Familia, tutor"]')), 'los asistentes se proponen con la familia y el tutor/a');
+    const cita = await p.evaluate(() => { const d = new Date(_hoyLocal() + 'T00:00:00'); d.setDate(d.getDate() + 3); return d.toISOString().slice(0, 10); });
+    await p.fill('#fichaBody textarea[placeholder^="Por qué"]', 'Faltas a primera hora');
+    await p.fill('#fichaBody textarea[placeholder^="Qué se acuerda"]', 'La familia avisará de cada falta');
+    await p.locator('#fichaBody .ent-form input[type="date"]').nth(1).fill(cita);
+    await p.click('#fichaBody button:has-text("Guardar entrevista")'); await esperar(300);
+    let ents = await p.evaluate(() => data['1º ESO'].A[0].entrevistas);
+    t.ok(ents.length === 1 && ents[0].motivo === 'Faltas a primera hora' && ents[0].proximaCita === cita, 'la entrevista se guarda con motivo, acuerdos y próxima cita', JSON.stringify(ents));
+    t.ok(await p.evaluate(() => _alertasAlumno(data['1º ESO'].A[0], '1º ESO').some(x => x.clave === 'cita')), 'la próxima cita sale como aviso');
+    await p.click('#fichaBody button:has-text("Editar")'); await esperar(150);
+    await p.fill('#fichaBody textarea[placeholder^="Qué se acuerda"]', 'Acuerdo cambiado'); await p.click('#fichaBody button:has-text("Guardar entrevista")'); await esperar(200);
+    ents = await p.evaluate(() => data['1º ESO'].A[0].entrevistas);
+    t.ok(ents.length === 1 && ents[0].acuerdos === 'Acuerdo cambiado', 'editar cambia la misma entrevista, no crea otra');
+    await p.click('#fichaBody button:has-text("Acta")'); await esperar(400);
+    const acta = await p.evaluate(() => { const fr = document.querySelector('#tdocOverlay iframe'); return fr ? fr.srcdoc : ''; });
+    t.ok(/Acta de entrevista con la familia/.test(acta) && /Acuerdo cambiado/.test(acta) && /Fdo\.: la familia/.test(acta), 'el acta de la entrevista se abre para imprimir, con los acuerdos y las firmas', acta.slice(0, 200));
+    await p.evaluate(() => { window.__cerrarVistaDocT && window.__cerrarVistaDocT(); closeFichaAlumno(); }); await esperar(1300);
+    await p.reload(); await esperar(1500);
+    const r = await p.evaluate(() => ({ n: data['1º ESO'].A[0].notas, e: (data['1º ESO'].A[0].entrevistas || []).length }));
+    t.ok(r.n === 'Le cuesta organizarse.' && r.e === 1, 'las observaciones y la entrevista se guardan', JSON.stringify(r));
+    await p.evaluate(() => { hideWelcomeScreen(); currentGrupos['1º ESO'] = 'A'; selectNivel('1º ESO'); openFichaAlumno('1º ESO', 'A', 0, 'entrevistas'); }); await esperar(200);
+    await p.click('#fichaBody button[aria-label="Borrar esta entrevista"]'); await esperar(200);
+    await p.locator('.tdlg-ov .tdlg-si').click(); await esperar(200);
+    t.ok(await p.evaluate(() => data['1º ESO'].A[0].entrevistas.length) === 0, 'una entrevista se puede borrar');
+    await p.evaluate(() => _undoPop()); await esperar(200);
+    t.ok(await p.evaluate(() => data['1º ESO'].A[0].entrevistas.length) === 1, 'y se recupera con Ctrl+Z');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'sesion-evaluacion', descripcion: 'Sesión de evaluación: asistencia, valoración, propuesta y acuerdos alumno por alumno, acta automática, y ficha del grupo que el Cuaderno carga con «📥 De la tutoría»', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis'] });
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['GARCÍA LÓPEZ, ANA', 'Pérez Ruiz, Luis']);
+    await p.evaluate(() => {
+      const [ana, luis] = data['1º ESO'].A;
+      Object.assign(ana, { nese: 'Sí', recursoNese: ['AL'], eval1: 3, pendientes1: ['Matemáticas', 'Inglés', 'Música'], pendientesAnteriores: ['Geografía e Historia (1º ESO)'],
+        familia: [{ parentesco: 'Madre', nombre: 'Contacto Privado', email: 'privado@correo.es', telefono: '' }], entrevistas: [{ id: 'e1', fecha: _hoyLocal(), motivo: 'Entrevista privada' }] });
+      Object.assign(luis, { repetidor: 'Sí', eval1: 1, pendientes1: ['Música'] });
+      const d = _getAsistenciaData('1º ESO', 'A');
+      d.profesores.push({ id: 'p1', nombre: 'Zapata Ruiz, Luis', materia: 'Matemáticas', correo: '' });
+      ['eval1', 'eval2', 'eval3'].forEach(k => d.sesiones[k].push({ asistio: null, justificacion: '' }));
+      tutores['1º ESO-A'] = 'Gil Mora, Eva'; renderMain();
+    });
+    await p.click('#mainContent button:has-text("Sesión de evaluación")'); await esperar(300);
+    await p.selectOption('#sesCab select', '1'); await esperar(150);
+    t.ok(/Música \(2\)/.test(await p.textContent('#sesMain')), 'el grupo muestra las materias con más suspensos');
+    await p.check('#sesMain input[type=radio] >> nth=1'); await esperar(150);
+    await p.fill('#sesMain input[aria-label="Motivo de la ausencia"]', 'Formación');
+    await p.fill('#sesMain textarea[aria-label="Valoración general del grupo"]', 'Grupo trabajador pero hablador.');
+    await p.fill('#sesMain textarea[aria-label="Acuerdos del grupo"]', 'Cambiar la distribución de las mesas.');
+    await p.click('#sesMain button:has-text("Empezar")'); await esperar(200);
+    t.ok(/García López|GARCÍA LÓPEZ/.test(await p.textContent('#sesMain .ses-alumno-nombre')) && /Matemáticas/.test(await p.textContent('#sesMain .ses-mats')), 'cada alumno/a sale con sus materias suspensas');
+    await p.click('#sesMain .ses-prop:has-text("Promoción")'); await esperar(150);
+    await p.fill('#sesMain textarea[aria-label="Acuerdos para este alumno/a"]', 'Plan de refuerzo en Matemáticas.');
+    await p.click('#sesMain button:has-text("Revisado y siguiente")'); await esperar(200);
+    t.ok(/Pérez Ruiz/.test(await p.textContent('#sesMain .ses-alumno-nombre')) && /1 de 2 revisados/.test(await p.textContent('#sesCab')), '«Revisado y siguiente» marca y pasa al siguiente');
+    await p.keyboard.press('ArrowLeft'); await esperar(150);
+    t.ok(/GARCÍA LÓPEZ/.test(await p.textContent('#sesMain .ses-alumno-nombre')), 'las flechas del teclado cambian de alumno/a');
+    const r = await p.evaluate(() => { const ana = data['1º ESO'].A[0], d = _getAsistenciaData('1º ESO', 'A');
+      return { prop: ana.propuesta1.tipo, ac: ana.sesionEval['1'].acuerdos, rev: ana.sesionEval['1'].revisado, val: d.actasSesion['1'].valoracion, as: d.sesiones.eval1[0] }; });
+    t.ok(r.prop === 'Promoción' && r.ac === 'Plan de refuerzo en Matemáticas.' && r.rev && r.val === 'Grupo trabajador pero hablador.' && r.as.asistio === false && r.as.justificacion === 'Formación',
+      'se guardan la propuesta, los acuerdos, la valoración y la asistencia', JSON.stringify(r));
+    await p.click('#sesCab button:has-text("Acta")'); await esperar(400);
+    const acta = await p.evaluate(() => document.querySelector('#tdocOverlay iframe')?.srcdoc || '');
+    t.ok(/Acta de la sesión de evaluación/.test(acta) && /Plan de refuerzo en Matemáticas/.test(acta) && /Promoción/.test(acta) && /Zapata Ruiz, Luis \(Matemáticas\): Formación/.test(acta) && /Cambiar la distribución/.test(acta),
+      'el acta se genera con asistencia, valoración, acuerdos y la propuesta de cada alumno/a');
+    await p.evaluate(() => { __cerrarVistaDocT(); closeSesionEvaluacion(); });
+    const ficha = await p.evaluate(() => fichaGrupoParaProfesorado('1º ESO', 'A', '1'));
+    const textoFicha = JSON.stringify(ficha);
+    t.ok(ficha.alumnos[0].nese && ficha.alumnos[1].repetidor && ficha.alumnos[0].acuerdos === 'Plan de refuerzo en Matemáticas.', 'la ficha del grupo lleva NESE, repetición y acuerdos');
+    t.ok(!/Contacto Privado|privado@correo|Entrevista privada/.test(textoFicha), 'y no lleva contactos de la familia ni entrevistas');
+    await p.evaluate(() => _undoPop()); await esperar(200);
+    t.ok(await p.evaluate(() => data['1º ESO'].A[0].propuesta1.tipo) === '', 'Ctrl+Z deshace la decisión tomada en la sesión');
+    // En el Cuaderno de un profesor/a: «📥 De la tutoría»
+    await p.goto(t.url + '/'); await esperar(1500);
+    const elegir = p.waitForEvent('filechooser');
+    await p.evaluate(() => { _mostrarBienvenida = false; state.ui.grupoId = state.grupos[0].id; state.ui.appMode = 'competencial'; state.ui.tab = 'resultados'; render(); importarDeTutoria(); });
+    await (await elegir).setFiles([{ name: 'ficha-grupo.json', mimeType: 'application/json', buffer: Buffer.from(textoFicha) }]); await esperar(400);
+    const vista = await p.textContent('#deTutoriaOv');
+    t.ok(/2 alumnos encontrados/.test(vista) && /Marcar NESE[^(]*\(1\)/.test(vista) && /Repite curso[^(]*\(1\)/.test(vista) && /Geografía e Historia[^(]*\(1\)/.test(vista), 'la vista previa dice qué va a cambiar', vista.slice(0, 300));
+    await p.click('#deTutoriaOv button:has-text("Aplicar")'); await esperar(400);
+    const c = await p.evaluate(() => { const [ana, luis] = state.grupos[0].alumnos; return { nese: ana.nese, rep: luis.repetidor, pend: ana.pendientes, dt: ana.deTutoria && ana.deTutoria.acuerdos, g: state.grupos[0].deTutoria && state.grupos[0].deTutoria.acuerdosGrupo }; });
+    t.ok(c.nese && c.rep && c.pend.includes('1') && c.dt === 'Plan de refuerzo en Matemáticas.' && c.g === 'Cambiar la distribución de las mesas.', 'el Cuaderno marca NESE, repite, la pendiente de su materia y guarda los acuerdos', JSON.stringify(c));
+    await p.evaluate(() => { state.ui.appMode = 'competencial'; state.ui.tab = 'alumnos'; state.ui.fichaAlumnoId = state.grupos[0].alumnos[0].id; render(); }); await esperar(300);
+    t.ok(/De la tutoría[\s\S]*Plan de refuerzo en Matemáticas/.test(await p.textContent('body')), 'la ficha del alumno/a en el Cuaderno muestra lo acordado en la sesión');
+    await p.evaluate(() => { state.ui.fichaAlumnoId = ''; state.ui.tab = 'resultados'; render(); }); await esperar(300);
+    t.ok(/Acuerdos de la sesión de evaluación/.test(await p.textContent('body')), 'y Resultados, los acuerdos del grupo');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
   { nombre: 'suspensos', descripcion: 'Tutoría: importar suspensos por identificador y por nombre parecido', async fn(t) {
@@ -235,6 +543,48 @@ export const PRUEBAS = [
     await p.click('#impCOk'); await esperar(600);
     const pend = await p.evaluate(() => data['1º ESO'].A.map(a => a.pendientes1.length));
     t.ok(JSON.stringify(pend) === '[1,0,1]', 'suspensos: Ana (por identificador) y Íria (por parecido); Luis aprueba', JSON.stringify(pend));
+    // El profesor/a corrige la nota de Ana (3 → 6) y reenvía el archivo: la materia sale y el número baja.
+    archivo.alumnos[0].notas = { 1: 6 };
+    await p.evaluate(o => _tImpCuadernoModal(o, 'para-tutoria.json'), archivo); await esperar(500);
+    await p.click('#impCOk'); await esperar(600);
+    const ana = await p.evaluate(() => { const a = data['1º ESO'].A[0]; return [a.pendientes1.length, a.eval1]; });
+    t.ok(JSON.stringify(ana) === '[0,0]', 'al reenviar un aprobado, se quita la materia y baja el número de suspensas', JSON.stringify(ana));
+  } },
+
+  { nombre: 'tutoria-csv', descripcion: 'Tutoría: un CSV de Excel en Windows (ANSI) conserva las tildes y una columna sin título no se confunde', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', []);
+    const leer = (bytes) => p.evaluate(async bytes => {
+      openImportModal();
+      readCSVFile(new File([new Uint8Array(bytes)], 'lista.csv'));
+      await new Promise(r => setTimeout(r, 300));
+      return { cab: importState.headers, filas: importState.rows, nombre: importState.mapping.nombre, fecha: importState.mapping.fecha };
+    }, bytes);
+    // «;García Núñez, Íñigo;12/03/2012» en Windows-1252 (como lo guarda Excel en español), con una primera columna sin título.
+    const ansi = [...Buffer.from(';Alumno;Fecha de nacimiento\r\n;García Núñez, Íñigo;12/03/2012\r\n', 'latin1')];
+    let r = await leer(ansi);
+    t.ok(r.filas[0] && r.filas[0][1] === 'García Núñez, Íñigo', 'las tildes y la ñ se leen bien en un CSV ANSI', JSON.stringify(r.filas));
+    t.ok(r.nombre === 1 && r.fecha === 2, 'la columna sin título no se asigna al nombre ni a la fecha', JSON.stringify([r.nombre, r.fecha]));
+    const utf8 = [0xEF, 0xBB, 0xBF, ...Buffer.from('Alumno;Fecha\r\nSanz Martí, Íria;20/01/2013\r\n', 'utf8')];
+    r = await leer(utf8);
+    t.ok(r.cab[0] === 'Alumno' && r.filas[0][0] === 'Sanz Martí, Íria', 'un CSV en UTF-8 con BOM se sigue leyendo bien', JSON.stringify(r));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-buscar', descripcion: 'Tutoría: «Buscar alumno…» encuentra por el nombre, sin tildes ni mayúsculas', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria']);
+    await p.fill('#alumnoSearch', 'GARCIA'); await esperar(300);
+    const vis = () => p.evaluate(() => [...document.querySelectorAll('#mainContent table tbody tr[data-idx]')].filter(r => getComputedStyle(r).display !== 'none').map(r => data['1º ESO'].A[+r.dataset.idx].nombre));
+    let v = await vis();
+    t.ok(v.length === 1 && v[0] === 'García López, Ana', '«GARCIA» encuentra solo a García López', JSON.stringify(v));
+    t.ok(/1\/3/.test(await p.textContent('#searchResultCount')), 'el contador dice 1/3');
+    await p.fill('#alumnoSearch', 'iria'); await esperar(300);
+    v = await vis();
+    t.ok(v.length === 1 && v[0] === 'Sanz Martí, Íria', '«iria» encuentra a Íria', JSON.stringify(v));
+    await p.fill('#alumnoSearch', ''); await esperar(300);
+    t.ok((await vis()).length === 3, 'al borrar la búsqueda se ve todo el grupo');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
   { nombre: 'dos-ventanas', descripcion: 'Una sola ventana guarda a la vez; relevo con «Usar esta ventana»', async fn(t) {
@@ -395,15 +745,21 @@ export const PRUEBAS = [
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url, { nombres: ['Desde A, Alumna'] });
     // La «carpeta» es el almacenamiento privado de archivos del navegador (el selector real necesita a una persona).
+    // No se guarda en IndexedDB: Chrome 153 (el de GitHub Actions) se cierra entero al volver a leer de IndexedDB
+    // una carpeta de este almacenamiento privado (la que se elige con el selector es de otro tipo). Se le da a la app
+    // directamente, como hace ccIniciar() al abrir con la carpeta guardada.
+    const darCarpeta = () => p.evaluate(async () => {
+      _ccHandle = await (await navigator.storage.getDirectory()).getDirectoryHandle('copias', { create: true }); _ccEstado = 'activa'; });
     await p.evaluate(async () => { localStorage.setItem('cc_dispositivo', 'aaaaa');
       const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle('copias', { create: true });
-      for (let i = 1; i <= 12; i++) { const f = await dir.getFileHandle(`copia-cuaderno-auto-2026-01-${String(i).padStart(2, '0')}-aaaaa.json`, { create: true }); const w = await f.createWritable(); await w.write('{"grupos":[]}'); await w.close(); }
-      _ccHandle = dir; await idbPut('kv', dir, 'carpetaCopias'); _ccEstado = 'activa'; });
+      for (let i = 1; i <= 12; i++) { const f = await dir.getFileHandle(`copia-cuaderno-auto-2026-01-${String(i).padStart(2, '0')}-aaaaa.json`, { create: true }); const w = await f.createWritable(); await w.write('{"grupos":[]}'); await w.close(); } });
+    await darCarpeta();
     t.ok(await p.evaluate(() => ccEscribir()), 'escribe la copia de hoy');
     const n = await p.evaluate(async () => { let n = 0; for await (const _ of _ccHandle.entries()) n++; return n; });
     t.ok(n === 10, 'conserva las 10 más recientes de este dispositivo', 'hay ' + n);
     await p.evaluate(() => { localStorage.setItem('cc_dispositivo', 'bbbbb'); state._guardadoEn = Date.now() - 3600e3; localStorage.setItem(KEY, JSON.stringify(state)); });
     await p.reload(); await esperar(3500);
+    await darCarpeta(); await p.evaluate(() => ccBuscarMasReciente());
     t.ok(await p.evaluate(() => !!_ccMasReciente), 'otro dispositivo ve que hay una copia más reciente');
   } },
 

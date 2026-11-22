@@ -542,6 +542,7 @@ function executeJsonImport() {
     }
     // Configuración de vacantes: reemplazo completo
     if (src.vacantesCfg) Object.assign(_vacantesCfg, src.vacantesCfg);
+    if (src.alertasCfg) _alertasMergeCfg(src.alertasCfg);
     // Materias personalizadas: reemplazo completo
     if (src.materiasCustom) {
       Object.keys(_materiasCustom).forEach(k => delete _materiasCustom[k]);
@@ -593,6 +594,8 @@ function executeJsonImport() {
     }
     // Configuración de vacantes: combina campo a campo sin pisar lo existente
     if (src.vacantesCfg) _vacMergeCfg(src.vacantesCfg);
+    // Umbrales de alertas: solo si aquí siguen los de por defecto
+    if (src.alertasCfg && JSON.stringify(_alertasCfg) === JSON.stringify(ALERTAS_CFG_DEFECTO)) _alertasMergeCfg(src.alertasCfg);
     // Materias personalizadas: combina por nivel sin pisar lo existente
     if (src.materiasCustom) {
       Object.keys(src.materiasCustom).forEach(k => { if (!(k in _materiasCustom)) _materiasCustom[k] = src.materiasCustom[k]; });
@@ -654,6 +657,8 @@ function renderResumen() {
   const kpiColor = (c) => `border-left-color:${c}`;
 
   let html = `<div class="resumen-body">`;
+  // «🧭 Qué me falta» (tutoria/js/25-alertas-y-pendientes.js), lo primero que se ve.
+  if (typeof _qmfHTML === 'function') html += _qmfHTML();
 
   // ── Welcome banner ──
   html += `<div style="

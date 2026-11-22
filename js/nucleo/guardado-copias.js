@@ -155,6 +155,7 @@ function save(){
   clearTimeout(_idbEspejoTimer);
   _idbEspejoTimer=setTimeout(volcarEspejoIDB, saveState.ok?700:0);
   if(cambio) programarCopiaAuto();
+  if(cambio && typeof programarCopiaParaTutoria==="function") programarCopiaParaTutoria();   // copia para Tutoría (js/resultados/resultados.js)
   if(cambio && typeof ccProgramar==="function") ccProgramar();   // copia en la carpeta elegida (js/nucleo/copia-carpeta.js)
 }
 function volcarEspejoIDB(){

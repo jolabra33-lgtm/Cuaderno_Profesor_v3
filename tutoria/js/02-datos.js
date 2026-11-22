@@ -36,6 +36,27 @@ let _vacantesCfg = {
   ext1BachHS:    0                     // alumnado externo que entra a 1º Bach HS
 };
 
+/* Umbrales de las alertas del alumnado («🧭 Qué me falta» en Inicio y ficha del alumno/a).
+   Se guardan con el resto del estado (alertasCfg). Un 0 desactiva esa alerta. */
+const ALERTAS_CFG_DEFECTO = {
+  faltasInjust: 10,   // faltas sin justificar en el curso
+  ac: 3,              // faltas de actitud y comportamiento (AC)
+  partes: 2,          // partes de amonestación
+  suspensas: 3,       // materias suspensas en la última evaluación con datos
+  empeora: 2,         // materias suspensas de más respecto a la evaluación anterior
+  diasCita: 7,        // días para avisar de una cita con la familia
+  sinContacto: 1      // 1 = avisar si hay alertas y no consta ninguna entrevista ni seguimiento con la familia
+};
+let _alertasCfg = { ...ALERTAS_CFG_DEFECTO };
+function _alertasMergeCfg(src) {
+  if (!src || typeof src !== 'object') return;
+  Object.keys(ALERTAS_CFG_DEFECTO).forEach(k => {
+    if (src[k] == null || src[k] === '') return;
+    const n = Math.round(Number(src[k]));
+    if (isFinite(n) && n >= 0 && n <= 999) _alertasCfg[k] = n;
+  });
+}
+
 let currentNivel = '__home__';
 let currentGrupos = {};
 NIVELES.forEach(n => { currentGrupos[n] = GRUPOS_POR_NIVEL[n][0]; });

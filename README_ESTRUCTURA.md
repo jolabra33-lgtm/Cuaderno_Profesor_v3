@@ -25,6 +25,7 @@ La aplicación es **estática**: no necesita compilar nada. Se publica tal cual 
 | `js/una-ventana.js` | Solo una ventana guarda a la vez: si la app ya está abierta en otra (o en la otra versión, v2/v3), esta se bloquea con un aviso y «Usar esta ventana». Es el **primer** script de `index.html` y de `tutoria/index.html` |
 | `js/bloqueo.js` | Bloqueo con PIN (opcional): tapa la app hasta escribir el PIN, al abrir y tras unos minutos sin usarla. En `<head>` del Cuaderno y de Tutoría. Sus ajustes están en `js/ui/privacidad.js` |
 | `js/registro-sw.js` | Registro del service worker y aviso «Hay una versión nueva · Actualizar» (lo usan el Cuaderno y Tutoría) |
+| `js/comun/formato-tutoria.js` | **Contrato Cuaderno ↔ Tutoría**: formato del paquete «Para la tutoría» (versión 2: notas, faltas, convivencia y comentarios por evaluación), `ftNormalizarPaquete` (limpia lo que llega de un archivo) y `ftApellidosNombre`. Lo cargan las dos apps. También el formato de la ficha del grupo (Tutoría → Cuaderno, `ftNormalizarFichaGrupo`) |
 | `tutoria/` | Gestor de Tutoría, aplicación independiente (ver más abajo) |
 | `tests/calculo-notas.html` | Pruebas del motor de cálculo de notas (ver más abajo) |
 
@@ -64,7 +65,8 @@ Completan el repositorio: `manifest.json` e `icons/` (instalación como app), `.
 | `js/evaluacion/calificar.js` | Calificar, entrada rápida de notas y marcas NP/Exento |
 | `js/evaluacion/puntos-extra.js` | Puntos extra en actividades/exámenes y en la nota de cada evaluación o la final (ventana «➕ Puntos extra», píldoras y textos de informe). El cálculo está en `calculo-notas.js` |
 | `js/resultados/informe-detallado.js` | Distribución, evolución del alumno e informe detallado de cálculo |
-| `js/resultados/resultados.js` | Comentarios sugeridos, paso a Tutoría y pantalla de Resultados |
+| `js/resultados/de-la-tutoria.js` | «📥 De la tutoría»: carga la ficha del grupo que envía Tutoría (vista previa; NESE, repite, pendientes de la materia, `alumno.deTutoria` y `grupo.deTutoria`) y los bloques que lo muestran en la ficha del alumno/a y en Resultados. Va justo después de `resultados.js` |
+| `js/resultados/resultados.js` | Comentarios sugeridos, paso a Tutoría (`paqueteParaTutoria`, archivo «Para la tutoría» y copia para Tutoría en IndexedDB, `guardarCopiaParaTutoria`) y pantalla de Resultados |
 | `js/resultados/cobertura-diagnostico.js` | Cobertura de la evaluación, «Revisar mis datos» y novedades |
 | `js/clase/asistencia.js` | Asistencia (y constantes de convivencia y familias) |
 | `js/clase/convivencia.js` | Convivencia: AC, RC y parte de amonestación |
@@ -127,7 +129,13 @@ Antes era un único `index.html` de casi 20.000 líneas. En la v3 está dividido
 | `js/19-seguimiento.js` | Seguimiento individual del alumnado |
 | `js/20-equipo-docente.js` | Equipo docente |
 | `js/21-asistencia.js` | Asistencia a la sesión de evaluación |
-| `js/22-importar-del-cuaderno.js` | Botón «📥 Del Cuaderno»: copia nombres y fechas de nacimiento de un grupo del Cuaderno |
+| `js/22-importar-del-cuaderno.js` | Botón «📥 Del Cuaderno»: añade el alumnado de un grupo del Cuaderno y completa fecha de nacimiento, NESE, repetición y contactos de la familia de quien ya estaba (con vista previa); ofrece traer lo de tu materia desde la copia que deja el Cuaderno |
+| `js/23-informacion-equipo.js` | «📬 Información del equipo docente»: lo recibido de cada materia (`alumno.porMateria`), recordatorio por correo y relleno del seguimiento con familia |
+| `js/24-ficha-alumno.js` | Ficha completa del alumno/a (`openFichaAlumno`) y entrevistas con la familia (`alumno.entrevistas`, acta imprimible) |
+| `js/25-alertas-y-pendientes.js` | Alertas del alumnado (`_alertasAlumno`, umbrales en `_alertasCfg` de `02-datos.js`), «🧭 Qué me falta» en Inicio y ventana de umbrales |
+| `js/26-sesion-evaluacion.js` | «🎓 Sesión de evaluación» a pantalla completa (`openSesionEvaluacion`), acta de la sesión (`generarActaSesion`) y ficha del grupo para el profesorado (`fichaGrupoParaProfesorado`, `exportarFichaGrupo`) |
+
+Antes de `js/01` se carga `../js/comun/formato-tutoria.js`, el formato común con el Cuaderno (ver abajo).
 
 Los bloques de HTML que había entre los scripts (ventanas de historial, asistencia, plano…) siguen en
 `tutoria/index.html`, en el mismo sitio, para que cada script encuentre lo que necesita al cargarse.
@@ -135,7 +143,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 31 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 54 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.
@@ -197,6 +205,67 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
   29 pantallas revisadas con axe-core (WCAG 2 A/AA) no dan ningún error (no se ha revisado el contraste de color).
 
 ## Cambios recientes
+
+### Tutoría · fase 4: sesión de evaluación, acta y ficha del grupo para el profesorado (noviembre de 2026)
+
+- **🎓 Sesión de evaluación** (`tutoria/js/26-sesion-evaluacion.js`): pantalla completa (`.sesion-ov`), grupo y alumno por alumno,
+  flechas del teclado. Datos sin claves nuevas en el estado: `alumno.sesionEval[k] = {acuerdos, revisado}` y
+  `_asistenciaData['nivel-grupo'].actasSesion[k] = {valoracion, acuerdosGrupo, horaInicio, horaFin}` (viajan con `asistenciaData`);
+  la propuesta es `propuesta1`/`propuesta2` y, en la 3.ª, `promociona`. Cada decisión hace `_undoPush`.
+- **Acta de la sesión** (`generarActaSesion`) en la vista de documentos.
+- **Ficha del grupo para el profesorado** (formato `tutoria-a-cuaderno` en `js/comun/formato-tutoria.js`): sin contactos ni
+  entrevistas. El Cuaderno la carga con «📥 De la tutoría» (`js/resultados/de-la-tutoria.js`): empareja por `idsCuaderno` o por
+  nombre; marca NESE/repite (nunca desmarca), añade pendientes de su materia («Materia (2º ESO)» → `pendientes` «2») y guarda
+  `alumno.deTutoria` / `grupo.deTutoria` (ficha del alumno/a en `plano-aula.js` y Resultados).
+
+### Tutoría · fase 3: ficha, entrevistas, alertas y «Qué me falta» (noviembre de 2026)
+
+- **Ficha completa del alumno/a** (`tutoria/js/24-ficha-alumno.js`): botón 👤 en la columna del nombre; pestañas Resumen,
+  Académico, Faltas y convivencia, Entrevistas y Seguimientos; observaciones (`alumno.notas`) editables.
+- **Entrevistas con la familia** en `alumno.entrevistas` (campo nuevo; sin él, la lista está vacía): alta y edición con
+  borrador, próxima cita, acta (`_entActa`, vista de documentos), borrar con Ctrl+Z.
+- **Alertas** (`tutoria/js/25-alertas-y-pendientes.js`): reglas sobre lo de Tutoría y lo recibido de los Cuadernos (se toma el
+  mayor, no se suman). La evaluación en curso sale de las fechas de evaluación. Umbrales en `_alertasCfg` (nuevo `alertasCfg`
+  en el estado): `buildState`, `loadFromLocalStorage`, `applyFilePayload` (un archivo sin umbrales vuelve a los de por defecto),
+  importar JSON (sustituir y combinar) y la versión del curso.
+- **«🧭 Qué me falta»** al principio de Inicio; cuenta solo las materias del equipo docente del grupo y las que ya han enviado algo.
+- La columna del nombre es algo más ancha (230 px) y la insignia ⚠ va bajo el nombre.
+
+### Tutoría · fase 2: conexión con el Cuaderno (noviembre de 2026)
+
+- **Formato común** `js/comun/formato-tutoria.js` (versión 2, lee también la 1). El Cuaderno arma el paquete en
+  `paqueteParaTutoria(grupo, local)`: nota de acta, faltas y retrasos (`asistContarPeriodo`), AC/RC/partes
+  (`convContarTipos`) y comentarios, por evaluación según las fechas de Ajustes y del curso entero. El archivo no
+  lleva datos personales; la copia local (`local=true`) añade fecha de nacimiento, NESE, repetición y familia.
+- **Copia para Tutoría en el mismo navegador**: el Cuaderno la guarda en una base IndexedDB propia (`cuaderno-para-tutoria`,
+  aparte de la de sus datos para no competir con su guardado) 4 s después de cada cambio y al abrir, cuando el navegador está
+  desocupado y solo desde la ventana que guarda. Tutoría solo la lee y avisa si el Cuaderno tiene cambios posteriores.
+- **Tutoría guarda lo de cada materia** en `alumno.porMateria[materia]` (campo nuevo; los datos antiguos no lo tienen y
+  todo funciona igual). Importar varios archivos a la vez (`_tImpCuadernoCola`), Ctrl+Z, y el profesor/a entra solo en
+  el equipo docente (`_tProfesorDelPaquete`).
+- **Contactos de la familia** en `alumno.familia` (campo nuevo), en el seguimiento con familia y desde «📥 Del Cuaderno».
+- **Equipo docente en «Apellidos, Nombre»**, con aviso y orden por apellidos (las sesiones de asistencia se reordenan igual).
+- **📬 Información del equipo docente** (`tutoria/js/23-informacion-equipo.js`).
+
+### Tutoría · fase 1 de mejoras (noviembre de 2026)
+
+**Fallos corregidos**
+- **«📥 Del Cuaderno» no rellenaba nada a quien ya estaba en el grupo** (p. ej. cargado antes por CSV): solo lo vinculaba,
+  y la fecha de nacimiento se quedaba vacía. Además, un nombre escrito de otra forma («ANA GARCÍA LÓPEZ» frente a
+  «García López, Ana») se duplicaba. Ahora (`tutoria/js/22-importar-del-cuaderno.js`, `_planImportarCuaderno`) se empareja
+  por identificador, por nombre y por las mismas palabras en otro orden; a quien ya está se le completan fecha de
+  nacimiento, NESE y repetición; un dato distinto solo se cambia si se marca «Sustituir»; los nombres parecidos se
+  preguntan; y antes de aplicar se ve qué pasará con cada alumno/a.
+- **«Buscar alumno…» no encontraba a nadie**: buscaba en el texto de la fila y el nombre está en una casilla editable.
+  `applySearch` busca en el nombre, sin tildes ni mayúsculas.
+- **Suspensos del Cuaderno**: al reenviar un aprobado, la materia salía de la lista pero el número de suspensas no bajaba.
+- **CSV de Excel en Windows**: se leían como UTF-8 y las tildes salían como «�». `_tLeerTextoArchivo` prueba UTF-8 y, si no
+  lo es, Windows-1252. Una columna sin título ya no se asigna a ningún campo.
+- **Fechas de evaluación**: cambiarlas no se guardaba hasta tocar otra cosa (`_tFijarFechaEval`); en Seguimientos y Actas no
+  Oficiales se quedaba la barra del nivel anterior; si las tres son iguales (sin poner) se avisa.
+- **Interfaz**: los niveles van justo después de Inicio (antes quedaban fuera de la pantalla en un portátil); ✏ y ✕ de cada
+  grupo, en la fila del nombre y visibles en tema claro; en el móvil la cabecera cabe en dos filas y nada se sale por la derecha.
+
 
 ### Auditoría y mejoras (noviembre de 2026)
 

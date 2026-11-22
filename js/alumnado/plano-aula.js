@@ -611,6 +611,7 @@ function fichaAlumnoModalHTML(grupo,alumnoId){
             </label>`).join("")}
           </div>
         </div>
+        ${typeof deTutoriaFichaHTML==="function"?deTutoriaFichaHTML(a):""}
         ${familiaFichaHTML(a)}
         <label style="font-size:12.5px;color:var(--mut);font-weight:500">Observaciones (uso interno, no se imprime)
           <textarea class="in" style="width:100%;margin-top:4px;min-height:70px;resize:vertical" onchange="setObservacion('${a.id}',this.value)">${esc(a.observaciones||"")}</textarea>

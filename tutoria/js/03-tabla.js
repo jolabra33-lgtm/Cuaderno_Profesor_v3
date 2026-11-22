@@ -6,6 +6,7 @@
 // ===================== RENDER =====================
 function renderAll() {
   renderNivelTabs();
+  syncDateInputs();   // la barra de fechas solo se ve en la pantalla de un nivel
   const addBtn = document.getElementById('btnAddAlumnoHeader');
   const isSpecial = ['__home__','__materias__', '__calendario__', '__convivencia__', '__informe__', '__vacantes__', '__actasnooficiales__'].includes(currentNivel);
   if (addBtn) addBtn.style.display = isSpecial ? 'none' : '';
@@ -38,7 +39,10 @@ function renderNivelTabs() {
   const materiasTab = `<div class="nivel-tab ${currentNivel === '__materias__' ? 'active' : ''}" onclick="selectNivel('__materias__')">⚙ Materias</div>`;
   const addNivelTab = `<div class="nivel-tab nivel-tab-add" onclick="openAddNivelModal()" title="Crear un nuevo nivel" style="font-weight:700;">＋ Nivel</div>`;
   const actasNoOficialesToggle = `<div class="nivel-tab" onclick="toggleActasNoOficialesTab()" title="${_actasNoOficialesTabVisible ? 'Ocultar' : 'Mostrar'} la pestaña «Actas no Oficiales»" style="opacity:0.55;font-weight:400;">${_actasNoOficialesTabVisible ? '🗂️🙈' : '🗂️👁️'}</div>`;
-  c.innerHTML = homeTab + calendarioTab + informeTab + segFamTab + convivenciaTab + actasNoOficialesTab + NIVELES.map(n => {
+  // Orden: Inicio y los niveles primero (es donde se trabaja a diario), luego las herramientas.
+  // Antes los niveles iban detrás de seis pestañas y en un portátil quedaban fuera de la pantalla.
+  const separador = '<div class="nivel-tab-sep" aria-hidden="true"></div>';
+  c.innerHTML = homeTab + NIVELES.map(n => {
     // Count pending decisions for this nivel
     const grupos = GRUPOS_POR_NIVEL[n]||[];
     let totalAl = 0, pendAl = 0;
@@ -61,7 +65,13 @@ function renderNivelTabs() {
         style="opacity:0.4;transition:opacity 0.15s;"
         onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.4'">✕</button>
     </div>
-  `;}).join('') + addNivelTab + materiasTab + actasNoOficialesToggle;
+  `;}).join('') + addNivelTab + separador + calendarioTab + segFamTab + informeTab + convivenciaTab + actasNoOficialesTab + materiasTab + actasNoOficialesToggle;
+  // Que la pestaña activa se vea aunque la barra tenga que desplazarse.
+  const activa = c.querySelector('.nivel-tab.active');
+  if (activa && c.scrollWidth > c.clientWidth) {
+    const izq = activa.offsetLeft - c.offsetLeft, der = izq + activa.offsetWidth;
+    if (izq < c.scrollLeft || der > c.scrollLeft + c.clientWidth) c.scrollLeft = Math.max(0, izq - 24);
+  }
 
   // Delegated handlers for nivel delete/rename buttons
   c.querySelectorAll('[data-nivel]').forEach(btn => {
@@ -131,7 +141,8 @@ function renderMain() {
     editBtn.dataset.grupo = g;
     editBtn.textContent = '✏';
     editBtn.addEventListener('click', e => { e.stopPropagation(); openRenameGrupoModal(nivel, g); });
-    tab.appendChild(editBtn);
+    const filaSup = tab.querySelector('.tab-top-row') || tab;   // en la fila del nombre, no debajo
+    filaSup.appendChild(editBtn);
 
     // Delete button
     if (grupos.length > 1) {
@@ -142,7 +153,7 @@ function renderMain() {
       delBtn.dataset.grupo = g;
       delBtn.textContent = '✕';
       delBtn.addEventListener('click', e => { e.stopPropagation(); confirmDeleteGrupo(nivel, g); });
-      tab.appendChild(delBtn);
+      filaSup.appendChild(delBtn);
     }
 
     // Click to select
@@ -246,7 +257,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
           <input
             id="tutor-${_tEsc(nivel)}-${_tEsc(grupo)}"
             type="text"
-            placeholder="Nombre del tutor/a…"
+            placeholder="Apellidos, Nombre del tutor/a…"
             value="${_tEsc(tutores[key] || '')}"
             oninput="tutores['${jsAttr(key)}']=this.value"
             style="background:transparent;border:none;color:var(--text);font-family:inherit;font-size:13px;font-weight:500;width:220px;outline:none;"
@@ -276,6 +287,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
         <button class="compact-toggle${window._compactMode?' active':''}" id="compactToggle-${_tEsc(nivel)}-${_tEsc(grupo)}"
           title="Modo compacto — reduce el tamaño de las filas"
           onclick="_toggleCompact('${jsAttr(nivel)}','${jsAttr(grupo)}',this)">${window._compactMode?'⊡ Normal':'⊟ Compacto'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="openSesionEvaluacion('${jsAttr(nivel)}','${jsAttr(grupo)}')" title="Pantalla para llevar la junta de evaluación alumno por alumno (proyectable)">🎓 Sesión de evaluación</button>
         <button class="btn btn-ghost btn-sm" onclick="openActaOficialMenu('${jsAttr(nivel)}','${jsAttr(grupo)}')">📋 Acta Oficial</button>
         <details class="mas-menu">
           <summary class="btn btn-ghost btn-sm" title="Más herramientas del grupo">⋯ Más${_getAsistenciaIndicator(nivel, grupo) || ((window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : '')}</summary>
@@ -283,6 +295,8 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
             <button role="menuitem" onclick="selectNivel('__actasnooficiales__')" title="Las Actas I/II/Final de todos los grupos se gestionan en su propia pestaña">🗂️ Actas no Oficiales</button>
             <button role="menuitem" onclick="openAsistencia('${jsAttr(nivel)}','${jsAttr(grupo)}')">👥 Asistencia a la sesión${_getAsistenciaIndicator(nivel, grupo)}</button>
             <button role="menuitem" onclick="openEquipoDocente('${jsAttr(nivel)}','${jsAttr(grupo)}')">👨‍🏫 Equipo docente</button>
+            <button role="menuitem" onclick="openInformacionEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📬 Información del equipo docente</button>
+            <button role="menuitem" onclick="exportarFichaGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}',_sesEvalPropuesta('${jsAttr(nivel)}'))">📤 Ficha del grupo para el profesorado</button>
             <button role="menuitem" onclick="openObservacionesGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📝 Observaciones del grupo${(window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : ''}</button>
             <button role="menuitem" onclick="openPlanoGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">🪑 Plano del grupo</button>
             <button role="menuitem" onclick="openHorarioGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">🗓️ Horario del grupo</button>
@@ -1012,7 +1026,7 @@ function updateTable(nivel, grupo) {
 
   const defaults = colNames.map(() => 120);
   const _nombreIdx = colNames.indexOf('Alumno / a');
-  if (_nombreIdx >= 0) defaults[_nombreIdx] = 180; // Alumno
+  if (_nombreIdx >= 0) defaults[_nombreIdx] = 230; // Alumno (nombre + 📝 + 👤 ficha)
   defaults[colNames.indexOf('Lengua Base')] = 130;
   defaults[colNames.indexOf('CEIP Origen')] = 150;
   const cols = window.colWidths[key+'_'+evalTab] || (window.colWidths[key+'_'+evalTab] = [...defaults]);
@@ -1100,6 +1114,8 @@ function updateTable(nivel, grupo) {
     const opts = CEIP_KNOWN.map(c=>`<option value="${_tEsc(c)}" ${ceipVal===c?'selected':''}>${_tEsc(c)}</option>`).join('');
 
     // Base shared cells (always present in all eval tabs)
+    // Alertas del alumno/a (faltas, partes, suspensas…): insignia bajo el nombre que abre su ficha.
+    const alertaBadge = typeof _alInsigniaHTML === 'function' ? _alInsigniaHTML(a, nivel, grupo, i) : '';
     const baseCells = `
       <td class="td-nombre sticky-nombre">
         <div class="nombre-cell">
@@ -1108,10 +1124,13 @@ function updateTable(nivel, grupo) {
             ${evalTab === 'eval3' ? trendHtml : ''}
             <button class="notes-btn obs-inline${hasNote?' has-note':''}" title="${hasNote?'Ver / editar observaciones':'Añadir observaciones'}"
               onclick="openNotesPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">📝</button>
+            <button class="notes-btn obs-inline" title="Ficha completa del alumno/a" aria-label="Ficha completa del alumno/a"
+              onclick="openFichaAlumno('${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">👤</button>
           </div>
-          ${(pendiente || isCritical) && evalTab === 'eval3' ? `<div class="nombre-cell-badges">
-            ${pendiente ? '<span class="pending-badge">pendiente</span>' : ''}
-            ${criticalBadge}
+          ${((pendiente || isCritical) && evalTab === 'eval3') || alertaBadge ? `<div class="nombre-cell-badges">
+            ${pendiente && evalTab === 'eval3' ? '<span class="pending-badge">pendiente</span>' : ''}
+            ${evalTab === 'eval3' ? criticalBadge : ''}
+            ${alertaBadge}
           </div>` : ''}
           ${tooltipHtml}
         </div>
@@ -2241,3 +2260,14 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.querySelectorAll('details.mas-menu[open]').forEach(d => { d.removeAttribute('open'); d.querySelector('summary')?.focus(); });
 });
+
+// Menú «⋯ Más» del grupo: si al abrirse se sale por la derecha (móvil), se desplaza lo justo a la izquierda.
+document.addEventListener('toggle', e => {
+  const d = e.target;
+  if (!(d instanceof HTMLDetailsElement) || !d.classList.contains('mas-menu') || !d.open) return;
+  const l = d.querySelector('.mas-menu-lista');
+  if (!l) return;
+  l.style.transform = '';
+  const r = l.getBoundingClientRect(), W = document.documentElement.clientWidth;
+  if (r.right > W - 8) l.style.transform = `translateX(${Math.round(Math.max(8 - r.left, W - 8 - r.right))}px)`;
+}, true);

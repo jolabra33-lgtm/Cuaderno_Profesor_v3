@@ -18,10 +18,10 @@
 // Cuaderno_Profesor_v2), que comparte el mismo almacenamiento del navegador.
 
 const CACHE_PREFIJO = 'cuaderno-v3-';
-const CACHE_NAME = CACHE_PREFIJO + '52';
+const CACHE_NAME = CACHE_PREFIJO + '59';
 // Resumen de todos los archivos de esta versión. No lo cambies a mano: «npm run sellar» lo recalcula y, si
 // algún archivo ha cambiado, sube CACHE_NAME. La prueba «version-cache» falla si se sube un cambio sin sellar.
-const HUELLA = '5f9a55c6b355b338';
+const HUELLA = '8030b7407f7a78ae';
 
 // El "esqueleto" de las dos apps: HTML, manifest e iconos.
 const APP_SHELL = [
@@ -68,6 +68,8 @@ const APP_SHELL = [
   './js/evaluacion/puntos-extra.js',
   './js/resultados/informe-detallado.js',
   './js/resultados/resultados.js',
+  './js/resultados/de-la-tutoria.js',
+  './js/comun/formato-tutoria.js',
   './js/resultados/mapa-criterios.js',
   './js/resultados/cobertura-diagnostico.js',
   './js/clase/asistencia.js',
@@ -162,6 +164,10 @@ const APP_SHELL = [
   './tutoria/js/20-equipo-docente.js',
   './tutoria/js/21-asistencia.js',
   './tutoria/js/22-importar-del-cuaderno.js',
+  './tutoria/js/23-informacion-equipo.js',
+  './tutoria/js/24-ficha-alumno.js',
+  './tutoria/js/25-alertas-y-pendientes.js',
+  './tutoria/js/26-sesion-evaluacion.js',
   './tutoria/manifest.json',
   './tutoria/icon-192.png',
   './tutoria/icon-512.png'

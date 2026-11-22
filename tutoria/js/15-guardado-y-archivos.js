@@ -32,6 +32,7 @@ function buildState(includeImages = true, includeActas = true) {
     actasData: includeActas ? (window._actasData || {}) : {},
     actasOficialesData: includeActas ? (window._actasOficialesData || {}) : {},
     vacantesCfg: _vacantesCfg,
+    alertasCfg: _alertasCfg,
     actasNoOficialesTabVisible: _actasNoOficialesTabVisible
   };
   if (includeImages) {
@@ -258,6 +259,7 @@ function loadFromLocalStorage() {
       if (saved.evalDates) Object.assign(evalDates, saved.evalDates);
       if (Array.isArray(saved.calEventos)) { calEventos.length = 0; saved.calEventos.forEach(e => calEventos.push(e)); }
       if (saved.vacantesCfg) { _vacMergeCfg(saved.vacantesCfg); }
+      if (saved.alertasCfg) _alertasMergeCfg(saved.alertasCfg);
       if (saved.convivenciaData) { if (!window._convivenciaData) window._convivenciaData = {}; Object.assign(window._convivenciaData, saved.convivenciaData); }
       // Restaurar el resto del estado (antes se perdía al pulsar "Continuar")
       if (saved.materiasCustom) { Object.assign(_materiasCustom, saved.materiasCustom); }
@@ -297,15 +299,25 @@ addAlumno = function(...args) { _origAddAlumno(...args); markDirty(); };
 
 // ===================== SEARCH =====================
 
+/* Busca en el NOMBRE de cada alumno/a (que está dentro de una casilla editable,
+   no en el texto de la fila) y en el resto de lo que se ve en la fila. Sin
+   distinguir tildes ni mayúsculas: «garcia» encuentra a «García». */
+function _buscable(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
 function applySearch() {
-  const q = _searchQuery.toLowerCase().trim();
-  const tbl = document.querySelector('table tbody');
+  const q = _buscable(_searchQuery).trim();
+  const grupo = currentGrupos[currentNivel];
+  const tbl = document.getElementById(`tbl-${currentNivel}-${grupo}`)?.tBodies[0];
   if (!tbl) return;
-  tbl.querySelectorAll('tr').forEach(row => {
+  const alumnos = (data[currentNivel] && data[currentNivel][grupo]) || [];
+  const filas = tbl.querySelectorAll('tr[data-idx]');
+  filas.forEach(row => {
     if (!q) {
       row.classList.remove('search-hidden','search-match');
     } else {
-      const text = row.textContent.toLowerCase();
+      const a = alumnos[+row.dataset.idx];
+      const text = _buscable((a ? a.nombre + ' ' : '') + row.textContent);
       if (text.includes(q)) {
         row.classList.remove('search-hidden');
         row.classList.add('search-match');
@@ -318,8 +330,8 @@ function applySearch() {
   // Update visible count indicator
   const countEl = document.getElementById('searchResultCount');
   if (countEl && q) {
-    const visible = tbl.querySelectorAll('tr:not(.search-hidden)').length;
-    const total = tbl.querySelectorAll('tr').length;
+    const visible = [...filas].filter(r => !r.classList.contains('search-hidden')).length;
+    const total = filas.length;
     countEl.textContent = `${visible}/${total}`;
     countEl.style.display = '';
   } else if (countEl) {
@@ -663,6 +675,7 @@ function applyFilePayload(parsed) {
   if (parsed.tutores) Object.assign(tutores, parsed.tutores);
   if (parsed.evalDates) Object.assign(evalDates, parsed.evalDates);
   if (parsed.vacantesCfg) { _vacMergeCfg(parsed.vacantesCfg); }
+  Object.assign(_alertasCfg, ALERTAS_CFG_DEFECTO); if (parsed.alertasCfg) _alertasMergeCfg(parsed.alertasCfg);
   if (parsed.materiasCustom) {
     Object.keys(_materiasCustom).forEach(k => delete _materiasCustom[k]);
     Object.assign(_materiasCustom, parsed.materiasCustom);
@@ -742,6 +755,7 @@ function _tutEstadoEnBlanco() {
   Object.keys(tutores).forEach(k => delete tutores[k]);
   NIVELES.forEach(n => GRUPOS_POR_NIVEL[n].forEach(g => { tutores[`${n}-${g}`] = ''; }));
   NIVELES.forEach(n => { currentGrupos[n] = GRUPOS_POR_NIVEL[n][0]; });
+  Object.assign(_alertasCfg, ALERTAS_CFG_DEFECTO);
   currentNivel = '__home__';
 }
 /* v5 · Datos de ejemplo bajo petición: solo en memoria, nunca se guardan. */
