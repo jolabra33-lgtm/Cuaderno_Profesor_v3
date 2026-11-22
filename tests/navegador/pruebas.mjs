@@ -275,13 +275,29 @@ export const PRUEBAS = [
     t.ok(await p.evaluate(() => state.grupos[0]?.alumnos.length) === 6 && !p.errores.length, 'y los datos siguen completos', p.errores.join('; '));
     // Caso límite: en localStorage queda una copia ANTERIOR (el último guardado no cupo) y además está lleno.
     const viejo = await p.evaluate(() => localStorage.getItem(KEY));
-    await anadir('Nuevo, Cuatro'); await esperar(1200);
+    await anadir('Nuevo, Cuatro');
+    // Antes de dejar en localStorage la copia anterior, IndexedDB tiene que tener ya este último guardado (con la máquina cargada, el volcado puede tardar).
+    for (let i = 0; i < 100 && !(await p.evaluate(async () => (await idbGet('kv', 'estado'))?.guardadoEn === state._guardadoEn)); i++) await esperar(100);
     await p.evaluate(v => Storage.prototype.setItem.call(localStorage, KEY, v), viejo); await llenarLocalStorage(p);
     await p.reload(); await esperar(3000);
     e = await p.evaluate(() => ({ alumnos: state.grupos[0]?.alumnos.length, ls: localStorage.getItem(KEY) !== null, marca: localStorage.getItem(KEY_EN_IDB) !== null }));
     t.ok(e.alumnos === 7 && !e.ls && e.marca, 'si localStorage se quedó con una copia anterior, manda la de IndexedDB (más reciente) y la vieja se retira', JSON.stringify(e));
     await p.reload(); await esperar(2500);
     t.ok(await p.evaluate(() => state.grupos[0]?.alumnos.length === 7 && !/recuperado/i.test((document.getElementById('toastGlobal') || {}).innerText || '')) && !p.errores.length, 'y la siguiente apertura vuelve a ser normal', p.errores.join('; '));
+    // Tan lleno que ni el turno de la ventana (una-ventana.js) cabe: la ventana no debe creerse relevada y bloquearse a sí misma.
+    await llenarLocalStorage(p); await anadir('Nuevo, Cinco');   // no cabe: va a IndexedDB y la copia de localStorage se retira
+    for (let i = 0; i < 100 && !(await p.evaluate(async () => localStorage.getItem(KEY) === null && (await idbGet('kv', 'estado'))?.guardadoEn === state._guardadoEn)); i++) await esperar(100);
+    // Desde un marco en blanco (mismo almacenamiento, sin el control de una-ventana.js): un turno corto y localStorage lleno hasta el último carácter.
+    await p.evaluate(() => { const f = document.body.appendChild(document.createElement('iframe')), ls = f.contentWindow.localStorage;
+      ls.setItem('una-ventana:cuaderno', '{"n":1}'); let n = ls.getItem('relleno_de_otra_app').length;
+      for (let paso = 8192; paso >= 1; paso = Math.floor(paso / 2)) { try { while (true) { ls.setItem('relleno_de_otra_app', 'x'.repeat(n + paso)); n += paso; } } catch (e) {} } });
+    await p.reload(); await esperar(2000);
+    await anadir('Nuevo, Seis'); await esperar(900);
+    e = await p.evaluate(() => ({ alumnos: state.grupos[0]?.alumnos.length, estado: UnaVentana.estado, bloqueo: !!document.getElementById('unaVentanaOverlay'), idbOk: saveState.idbOk, turno: localStorage.getItem('una-ventana:cuaderno') }));
+    t.ok(e.turno === '{"n":1}', 'preparación: localStorage está tan lleno que no cabe ni el turno de la ventana', JSON.stringify(e));
+    t.ok(e.alumnos === 9 && e.estado === 'activa' && !e.bloqueo && e.idbOk, 'aun así la ventana sigue activa (sin el aviso de «otra ventana») y guarda', JSON.stringify(e));
+    await p.reload(); await esperar(2500);
+    t.ok(await p.evaluate(() => state.grupos[0]?.alumnos.length === 9 && !document.getElementById('unaVentanaOverlay')) && !p.errores.length, 'y al reabrir está también ese cambio', p.errores.join('; '));
   } },
 
   { nombre: 'tutoria-almacen', descripcion: 'Tutoría: fotos y actas van a IndexedDB, localStorage queda ligero y nada se pierde aunque esté lleno', async fn(t) {

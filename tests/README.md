@@ -27,7 +27,7 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `del-cuaderno` | «📥 Del Cuaderno»: sin duplicar, vinculando identificadores, deshacer |
 | `suspensos` | Importar suspensos por identificador y por nombre parecido |
 | `dos-ventanas` | Una sola ventana guarda; relevo con «Usar esta ventana» |
-| `almacen-lleno` | Cuaderno: con localStorage lleno por otra app, se guarda y se abre desde IndexedDB sin avisos ni pérdidas |
+| `almacen-lleno` | Cuaderno: con localStorage lleno por otra app, se guarda y se abre desde IndexedDB sin avisos ni pérdidas; aunque no quepa ni el turno de la ventana, esta no se bloquea a sí misma |
 | `tutoria-almacen` | Tutoría: fotos y actas en IndexedDB, localStorage ligero, datos de la versión anterior, fotos reducidas |
 | `version-del-curso` | El .html de «Guardar versión del curso» se abre sin servidor |
 | `sin-conexion` | Todas las páginas funcionan sin conexión (se apaga el servidor), también la Planificación con sus letras |
