@@ -34,6 +34,7 @@ function buildState(includeImages = true, includeActas = true) {
     vacantesCfg: _vacantesCfg,
     alertasCfg: _alertasCfg,
     abrevMaterias: _abrevMaterias,
+    columnasActa: _columnasActa,
     actasNoOficialesTabVisible: _actasNoOficialesTabVisible
   };
   if (includeImages) {
@@ -262,6 +263,7 @@ function loadFromLocalStorage() {
       if (saved.vacantesCfg) { _vacMergeCfg(saved.vacantesCfg); }
       if (saved.alertasCfg) _alertasMergeCfg(saved.alertasCfg);
       if (saved.abrevMaterias) _abrevMerge(saved.abrevMaterias);
+      if (saved.columnasActa) _columnasMerge(saved.columnasActa);
       if (saved.convivenciaData) { if (!window._convivenciaData) window._convivenciaData = {}; Object.assign(window._convivenciaData, saved.convivenciaData); }
       // Restaurar el resto del estado (antes se perdía al pulsar "Continuar")
       if (saved.materiasCustom) { Object.assign(_materiasCustom, saved.materiasCustom); }
@@ -679,6 +681,7 @@ function applyFilePayload(parsed) {
   if (parsed.vacantesCfg) { _vacMergeCfg(parsed.vacantesCfg); }
   Object.assign(_alertasCfg, ALERTAS_CFG_DEFECTO); if (parsed.alertasCfg) _alertasMergeCfg(parsed.alertasCfg);
   Object.keys(_abrevMaterias).forEach(k => delete _abrevMaterias[k]); if (parsed.abrevMaterias) _abrevMerge(parsed.abrevMaterias);
+  Object.keys(_columnasActa).forEach(k => delete _columnasActa[k]); if (parsed.columnasActa) _columnasMerge(parsed.columnasActa);
   if (parsed.materiasCustom) {
     Object.keys(_materiasCustom).forEach(k => delete _materiasCustom[k]);
     Object.assign(_materiasCustom, parsed.materiasCustom);
@@ -760,6 +763,7 @@ function _tutEstadoEnBlanco() {
   NIVELES.forEach(n => { currentGrupos[n] = GRUPOS_POR_NIVEL[n][0]; });
   Object.assign(_alertasCfg, ALERTAS_CFG_DEFECTO);
   Object.keys(_abrevMaterias).forEach(k => delete _abrevMaterias[k]);
+  Object.keys(_columnasActa).forEach(k => delete _columnasActa[k]);
   currentNivel = '__home__';
 }
 /* v5 · Datos de ejemplo bajo petición: solo en memoria, nunca se guardan. */

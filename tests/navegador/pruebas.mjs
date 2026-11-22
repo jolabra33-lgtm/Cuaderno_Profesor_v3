@@ -700,6 +700,69 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
+  { nombre: 'tutoria-no-cursa', descripcion: 'Tutoría: materias que no cursa todo el grupo (optativas, Inglés/Francés): «No la cursa», ver solo a quien la cursa, pegar saltándolos, 📬 y acta con «—», «Sin nota» y columnas agrupadas como Itaca', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    const N = '2º Bach.';
+    await tutoriaConAlumnos(p, t.url, N, 'HS', ['Andrés Lozano, Claudia', 'Barabaschi Godoy, Santiago', 'Bataller Martínez, Nuria', 'Boente Barberá, Paula']);
+    const pegar = (r, txt) => p.evaluate(({ r, txt }) => { const inp = document.querySelector(`#dmBody input[data-r="${r}"][data-c="nota"]`), dt = new DataTransfer(); dt.setData('text/plain', txt); inp.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }, { r, txt });
+    await p.evaluate(N => { ['Historia de España|Pérez Gil, Ana', 'Inglés II|Gil Mora, Eva', 'Francés II|Roig Puig, Pau'].forEach(x => { const [m, pr] = x.split('|'); _tAplicarProfesor(N, 'HS', m, pr); });
+      currentGrupos[N] = 'HS'; selectNivel(N); openDatosMateria(N, 'HS', '1', 'Francés II'); }, N); await esperar(200);
+    // Francés: solo Barabaschi (1) y Boente (3). Se marca al resto, se ven solo quienes la cursan y se pega la columna del profesor/a.
+    await p.check('#dmBody input[data-r="0"][data-c="nc"]'); await p.check('#dmBody input[data-r="2"][data-c="nc"]');
+    t.ok(await p.isDisabled('#dmBody input[data-r="0"][data-c="nota"]'), 'quien no la cursa no tiene casillas para escribir');
+    await p.check('#dmSolo');
+    t.ok(!(await p.isVisible('#dmBody input[data-r="0"][data-c="nc"]')) && await p.isVisible('#dmBody input[data-r="1"][data-c="nc"]'), '«Ver solo a quien la cursa» esconde al resto');
+    await pegar(1, '7\n4\n');
+    const fr = await p.evaluate(() => _dmCtx.filas.map(f => f.nota));
+    t.ok(JSON.stringify(fr) === JSON.stringify(['', '7', '', '4']), 'al pegar la columna del profesor/a, las notas caen solo en quien la cursa', JSON.stringify(fr));
+    t.ok(/1 suspenso de 2 que la cursan \(2 no la cursan\)/.test(await p.textContent('#dmResumen')), 'el resumen cuenta solo a quien la cursa', await p.textContent('#dmResumen'));
+    await p.click('#dmPie button:has-text("Guardar Francés II")'); await esperar(200);
+    // Inglés: notas de los otros dos y «Quien está en blanco no la cursa».
+    await p.uncheck('#dmSolo');
+    await p.evaluate(() => _dmCambiar('materia', 'Inglés II')); await esperar(150);
+    await p.fill('#dmBody input[data-r="0"][data-c="nota"]', '6'); await p.fill('#dmBody input[data-r="2"][data-c="nota"]', '3');
+    await p.click('#dmBlancoNC'); await esperar(100);
+    t.ok(JSON.stringify(await p.evaluate(() => _dmCtx.filas.map(f => f.nc))) === '[false,true,false,true]', '«Quien está en blanco no la cursa» marca al resto');
+    await p.click('#dmPie button:has-text("Guardar Inglés II")'); await esperar(200);
+    // Historia de España: falta la nota de una alumna.
+    await p.evaluate(() => _dmCambiar('materia', 'Historia de España')); await esperar(150);
+    for (const [r, v] of [[0, '6'], [1, '5'], [2, '3']]) await p.fill(`#dmBody input[data-r="${r}"][data-c="nota"]`, v);
+    await p.click('#dmPie button:has-text("Guardar Historia")'); await esperar(200);
+    const al = await p.evaluate(N => data[N].HS.map(a => [a.noCursa || [], Object.keys(a.porMateria || {}).sort()]), N);
+    t.ok(JSON.stringify(al) === JSON.stringify([[['Francés II'], ['Historia de España', 'Inglés II']], [['Inglés II'], ['Francés II', 'Historia de España']], [['Francés II'], ['Historia de España', 'Inglés II']], [['Inglés II'], ['Francés II']]]),
+      'se apunta qué no cursa cada uno y no se guardan datos vacíos ni de lo que no cursa', JSON.stringify(al));
+    t.ok(await p.evaluate(N => data[N].HS[3].pendientes1.includes('Francés II') && !data[N].HS[3].pendientes1.includes('Inglés II'), N), 'las suspensas solo cuentan las materias que cursa');
+    await p.evaluate(() => _dmCambiar('k', '2')); await p.evaluate(() => _dmCambiar('materia', 'Francés II')); await esperar(150);
+    t.ok(JSON.stringify(await p.evaluate(() => _dmCtx.filas.map(f => f.nc))) === '[true,false,true,false]', 'en la II Evaluación ya sale marcado quién no la cursa');
+    const bz = await p.evaluate(N => { closeDatosMateria(); openInformacionEquipo(N, 'HS', 'materias'); _infSet('periodo', '1');
+      return ['Francés II', 'Inglés II', 'Historia de España'].map(m => document.querySelector(`#infEquipoBody tr[data-materia="${m}"] td:nth-child(4)`).textContent.trim()); }, N);
+    t.ok(JSON.stringify(bz) === '["2/2","2/2","3/4"]', '📬 cuenta solo a quien la cursa (y se ve la nota que falta)', JSON.stringify(bz));
+    // Acta: «—», fila «Sin nota» y columnas agrupadas (LE II con AN / FR, como Itaca).
+    let D = await p.evaluate(N => { closeInformacionEquipo(); const d = datosActaCalificaciones(N, 'HS', '1'); return { cols: d.columnas.map(c => c.nombre), he: d.columnas[0].sinNota, faltan: d.faltanNotas, fr: d.filas.map(f => f.celdas[d.materias.indexOf('Francés II')].texto) }; }, N);
+    t.ok(JSON.stringify(D.fr) === JSON.stringify(['—', '7', '—', '4']) && D.he === 1 && JSON.stringify(D.faltan) === JSON.stringify([{ materia: 'Historia de España', n: 1 }]),
+      'en el acta «—» es que no la cursa y se avisa de la nota que falta', JSON.stringify(D));
+    await p.evaluate(N => abrirActaCalificaciones(N, 'HS', '1'), N); await esperar(150);
+    t.ok(/Alumnado sin nota .*Historia de España \(1\)/.test(await p.textContent('#actaCalifOv')), 'la ventana del acta avisa de quién no tiene nota');
+    await p.click('#acAbrevs summary');
+    for (const [m, ab] of [['Inglés II', 'AN'], ['Francés II', 'FR']]) {
+      await p.fill(`#actaCalifOv input[aria-label="Abreviatura de ${m}"]`, ab); await p.press(`#actaCalifOv input[aria-label="Abreviatura de ${m}"]`, 'Tab');
+      await p.fill(`#actaCalifOv input[aria-label="Columna del acta de ${m}"]`, 'LE II'); await p.press(`#actaCalifOv input[aria-label="Columna del acta de ${m}"]`, 'Tab');
+    }
+    await esperar(1300);
+    D = await p.evaluate(N => { const d = datosActaCalificaciones(N, 'HS', '1'), le = d.columnas.findIndex(c => c.nombre === 'LE II');
+      return { cols: d.columnas.map(c => c.nombre + (c.agrupada ? '*' : '')), le: d.filas.map(f => f.cols[le].items.map(i => i.abrev + ' ' + i.texto).join()), cifras: [d.columnas[le].calificados, d.columnas[le].suspensos, d.columnas[le].media],
+        html: actaCalificacionesHTML(N, 'HS', '1') }; }, N);
+    t.ok(JSON.stringify(D.cols) === JSON.stringify(['HE', 'LE II*']) && JSON.stringify(D.le) === JSON.stringify(['AN 6', 'FR 7', 'AN 3', 'FR 4']) && JSON.stringify(D.cifras) === '[4,2,5]',
+      'Inglés y Francés van juntas en la columna LE II con su abreviatura delante, y sus cifras juntas', JSON.stringify(D.cols) + JSON.stringify(D.le) + JSON.stringify(D.cifras));
+    t.ok(/<th scope="colgroup" colspan="2"[^>]*>LE II<\/th>/.test(D.html) && /<th scope="col" class="ab">Abr\.<\/th><th scope="col" class="m">Calif\.<\/th>/.test(D.html) && /<th colspan="2" scope="row">Sin nota<\/th>/.test(D.html),
+      'el acta lleva la columna agrupada con «Abr.» y «Calif.» y la fila «Sin nota»');
+    await p.reload(); await esperar(1500);
+    t.ok(await p.evaluate(N => _columnasActa['Inglés II'] === 'LE II' && buildState().columnasActa['Francés II'] === 'LE II' && (data[N].HS[0].noCursa || [])[0] === 'Francés II', N),
+      'las columnas y quién no cursa qué se conservan al recargar y van en el archivo');
+    t.ok(await p.evaluate(() => { const st = buildState(); delete st.columnasActa; applyFilePayload(st); return !Object.keys(_columnasActa).length; }), 'un archivo sin columnas agrupadas vuelve a una columna por materia');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
   { nombre: 'suspensos', descripcion: 'Tutoría: importar suspensos por identificador y por nombre parecido', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     const ids = await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis'] });

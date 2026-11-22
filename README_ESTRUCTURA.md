@@ -146,7 +146,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 57 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 58 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.
@@ -208,6 +208,17 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
   29 pantallas revisadas con axe-core (WCAG 2 A/AA) no dan ningún error (no se ha revisado el contraste de color).
 
 ## Cambios recientes
+
+### Tutoría · materias que no cursa todo el grupo y columnas agrupadas en el acta (noviembre de 2026)
+
+- **«No la cursa»**: `alumno.noCursa = ['Francés II', …]` (campo nuevo y opcional del alumno/a, para todo el curso), con
+  `_tNoCursa` y `_tPonerNoCursa` (01). Al guardar «✍️ Datos de una materia» se borra lo de esa materia en `porMateria` y en las
+  suspensas; las filas en blanco ya no crean entradas vacías y `manual[periodo]` solo se pone si hay nota o «Susp.». Pegar e Intro
+  se saltan a quien no la cursa (`_dmFilasActivas`); «Ver solo a quien la cursa» (preferencia `tut_dm_solo` en localStorage).
+  Importar un archivo del Cuaderno quita la marca a quien viene en él. 📬 cuenta `matriculados` (23).
+- **Acta**: «—» para quien no la cursa, fila «Sin nota» y aviso (`faltanNotas`); columnas agrupadas como en Itaca
+  (`_columnasActa`, clave nueva y opcional `columnasActa` del estado, en las mismas rutas que `abrevMaterias`; `D.columnas`,
+  `fila.cols`), con «Abr.» y «Calif.».
 
 ### Tutoría · acta de calificaciones y desplegable de materias (noviembre de 2026)
 

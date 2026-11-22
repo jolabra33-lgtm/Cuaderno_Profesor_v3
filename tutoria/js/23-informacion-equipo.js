@@ -53,6 +53,7 @@ function _infResumenMateria(nivel, grupo, materia, periodo) {
     const f = d.faltas && d.faltas[kReg]; if (f) r.injust += f.injustificadas || 0;
     const c = d.convivencia && d.convivencia[kReg]; if (c) { r.ac += c.ac || 0; r.pa += c.pa || 0; }
   });
+  r.matriculados = _infAlumnos(nivel, grupo).filter(a => !_tNoCursa(a, materia)).length;   // sin quien no la cursa
   r.hayDatos = r.conNota > 0 || r.introducido > 0;   // ha llegado (o se ha introducido) algo de este periodo
   if (!r.profesor) {
     const p = ((window._asistenciaData || {})[`${nivel}-${grupo}`] || { profesores: [] }).profesores.find(x => _tNorm(x.materia) === _tNorm(materia));
@@ -116,7 +117,6 @@ function renderInformacionEquipo() {
 
 function _infVistaMaterias() {
   const { nivel, grupo, periodo } = _infCtx;
-  const total = _infAlumnos(nivel, grupo).length;
   const nombreP = (_INF_PERIODOS.find(x => x[0] === periodo) || [])[1];
   const filas = _infMaterias(nivel, grupo).map(m => {
     const r = _infResumenMateria(nivel, grupo, m, periodo);
@@ -128,7 +128,7 @@ function _infVistaMaterias() {
       <td style="font-weight:600">${_tEsc(m)}</td>
       <td>${_tEsc(r.profesor) || '<span style="color:var(--text3)">—</span>'}</td>
       <td>${estado}</td>
-      <td style="text-align:center">${llegado ? `${Math.max(r.conNota, r.introducido)}/${total}` : '—'}</td>
+      <td style="text-align:center">${llegado ? `${Math.max(r.conNota, r.introducido)}/${r.matriculados}` : '—'}</td>
       <td style="text-align:center;${r.suspensos ? 'color:var(--red);font-weight:700' : ''}">${llegado ? r.suspensos : '—'}</td>
       <td style="text-align:center">${r.conDatos ? r.injust : '—'}</td>
       <td style="text-align:center">${r.conDatos ? r.ac : '—'}</td>

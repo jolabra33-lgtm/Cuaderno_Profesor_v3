@@ -60,15 +60,19 @@ function _alertasMergeCfg(src) {
 // Abreviaturas de las materias para el acta de calificaciones (las que pone el tutor/a, como en Itaca):
 // { 'Historia de España': 'HE', ... }. Las que no están se generan solas (_acAbrev, en 29).
 let _abrevMaterias = {};
-function _abrevMerge(src, sinPisar) {
+// Materias que van juntas en una misma columna del acta, como en Itaca: { 'Inglés II': 'LE II', 'Francés II': 'LE II' }.
+let _columnasActa = {};
+function _dicMateriasMerge(dest, src, sinPisar, max) {
   if (!src || typeof src !== 'object') return;
   Object.entries(src).forEach(([m, a]) => {
-    m = String(m || '').trim().slice(0, 120); a = String(a == null ? '' : a).trim().slice(0, 12);
+    m = String(m || '').trim().slice(0, 120); a = String(a == null ? '' : a).trim().slice(0, max);
     if (!m || !a) return;
-    if (sinPisar && Object.keys(_abrevMaterias).some(k => k.toLowerCase() === m.toLowerCase())) return;
-    _abrevMaterias[m] = a;
+    if (sinPisar && Object.keys(dest).some(k => k.toLowerCase() === m.toLowerCase())) return;
+    dest[m] = a;
   });
 }
+function _abrevMerge(src, sinPisar) { _dicMateriasMerge(_abrevMaterias, src, sinPisar, 12); }
+function _columnasMerge(src, sinPisar) { _dicMateriasMerge(_columnasActa, src, sinPisar, 24); }
 
 let currentNivel = '__home__';
 let currentGrupos = {};

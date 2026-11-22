@@ -544,6 +544,7 @@ function executeJsonImport() {
     if (src.vacantesCfg) Object.assign(_vacantesCfg, src.vacantesCfg);
     if (src.alertasCfg) _alertasMergeCfg(src.alertasCfg);
     if (src.abrevMaterias) { Object.keys(_abrevMaterias).forEach(k => delete _abrevMaterias[k]); _abrevMerge(src.abrevMaterias); }
+    if (src.columnasActa) { Object.keys(_columnasActa).forEach(k => delete _columnasActa[k]); _columnasMerge(src.columnasActa); }
     // Materias personalizadas: reemplazo completo
     if (src.materiasCustom) {
       Object.keys(_materiasCustom).forEach(k => delete _materiasCustom[k]);
@@ -599,6 +600,7 @@ function executeJsonImport() {
     if (src.alertasCfg && JSON.stringify(_alertasCfg) === JSON.stringify(ALERTAS_CFG_DEFECTO)) _alertasMergeCfg(src.alertasCfg);
     // Abreviaturas de las materias: añade las que aquí no hay
     if (src.abrevMaterias) _abrevMerge(src.abrevMaterias, true);
+    if (src.columnasActa) _columnasMerge(src.columnasActa, true);
     // Materias personalizadas: combina por nivel sin pisar lo existente
     if (src.materiasCustom) {
       Object.keys(src.materiasCustom).forEach(k => { if (!(k in _materiasCustom)) _materiasCustom[k] = src.materiasCustom[k]; });
