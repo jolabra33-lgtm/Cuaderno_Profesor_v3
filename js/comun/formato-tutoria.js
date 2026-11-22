@@ -106,3 +106,43 @@ function ftApellidosNombre(s) {
   return `${p.slice(1).join(' ')}, ${p[0]}`;
 }
 function ftTieneFormatoApellidos(s) { return String(s || '').includes(','); }
+
+/* ---------------------------------------------------------------------------
+   FICHA DEL GRUPO (de Tutoría al Cuaderno del profesorado)
+   La genera el tutor/a desde la sesión de evaluación de Tutoría; cada profesor/a
+   la carga en su Cuaderno (Resultados → «📥 De la tutoría»). Lleva solo lo que el
+   equipo docente necesita para su materia, nunca contactos ni entrevistas:
+   {
+     formato: 'tutoria-a-cuaderno', version: 1,
+     nivel, grupo, tutor, evaluacion ('1'|'2'|'3'), fechaSesion, generado,
+     acuerdosGrupo, valoracion,
+     alumnos: [{
+       idsCuaderno: [...], nombre, nese, recursosNese: [...], repetidor, compensatoria,
+       pap, enriquecimiento, pendientesAnteriores: ['Matemáticas (1º ESO)', ...],
+       propuesta: {tipo, destino}, acuerdos
+     }]
+   }
+   --------------------------------------------------------------------------- */
+const FT_FORMATO_FICHA = 'tutoria-a-cuaderno';
+const FT_VERSION_FICHA = 1;
+function ftNormalizarFichaGrupo(o) {
+  if (!o || typeof o !== 'object' || o.formato !== FT_FORMATO_FICHA || !Array.isArray(o.alumnos)) return null;
+  const txt = (v, max) => String(v == null ? '' : v).slice(0, max || 300).trim();
+  const lista = (v, max) => (Array.isArray(v) ? v : []).slice(0, 40).map(x => txt(x, max || 160)).filter(Boolean);
+  return {
+    formato: FT_FORMATO_FICHA, version: Number(o.version) || 1,
+    nivel: txt(o.nivel, 60), grupo: txt(o.grupo, 60), tutor: txt(o.tutor, 120),
+    evaluacion: ['1', '2', '3'].includes(String(o.evaluacion)) ? String(o.evaluacion) : '',
+    fechaSesion: /^\d{4}-\d{2}-\d{2}$/.test(String(o.fechaSesion || '')) ? String(o.fechaSesion) : '',
+    generado: txt(o.generado, 40),
+    acuerdosGrupo: txt(o.acuerdosGrupo, 6000), valoracion: txt(o.valoracion, 6000),
+    alumnos: o.alumnos.filter(a => a && typeof a === 'object' && txt(a.nombre)).slice(0, 500).map(a => ({
+      idsCuaderno: lista(a.idsCuaderno, 80), nombre: txt(a.nombre),
+      nese: !!a.nese, recursosNese: lista(a.recursosNese, 40), repetidor: !!a.repetidor, compensatoria: !!a.compensatoria,
+      pap: !!a.pap, enriquecimiento: !!a.enriquecimiento, pendientesAnteriores: lista(a.pendientesAnteriores),
+      propuesta: { tipo: txt(a.propuesta && a.propuesta.tipo, 60), destino: txt(a.propuesta && a.propuesta.destino, 80) },
+      acuerdos: txt(a.acuerdos, 4000),
+    })),
+  };
+}
+const FT_NOMBRE_EVAL = { 1: 'I Evaluación', 2: 'II Evaluación', 3: 'Evaluación final' };

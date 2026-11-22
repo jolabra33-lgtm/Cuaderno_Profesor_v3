@@ -166,7 +166,7 @@ function renderResultados(grupo){
   if(state.ui.resVista==="mapa"){ c.innerHTML=mapaCriteriosHTML(grupo); return; }
 
   // ---- "Toda la clase": tabla siempre visible, cada fila abre el detalle del alumno debajo ----
-  const htmlClase=`
+  const htmlClase=`${typeof deTutoriaGrupoHTML==="function"?deTutoriaGrupoHTML(grupo):""}
   <div class="card">
     <div class="flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
       <h2 style="font-size:15px">Toda la clase</h2>
@@ -177,6 +177,7 @@ function renderResultados(grupo){
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesTodos()">Exportar todos los informes</button>
         <button class="ghost" style="border:1px solid var(--line)" onclick="exportarInformesFinalesTodos()">Exportar informes finales de curso</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Archivo con los suspensos de tu materia en cada evaluación, para cargarlo en el Gestor de Tutoría del tutor/a del grupo" onclick="exportarParaTutoria()">👥 Para la tutoría</button>
+        <button class="ghost" style="border:1px solid var(--line)" title="Cargar la «Ficha del grupo» que envía el tutor/a desde el Gestor de Tutoría: NESE, repetición, pendientes de tu materia y acuerdos de la sesión de evaluación" onclick="importarDeTutoria()">📥 De la tutoría</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Sumar puntos a la nota de la evaluación o a la nota final (p. ej. +0,5 por presentarse voluntario/a)" onclick="abrirExtrasEvaluacion(${trim})">➕ Puntos extra</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Borradores de comentario para quien todavía no tenga (no sobrescribe)" onclick="comSugerirGrupo('es')">💬 Comentarios vacíos</button>
         <button class="ghost" style="border:1px solid var(--line)" title="Esborranys de comentari en valencià per a qui encara no en tinga" onclick="comSugerirGrupo('va')">💬 En valencià</button>

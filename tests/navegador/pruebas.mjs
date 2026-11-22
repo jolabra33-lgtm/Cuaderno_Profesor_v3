@@ -176,7 +176,9 @@ export const PRUEBAS = [
       const g = state.grupos[0], cr = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
       g.nombre = '1º A ' + P('grupo');
       g.alumnos.forEach((a, i) => { a.apellidos = 'Pérez ' + P('apellidos'); a.nombreP = 'Ana' + i + P('nombreP'); a.nombre = a.apellidos + ', ' + a.nombreP; a.observaciones = P('obs'); a.comentariosEval = [P('coment'), '', ''];
-        a.nese = true; a.neseNivel = P('neseNivel'); a.familia = [{ parentesco: P('parentesco'), nombre: P('famNombre'), email: P('email') }, { parentesco: '', nombre: '', email: '' }]; });
+        a.nese = true; a.neseNivel = P('neseNivel'); a.familia = [{ parentesco: P('parentesco'), nombre: P('famNombre'), email: P('email') }, { parentesco: '', nombre: '', email: '' }];
+        a.deTutoria = { evaluacion: '1', fechaSesion: '2026-12-18', tutor: P('dt_tutor'), propuesta: { tipo: P('dt_tipo'), destino: P('dt_destino') }, medidas: [P('dt_medida')], acuerdos: P('dt_acuerdos') }; });
+      g.deTutoria = { evaluacion: '1', fechaSesion: '2026-12-18', tutor: P('dtg_tutor'), acuerdosGrupo: P('dtg_acuerdos'), valoracion: P('dtg_valoracion') };
       g.actividades = [{ id: 'e1', nombre: 'Examen ' + P('actividad'), tipo: TIPOS[0], trimestre: 0, bloqueId: 'b0', esExamen: true, sda: P('sda'), criterios: [{ critId: cr, peso: 100 }] }];
       g.notasCuant = { [g.alumnos[0].id]: { e1: 7 } };
       g.bloques.forEach(b => { b.label += P('bloque'); });
@@ -194,6 +196,11 @@ export const PRUEBAS = [
       const malos = new Set(); const mira = async d => { donde = d; _mostrarBienvenida = false; render(); await new Promise(r => setTimeout(r, 120)); inyectados().forEach(x => malos.add(x)); };
       for (const tab of ['alumnos', 'plano', 'actividades', 'calificar', 'resultados', 'resumen', 'cobertura', 'asistencia', 'diario', 'convivencia', 'familias', 'ajustes']) { state.ui.appMode = 'competencial'; state.ui.grupoId = g.id; state.ui.tab = tab; await mira('pestaña ' + tab); }
       state.ui.resAl = g.alumnos[0].id; state.ui.tab = 'resultados'; await mira('informe del alumno');
+      state.ui.resAl = ''; state.ui.tab = 'alumnos'; state.ui.fichaAlumnoId = g.alumnos[0].id; await mira('ficha del alumno (de la tutoría)'); state.ui.fichaAlumnoId = '';
+      // Ventana «📥 De la tutoría» con una ficha del grupo hostil
+      donde = 'De la tutoría'; _dtVentana(g, ftNormalizarFichaGrupo({ formato: 'tutoria-a-cuaderno', version: 1, nivel: P('f_nivel'), grupo: P('f_grupo'), tutor: P('f_tutor'), evaluacion: '1', acuerdosGrupo: P('f_acuerdos'), valoracion: P('f_val'),
+        alumnos: g.alumnos.map(a => ({ nombre: a.nombre, idsCuaderno: [a.id], nese: true, recursosNese: [P('f_rec')], acuerdos: P('f_ac'), propuesta: { tipo: P('f_tipo') } })).concat([{ nombre: P('f_sin') }]) }));
+      await new Promise(r => setTimeout(r, 100)); inyectados().forEach(x => malos.add(x)); document.getElementById('deTutoriaOv')?.remove();
       for (const m of ['inicio', 'corrector', 'programacion', 'memoria', 'nese', 'refuerzo', 'repeticion', 'reuniones']) { state.ui.appMode = m; await mira('modo ' + m); }
       state.ui.appMode = 'programacion'; state.ui.progTab = 'detalle'; state.ui.progId = 'p1'; await mira('programación abierta');
       buscarAbrir(); const inp = document.querySelector('.modal-overlay input'); if (inp) { inp.value = 'Zq'; inp.dispatchEvent(new Event('input', { bubbles: true })); } await mira('buscador');
@@ -457,6 +464,67 @@ export const PRUEBAS = [
     t.ok(await p.evaluate(() => data['1º ESO'].A[0].entrevistas.length) === 0, 'una entrevista se puede borrar');
     await p.evaluate(() => _undoPop()); await esperar(200);
     t.ok(await p.evaluate(() => data['1º ESO'].A[0].entrevistas.length) === 1, 'y se recupera con Ctrl+Z');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'sesion-evaluacion', descripcion: 'Sesión de evaluación: asistencia, valoración, propuesta y acuerdos alumno por alumno, acta automática, y ficha del grupo que el Cuaderno carga con «📥 De la tutoría»', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis'] });
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['GARCÍA LÓPEZ, ANA', 'Pérez Ruiz, Luis']);
+    await p.evaluate(() => {
+      const [ana, luis] = data['1º ESO'].A;
+      Object.assign(ana, { nese: 'Sí', recursoNese: ['AL'], eval1: 3, pendientes1: ['Matemáticas', 'Inglés', 'Música'], pendientesAnteriores: ['Geografía e Historia (1º ESO)'],
+        familia: [{ parentesco: 'Madre', nombre: 'Contacto Privado', email: 'privado@correo.es', telefono: '' }], entrevistas: [{ id: 'e1', fecha: _hoyLocal(), motivo: 'Entrevista privada' }] });
+      Object.assign(luis, { repetidor: 'Sí', eval1: 1, pendientes1: ['Música'] });
+      const d = _getAsistenciaData('1º ESO', 'A');
+      d.profesores.push({ id: 'p1', nombre: 'Zapata Ruiz, Luis', materia: 'Matemáticas', correo: '' });
+      ['eval1', 'eval2', 'eval3'].forEach(k => d.sesiones[k].push({ asistio: null, justificacion: '' }));
+      tutores['1º ESO-A'] = 'Gil Mora, Eva'; renderMain();
+    });
+    await p.click('#mainContent button:has-text("Sesión de evaluación")'); await esperar(300);
+    await p.selectOption('#sesCab select', '1'); await esperar(150);
+    t.ok(/Música \(2\)/.test(await p.textContent('#sesMain')), 'el grupo muestra las materias con más suspensos');
+    await p.check('#sesMain input[type=radio] >> nth=1'); await esperar(150);
+    await p.fill('#sesMain input[aria-label="Motivo de la ausencia"]', 'Formación');
+    await p.fill('#sesMain textarea[aria-label="Valoración general del grupo"]', 'Grupo trabajador pero hablador.');
+    await p.fill('#sesMain textarea[aria-label="Acuerdos del grupo"]', 'Cambiar la distribución de las mesas.');
+    await p.click('#sesMain button:has-text("Empezar")'); await esperar(200);
+    t.ok(/García López|GARCÍA LÓPEZ/.test(await p.textContent('#sesMain .ses-alumno-nombre')) && /Matemáticas/.test(await p.textContent('#sesMain .ses-mats')), 'cada alumno/a sale con sus materias suspensas');
+    await p.click('#sesMain .ses-prop:has-text("Promoción")'); await esperar(150);
+    await p.fill('#sesMain textarea[aria-label="Acuerdos para este alumno/a"]', 'Plan de refuerzo en Matemáticas.');
+    await p.click('#sesMain button:has-text("Revisado y siguiente")'); await esperar(200);
+    t.ok(/Pérez Ruiz/.test(await p.textContent('#sesMain .ses-alumno-nombre')) && /1 de 2 revisados/.test(await p.textContent('#sesCab')), '«Revisado y siguiente» marca y pasa al siguiente');
+    await p.keyboard.press('ArrowLeft'); await esperar(150);
+    t.ok(/GARCÍA LÓPEZ/.test(await p.textContent('#sesMain .ses-alumno-nombre')), 'las flechas del teclado cambian de alumno/a');
+    const r = await p.evaluate(() => { const ana = data['1º ESO'].A[0], d = _getAsistenciaData('1º ESO', 'A');
+      return { prop: ana.propuesta1.tipo, ac: ana.sesionEval['1'].acuerdos, rev: ana.sesionEval['1'].revisado, val: d.actasSesion['1'].valoracion, as: d.sesiones.eval1[0] }; });
+    t.ok(r.prop === 'Promoción' && r.ac === 'Plan de refuerzo en Matemáticas.' && r.rev && r.val === 'Grupo trabajador pero hablador.' && r.as.asistio === false && r.as.justificacion === 'Formación',
+      'se guardan la propuesta, los acuerdos, la valoración y la asistencia', JSON.stringify(r));
+    await p.click('#sesCab button:has-text("Acta")'); await esperar(400);
+    const acta = await p.evaluate(() => document.querySelector('#tdocOverlay iframe')?.srcdoc || '');
+    t.ok(/Acta de la sesión de evaluación/.test(acta) && /Plan de refuerzo en Matemáticas/.test(acta) && /Promoción/.test(acta) && /Zapata Ruiz, Luis \(Matemáticas\): Formación/.test(acta) && /Cambiar la distribución/.test(acta),
+      'el acta se genera con asistencia, valoración, acuerdos y la propuesta de cada alumno/a');
+    await p.evaluate(() => { __cerrarVistaDocT(); closeSesionEvaluacion(); });
+    const ficha = await p.evaluate(() => fichaGrupoParaProfesorado('1º ESO', 'A', '1'));
+    const textoFicha = JSON.stringify(ficha);
+    t.ok(ficha.alumnos[0].nese && ficha.alumnos[1].repetidor && ficha.alumnos[0].acuerdos === 'Plan de refuerzo en Matemáticas.', 'la ficha del grupo lleva NESE, repetición y acuerdos');
+    t.ok(!/Contacto Privado|privado@correo|Entrevista privada/.test(textoFicha), 'y no lleva contactos de la familia ni entrevistas');
+    await p.evaluate(() => _undoPop()); await esperar(200);
+    t.ok(await p.evaluate(() => data['1º ESO'].A[0].propuesta1.tipo) === '', 'Ctrl+Z deshace la decisión tomada en la sesión');
+    // En el Cuaderno de un profesor/a: «📥 De la tutoría»
+    await p.goto(t.url + '/'); await esperar(1500);
+    const elegir = p.waitForEvent('filechooser');
+    await p.evaluate(() => { _mostrarBienvenida = false; state.ui.grupoId = state.grupos[0].id; state.ui.appMode = 'competencial'; state.ui.tab = 'resultados'; render(); importarDeTutoria(); });
+    await (await elegir).setFiles([{ name: 'ficha-grupo.json', mimeType: 'application/json', buffer: Buffer.from(textoFicha) }]); await esperar(400);
+    const vista = await p.textContent('#deTutoriaOv');
+    t.ok(/2 alumnos encontrados/.test(vista) && /Marcar NESE[^(]*\(1\)/.test(vista) && /Repite curso[^(]*\(1\)/.test(vista) && /Geografía e Historia[^(]*\(1\)/.test(vista), 'la vista previa dice qué va a cambiar', vista.slice(0, 300));
+    await p.click('#deTutoriaOv button:has-text("Aplicar")'); await esperar(400);
+    const c = await p.evaluate(() => { const [ana, luis] = state.grupos[0].alumnos; return { nese: ana.nese, rep: luis.repetidor, pend: ana.pendientes, dt: ana.deTutoria && ana.deTutoria.acuerdos, g: state.grupos[0].deTutoria && state.grupos[0].deTutoria.acuerdosGrupo }; });
+    t.ok(c.nese && c.rep && c.pend.includes('1') && c.dt === 'Plan de refuerzo en Matemáticas.' && c.g === 'Cambiar la distribución de las mesas.', 'el Cuaderno marca NESE, repite, la pendiente de su materia y guarda los acuerdos', JSON.stringify(c));
+    await p.evaluate(() => { state.ui.appMode = 'competencial'; state.ui.tab = 'alumnos'; state.ui.fichaAlumnoId = state.grupos[0].alumnos[0].id; render(); }); await esperar(300);
+    t.ok(/De la tutoría[\s\S]*Plan de refuerzo en Matemáticas/.test(await p.textContent('body')), 'la ficha del alumno/a en el Cuaderno muestra lo acordado en la sesión');
+    await p.evaluate(() => { state.ui.fichaAlumnoId = ''; state.ui.tab = 'resultados'; render(); }); await esperar(300);
+    t.ok(/Acuerdos de la sesión de evaluación/.test(await p.textContent('body')), 'y Resultados, los acuerdos del grupo');
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 

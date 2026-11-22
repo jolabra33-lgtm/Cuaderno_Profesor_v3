@@ -287,6 +287,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
         <button class="compact-toggle${window._compactMode?' active':''}" id="compactToggle-${_tEsc(nivel)}-${_tEsc(grupo)}"
           title="Modo compacto — reduce el tamaño de las filas"
           onclick="_toggleCompact('${jsAttr(nivel)}','${jsAttr(grupo)}',this)">${window._compactMode?'⊡ Normal':'⊟ Compacto'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="openSesionEvaluacion('${jsAttr(nivel)}','${jsAttr(grupo)}')" title="Pantalla para llevar la junta de evaluación alumno por alumno (proyectable)">🎓 Sesión de evaluación</button>
         <button class="btn btn-ghost btn-sm" onclick="openActaOficialMenu('${jsAttr(nivel)}','${jsAttr(grupo)}')">📋 Acta Oficial</button>
         <details class="mas-menu">
           <summary class="btn btn-ghost btn-sm" title="Más herramientas del grupo">⋯ Más${_getAsistenciaIndicator(nivel, grupo) || ((window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : '')}</summary>
@@ -295,6 +296,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
             <button role="menuitem" onclick="openAsistencia('${jsAttr(nivel)}','${jsAttr(grupo)}')">👥 Asistencia a la sesión${_getAsistenciaIndicator(nivel, grupo)}</button>
             <button role="menuitem" onclick="openEquipoDocente('${jsAttr(nivel)}','${jsAttr(grupo)}')">👨‍🏫 Equipo docente</button>
             <button role="menuitem" onclick="openInformacionEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📬 Información del equipo docente</button>
+            <button role="menuitem" onclick="exportarFichaGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}',_sesEvalPropuesta('${jsAttr(nivel)}'))">📤 Ficha del grupo para el profesorado</button>
             <button role="menuitem" onclick="openObservacionesGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📝 Observaciones del grupo${(window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : ''}</button>
             <button role="menuitem" onclick="openPlanoGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">🪑 Plano del grupo</button>
             <button role="menuitem" onclick="openHorarioGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">🗓️ Horario del grupo</button>

@@ -52,12 +52,14 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
         a.porMateria = { [P('pm_materia')]: { profesor: P('pm_prof'), generado: new Date().toISOString(), notas: { 1: 3 }, faltas: { curso: { injustificadas: 20, justificadas: 0, retrasos: 0 } },
           convivencia: { curso: { ac: 5, rc: 0, pa: 3 } }, comentarios: { 1: P('pm_com') } } };
         a.faltasInjust1 = 12;
+        a.sesionEval = { 1: { acuerdos: P('ses_acuerdos'), revisado: i % 2 === 0 } };
       });
       const key = `${n}-${g}`;
       tutores[key] = 'Tutor ' + P('tutor');
       (window._obsGrupoData = window._obsGrupoData || {})[key] = 'Obs grupo ' + P('obsGrupo');
       const as = _getAsistenciaData(n, g); as.profesores = [{ nombre: P('prof_nombre'), materia: P('prof_materia'), correo: P('prof_correo') }];
       ['eval1', 'eval2', 'eval3'].forEach(e => { as.sesiones[e] = [{ asistio: false, justificacion: P('justif') }]; });
+      as.actasSesion = { 1: { valoracion: P('ses_valoracion'), acuerdosGrupo: P('ses_acuerdosGrupo'), horaInicio: '16:00', horaFin: '17:00' } };
     }));
     calEventos.push({ id: 'evx', fecha: _today, titulo: P('cal_titulo'), tipo: 'otro', nota: P('cal_nota') });
     const ies = document.getElementById('headerIesName'); if (ies) ies.value = 'IES ' + P('ies');
@@ -90,6 +92,7 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
       document.querySelectorAll('.modal-overlay.open, .overlay.open, .open[id$="Overlay"], .show[id$="Overlay"]').forEach(o => { o.classList.remove('open'); o.classList.remove('show'); });
       try { closeModal(); } catch (e) {}
       document.querySelectorAll('details[open]').forEach(d => d.removeAttribute('open'));
+      document.getElementById('sesionOverlay')?.classList.remove('open'); document.body.classList.remove('sesion-abierta');
     };
     // Fuera del rastreo: los avisos de «una sola ventana» y del PIN (recargan la página o la bloquean).
     const visibles = raiz => [...raiz.querySelectorAll('[onclick], button, summary')].filter(el => { if (el.closest('#unaVentanaOverlay, #bloqueoOverlay, #avisoVersionNueva, #bloqueoBtn')) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
@@ -140,6 +143,10 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
       ['ACTA DE ENTREVISTA', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openFichaAlumno(nivH, gH, 0, 'entrevistas'); _entActa('ent0'); }],
       ...['materias', 'alumno'].map(v => ['📬 · ' + v, () => { currentGrupos[nivH] = gH; selectNivel(nivH); openInformacionEquipo(nivH, gH, v, 0); }]),
       ['UMBRALES', () => { selectNivel('__home__'); abrirUmbralesAlertas(); }],
+      ['SESIÓN · grupo', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '1'); }],
+      ['SESIÓN · alumno/a', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '1'); _sesIr(0); }],
+      ['SESIÓN · final', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '3'); _sesIr(0); }],
+      ['ACTA DE LA SESIÓN', () => { selectNivel(nivH); generarActaSesion(nivH, gH, '1'); }],
     ];
     for (const [nombre, poner] of extra) { try { await pantalla(nombre, poner); } catch (err) { fallos.push(nombre + ': ' + err.message); } }
     const lista = o => Object.entries(o).map(([k, v]) => `${k}   ← ${typeof v === 'string' ? v : Object.keys(v)[0]}`);

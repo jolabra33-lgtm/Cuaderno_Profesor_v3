@@ -143,3 +143,7 @@ Actualizar los archivos no toca tus datos: viven en el navegador, no en GitHub.
     alumnado de un grupo del Cuaderno con su fecha de nacimiento, NESE, repetición y contactos de la
     familia; a quien ya está le completa lo que le falte, sin duplicarlo, y antes de aplicar enseña qué
     va a cambiar. Además ofrece traer lo de tu materia (lo mismo que el archivo, sin archivo).
+- De Tutoría al Cuaderno: tras la **🎓 Sesión de evaluación**, el tutor/a genera la **📤 Ficha del grupo para el
+  profesorado** y se la envía. Cada profesor/a la carga en su Cuaderno (Resultados → **📥 De la tutoría**): marca NESE y
+  repetición, añade las pendientes de cursos anteriores de su materia y guarda los acuerdos de la sesión, que se ven en la
+  ficha de cada alumno/a y, los del grupo, en Resultados. No lleva contactos de las familias ni entrevistas.

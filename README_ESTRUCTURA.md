@@ -25,7 +25,7 @@ La aplicación es **estática**: no necesita compilar nada. Se publica tal cual 
 | `js/una-ventana.js` | Solo una ventana guarda a la vez: si la app ya está abierta en otra (o en la otra versión, v2/v3), esta se bloquea con un aviso y «Usar esta ventana». Es el **primer** script de `index.html` y de `tutoria/index.html` |
 | `js/bloqueo.js` | Bloqueo con PIN (opcional): tapa la app hasta escribir el PIN, al abrir y tras unos minutos sin usarla. En `<head>` del Cuaderno y de Tutoría. Sus ajustes están en `js/ui/privacidad.js` |
 | `js/registro-sw.js` | Registro del service worker y aviso «Hay una versión nueva · Actualizar» (lo usan el Cuaderno y Tutoría) |
-| `js/comun/formato-tutoria.js` | **Contrato Cuaderno ↔ Tutoría**: formato del paquete «Para la tutoría» (versión 2: notas, faltas, convivencia y comentarios por evaluación), `ftNormalizarPaquete` (limpia lo que llega de un archivo) y `ftApellidosNombre`. Lo cargan las dos apps |
+| `js/comun/formato-tutoria.js` | **Contrato Cuaderno ↔ Tutoría**: formato del paquete «Para la tutoría» (versión 2: notas, faltas, convivencia y comentarios por evaluación), `ftNormalizarPaquete` (limpia lo que llega de un archivo) y `ftApellidosNombre`. Lo cargan las dos apps. También el formato de la ficha del grupo (Tutoría → Cuaderno, `ftNormalizarFichaGrupo`) |
 | `tutoria/` | Gestor de Tutoría, aplicación independiente (ver más abajo) |
 | `tests/calculo-notas.html` | Pruebas del motor de cálculo de notas (ver más abajo) |
 
@@ -65,6 +65,7 @@ Completan el repositorio: `manifest.json` e `icons/` (instalación como app), `.
 | `js/evaluacion/calificar.js` | Calificar, entrada rápida de notas y marcas NP/Exento |
 | `js/evaluacion/puntos-extra.js` | Puntos extra en actividades/exámenes y en la nota de cada evaluación o la final (ventana «➕ Puntos extra», píldoras y textos de informe). El cálculo está en `calculo-notas.js` |
 | `js/resultados/informe-detallado.js` | Distribución, evolución del alumno e informe detallado de cálculo |
+| `js/resultados/de-la-tutoria.js` | «📥 De la tutoría»: carga la ficha del grupo que envía Tutoría (vista previa; NESE, repite, pendientes de la materia, `alumno.deTutoria` y `grupo.deTutoria`) y los bloques que lo muestran en la ficha del alumno/a y en Resultados. Va justo después de `resultados.js` |
 | `js/resultados/resultados.js` | Comentarios sugeridos, paso a Tutoría (`paqueteParaTutoria`, archivo «Para la tutoría» y copia para Tutoría en IndexedDB, `guardarCopiaParaTutoria`) y pantalla de Resultados |
 | `js/resultados/cobertura-diagnostico.js` | Cobertura de la evaluación, «Revisar mis datos» y novedades |
 | `js/clase/asistencia.js` | Asistencia (y constantes de convivencia y familias) |
@@ -132,6 +133,7 @@ Antes era un único `index.html` de casi 20.000 líneas. En la v3 está dividido
 | `js/23-informacion-equipo.js` | «📬 Información del equipo docente»: lo recibido de cada materia (`alumno.porMateria`), recordatorio por correo y relleno del seguimiento con familia |
 | `js/24-ficha-alumno.js` | Ficha completa del alumno/a (`openFichaAlumno`) y entrevistas con la familia (`alumno.entrevistas`, acta imprimible) |
 | `js/25-alertas-y-pendientes.js` | Alertas del alumnado (`_alertasAlumno`, umbrales en `_alertasCfg` de `02-datos.js`), «🧭 Qué me falta» en Inicio y ventana de umbrales |
+| `js/26-sesion-evaluacion.js` | «🎓 Sesión de evaluación» a pantalla completa (`openSesionEvaluacion`), acta de la sesión (`generarActaSesion`) y ficha del grupo para el profesorado (`fichaGrupoParaProfesorado`, `exportarFichaGrupo`) |
 
 Antes de `js/01` se carga `../js/comun/formato-tutoria.js`, el formato común con el Cuaderno (ver abajo).
 
@@ -141,7 +143,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 53 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 54 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.
@@ -203,6 +205,18 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
   29 pantallas revisadas con axe-core (WCAG 2 A/AA) no dan ningún error (no se ha revisado el contraste de color).
 
 ## Cambios recientes
+
+### Tutoría · fase 4: sesión de evaluación, acta y ficha del grupo para el profesorado (noviembre de 2026)
+
+- **🎓 Sesión de evaluación** (`tutoria/js/26-sesion-evaluacion.js`): pantalla completa (`.sesion-ov`), grupo y alumno por alumno,
+  flechas del teclado. Datos sin claves nuevas en el estado: `alumno.sesionEval[k] = {acuerdos, revisado}` y
+  `_asistenciaData['nivel-grupo'].actasSesion[k] = {valoracion, acuerdosGrupo, horaInicio, horaFin}` (viajan con `asistenciaData`);
+  la propuesta es `propuesta1`/`propuesta2` y, en la 3.ª, `promociona`. Cada decisión hace `_undoPush`.
+- **Acta de la sesión** (`generarActaSesion`) en la vista de documentos.
+- **Ficha del grupo para el profesorado** (formato `tutoria-a-cuaderno` en `js/comun/formato-tutoria.js`): sin contactos ni
+  entrevistas. El Cuaderno la carga con «📥 De la tutoría» (`js/resultados/de-la-tutoria.js`): empareja por `idsCuaderno` o por
+  nombre; marca NESE/repite (nunca desmarca), añade pendientes de su materia («Materia (2º ESO)» → `pendientes` «2») y guarda
+  `alumno.deTutoria` / `grupo.deTutoria` (ficha del alumno/a en `plano-aula.js` y Resultados).
 
 ### Tutoría · fase 3: ficha, entrevistas, alertas y «Qué me falta» (noviembre de 2026)
 
