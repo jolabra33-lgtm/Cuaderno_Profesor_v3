@@ -135,6 +135,7 @@ Antes era un único `index.html` de casi 20.000 líneas. En la v3 está dividido
 | `js/25-alertas-y-pendientes.js` | Alertas del alumnado (`_alertasAlumno`, umbrales en `_alertasCfg` de `02-datos.js`), «🧭 Qué me falta» en Inicio y ventana de umbrales |
 | `js/27-informe-equipo.js` | «📊 Informe para el equipo docente»: `datosInformeEquipo` (las cifras) e `informeEquipoHTML` (el .html, sin scripts), versión previa o tras la sesión (`_ieTrasSesion`), y su ventana (`abrirInformeEquipo`) |
 | `js/28-datos-materia.js` | «✍️ Datos de una materia»: el tutor/a introduce a mano (o pega de Excel) la nota o «suspensa», faltas, retrasos, AC, partes y comentario de una materia en una evaluación (`openDatosMateria`, `guardarDatosMateria`); se guarda en `porMateria` como un archivo del Cuaderno, con `origen: 'manual'` |
+| `js/29-acta-calificaciones.js` | «📑 Acta de calificaciones», como el acta de Itaca: `datosActaCalificaciones` (las cifras: notas por alumno/a y materia, S si suspende sin nota, recuentos y medias, reparto, abreviaturas con `_acAbrev`) y `actaCalificacionesHTML` (.html apaisado sin scripts), y su ventana (`abrirActaCalificaciones`) |
 | `js/26-sesion-evaluacion.js` | «🎓 Sesión de evaluación» a pantalla completa (`openSesionEvaluacion`), acta de la sesión (`generarActaSesion`) y ficha del grupo para el profesorado (`fichaGrupoParaProfesorado`, `exportarFichaGrupo`) |
 
 Antes de `js/01` se carga `../js/comun/formato-tutoria.js`, el formato común con el Cuaderno (ver abajo).
@@ -145,7 +146,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 56 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 57 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.
@@ -207,6 +208,18 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
   29 pantallas revisadas con axe-core (WCAG 2 A/AA) no dan ningún error (no se ha revisado el contraste de color).
 
 ## Cambios recientes
+
+### Tutoría · acta de calificaciones y desplegable de materias (noviembre de 2026)
+
+- **📑 Acta de calificaciones** (`tutoria/js/29-acta-calificaciones.js`): hoja como el acta de evaluación de Itaca a partir de
+  `porMateria` (notas del Cuaderno o introducidas a mano; en la 3.ª, `final` y si no `3`) y de las suspensas de la evaluación.
+  Materias en el orden del catálogo del nivel (`getMateriasParaNivel`) y solo las que tienen calificaciones o están en el
+  equipo docente. Abreviaturas propias (como las de Itaca) en `_abrevMaterias` (02-datos.js), clave nueva y opcional
+  `abrevMaterias` del estado: `buildState`, `applyFilePayload`, `loadFromLocalStorage`, `_tutEstadoEnBlanco`, archivo del curso
+  (14) e importar/combinar (08); los archivos sin ella cargan igual. Se editan en la ventana del acta (`_acPonerAbrev`).
+- **«✍️ Datos de una materia»**: el campo de materia era un `<input list>` y el navegador solo sugería las que coincidían con lo
+  escrito, así que no se podía cambiar de materia. Ahora es un `<select>` con dos grupos (`_dmMateriasGrupos`: del grupo /
+  otras del nivel) y «➕ Otra materia…»; «Guardar y siguiente» (`_dmGuardarYSiguiente`). `guardarDatosMateria` devuelve `true` si guarda.
 
 ### Tutoría · datos de una materia introducidos a mano (noviembre de 2026)
 

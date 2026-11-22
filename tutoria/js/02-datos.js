@@ -57,6 +57,19 @@ function _alertasMergeCfg(src) {
   });
 }
 
+// Abreviaturas de las materias para el acta de calificaciones (las que pone el tutor/a, como en Itaca):
+// { 'Historia de España': 'HE', ... }. Las que no están se generan solas (_acAbrev, en 29).
+let _abrevMaterias = {};
+function _abrevMerge(src, sinPisar) {
+  if (!src || typeof src !== 'object') return;
+  Object.entries(src).forEach(([m, a]) => {
+    m = String(m || '').trim().slice(0, 120); a = String(a == null ? '' : a).trim().slice(0, 12);
+    if (!m || !a) return;
+    if (sinPisar && Object.keys(_abrevMaterias).some(k => k.toLowerCase() === m.toLowerCase())) return;
+    _abrevMaterias[m] = a;
+  });
+}
+
 let currentNivel = '__home__';
 let currentGrupos = {};
 NIVELES.forEach(n => { currentGrupos[n] = GRUPOS_POR_NIVEL[n][0]; });

@@ -35,12 +35,18 @@ const _DM_PERIODOS_NOTA = { '1': ['1'], '2': ['2'], '3': ['3', 'final'] };
 let _dmCtx = { nivel: '', grupo: '', k: '1', materia: '', profesor: '', filas: [], cambios: false };
 
 function _dmAlumnos() { return data[_dmCtx.nivel]?.[_dmCtx.grupo] || []; }
-function _dmMaterias(nivel, grupo, k) {
-  const out = [];
-  const add = m => { m = String(m || '').trim(); if (m && _tNorm(m) !== 'tutoria' && !out.some(x => _tNorm(x) === _tNorm(m))) out.push(m); };
-  _ieMateriasGrupo(nivel, grupo, k).forEach(add);
-  (getMateriasParaNivel(nivel, grupo) || []).forEach(add);
-  return out;
+// Materias para el desplegable, en un orden fijo: primero las del grupo (equipo docente, suspensas
+// o con datos), en el orden del catálogo del nivel; después, las demás del nivel.
+function _dmMateriasGrupos(nivel, grupo, k) {
+  const catalogo = getMateriasParaNivel(nivel, grupo) || [];
+  const pos = m => { const i = catalogo.findIndex(x => _tNorm(x) === _tNorm(m)); return i < 0 ? 999 : i; };
+  const lista = () => { const out = []; out.add = m => { m = String(m || '').trim(); if (m && _tNorm(m) !== 'tutoria' && !out.some(x => _tNorm(x) === _tNorm(m))) out.push(m); }; return out; };
+  const delGrupo = lista(), otras = lista();
+  _ieMateriasGrupo(nivel, grupo, k).forEach(delGrupo.add);
+  (data[nivel]?.[grupo] || []).forEach(a => Object.keys(a.porMateria || {}).forEach(delGrupo.add));
+  delGrupo.sort((x, y) => pos(x) - pos(y) || x.localeCompare(y, 'es'));
+  catalogo.forEach(m => { if (!delGrupo.some(x => _tNorm(x) === _tNorm(m))) otras.add(m); });
+  return { delGrupo: [...delGrupo], otras: [...otras] };
 }
 function _dmEntrada(a, materia) {
   const pm = a.porMateria || {};
@@ -124,9 +130,38 @@ window._dmCambiar = async function(campo, valor) {
   renderDatosMateria();
 };
 
+// Desplegable de materias: «➕ Otra materia…» muestra un cuadro para escribirla.
+window._dmElegirMateria = function(v) {
+  if (v !== '__otra') { _dmCambiar('materia', v); return; }
+  const sel = document.getElementById('dmMateriaSel'), otra = document.getElementById('dmMateriaOtra');
+  if (sel) sel.value = _dmCtx.materia || '';
+  if (otra) { otra.hidden = false; otra.focus(); }
+};
+function _dmPeriodo(k) { return _DM_PERIODOS_NOTA[k][_DM_PERIODOS_NOTA[k].length - 1]; }
+// La materia que va después de la actual (en el orden del desplegable de antes de guardar): la siguiente
+// del grupo que aún no tiene datos de esta evaluación. Sin materias del grupo, la siguiente del nivel sin datos.
+function _dmSiguienteMateria(g) {
+  const { nivel, grupo, k, materia } = _dmCtx, mats = g.delGrupo.concat(g.otras);
+  const i = mats.findIndex(m => _tNorm(m) === _tNorm(materia));
+  const orden = mats.slice(i + 1).concat(mats.slice(0, Math.max(i, 0))).filter(m => _tNorm(m) !== _tNorm(materia));
+  const sinDatos = m => !_infResumenMateria(nivel, grupo, m, _dmPeriodo(k)).hayDatos;
+  const delGrupo = orden.filter(m => g.delGrupo.some(x => _tNorm(x) === _tNorm(m)));
+  return delGrupo.length ? (delGrupo.find(sinDatos) || '') : (orden.find(sinDatos) || '');
+}
+window._dmGuardarYSiguiente = async function() {
+  const g = _dmMateriasGrupos(_dmCtx.nivel, _dmCtx.grupo, _dmCtx.k);
+  if (!guardarDatosMateria()) return;
+  const sig = _dmSiguienteMateria(g);
+  if (sig) await _dmCambiar('materia', sig);
+  else showToast(`✅ Todas las materias del grupo tienen ya datos de la ${FT_NOMBRE_EVAL[_dmCtx.k]} · 📑 ya puedes sacar el acta de calificaciones`);
+  setTimeout(() => document.querySelector('#dmBody input[data-c="nota"]')?.focus(), 30);
+};
+
 function renderDatosMateria() {
   const { nivel, grupo, k, materia, profesor, filas } = _dmCtx;
-  const mats = _dmMaterias(nivel, grupo, k);
+  const grupos = _dmMateriasGrupos(nivel, grupo, k);
+  if (materia && !grupos.delGrupo.concat(grupos.otras).some(m => _tNorm(m) === _tNorm(materia))) grupos.delGrupo.push(materia);
+  const conDatos = m => _infResumenMateria(nivel, grupo, m, _dmPeriodo(k)).hayDatos;
   const alumnos = _dmAlumnos();
   document.getElementById('dmCab').innerHTML = `
     <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
@@ -136,8 +171,14 @@ function renderDatosMateria() {
     </div>
     <div class="dm-selectores">
       <label class="ent-form-campo"><span>Evaluación</span><select onchange="_dmCambiar('k',this.value)">${['1', '2', '3'].map(x => `<option value="${x}" ${x === k ? 'selected' : ''}>${FT_NOMBRE_EVAL[x]}</option>`).join('')}</select></label>
-      <label class="ent-form-campo"><span>Materia</span><input list="dmMaterias" value="${_tEsc(materia)}" placeholder="Elige o escribe la materia" onchange="_dmCambiar('materia',this.value.trim())">
-        <datalist id="dmMaterias">${mats.map(m => `<option value="${_tEsc(m)}">`).join('')}</datalist></label>
+      <label class="ent-form-campo"><span>Materia <small style="font-weight:400;text-transform:none;letter-spacing:0">(✓ ya tiene datos)</small></span>
+        <select id="dmMateriaSel" onchange="_dmElegirMateria(this.value)">
+          ${materia ? '' : '<option value="" selected>— Elige la materia —</option>'}
+          ${[['Materias del grupo', grupos.delGrupo], ['Otras materias del nivel', grupos.otras]].filter(([, l]) => l.length).map(([etq, l]) => `<optgroup label="${etq}">${l.map(m =>
+            `<option value="${_tEsc(m)}" ${_tNorm(m) === _tNorm(materia) ? 'selected' : ''}>${conDatos(m) ? '✓ ' : ''}${_tEsc(m)}</option>`).join('')}</optgroup>`).join('')}
+          <option value="__otra">➕ Otra materia…</option>
+        </select>
+        <input id="dmMateriaOtra" hidden placeholder="Escribe la materia y pulsa Intro" style="margin-top:4px" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" onchange="if(this.value.trim())_dmCambiar('materia',this.value.trim())"></label>
       <label class="ent-form-campo"><span>Profesor/a (Apellidos, Nombre)</span><input value="${_tEsc(profesor)}" placeholder="Se añade al equipo docente" oninput="_dmCtx.profesor=this.value;_dmCtx.cambios=true"></label>
     </div>`;
   const cab = _DM_COLS.map(c => `<th scope="col"${c.ancho ? ` style="width:${c.ancho}px"` : ''}${c.ayuda ? ` title="${_tEsc(c.ayuda)}"` : ''}>${c.etq}</th>`).join('');
@@ -160,7 +201,9 @@ function renderDatosMateria() {
   document.getElementById('dmPie').innerHTML = `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
       <span id="dmResumen" style="font-size:12.5px;color:var(--text2)">${materia ? `${nSusp} suspenso${nSusp === 1 ? '' : 's'} de ${alumnos.length}` : ''}</span>
       <span style="flex:1"></span>
+      <button class="btn btn-ghost btn-sm" onclick="abrirActaCalificaciones('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')" title="Todas las notas del grupo en una hoja, como el acta de Itaca">📑 Acta de calificaciones</button>
       <button class="btn btn-ghost btn-sm" onclick="closeDatosMateria()">Cerrar</button>
+      <button class="btn btn-ghost btn-sm" onclick="_dmGuardarYSiguiente()" ${materia ? '' : 'disabled'} title="Guarda esta materia y abre la siguiente que aún no tiene datos">💾 Guardar y siguiente ▶</button>
       <button class="btn btn-primary btn-sm" onclick="guardarDatosMateria()" ${materia ? '' : 'disabled'}>💾 Guardar ${_tEsc(materia || '')}</button>
     </div>`;
   _dmEnlazar();
@@ -215,7 +258,7 @@ function _dmEnlazar() {
 
 window.guardarDatosMateria = function() {
   const { nivel, grupo, k } = _dmCtx, materia = String(_dmCtx.materia || '').trim();
-  if (!materia) { mostrarAviso('Elige la materia.'); return; }
+  if (!materia) { mostrarAviso('Elige la materia.'); return false; }
   // Validación: notas de 0 a 10 y números enteros; las casillas mal escritas se marcan.
   let malas = 0;
   document.querySelectorAll('#dmBody input.dm-in').forEach(inp => {
@@ -223,7 +266,7 @@ window.guardarDatosMateria = function() {
     const ok = (col.tipo === 'nota' ? _dmLeerNota(inp.value) : _dmLeerCuenta(inp.value)).ok;
     inp.classList.toggle('dm-mal', !ok); if (!ok) malas++;
   });
-  if (malas) { mostrarAviso(`Hay ${malas} casilla${malas === 1 ? '' : 's'} con un valor que no vale (en rojo): la nota va de 0 a 10 y las faltas, AC y partes son números enteros.`); return; }
+  if (malas) { mostrarAviso(`Hay ${malas} casilla${malas === 1 ? '' : 's'} con un valor que no vale (en rojo): la nota va de 0 a 10 y las faltas, AC y partes son números enteros.`); return false; }
   _undoPush(nivel, grupo);
   const [campo, evalCampo] = _DM_PEND[k], pn = _DM_PERIODOS_NOTA[k];
   const prof = ftApellidosNombre(_dmCtx.profesor);
@@ -258,4 +301,5 @@ window.guardarDatosMateria = function() {
   if (GRUPOS_POR_NIVEL[currentNivel] && currentNivel === nivel && currentGrupos[nivel] === grupo) { updateTable(nivel, grupo); updateStats(nivel, grupo); updateStats2(nivel, grupo); }
   showToast(`✅ ${materia} · ${FT_NOMBRE_EVAL[k]} guardada${cambiosSusp ? ` · ${cambiosSusp} cambio${cambiosSusp === 1 ? '' : 's'} en suspensas` : ''}${profAccion === 'nuevo' ? ' · profesor/a añadido al equipo docente' : ''} · Ctrl+Z deshace`);
   renderDatosMateria();
+  return true;
 };
