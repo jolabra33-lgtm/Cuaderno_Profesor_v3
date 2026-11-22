@@ -133,6 +133,7 @@ Antes era un único `index.html` de casi 20.000 líneas. En la v3 está dividido
 | `js/23-informacion-equipo.js` | «📬 Información del equipo docente»: lo recibido de cada materia (`alumno.porMateria`), recordatorio por correo y relleno del seguimiento con familia |
 | `js/24-ficha-alumno.js` | Ficha completa del alumno/a (`openFichaAlumno`) y entrevistas con la familia (`alumno.entrevistas`, acta imprimible) |
 | `js/25-alertas-y-pendientes.js` | Alertas del alumnado (`_alertasAlumno`, umbrales en `_alertasCfg` de `02-datos.js`), «🧭 Qué me falta» en Inicio y ventana de umbrales |
+| `js/27-informe-equipo.js` | «📊 Informe para el equipo docente»: `datosInformeEquipo` (las cifras) e `informeEquipoHTML` (el .html, sin scripts), versión previa o tras la sesión (`_ieTrasSesion`), y su ventana (`abrirInformeEquipo`) |
 | `js/26-sesion-evaluacion.js` | «🎓 Sesión de evaluación» a pantalla completa (`openSesionEvaluacion`), acta de la sesión (`generarActaSesion`) y ficha del grupo para el profesorado (`fichaGrupoParaProfesorado`, `exportarFichaGrupo`) |
 
 Antes de `js/01` se carga `../js/comun/formato-tutoria.js`, el formato común con el Cuaderno (ver abajo).
@@ -143,7 +144,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 54 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 55 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.
@@ -205,6 +206,14 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
   29 pantallas revisadas con axe-core (WCAG 2 A/AA) no dan ningún error (no se ha revisado el contraste de color).
 
 ## Cambios recientes
+
+### Tutoría · tutor/a en el equipo docente e informe para el equipo (noviembre de 2026)
+
+- **Tutor/a dentro del equipo docente** (`tutoria/js/20-equipo-docente.js`): `profesor.esTutor` (uno por grupo), enlazado con
+  `tutores['nivel-grupo']` en los dos sentidos (`_eqMarcarTutor`, `_eqTutorDesdeCabecera`). Con datos de antes se marca solo la
+  fila del mismo nombre que tiene materia (`_eqSincronizarTutor`); `_eqUnirTutor` quita las filas repetidas conservando
+  asistencia y correo. La cabecera «Tutor/a del grupo» ahora guarda al escribir (antes no hacía `markDirty`).
+- **📊 Informe para el equipo docente** (`tutoria/js/27-informe-equipo.js`): .html sin scripts, versión previa o tras la sesión.
 
 ### Tutoría · fase 4: sesión de evaluación, acta y ficha del grupo para el profesorado (noviembre de 2026)
 

@@ -26,12 +26,13 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `tutoria-ficha` | Ficha completa del alumno/a y entrevistas con la familia: alta con asistentes propuestos, próxima cita, edición, acta, guardado, borrado y deshacer |
 | `cuaderno-texto-hostil` | Cuaderno: lo mismo en 20 pantallas y el buscador; una copia con identificadores manipulados no se carga |
 | `sesion-evaluacion` | Sesión de evaluación (asistencia, valoración, propuesta, acuerdos, revisado, teclado, deshacer), acta automática y ficha del grupo sin datos privados que el Cuaderno carga con «📥 De la tutoría» (vista previa, NESE, repite, pendiente de su materia, acuerdos en la ficha y en Resultados) |
+| `tutoria-informe-equipo` | Informe HTML para el equipo docente: distribución, más y menos suspensos, cada materia (media, profesor/a, evolución), comparación con la evaluación anterior, casos para comentar, descarga sin scripts ni datos privados, versión tras la sesión |
 | `tutoria-actas-guardadas` | Un acta guardada conserva su formato y no puede traer código dentro |
 | `del-cuaderno` | «📥 Del Cuaderno»: añade a quien falta, completa fecha de nacimiento, NESE y repetición de quien ya estaba (nombre en otro orden o en mayúsculas), no cambia datos distintos sin pedirlo, pregunta por nombres parecidos, deshacer |
 | `suspensos` | Importar suspensos por identificador y por nombre parecido; al reenviar un aprobado, la materia sale y el número de suspensas baja |
 | `tutoria-csv` | Un CSV de Excel en Windows (ANSI) conserva tildes y ñ; una columna sin título no se asigna a ningún campo; UTF-8 con BOM |
 | `tutoria-buscar` | «Buscar alumno…» encuentra por el nombre, sin tildes ni mayúsculas, y el contador cuadra |
-| `tutoria-equipo-docente` | Equipo docente en «Apellidos, Nombre»: aviso sin perder el cursor, cambio automático, orden por apellidos que arrastra la asistencia a la sesión |
+| `tutoria-equipo-docente` | Equipo docente en «Apellidos, Nombre»: aviso sin perder el cursor, cambio automático, orden por apellidos que arrastra la asistencia a la sesión; tutor/a dentro del equipo (marcar, unir el repetido conservando asistencia y correo, nombre enlazado con la cabecera y guardado) |
 | `tutoria-familia` | Contactos de la familia traídos del Cuaderno sin repetir, editables en el seguimiento y guardados |
 | `cuaderno-a-tutoria` | Paquete v2 (notas, faltas, convivencia, comentarios) en el mismo navegador y por archivos (varios a la vez); equipo docente automático; el archivo no lleva datos personales; deshacer |
 | `tutoria-informacion-equipo` | «📬 Información del equipo docente»: recibido y pendiente por materia, recordatorio por correo, vista por alumno/a y relleno del seguimiento |
