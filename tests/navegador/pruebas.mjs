@@ -588,6 +588,52 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
+  { nombre: 'tutoria-datos-materia', descripcion: 'Tutoría: datos de una materia introducidos a mano (pegar de Excel, suspensa sin nota, validación, guardado, suspensas, equipo docente, 📬 e informe, deshacer)', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '2º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria', 'Vidal Roca, Pau']);
+    await p.evaluate(() => { currentGrupos['2º ESO'] = 'A'; selectNivel('2º ESO'); });
+    await p.click('#mainContent .mas-menu > summary'); await p.click('#mainContent button:has-text("Introducir datos de una materia")'); await esperar(200);
+    await p.fill('#dmCab input[list="dmMaterias"]', 'Inglés'); await p.dispatchEvent('#dmCab input[list="dmMaterias"]', 'change'); await esperar(150);
+    await p.fill('#dmCab input[placeholder^="Se añade"]', 'Eva Gil Mora');
+    // Dos columnas copiadas de Excel (nota y faltas sin justificar) pegadas en la primera nota.
+    await p.evaluate(() => { const inp = document.querySelector('#dmBody input[data-r="0"][data-c="nota"]'), dt = new DataTransfer();
+      dt.setData('text/plain', '3,5\t2\n7\t0\n4\t5\n'); inp.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); });
+    let f = await p.evaluate(() => _dmCtx.filas.map(x => [x.nota, x.fi, x.susp]));
+    t.ok(JSON.stringify(f.slice(0, 3)) === JSON.stringify([['3,5', '2', true], ['7', '0', false], ['4', '5', true]]), 'pegar de Excel reparte las columnas y marca «Susp.» con nota menor que 5', JSON.stringify(f));
+    await p.check('#dmBody input[data-r="3"][data-c="susp"]');
+    await p.fill('#dmBody input[data-r="0"][data-c="com"]', 'No entrega las tareas.');
+    await p.fill('#dmBody input[data-r="1"][data-c="ac"]', 'dos');
+    await p.click('#dmPie button:has-text("Guardar")'); await esperar(200);
+    t.ok(await p.evaluate(() => !!document.querySelector('#dmBody .dm-mal') && !data['2º ESO'].A[0].porMateria), 'un valor que no vale se marca en rojo y no se guarda nada');
+    await p.locator('.tdlg-ov .tdlg-si').click().catch(() => {}); await esperar(100);
+    await p.fill('#dmBody input[data-r="1"][data-c="ac"]', '2');
+    await p.click('#dmPie button:has-text("Guardar")'); await esperar(300);
+    const r = await p.evaluate(() => { const al = data['2º ESO'].A, pm = a => (a.porMateria || {})['Inglés'] || {};
+      return { pend: al.map(a => (a.pendientes1 || []).includes('Inglés')), eval1: al.map(a => a.eval1), nota0: pm(al[0]).notas['1'], com0: pm(al[0]).comentarios['1'], f2: pm(al[2]).faltas['1'].injustificadas, curso2: pm(al[2]).faltas.curso.injustificadas,
+        ac1: pm(al[1]).convivencia['1'].ac, susp3: pm(al[3]).suspensa['1'], equipo: _getAsistenciaData('2º ESO', 'A').profesores.map(x => x.nombre + '|' + x.materia) }; });
+    t.ok(JSON.stringify(r.pend) === '[true,false,true,true]' && JSON.stringify(r.eval1) === '[1,0,1,1]', 'las suspensas (también la marcada sin nota) pasan a la I Evaluación del grupo', JSON.stringify(r));
+    t.ok(r.nota0 === 3.5 && r.com0 === 'No entrega las tareas.' && r.f2 === 5 && r.curso2 === 5 && r.ac1 === 2 && r.susp3 === true, 'se guardan nota, comentario, faltas (y el total del curso) y convivencia', JSON.stringify(r));
+    t.ok(JSON.stringify(r.equipo) === JSON.stringify(['Gil Mora, Eva|Inglés']), 'el profesor/a entra en el equipo docente en «Apellidos, Nombre»', JSON.stringify(r.equipo));
+    const panel = await p.evaluate(() => { closeDatosMateria(); openInformacionEquipo('2º ESO', 'A'); return document.querySelector('#infEquipoBody tr[data-materia="Inglés"]').innerText; });
+    t.ok(/Introducido a mano/.test(panel) && /4\/4/.test(panel), '📬 lo cuenta como recibido e indica que se introdujo a mano', panel.replace(/\s+/g, ' '));
+    const ie = await p.evaluate(() => { closeInformacionEquipo(); const m = datosInformeEquipo('2º ESO', 'A', '1').materias.find(x => x.materia === 'Inglés'); return [m.suspensos, m.media]; });
+    t.ok(ie[0] === 3 && ie[1] === 4.83, 'el informe para el equipo docente lo usa (suspensos y nota media)', JSON.stringify(ie));
+    await p.evaluate(() => openDatosMateria('2º ESO', 'A', '1', 'Inglés')); await esperar(150);
+    t.ok(await p.inputValue('#dmBody input[data-r="0"][data-c="nota"]') === '3,5' && await p.isChecked('#dmBody input[data-r="3"][data-c="susp"]'), 'al volver a abrirlo sale lo guardado, para corregirlo');
+    await p.fill('#dmBody input[data-r="1"][data-c="nota"]', '2'); await esperar(50);
+    await p.evaluate(() => { closeDatosMateria(); }); await esperar(200);
+    t.ok(/sin guardar/.test(await p.textContent('.tdlg-ov')), 'si se cierra con cambios sin guardar, lo pregunta');
+    await p.locator('.tdlg-ov .tdlg-si').click(); await esperar(1300);
+    await p.reload(); await esperar(1500);
+    t.ok(await p.evaluate(() => data['2º ESO'].A[0].porMateria['Inglés'].notas['1'] === 3.5 && data['2º ESO'].A[1].porMateria['Inglés'].notas['1'] === 7), 'lo guardado se conserva al recargar y lo no guardado no');
+    await p.evaluate(() => { hideWelcomeScreen(); currentGrupos['2º ESO'] = 'A'; selectNivel('2º ESO'); openDatosMateria('2º ESO', 'A', '1', 'Inglés'); }); await esperar(150);
+    await p.uncheck('#dmBody input[data-r="3"][data-c="susp"]'); await p.click('#dmPie button:has-text("Guardar")'); await esperar(200);
+    t.ok(await p.evaluate(() => !data['2º ESO'].A[3].pendientes1.includes('Inglés') && data['2º ESO'].A[3].eval1 === 0), 'desmarcar «Susp.» la quita de las suspensas');
+    await p.evaluate(() => _undoPop()); await esperar(150);
+    t.ok(await p.evaluate(() => data['2º ESO'].A[3].pendientes1.includes('Inglés')), 'y Ctrl+Z lo deshace');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
   { nombre: 'suspensos', descripcion: 'Tutoría: importar suspensos por identificador y por nombre parecido', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     const ids = await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis'] });

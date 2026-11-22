@@ -147,6 +147,7 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
       ['SESIÓN · alumno/a', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '1'); _sesIr(0); }],
       ['SESIÓN · final', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '3'); _sesIr(0); }],
       ['ACTA DE LA SESIÓN', () => { selectNivel(nivH); generarActaSesion(nivH, gH, '1'); }],
+      ['DATOS DE UNA MATERIA', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openDatosMateria(nivH, gH, '1', Object.keys(data[nivH][gH][0].porMateria)[0]); }],
       ['INFORME PARA EL EQUIPO · ventana', () => { currentGrupos[nivH] = gH; selectNivel(nivH); abrirInformeEquipo(nivH, gH, '1'); }],
       ['INFORME PARA EL EQUIPO · documento', () => { selectNivel(nivH); const w = _ventanaDoc(); w.document.write(informeEquipoHTML(nivH, gH, '1')); w.document.close(); }],
     ];

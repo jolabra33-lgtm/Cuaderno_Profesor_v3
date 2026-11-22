@@ -134,6 +134,7 @@ Antes era un único `index.html` de casi 20.000 líneas. En la v3 está dividido
 | `js/24-ficha-alumno.js` | Ficha completa del alumno/a (`openFichaAlumno`) y entrevistas con la familia (`alumno.entrevistas`, acta imprimible) |
 | `js/25-alertas-y-pendientes.js` | Alertas del alumnado (`_alertasAlumno`, umbrales en `_alertasCfg` de `02-datos.js`), «🧭 Qué me falta» en Inicio y ventana de umbrales |
 | `js/27-informe-equipo.js` | «📊 Informe para el equipo docente»: `datosInformeEquipo` (las cifras) e `informeEquipoHTML` (el .html, sin scripts), versión previa o tras la sesión (`_ieTrasSesion`), y su ventana (`abrirInformeEquipo`) |
+| `js/28-datos-materia.js` | «✍️ Datos de una materia»: el tutor/a introduce a mano (o pega de Excel) la nota o «suspensa», faltas, retrasos, AC, partes y comentario de una materia en una evaluación (`openDatosMateria`, `guardarDatosMateria`); se guarda en `porMateria` como un archivo del Cuaderno, con `origen: 'manual'` |
 | `js/26-sesion-evaluacion.js` | «🎓 Sesión de evaluación» a pantalla completa (`openSesionEvaluacion`), acta de la sesión (`generarActaSesion`) y ficha del grupo para el profesorado (`fichaGrupoParaProfesorado`, `exportarFichaGrupo`) |
 
 Antes de `js/01` se carga `../js/comun/formato-tutoria.js`, el formato común con el Cuaderno (ver abajo).
@@ -144,7 +145,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 55 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 56 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.
@@ -206,6 +207,17 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
   29 pantallas revisadas con axe-core (WCAG 2 A/AA) no dan ningún error (no se ha revisado el contraste de color).
 
 ## Cambios recientes
+
+### Tutoría · datos de una materia introducidos a mano (noviembre de 2026)
+
+- **✍️ Datos de una materia** (`tutoria/js/28-datos-materia.js`): para el profesorado que no usa el Cuaderno. Una tabla por
+  grupo, evaluación y materia (alumnado en filas; nota o casilla «Susp.», faltas, retrasos, AC, partes y comentario), con Intro
+  para bajar y pegado de columnas de Excel. Guarda en `alumno.porMateria[materia]` con el mismo formato que un archivo «Para la
+  tutoría» y `origen: 'manual'`; las notas de una evaluación sin número se guardan en `suspensa[periodo]` (campo nuevo, opcional).
+  Las suspensas, el equipo docente, «📬», el informe para el equipo y las alertas lo usan igual. Con Ctrl+Z.
+- Funciones comunes con la importación (`tutoria/js/01-avisos-y-vista-documentos.js`): `_tAplicarProfesor` (añade o completa
+  al profesor/a en el equipo docente) y `_tAjustarSuspensa` (marca o quita la materia en las pendientes y ajusta el recuento).
+  `_infResumenMateria` (23) da `hayDatos`, `introducido` y `aMano`.
 
 ### Tutoría · tutor/a en el equipo docente e informe para el equipo (noviembre de 2026)
 

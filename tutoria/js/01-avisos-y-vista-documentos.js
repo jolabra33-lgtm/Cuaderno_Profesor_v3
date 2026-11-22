@@ -279,6 +279,30 @@ function _tProfesorDelPaquete(nivel,grupo,materia,profesor){
   if(conMateria) return {accion:conMateria.nombre?'nada':'nombre',nombre,prof:conMateria};
   return {accion:'nuevo',nombre};
 }
+// Lo aplica: añade al profesor/a o le pone el nombre a su materia. Devuelve lo mismo que _tProfesorDelPaquete.
+function _tAplicarProfesor(nivel,grupo,materia,profesor){
+  const prof=_tProfesorDelPaquete(nivel,grupo,materia,profesor);
+  if(prof.accion==='nombre') prof.prof.nombre=prof.nombre;
+  else if(prof.accion==='nuevo'){
+    const d=_getAsistenciaData(nivel,grupo);
+    d.profesores.push({id:'prof'+Math.random().toString(36).slice(2,9),nombre:prof.nombre,materia,correo:''});
+    ['eval1','eval2','eval3'].forEach(k=>{ if(!d.sesiones[k]) d.sesiones[k]=[]; d.sesiones[k].push({asistio:null,justificacion:''}); });
+  }
+  return prof;
+}
+// Suma o quita una materia de una lista de suspensas y ajusta el número (sube si hay más materias en la
+// lista y baja si se quita alguna; nunca por debajo de la lista). Lo usan las importaciones y la entrada a mano.
+function _tAjustarSuspensa(a,campo,evalCampo,materia,suspensa){
+  if(!Array.isArray(a[campo])) a[campo]=[];
+  const tiene=a[campo].some(m=>_tNorm(m)===_tNorm(materia));
+  if(suspensa===tiene) return false;
+  const antes=a[campo].length;
+  if(suspensa) a[campo].push(materia); else a[campo]=a[campo].filter(m=>_tNorm(m)!==_tNorm(materia));
+  const n=a[campo].length, cuenta=+a[evalCampo]||0;
+  if(cuenta<n) a[evalCampo]=n;
+  else if(n<antes) a[evalCampo]=Math.max(n,cuenta-(antes-n));
+  return true;
+}
 function _tImpCuadernoPlan(o,nivel,grupo,materia,confirmados){
   const lista=(data[nivel]&&data[nivel][grupo])||[];
   const idx={}; lista.forEach((a,i)=>{ idx[_tNorm(a.nombre)]=i; });
@@ -340,15 +364,7 @@ function _tImpCuadernoAplicar(p,o){
         notas:x.notas||{}, faltas:x.faltas||{}, convivencia:x.convivencia||{}, comentarios:x.comentarios||{}};
     });
     // El profesor/a de la materia, al equipo docente del grupo (en «Apellidos, Nombre»).
-    prof=_tProfesorDelPaquete(p.nivel,p.grupo,p.materia,o.profesor);
-    if(prof.accion!=='nada'){
-      const d=_getAsistenciaData(p.nivel,p.grupo);
-      if(prof.accion==='nombre') prof.prof.nombre=prof.nombre;
-      else {
-        d.profesores.push({id:'prof'+Math.random().toString(36).slice(2,9),nombre:prof.nombre,materia:p.materia,correo:''});
-        ['eval1','eval2','eval3'].forEach(k=>{ if(!d.sesiones[k]) d.sesiones[k]=[]; d.sesiones[k].push({asistio:null,justificacion:''}); });
-      }
-    }
+    prof=_tAplicarProfesor(p.nivel,p.grupo,p.materia,o.profesor);
   }
   markDirty(); renderAll();
   return prof;
