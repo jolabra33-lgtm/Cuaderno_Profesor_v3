@@ -1024,7 +1024,7 @@ function updateTable(nivel, grupo) {
 
   const defaults = colNames.map(() => 120);
   const _nombreIdx = colNames.indexOf('Alumno / a');
-  if (_nombreIdx >= 0) defaults[_nombreIdx] = 180; // Alumno
+  if (_nombreIdx >= 0) defaults[_nombreIdx] = 230; // Alumno (nombre + 📝 + 👤 ficha)
   defaults[colNames.indexOf('Lengua Base')] = 130;
   defaults[colNames.indexOf('CEIP Origen')] = 150;
   const cols = window.colWidths[key+'_'+evalTab] || (window.colWidths[key+'_'+evalTab] = [...defaults]);
@@ -1112,6 +1112,8 @@ function updateTable(nivel, grupo) {
     const opts = CEIP_KNOWN.map(c=>`<option value="${_tEsc(c)}" ${ceipVal===c?'selected':''}>${_tEsc(c)}</option>`).join('');
 
     // Base shared cells (always present in all eval tabs)
+    // Alertas del alumno/a (faltas, partes, suspensas…): insignia bajo el nombre que abre su ficha.
+    const alertaBadge = typeof _alInsigniaHTML === 'function' ? _alInsigniaHTML(a, nivel, grupo, i) : '';
     const baseCells = `
       <td class="td-nombre sticky-nombre">
         <div class="nombre-cell">
@@ -1120,10 +1122,13 @@ function updateTable(nivel, grupo) {
             ${evalTab === 'eval3' ? trendHtml : ''}
             <button class="notes-btn obs-inline${hasNote?' has-note':''}" title="${hasNote?'Ver / editar observaciones':'Añadir observaciones'}"
               onclick="openNotesPanel(event,'${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">📝</button>
+            <button class="notes-btn obs-inline" title="Ficha completa del alumno/a" aria-label="Ficha completa del alumno/a"
+              onclick="openFichaAlumno('${jsAttr(nivel)}','${jsAttr(grupo)}',${i})">👤</button>
           </div>
-          ${(pendiente || isCritical) && evalTab === 'eval3' ? `<div class="nombre-cell-badges">
-            ${pendiente ? '<span class="pending-badge">pendiente</span>' : ''}
-            ${criticalBadge}
+          ${((pendiente || isCritical) && evalTab === 'eval3') || alertaBadge ? `<div class="nombre-cell-badges">
+            ${pendiente && evalTab === 'eval3' ? '<span class="pending-badge">pendiente</span>' : ''}
+            ${evalTab === 'eval3' ? criticalBadge : ''}
+            ${alertaBadge}
           </div>` : ''}
           ${tooltipHtml}
         </div>

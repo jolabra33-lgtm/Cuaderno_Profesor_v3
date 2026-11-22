@@ -384,6 +384,82 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
+  { nombre: 'tutoria-alertas', descripcion: 'Tutoría: alertas del alumnado con umbrales configurables y guardados, «🧭 Qué me falta» en Inicio e insignia en la tabla', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria']);
+    const claves = () => p.evaluate(() => data['1º ESO'].A.map(a => _alertasAlumno(a, '1º ESO').map(x => x.clave).sort().join(',')));
+    await p.evaluate(() => {
+      const [ana, luis, iria] = data['1º ESO'].A, hoy = _hoyLocal();
+      const mas = n => { const d = new Date(hoy + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+      evalDates['1º ESO'] = { eval1: mas(-40), eval2: mas(-2), eval3: mas(100) };
+      Object.assign(ana, { faltasInjust1: 6, faltasInjust2: 6 });                       // 12 en Tutoría
+      luis.porMateria = { 'Inglés': { profesor: '', generado: '', notas: {}, faltas: {}, comentarios: {}, convivencia: { curso: { ac: 0, rc: 0, pa: 2 } } } };   // 2 partes en los Cuadernos
+      Object.assign(iria, { eval1: 0, eval2: 3 });                                       // 3 suspensas en la II, venía de 0
+      iria.entrevistas = [{ id: 'e1', fecha: mas(-30), medio: 'Teléfono', proximaCita: mas(-1) }];
+      markDirty(); selectNivel('__home__');
+    }); await esperar(400);
+    let c = await claves();
+    t.ok(c[0] === 'faltas,sin-contacto', 'faltas sin justificar (Tutoría) y sin contacto con la familia', JSON.stringify(c));
+    t.ok(c[1] === 'partes,sin-contacto', 'partes recibidos de los Cuadernos', JSON.stringify(c));
+    t.ok(c[2] === 'cita-vencida,empeora,suspensas', 'suspensas en la evaluación en curso, empeora y cita vencida sin registrar', JSON.stringify(c));
+    const panel = await p.textContent('.qmf');
+    t.ok(/3 alumnos con alertas/.test(panel) && /II Evaluación|Evaluación final/.test(panel), '«Qué me falta» resume el grupo en Inicio', panel.slice(0, 300));
+    await p.click('.qmf button:has-text("Umbrales")'); await esperar(200);
+    await p.fill('#umbralesOv [data-umbral="faltasInjust"]', '20');
+    await p.uncheck('#umbralesOv [data-umbral-cb="sinContacto"]');
+    await p.click('#umbralesOv button:has-text("Guardar")'); await esperar(1300);
+    c = await claves();
+    t.ok(c[0] === '' && c[1] === 'partes', 'al subir el umbral y quitar «sin contacto», esas alertas desaparecen', JSON.stringify(c));
+    await p.reload(); await esperar(1500);
+    t.ok(await p.evaluate(() => _alertasCfg.faltasInjust === 20 && _alertasCfg.sinContacto === 0), 'los umbrales se guardan');
+    t.ok(await p.evaluate(() => buildState().alertasCfg.faltasInjust === 20), 'y viajan en el archivo y en las copias');
+    await p.evaluate(() => { hideWelcomeScreen(); currentGrupos['1º ESO'] = 'A'; selectNivel('1º ESO'); }); await esperar(300);
+    t.ok(await p.locator('#mainContent .alerta-insignia').count() === 2, 'la tabla marca con «⚠» a quien tiene alertas');
+    await p.evaluate(() => { const st = buildState(); delete st.alertasCfg; applyFilePayload(st); });
+    t.ok(await p.evaluate(() => _alertasCfg.faltasInjust === ALERTAS_CFG_DEFECTO.faltasInjust), 'un archivo sin umbrales vuelve a los de por defecto');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-ficha', descripcion: 'Tutoría: ficha completa del alumno/a (pestañas, observaciones) y entrevistas con la familia (alta, edición, acta, próxima cita, deshacer)', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis']);
+    await p.evaluate(() => { const a = data['1º ESO'].A[0]; a.familia = [{ parentesco: 'Madre', nombre: 'López Sanz, Marta', email: 'm@correo.es', telefono: '' }]; tutores['1º ESO-A'] = 'Gil Mora, Eva'; renderMain(); });
+    await p.locator('#mainContent button[aria-label="Ficha completa del alumno/a"]').first().click(); await esperar(300);
+    t.ok(/García López, Ana/.test(await p.textContent('#fichaCab')), 'el botón 👤 abre la ficha del alumno/a');
+    for (const pest of ['Académico', 'Faltas y convivencia', 'Seguimientos', 'Resumen']) { await p.click(`#fichaPestanas button:has-text("${pest}")`); await esperar(120); }
+    await p.fill('#fichaBody textarea[aria-label="Observaciones del alumno/a"]', 'Le cuesta organizarse.');
+    await p.dispatchEvent('#fichaBody textarea[aria-label="Observaciones del alumno/a"]', 'change');
+    await p.click('#fichaPestanas button:has-text("Entrevistas")');
+    await p.click('#fichaBody button:has-text("Nueva entrevista")'); await esperar(200);
+    t.ok(/López Sanz, Marta \(Madre\).*Gil Mora, Eva \(tutor\/a\)/.test(await p.inputValue('#fichaBody input[placeholder^="Familia, tutor"]')), 'los asistentes se proponen con la familia y el tutor/a');
+    const cita = await p.evaluate(() => { const d = new Date(_hoyLocal() + 'T00:00:00'); d.setDate(d.getDate() + 3); return d.toISOString().slice(0, 10); });
+    await p.fill('#fichaBody textarea[placeholder^="Por qué"]', 'Faltas a primera hora');
+    await p.fill('#fichaBody textarea[placeholder^="Qué se acuerda"]', 'La familia avisará de cada falta');
+    await p.locator('#fichaBody .ent-form input[type="date"]').nth(1).fill(cita);
+    await p.click('#fichaBody button:has-text("Guardar entrevista")'); await esperar(300);
+    let ents = await p.evaluate(() => data['1º ESO'].A[0].entrevistas);
+    t.ok(ents.length === 1 && ents[0].motivo === 'Faltas a primera hora' && ents[0].proximaCita === cita, 'la entrevista se guarda con motivo, acuerdos y próxima cita', JSON.stringify(ents));
+    t.ok(await p.evaluate(() => _alertasAlumno(data['1º ESO'].A[0], '1º ESO').some(x => x.clave === 'cita')), 'la próxima cita sale como aviso');
+    await p.click('#fichaBody button:has-text("Editar")'); await esperar(150);
+    await p.fill('#fichaBody textarea[placeholder^="Qué se acuerda"]', 'Acuerdo cambiado'); await p.click('#fichaBody button:has-text("Guardar entrevista")'); await esperar(200);
+    ents = await p.evaluate(() => data['1º ESO'].A[0].entrevistas);
+    t.ok(ents.length === 1 && ents[0].acuerdos === 'Acuerdo cambiado', 'editar cambia la misma entrevista, no crea otra');
+    await p.click('#fichaBody button:has-text("Acta")'); await esperar(400);
+    const acta = await p.evaluate(() => { const fr = document.querySelector('#tdocOverlay iframe'); return fr ? fr.srcdoc : ''; });
+    t.ok(/Acta de entrevista con la familia/.test(acta) && /Acuerdo cambiado/.test(acta) && /Fdo\.: la familia/.test(acta), 'el acta de la entrevista se abre para imprimir, con los acuerdos y las firmas', acta.slice(0, 200));
+    await p.evaluate(() => { window.__cerrarVistaDocT && window.__cerrarVistaDocT(); closeFichaAlumno(); }); await esperar(1300);
+    await p.reload(); await esperar(1500);
+    const r = await p.evaluate(() => ({ n: data['1º ESO'].A[0].notas, e: (data['1º ESO'].A[0].entrevistas || []).length }));
+    t.ok(r.n === 'Le cuesta organizarse.' && r.e === 1, 'las observaciones y la entrevista se guardan', JSON.stringify(r));
+    await p.evaluate(() => { hideWelcomeScreen(); currentGrupos['1º ESO'] = 'A'; selectNivel('1º ESO'); openFichaAlumno('1º ESO', 'A', 0, 'entrevistas'); }); await esperar(200);
+    await p.click('#fichaBody button[aria-label="Borrar esta entrevista"]'); await esperar(200);
+    await p.locator('.tdlg-ov .tdlg-si').click(); await esperar(200);
+    t.ok(await p.evaluate(() => data['1º ESO'].A[0].entrevistas.length) === 0, 'una entrevista se puede borrar');
+    await p.evaluate(() => _undoPop()); await esperar(200);
+    t.ok(await p.evaluate(() => data['1º ESO'].A[0].entrevistas.length) === 1, 'y se recupera con Ctrl+Z');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
   { nombre: 'suspensos', descripcion: 'Tutoría: importar suspensos por identificador y por nombre parecido', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     const ids = await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis'] });

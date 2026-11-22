@@ -130,6 +130,8 @@ Antes era un único `index.html` de casi 20.000 líneas. En la v3 está dividido
 | `js/21-asistencia.js` | Asistencia a la sesión de evaluación |
 | `js/22-importar-del-cuaderno.js` | Botón «📥 Del Cuaderno»: añade el alumnado de un grupo del Cuaderno y completa fecha de nacimiento, NESE, repetición y contactos de la familia de quien ya estaba (con vista previa); ofrece traer lo de tu materia desde la copia que deja el Cuaderno |
 | `js/23-informacion-equipo.js` | «📬 Información del equipo docente»: lo recibido de cada materia (`alumno.porMateria`), recordatorio por correo y relleno del seguimiento con familia |
+| `js/24-ficha-alumno.js` | Ficha completa del alumno/a (`openFichaAlumno`) y entrevistas con la familia (`alumno.entrevistas`, acta imprimible) |
+| `js/25-alertas-y-pendientes.js` | Alertas del alumnado (`_alertasAlumno`, umbrales en `_alertasCfg` de `02-datos.js`), «🧭 Qué me falta» en Inicio y ventana de umbrales |
 
 Antes de `js/01` se carga `../js/comun/formato-tutoria.js`, el formato común con el Cuaderno (ver abajo).
 
@@ -139,7 +141,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 51 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 53 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.
@@ -201,6 +203,19 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
   29 pantallas revisadas con axe-core (WCAG 2 A/AA) no dan ningún error (no se ha revisado el contraste de color).
 
 ## Cambios recientes
+
+### Tutoría · fase 3: ficha, entrevistas, alertas y «Qué me falta» (noviembre de 2026)
+
+- **Ficha completa del alumno/a** (`tutoria/js/24-ficha-alumno.js`): botón 👤 en la columna del nombre; pestañas Resumen,
+  Académico, Faltas y convivencia, Entrevistas y Seguimientos; observaciones (`alumno.notas`) editables.
+- **Entrevistas con la familia** en `alumno.entrevistas` (campo nuevo; sin él, la lista está vacía): alta y edición con
+  borrador, próxima cita, acta (`_entActa`, vista de documentos), borrar con Ctrl+Z.
+- **Alertas** (`tutoria/js/25-alertas-y-pendientes.js`): reglas sobre lo de Tutoría y lo recibido de los Cuadernos (se toma el
+  mayor, no se suman). La evaluación en curso sale de las fechas de evaluación. Umbrales en `_alertasCfg` (nuevo `alertasCfg`
+  en el estado): `buildState`, `loadFromLocalStorage`, `applyFilePayload` (un archivo sin umbrales vuelve a los de por defecto),
+  importar JSON (sustituir y combinar) y la versión del curso.
+- **«🧭 Qué me falta»** al principio de Inicio; cuenta solo las materias del equipo docente del grupo y las que ya han enviado algo.
+- La columna del nombre es algo más ancha (230 px) y la insignia ⚠ va bajo el nombre.
 
 ### Tutoría · fase 2: conexión con el Cuaderno (noviembre de 2026)
 

@@ -45,11 +45,18 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
         a.seguimientos = [{ id: 'seg' + i, fecha: _today, materias: [{ nombre: P('seg_materia'), trabajo: 'B', examenes: 'B', comportamiento: 'B' }], observaciones: P('seg_obs') }];
         a.lenguaBase = i % 2 ? 'Castellano' : 'Valenciano';
         if (i === 0) { a.papActivo = true; a.ecActivo = true; }
+        // Fases 2 y 3: contactos de la familia, entrevistas y lo recibido de cada materia (con alertas).
+        a.familia = [{ parentesco: P('fam_par'), nombre: P('fam_nombre'), email: P('fam_email'), telefono: P('fam_tel') }];
+        a.entrevistas = [{ id: 'ent' + i, fecha: _today, hora: '10:00', medio: P('ent_medio'), solicitadaPor: P('ent_sol'), asistentes: P('ent_asis'), motivo: P('ent_motivo'),
+          acuerdos: P('ent_acuerdos'), proximaCita: _today, proximaHora: P('ent_hora'), observaciones: P('ent_obs') }];
+        a.porMateria = { [P('pm_materia')]: { profesor: P('pm_prof'), generado: new Date().toISOString(), notas: { 1: 3 }, faltas: { curso: { injustificadas: 20, justificadas: 0, retrasos: 0 } },
+          convivencia: { curso: { ac: 5, rc: 0, pa: 3 } }, comentarios: { 1: P('pm_com') } } };
+        a.faltasInjust1 = 12;
       });
       const key = `${n}-${g}`;
       tutores[key] = 'Tutor ' + P('tutor');
       (window._obsGrupoData = window._obsGrupoData || {})[key] = 'Obs grupo ' + P('obsGrupo');
-      const as = _getAsistenciaData(n, g); as.profesores = [{ nombre: P('prof_nombre'), materia: P('prof_materia') }];
+      const as = _getAsistenciaData(n, g); as.profesores = [{ nombre: P('prof_nombre'), materia: P('prof_materia'), correo: P('prof_correo') }];
       ['eval1', 'eval2', 'eval3'].forEach(e => { as.sesiones[e] = [{ asistio: false, justificacion: P('justif') }]; });
     }));
     calEventos.push({ id: 'evx', fecha: _today, titulo: P('cal_titulo'), tipo: 'otro', nota: P('cal_nota') });
@@ -125,6 +132,16 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
         catch (err) { fallos.push(tab + ': ' + err.message); }
       }
     }
+    // Fase 3: ficha del alumno/a (cada pestaña), «📬 Información del equipo docente», acta de entrevista y umbrales.
+    const gH = GRUPOS_POR_NIVEL[nivH][0];
+    const extra = [
+      ...['resumen', 'academico', 'convivencia', 'entrevistas', 'seguimientos'].map(pe => ['FICHA · ' + pe, () => { currentGrupos[nivH] = gH; selectNivel(nivH); openFichaAlumno(nivH, gH, 0, pe); }]),
+      ['FICHA · formulario de entrevista', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openFichaAlumno(nivH, gH, 0, 'entrevistas'); _entEditar('ent0'); }],
+      ['ACTA DE ENTREVISTA', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openFichaAlumno(nivH, gH, 0, 'entrevistas'); _entActa('ent0'); }],
+      ...['materias', 'alumno'].map(v => ['📬 · ' + v, () => { currentGrupos[nivH] = gH; selectNivel(nivH); openInformacionEquipo(nivH, gH, v, 0); }]),
+      ['UMBRALES', () => { selectNivel('__home__'); abrirUmbralesAlertas(); }],
+    ];
+    for (const [nombre, poner] of extra) { try { await pantalla(nombre, poner); } catch (err) { fallos.push(nombre + ': ' + err.message); } }
     const lista = o => Object.entries(o).map(([k, v]) => `${k}   ← ${typeof v === 'string' ? v : Object.keys(v)[0]}`);
     return { clics, fallos, inyectados: lista(inyectados), ejecutados: lista(ejecutados), dobles: lista(dobles) };
   }, { modo, completo });

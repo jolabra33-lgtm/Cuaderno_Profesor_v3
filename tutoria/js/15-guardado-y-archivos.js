@@ -32,6 +32,7 @@ function buildState(includeImages = true, includeActas = true) {
     actasData: includeActas ? (window._actasData || {}) : {},
     actasOficialesData: includeActas ? (window._actasOficialesData || {}) : {},
     vacantesCfg: _vacantesCfg,
+    alertasCfg: _alertasCfg,
     actasNoOficialesTabVisible: _actasNoOficialesTabVisible
   };
   if (includeImages) {
@@ -258,6 +259,7 @@ function loadFromLocalStorage() {
       if (saved.evalDates) Object.assign(evalDates, saved.evalDates);
       if (Array.isArray(saved.calEventos)) { calEventos.length = 0; saved.calEventos.forEach(e => calEventos.push(e)); }
       if (saved.vacantesCfg) { _vacMergeCfg(saved.vacantesCfg); }
+      if (saved.alertasCfg) _alertasMergeCfg(saved.alertasCfg);
       if (saved.convivenciaData) { if (!window._convivenciaData) window._convivenciaData = {}; Object.assign(window._convivenciaData, saved.convivenciaData); }
       // Restaurar el resto del estado (antes se perdía al pulsar "Continuar")
       if (saved.materiasCustom) { Object.assign(_materiasCustom, saved.materiasCustom); }
@@ -673,6 +675,7 @@ function applyFilePayload(parsed) {
   if (parsed.tutores) Object.assign(tutores, parsed.tutores);
   if (parsed.evalDates) Object.assign(evalDates, parsed.evalDates);
   if (parsed.vacantesCfg) { _vacMergeCfg(parsed.vacantesCfg); }
+  Object.assign(_alertasCfg, ALERTAS_CFG_DEFECTO); if (parsed.alertasCfg) _alertasMergeCfg(parsed.alertasCfg);
   if (parsed.materiasCustom) {
     Object.keys(_materiasCustom).forEach(k => delete _materiasCustom[k]);
     Object.assign(_materiasCustom, parsed.materiasCustom);
@@ -752,6 +755,7 @@ function _tutEstadoEnBlanco() {
   Object.keys(tutores).forEach(k => delete tutores[k]);
   NIVELES.forEach(n => GRUPOS_POR_NIVEL[n].forEach(g => { tutores[`${n}-${g}`] = ''; }));
   NIVELES.forEach(n => { currentGrupos[n] = GRUPOS_POR_NIVEL[n][0]; });
+  Object.assign(_alertasCfg, ALERTAS_CFG_DEFECTO);
   currentNivel = '__home__';
 }
 /* v5 · Datos de ejemplo bajo petición: solo en memoria, nunca se guardan. */

@@ -154,6 +154,7 @@ async function guardarVersionCurso() {
     actasData:       JSON.parse(JSON.stringify(window._actasData || {})),
     actasOficialesData: JSON.parse(JSON.stringify(window._actasOficialesData || {})),
     vacantesCfg:     JSON.parse(JSON.stringify(typeof _vacantesCfg!=='undefined' ? _vacantesCfg : {})),
+    alertasCfg:      JSON.parse(JSON.stringify(typeof _alertasCfg!=='undefined' ? _alertasCfg : {})),
     actasNoOficialesTabVisible: _actasNoOficialesTabVisible,
     fotoData:        cap(window._fotoData),
     horarioData:     cap(window._horarioData),
@@ -194,6 +195,7 @@ window.__IS_SNAPSHOT_EXPORT__ = true;
       if(_s.actasData){ if(!window._actasData) window._actasData={}; Object.assign(window._actasData, _s.actasData); }
       if(_s.actasOficialesData){ if(!window._actasOficialesData) window._actasOficialesData={}; Object.assign(window._actasOficialesData, _s.actasOficialesData); }
       if(_s.vacantesCfg && typeof _vacantesCfg!=='undefined') Object.assign(_vacantesCfg, _s.vacantesCfg);
+      if(_s.alertasCfg && typeof _alertasMergeCfg==='function') _alertasMergeCfg(_s.alertasCfg);
       if(typeof _s.actasNoOficialesTabVisible === 'boolean' && typeof _actasNoOficialesTabVisible!=='undefined') _actasNoOficialesTabVisible = _s.actasNoOficialesTabVisible;
       if(_s.fotoData){ if(!window._fotoData) window._fotoData={}; Object.assign(window._fotoData, _s.fotoData); }
       if(_s.horarioData){ if(!window._horarioData) window._horarioData={}; Object.assign(window._horarioData, _s.horarioData); }
