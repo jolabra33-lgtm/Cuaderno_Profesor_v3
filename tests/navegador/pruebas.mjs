@@ -763,6 +763,36 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
+  { nombre: 'tutoria-orden-alfabetico', descripcion: 'Tutoría: el alumnado queda en orden alfabético en toda la app al darlo de alta o cambiarle el nombre (selección, otras pantallas, recarga, deshacer, archivos antiguos)', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '2º ESO', 'A', ['Pérez Ruiz, Luis', 'García López, Ana', 'Zapata Mora, Eva']);
+    const orden = () => p.evaluate(() => data['2º ESO'].A.map(a => a.nombre));
+    t.ok(JSON.stringify(await orden()) === JSON.stringify(['García López, Ana', 'Pérez Ruiz, Luis', 'Zapata Mora, Eva']), 'al dar de alta, el grupo queda en orden alfabético', JSON.stringify(await orden()));
+    await p.evaluate(() => { currentGrupos['2º ESO'] = 'A'; selectNivel('2º ESO'); bulkToggleRow('2º ESO', 'A', 2, true); }); await esperar(150);
+    // Cambiar el nombre desde la columna «Alumno/a» de la tabla.
+    const inp = p.locator('#mainContent input.cell-input[value="Pérez Ruiz, Luis"]');
+    await inp.fill('Aguilar Ruiz, Luis'); await inp.press('Tab'); await esperar(400);
+    t.ok(JSON.stringify(await orden()) === JSON.stringify(['Aguilar Ruiz, Luis', 'García López, Ana', 'Zapata Mora, Eva']), 'al cambiar un nombre, el grupo se reordena', JSON.stringify(await orden()));
+    t.ok(await p.evaluate(() => [..._bulkSel['2º ESO-A']].map(i => data['2º ESO'].A[i].nombre).join() === 'Zapata Mora, Eva'), 'la selección de filas sigue en los mismos alumnos/as');
+    const pantallas = await p.evaluate(() => {
+      openDatosMateria('2º ESO', 'A', '1', 'Inglés'); const dm = document.querySelector('#dmBody tbody th[scope="row"]').textContent.trim(); _dmCtx.cambios = false; closeDatosMateria();
+      const ie = datosInformeEquipo('2º ESO', 'A', '1').alumnos.map(x => x.nombre)[0];
+      return [dm, ie]; });
+    t.ok(pantallas.every(x => x === 'Aguilar Ruiz, Luis'), 'las demás pantallas (datos de una materia, informe para el equipo) lo muestran ya en su sitio', JSON.stringify(pantallas));
+    await esperar(1200); await p.reload(); await esperar(1500);
+    t.ok(JSON.stringify(await orden()) === JSON.stringify(['Aguilar Ruiz, Luis', 'García López, Ana', 'Zapata Mora, Eva']), 'el orden se conserva al recargar');
+    await p.evaluate(() => { hideWelcomeScreen(); currentGrupos['2º ESO'] = 'A'; selectNivel('2º ESO'); }); await esperar(150);
+    const inp2 = p.locator('#mainContent input.cell-input[value="Zapata Mora, Eva"]');
+    await inp2.fill('Bernal Mora, Eva'); await inp2.press('Tab'); await esperar(400);
+    t.ok(JSON.stringify(await orden()) === JSON.stringify(['Aguilar Ruiz, Luis', 'Bernal Mora, Eva', 'García López, Ana']), 'otro cambio de nombre', JSON.stringify(await orden()));
+    await p.evaluate(() => _undoPop()); await esperar(300);
+    t.ok(JSON.stringify(await orden()) === JSON.stringify(['Aguilar Ruiz, Luis', 'García López, Ana', 'Zapata Mora, Eva']), 'Ctrl+Z devuelve el nombre y su sitio', JSON.stringify(await orden()));
+    // Un archivo de antes, con el alumnado desordenado, se ve en orden alfabético.
+    const r = await p.evaluate(() => { const st = JSON.parse(JSON.stringify(buildState())); st.data['2º ESO'].A.reverse(); applyFilePayload(st); renderAll(); return data['2º ESO'].A.map(a => a.nombre); });
+    t.ok(JSON.stringify(r) === JSON.stringify(['Aguilar Ruiz, Luis', 'García López, Ana', 'Zapata Mora, Eva']), 'un archivo con el alumnado desordenado se muestra en orden alfabético', JSON.stringify(r));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
   { nombre: 'suspensos', descripcion: 'Tutoría: importar suspensos por identificador y por nombre parecido', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     const ids = await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis'] });
