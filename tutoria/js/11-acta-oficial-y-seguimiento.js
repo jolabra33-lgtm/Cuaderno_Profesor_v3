@@ -32,6 +32,9 @@ function openActaOficialMenu(nivel, grupo) {
         <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--purple),#6d28d9);" onclick="openActaOficial('${jsAttr(nivel)}','${jsAttr(grupo)}',3);document.getElementById('actaMenuOverlay').classList.remove('open')">
           📄 Acta Evaluación Final
         </button>
+        <button class="btn btn-ghost" onclick="document.getElementById('actaMenuOverlay').classList.remove('open');abrirActaCalificaciones('${jsAttr(nivel)}','${jsAttr(grupo)}')" title="La nota de cada alumno/a en cada materia, como el acta de Itaca">
+          📑 Acta de calificaciones (notas por materia)
+        </button>
       </div>
       <div class="modal-actions" style="margin-top:16px;">
         <button class="btn btn-ghost" onclick="document.getElementById('actaMenuOverlay').classList.remove('open')">Cancelar</button>

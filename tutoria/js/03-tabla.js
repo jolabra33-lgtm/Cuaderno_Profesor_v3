@@ -298,6 +298,7 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
             <button role="menuitem" onclick="openInformacionEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📬 Información del equipo docente</button>
             <button role="menuitem" onclick="openDatosMateria('${jsAttr(nivel)}','${jsAttr(grupo)}')" title="Para el profesorado que no usa el Cuaderno: mete tú sus notas, faltas, convivencia y comentarios">✍️ Introducir datos de una materia</button>
             <button role="menuitem" onclick="abrirInformeEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📊 Informe para el equipo docente</button>
+            <button role="menuitem" onclick="abrirActaCalificaciones('${jsAttr(nivel)}','${jsAttr(grupo)}')" title="Todas las notas del grupo en una hoja, como el acta de Itaca">📑 Acta de calificaciones</button>
             <button role="menuitem" onclick="exportarFichaGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}',_sesEvalPropuesta('${jsAttr(nivel)}'))">📤 Ficha del grupo para el profesorado</button>
             <button role="menuitem" onclick="openObservacionesGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📝 Observaciones del grupo${(window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : ''}</button>
             <button role="menuitem" onclick="openPlanoGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}')">🪑 Plano del grupo</button>

@@ -521,7 +521,7 @@ export const PRUEBAS = [
       return { prop: ana.propuesta1.tipo, ac: ana.sesionEval['1'].acuerdos, rev: ana.sesionEval['1'].revisado, val: d.actasSesion['1'].valoracion, as: d.sesiones.eval1[0] }; });
     t.ok(r.prop === 'Promoción' && r.ac === 'Plan de refuerzo en Matemáticas.' && r.rev && r.val === 'Grupo trabajador pero hablador.' && r.as.asistio === false && r.as.justificacion === 'Formación',
       'se guardan la propuesta, los acuerdos, la valoración y la asistencia', JSON.stringify(r));
-    await p.click('#sesCab button:has-text("Acta")'); await esperar(400);
+    await p.click('#sesCab button:has-text("Acta de la sesión")'); await esperar(400);
     const acta = await p.evaluate(() => document.querySelector('#tdocOverlay iframe')?.srcdoc || '');
     t.ok(/Acta de la sesión de evaluación/.test(acta) && /Plan de refuerzo en Matemáticas/.test(acta) && /Promoción/.test(acta) && /Zapata Ruiz, Luis \(Matemáticas\): Formación/.test(acta) && /Cambiar la distribución/.test(acta),
       'el acta se genera con asistencia, valoración, acuerdos y la propuesta de cada alumno/a');
@@ -593,7 +593,9 @@ export const PRUEBAS = [
     await tutoriaConAlumnos(p, t.url, '2º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria', 'Vidal Roca, Pau']);
     await p.evaluate(() => { currentGrupos['2º ESO'] = 'A'; selectNivel('2º ESO'); });
     await p.click('#mainContent .mas-menu > summary'); await p.click('#mainContent button:has-text("Introducir datos de una materia")'); await esperar(200);
-    await p.fill('#dmCab input[list="dmMaterias"]', 'Inglés'); await p.dispatchEvent('#dmCab input[list="dmMaterias"]', 'change'); await esperar(150);
+    // La materia se elige en un desplegable; «➕ Otra materia…» deja escribir una que no está.
+    await p.selectOption('#dmMateriaSel', '__otra'); await esperar(50);
+    await p.fill('#dmMateriaOtra', 'Inglés'); await p.press('#dmMateriaOtra', 'Enter'); await esperar(150);
     await p.fill('#dmCab input[placeholder^="Se añade"]', 'Eva Gil Mora');
     // Dos columnas copiadas de Excel (nota y faltas sin justificar) pegadas en la primera nota.
     await p.evaluate(() => { const inp = document.querySelector('#dmBody input[data-r="0"][data-c="nota"]'), dt = new DataTransfer();
@@ -631,6 +633,56 @@ export const PRUEBAS = [
     t.ok(await p.evaluate(() => !data['2º ESO'].A[3].pendientes1.includes('Inglés') && data['2º ESO'].A[3].eval1 === 0), 'desmarcar «Susp.» la quita de las suspensas');
     await p.evaluate(() => _undoPop()); await esperar(150);
     t.ok(await p.evaluate(() => data['2º ESO'].A[3].pendientes1.includes('Inglés')), 'y Ctrl+Z lo deshace');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-acta-calificaciones', descripcion: 'Tutoría: cambiar de materia en «Datos de una materia» (desplegable, «Guardar y siguiente») y acta de calificaciones como la de Itaca (notas, S, recuentos, abreviaturas, sin nombres)', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '2º Bach.', 'HS', ['Pérez Ruiz, Luis', 'Andrés Lozano, Claudia', 'Sanz Martí, Íria']);
+    await p.evaluate(() => {
+      ['Historia de España|Pérez Gil, Ana', 'Lengua Castellana y Literatura II|Gil Mora, Eva', 'Historia del Arte|Ruiz Sanz, Toni'].forEach(x => { const [m, pr] = x.split('|'); _tAplicarProfesor('2º Bach.', 'HS', m, pr); });
+      data['2º Bach.'].HS.forEach(a => { a.familia = [{ parentesco: 'Madre', nombre: 'Contacto Privado', email: 'privado@correo.es', telefono: '600000000' }]; });
+      currentGrupos['2º Bach.'] = 'HS'; selectNivel('2º Bach.'); openDatosMateria('2º Bach.', 'HS', '1');
+    }); await esperar(200);
+    const grupos = await p.$$eval('#dmMateriaSel optgroup', g => g.map(x => [x.label, [...x.children].map(o => o.value)]));
+    t.ok(grupos[0][0] === 'Materias del grupo' && JSON.stringify(grupos[0][1]) === JSON.stringify(['Historia de España', 'Lengua Castellana y Literatura II', 'Historia del Arte']) && grupos[1][1].length > 5,
+      'el desplegable ofrece todas las materias: las del grupo primero y después las demás del nivel', JSON.stringify(grupos).slice(0, 300));
+    t.ok(await p.evaluate(() => _dmCtx.materia) === 'Historia de España', 'propone la primera materia del grupo sin datos');
+    await p.selectOption('#dmMateriaSel', 'Historia del Arte'); await esperar(150);
+    t.ok(await p.evaluate(() => _dmCtx.materia === 'Historia del Arte' && _dmCtx.profesor === 'Ruiz Sanz, Toni'), 'se puede cambiar a cualquier materia (y trae su profesor/a)');
+    for (const [i, v] of ['4', '7,5', '9'].entries()) await p.fill(`#dmBody input[data-r="${i}"][data-c="nota"]`, v);
+    await p.click('#dmPie button:has-text("Guardar y siguiente")'); await esperar(250);
+    t.ok(await p.evaluate(() => _dmCtx.materia) === 'Historia de España', '«Guardar y siguiente» guarda y pasa a la siguiente materia del grupo sin datos');
+    await p.check('#dmBody input[data-r="1"][data-c="susp"]');
+    for (const [i, v] of [[0, '6'], [2, '3']]) await p.fill(`#dmBody input[data-r="${i}"][data-c="nota"]`, v);
+    await p.click('#dmPie button:has-text("Guardar y siguiente")'); await esperar(250);
+    t.ok(await p.evaluate(() => _dmCtx.materia) === 'Lengua Castellana y Literatura II', 'y luego a la siguiente');
+    await p.selectOption('#dmMateriaSel', 'Historia de España'); await esperar(150);
+    t.ok(await p.inputValue('#dmBody input[data-r="0"][data-c="nota"]') === '6' && await p.isChecked('#dmBody input[data-r="1"][data-c="susp"]'), 'al volver a una materia guardada sale lo que tenía');
+    const D = await p.evaluate(() => { const d = datosActaCalificaciones('2º Bach.', 'HS', '1');
+      return { nombres: d.filas.map(f => f.nombre), mats: d.porMateria.map(m => [m.abrev, m.calificados, m.suspensos, m.media, m.profesor]), celdas: d.filas.map(f => f.celdas.map(c => c ? c.texto : '')), susp: d.filas.map(f => f.susp), media: d.filas.map(f => f.media), reparto: d.reparto.map(r => r.n), sin: d.sinCalificar }; });
+    t.ok(JSON.stringify(D.nombres) === JSON.stringify(['Andrés Lozano, Claudia', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria']), 'relación alfabética del alumnado', JSON.stringify(D.nombres));
+    t.ok(JSON.stringify(D.mats) === JSON.stringify([['HE', 3, 2, 4.5, 'Pérez Gil, Ana'], ['LCL II', 0, 0, null, 'Gil Mora, Eva'], ['HA', 3, 1, 6.83, 'Ruiz Sanz, Toni']]),
+      'cada materia con su abreviatura, calificados, suspensos, media y profesor/a, en el orden del nivel', JSON.stringify(D.mats));
+    t.ok(JSON.stringify(D.celdas) === JSON.stringify([['S', '', '7,5'], ['6', '', '4'], ['3', '', '9']]) && JSON.stringify(D.susp) === '[1,1,1]' && JSON.stringify(D.media) === '[7.5,5,6]',
+      'la nota de cada alumno/a en cada materia (S si suspende sin nota), sus suspensas y su media', JSON.stringify(D));
+    t.ok(JSON.stringify(D.reparto) === '[0,3,0,0]' && JSON.stringify(D.sin) === JSON.stringify(['Lengua Castellana y Literatura II']), 'reparto por número de suspensas y aviso de la materia sin calificar', JSON.stringify(D));
+    // Desde el pie de la tabla: ventana del acta, sin nombres y descarga.
+    await p.click('#dmPie button:has-text("Acta de calificaciones")'); await esperar(200);
+    t.ok(/2 de 3 materias con calificaciones/.test(await p.textContent('#actaCalifOv')) && /Faltan: Lengua Castellana/.test(await p.textContent('#actaCalifOv')), 'la ventana dice cuántas materias tienen notas y cuáles faltan');
+    await p.check('#acSinNombres');
+    const [descarga] = await Promise.all([p.waitForEvent('download'), p.click('#actaCalifOv [data-acc="descargar"]')]);
+    const html = await (await import('node:fs/promises')).readFile(await descarga.path(), 'utf8');
+    t.ok(descarga.suggestedFilename() === 'acta-calificaciones-2-bach-hs-eval1.html', 'se descarga con un nombre claro', descarga.suggestedFilename());
+    t.ok(/ACTA DE CALIFICACIONES · PRIMERA EVALUACIÓN/i.test(html) && /Pérez Gil, Ana/.test(html) && /<td class="s">S<\/td>/.test(html) && /% de aprobados/.test(html), 'el acta lleva cabecera, notas, suspensas y recuentos', html.length);
+    t.ok(!/Andrés Lozano|Pérez Ruiz|Sanz Martí/.test(html), 'con «Sin los nombres» solo va el número de orden');
+    t.ok(!/<script/i.test(html) && !/privado@correo|Contacto Privado|600000000/.test(html), 'sin código ni contactos de las familias');
+    await p.uncheck('#acSinNombres');
+    await p.click('#actaCalifOv [data-acc="ver"]'); await esperar(400);
+    const vista = await p.frameLocator('#tdocOverlay iframe').locator('table.acta').innerText();
+    t.ok(/Andrés Lozano, Claudia/.test(vista) && /HE/.test(vista), '«Ver e imprimir» la abre en la vista de documentos, para imprimir o guardar en PDF', vista.slice(0, 120));
+    await p.evaluate(() => { __cerrarVistaDocT(); closeDatosMateria(); openActaOficialMenu('2º Bach.', 'HS'); }); await esperar(150);
+    t.ok(await p.isVisible('#actaMenuOverlay button:has-text("Acta de calificaciones")'), 'también está en el menú del Acta Oficial');
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 

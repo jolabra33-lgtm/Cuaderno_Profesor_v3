@@ -99,6 +99,7 @@ function renderSesion() {
       <span style="flex:1"></span>
       <button class="btn btn-ghost btn-sm" onclick="abrirInformeEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')" title="Resultados del grupo para el profesorado (previo a la sesión o actualizado tras ella)">📊 Informe para el equipo</button>
       <button class="btn btn-ghost btn-sm" onclick="generarActaSesion('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')">📝 Acta de la sesión</button>
+      <button class="btn btn-ghost btn-sm" onclick="abrirActaCalificaciones('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')" title="Todas las notas del grupo en una hoja, como el acta de Itaca">📑 Acta de calificaciones</button>
       <button class="btn btn-ghost btn-sm" onclick="exportarFichaGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')">📤 Ficha para el profesorado</button>
       <button class="btn btn-primary btn-sm" onclick="closeSesionEvaluacion()">✕ Salir</button>
     </div>
