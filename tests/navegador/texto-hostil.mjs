@@ -149,6 +149,8 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
       ['ACTA DE LA SESIÓN', () => { selectNivel(nivH); generarActaSesion(nivH, gH, '1'); }],
       ['DATOS DE UNA MATERIA', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openDatosMateria(nivH, gH, '1', Object.keys(data[nivH][gH][0].porMateria)[0]); }],
       ['ACTA DE CALIFICACIONES · ventana', () => { currentGrupos[nivH] = gH; selectNivel(nivH); const m = Object.keys(data[nivH][gH][0].porMateria)[0]; _abrevMaterias[m] = m.slice(0, 12); abrirActaCalificaciones(nivH, gH, '1'); document.getElementById('acAbrevs').open = true; }],
+      ['DATOS DE UNA MATERIA · no la cursa', () => { currentGrupos[nivH] = gH; selectNivel(nivH); const al = data[nivH][gH], m = Object.keys(al[0].porMateria)[0]; _tPonerNoCursa(al[al.length - 1], m, true); openDatosMateria(nivH, gH, '1', m); }],
+      ['ACTA DE CALIFICACIONES · columnas agrupadas', () => { selectNivel(nivH); const ms = Object.keys(data[nivH][gH][0].porMateria); ms.forEach(m => { _columnasActa[m] = m.slice(0, 24); _abrevMaterias[m] = m.slice(0, 12); }); const w = _ventanaDoc(); w.document.write(actaCalificacionesHTML(nivH, gH, '1')); w.document.close(); }],
       ['ACTA DE CALIFICACIONES · documento', () => { selectNivel(nivH); const w = _ventanaDoc(); w.document.write(actaCalificacionesHTML(nivH, gH, '1')); w.document.close(); }],
       ['INFORME PARA EL EQUIPO · ventana', () => { currentGrupos[nivH] = gH; selectNivel(nivH); abrirInformeEquipo(nivH, gH, '1'); }],
       ['INFORME PARA EL EQUIPO · documento', () => { selectNivel(nivH); const w = _ventanaDoc(); w.document.write(informeEquipoHTML(nivH, gH, '1')); w.document.close(); }],

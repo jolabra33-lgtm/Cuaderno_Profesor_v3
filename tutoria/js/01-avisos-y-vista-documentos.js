@@ -292,6 +292,14 @@ function _tAplicarProfesor(nivel,grupo,materia,profesor){
 }
 // Suma o quita una materia de una lista de suspensas y ajusta el número (sube si hay más materias en la
 // lista y baja si se quita alguna; nunca por debajo de la lista). Lo usan las importaciones y la entrada a mano.
+/* Materias que el alumno/a no cursa (optativas, Inglés o Francés, Religión…): alumno.noCursa = ['Francés II', …].
+   Vale para todo el curso. Se marca en «✍️ Datos de una materia» y la usan el acta de calificaciones y 📬. */
+function _tNoCursa(a,materia){ return (a.noCursa||[]).some(m=>_tNorm(m)===_tNorm(materia)); }
+function _tPonerNoCursa(a,materia,nc){
+  const l=(a.noCursa||[]).filter(m=>_tNorm(m)!==_tNorm(materia));
+  if(nc) l.push(String(materia).trim());
+  if(l.length) a.noCursa=l; else delete a.noCursa;
+}
 function _tAjustarSuspensa(a,campo,evalCampo,materia,suspensa){
   if(!Array.isArray(a[campo])) a[campo]=[];
   const tiene=a[campo].some(m=>_tNorm(m)===_tNorm(materia));
@@ -360,6 +368,7 @@ function _tImpCuadernoAplicar(p,o){
     p.emparejados.forEach(({a,x})=>{
       if(!x) return;
       if(!a.porMateria || typeof a.porMateria!=='object') a.porMateria={};
+      _tPonerNoCursa(a,p.materia,false);   // está en la lista de ese profesor/a: la cursa
       a.porMateria[p.materia]={profesor:o.profesor||'', generado:o.generado||new Date().toISOString(), version:o.version||1, periodos:o.periodos||{},
         notas:x.notas||{}, faltas:x.faltas||{}, convivencia:x.convivencia||{}, comentarios:x.comentarios||{}};
     });

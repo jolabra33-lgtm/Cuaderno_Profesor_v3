@@ -75,8 +75,9 @@ function _dmCargarFilas() {
     const d = materia ? _dmEntrada(a, materia) : null;
     const nota = d ? pn.map(p => (d.notas || {})[p]).find(n => typeof n === 'number') : undefined;
     const f = (d && (d.faltas || {})[k]) || {}, c = (d && (d.convivencia || {})[k]) || {};
-    const susp = typeof nota === 'number' ? nota < 5 : (!!materia && ((a[pend] || []).some(m => _tNorm(m) === _tNorm(materia)) || !!(d && (d.suspensa || {})[pn[pn.length - 1]])));
-    return { nota: _dmNotaTexto(nota), susp, fi: f.injustificadas ? String(f.injustificadas) : '', fj: f.justificadas ? String(f.justificadas) : '', re: f.retrasos ? String(f.retrasos) : '',
+    const nc = !!materia && _tNoCursa(a, materia);
+    const susp = !nc && (typeof nota === 'number' ? nota < 5 : (!!materia && ((a[pend] || []).some(m => _tNorm(m) === _tNorm(materia)) || !!(d && (d.suspensa || {})[pn[pn.length - 1]]))));
+    return { nc, nota: _dmNotaTexto(nota), susp, fi: f.injustificadas ? String(f.injustificadas) : '', fj: f.justificadas ? String(f.justificadas) : '', re: f.retrasos ? String(f.retrasos) : '',
       ac: c.ac ? String(c.ac) : '', pa: c.pa ? String(c.pa) : '', com: d ? _dmTexto(pn.map(p => (d.comentarios || {})[p]).find(Boolean)) : '' };
   });
   if (!_dmCtx.profesor) {
@@ -96,7 +97,8 @@ window.openDatosMateria = async function(nivel, grupo, k, materia) {
     const equipo = _getAsistenciaData(nivel, grupo).profesores.map(p => p.materia).filter(m => (m || '').trim() && _tNorm(m) !== 'tutoria');
     materia = equipo.find(m => !_infResumenMateria(nivel, grupo, m, periodo).hayDatos) || equipo[0] || '';
   }
-  _dmCtx = { nivel, grupo, k, materia, profesor: '', filas: [], cambios: false };
+  let solo = false; try { solo = localStorage.getItem('tut_dm_solo') === '1'; } catch (e) {}
+  _dmCtx = { nivel, grupo, k, materia, profesor: '', filas: [], cambios: false, solo };
   _dmCargarFilas();
   let ov = document.getElementById('datosMateriaOverlay');
   if (!ov) {
@@ -184,22 +186,27 @@ function renderDatosMateria() {
   const cab = _DM_COLS.map(c => `<th scope="col"${c.ancho ? ` style="width:${c.ancho}px"` : ''}${c.ayuda ? ` title="${_tEsc(c.ayuda)}"` : ''}>${c.etq}</th>`).join('');
   const celda = (i, c) => {
     const v = filas[i][c.k];
-    if (c.tipo === 't') return `<td><input class="dm-in dm-com" data-r="${i}" data-c="${c.k}" value="${_tEsc(v)}" aria-label="Comentario de ${_tEsc(alumnos[i].nombre)}"></td>`;
-    return `<td><input class="dm-in" data-r="${i}" data-c="${c.k}" value="${_tEsc(v)}" inputmode="${c.tipo === 'nota' ? 'decimal' : 'numeric'}" aria-label="${_tEsc(c.etq)} de ${_tEsc(alumnos[i].nombre)}"></td>`;
+    const dis = filas[i].nc ? ' disabled' : '';
+    if (c.tipo === 't') return `<td><input class="dm-in dm-com" data-r="${i}" data-c="${c.k}" value="${_tEsc(v)}"${dis} aria-label="Comentario de ${_tEsc(alumnos[i].nombre)}"></td>`;
+    return `<td><input class="dm-in" data-r="${i}" data-c="${c.k}" value="${_tEsc(v)}"${dis} inputmode="${c.tipo === 'nota' ? 'decimal' : 'numeric'}" aria-label="${_tEsc(c.etq)} de ${_tEsc(alumnos[i].nombre)}"></td>`;
   };
   document.getElementById('dmBody').innerHTML = !materia
     ? '<p class="ficha-vacio">Elige o escribe la materia.</p>'
-    : `<p style="font-size:12px;color:var(--text2);margin:0 0 8px">⌨️ Intro baja a la fila siguiente. 📋 Puedes copiar una columna (o varias) de Excel y pegarla en la primera casilla: se reparte hacia abajo y hacia la derecha. La casilla <strong>Susp.</strong> se marca sola con una nota menor que 5; sin nota, márcala tú.</p>
-      <div style="overflow-x:auto"><table class="inf-tabla dm-tabla">
-        <thead><tr><th scope="col">Alumno/a</th>${cab}<th scope="col" style="width:50px">Susp.</th></tr></thead>
-        <tbody>${alumnos.map((a, i) => `<tr class="${filas[i].susp ? 'dm-susp' : ''}">
+    : `<p style="font-size:12px;color:var(--text2);margin:0 0 6px">⌨️ Intro baja a la fila siguiente. 📋 Puedes copiar una columna (o varias) de Excel y pegarla en la primera casilla: se reparte hacia abajo y hacia la derecha, saltándose a quien no la cursa. La casilla <strong>Susp.</strong> se marca sola con una nota menor que 5; sin nota, márcala tú. En optativas, Inglés o Francés y Religión, marca <strong>No la cursa</strong> (se recuerda en las demás evaluaciones).</p>
+      <div class="dm-acciones">
+        <label><input type="checkbox" id="dmSolo" ${_dmCtx.solo ? 'checked' : ''}> Ver solo a quien la cursa</label>
+        <button class="btn btn-ghost btn-sm" id="dmBlancoNC" title="Para optativas: después de meter las notas de quien la cursa, marca al resto">🚫 Quien está en blanco no la cursa</button>
+      </div>
+      <div style="overflow-x:auto"><table class="inf-tabla dm-tabla ${_dmCtx.solo ? 'dm-solo' : ''}">
+        <thead><tr><th scope="col">Alumno/a</th><th scope="col" style="width:66px;white-space:normal;line-height:1.15" title="El alumno/a no está matriculado en esta materia">No la cursa</th>${cab}<th scope="col" style="width:50px">Susp.</th></tr></thead>
+        <tbody>${alumnos.map((a, i) => `<tr class="${filas[i].susp ? 'dm-susp' : ''} ${filas[i].nc ? 'dm-nc' : ''}">
           <th scope="row">${_tEsc(a.nombre || 'Sin nombre')}</th>
+          <td style="text-align:center"><input type="checkbox" data-r="${i}" data-c="nc" ${filas[i].nc ? 'checked' : ''} aria-label="${_tEsc(a.nombre)} no cursa ${_tEsc(materia)}"></td>
           ${_DM_COLS.map(c => celda(i, c)).join('')}
-          <td style="text-align:center"><input type="checkbox" data-r="${i}" data-c="susp" ${filas[i].susp ? 'checked' : ''} aria-label="Suspende ${_tEsc(materia)}: ${_tEsc(a.nombre)}"></td>
+          <td style="text-align:center"><input type="checkbox" data-r="${i}" data-c="susp" ${filas[i].susp ? 'checked' : ''} ${filas[i].nc ? 'disabled' : ''} aria-label="Suspende ${_tEsc(materia)}: ${_tEsc(a.nombre)}"></td>
         </tr>`).join('')}</tbody></table></div>`;
-  const nSusp = filas.filter(f => f.susp).length;
   document.getElementById('dmPie').innerHTML = `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
-      <span id="dmResumen" style="font-size:12.5px;color:var(--text2)">${materia ? `${nSusp} suspenso${nSusp === 1 ? '' : 's'} de ${alumnos.length}` : ''}</span>
+      <span id="dmResumen" style="font-size:12.5px;color:var(--text2)">${materia ? _dmResumen() : ''}</span>
       <span style="flex:1"></span>
       <button class="btn btn-ghost btn-sm" onclick="abrirActaCalificaciones('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')" title="Todas las notas del grupo en una hoja, como el acta de Itaca">📑 Acta de calificaciones</button>
       <button class="btn btn-ghost btn-sm" onclick="closeDatosMateria()">Cerrar</button>
@@ -214,10 +221,25 @@ function _dmPintarFila(i) {
   const tr = document.querySelector(`#dmBody input[data-r="${i}"]`)?.closest('tr'); if (!tr) return;
   const f = _dmCtx.filas[i];
   tr.classList.toggle('dm-susp', !!f.susp);
-  const cb = tr.querySelector('input[data-c="susp"]'); if (cb) cb.checked = !!f.susp;
-  _DM_COLS.forEach(c => { const inp = tr.querySelector(`input[data-c="${c.k}"]`); if (inp && document.activeElement !== inp) inp.value = f[c.k]; });
-  const n = _dmCtx.filas.filter(x => x.susp).length, r = document.getElementById('dmResumen');
-  if (r) r.textContent = `${n} suspenso${n === 1 ? '' : 's'} de ${_dmCtx.filas.length}`;
+  tr.classList.toggle('dm-nc', !!f.nc);
+  const cb = tr.querySelector('input[data-c="susp"]'); if (cb) { cb.checked = !!f.susp; cb.disabled = !!f.nc; }
+  const nc = tr.querySelector('input[data-c="nc"]'); if (nc) nc.checked = !!f.nc;
+  _DM_COLS.forEach(c => { const inp = tr.querySelector(`input[data-c="${c.k}"]`); if (!inp) return; inp.disabled = !!f.nc; if (document.activeElement !== inp) inp.value = f[c.k]; });
+  const r = document.getElementById('dmResumen');
+  if (r) r.textContent = _dmResumen();
+}
+function _dmResumen() {
+  const fs = _dmCtx.filas, n = fs.filter(x => x.susp).length, nc = fs.filter(x => x.nc).length;
+  return `${n} suspenso${n === 1 ? '' : 's'} de ${fs.length - nc}${nc ? ` que la cursan (${nc} no la cursa${nc === 1 ? '' : 'n'})` : ''}`;
+}
+// Filas en las que se escribe (las de quien no la cursa se saltan al pegar y con Intro).
+function _dmFilasActivas() { return _dmCtx.filas.map((f, i) => f.nc ? -1 : i).filter(i => i >= 0); }
+function _dmMarcarNoCursa(i, nc) {
+  const f = _dmCtx.filas[i]; if (!f) return;
+  f.nc = !!nc;
+  if (f.nc) { f.susp = false; ['nota', 'fi', 'fj', 're', 'ac', 'pa', 'com'].forEach(c => { f[c] = ''; }); }
+  _dmCtx.cambios = true;
+  _dmPintarFila(i);
 }
 function _dmPonerValor(i, col, valor) {
   const f = _dmCtx.filas[i]; if (!f) return;
@@ -232,8 +254,9 @@ function _dmEnlazar() {
     inp.addEventListener('keydown', e => {
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      const r = +inp.dataset.r + (e.shiftKey ? -1 : 1);
-      body.querySelector(`input[data-r="${r}"][data-c="${inp.dataset.c}"]`)?.focus();
+      const act = _dmFilasActivas(), pos = act.indexOf(+inp.dataset.r);
+      const r = act[pos + (e.shiftKey ? -1 : 1)];
+      if (r !== undefined) body.querySelector(`input[data-r="${r}"][data-c="${inp.dataset.c}"]`)?.focus();
     });
     // Pegar desde Excel: filas separadas por saltos de línea y columnas por tabuladores.
     inp.addEventListener('paste', e => {
@@ -241,19 +264,36 @@ function _dmEnlazar() {
       if (!/[\t\n]/.test(t.replace(/\r?\n$/, ''))) return;   // un solo valor: pegado normal
       e.preventDefault();
       const filas = t.replace(/\r/g, '').replace(/\n$/, '').split('\n').map(l => l.split('\t'));
-      const r0 = +inp.dataset.r, c0 = _DM_COLS.findIndex(c => c.k === inp.dataset.c);
+      const c0 = _DM_COLS.findIndex(c => c.k === inp.dataset.c);
+      const destino = _dmFilasActivas().filter(i => i >= +inp.dataset.r).slice(0, filas.length);
       filas.forEach((celdas, dr) => celdas.forEach((v, dc) => {
-        const col = _DM_COLS[c0 + dc]; if (!col || !_dmCtx.filas[r0 + dr]) return;
-        _dmPonerValor(r0 + dr, col.k, v.trim());
+        const col = _DM_COLS[c0 + dc]; if (!col || destino[dr] === undefined) return;
+        _dmPonerValor(destino[dr], col.k, v.trim());
       }));
-      for (let i = r0; i < Math.min(_dmCtx.filas.length, r0 + filas.length); i++) _dmPintarFila(i);
+      destino.forEach(_dmPintarFila);
       body.querySelectorAll('input.dm-in').forEach(x => { const f = _dmCtx.filas[+x.dataset.r]; if (f) x.value = f[x.dataset.c]; });
-      showToast(`📋 Pegado en ${Math.min(filas.length, _dmCtx.filas.length - r0)} filas`);
+      showToast(`📋 Pegado en ${destino.length} filas${filas.length > destino.length ? ` (sobran ${filas.length - destino.length})` : ''}`);
     });
   });
   body.querySelectorAll('input[data-c="susp"]').forEach(cb => cb.addEventListener('change', () => {
     const f = _dmCtx.filas[+cb.dataset.r]; f.susp = cb.checked; _dmCtx.cambios = true; _dmPintarFila(+cb.dataset.r);
   }));
+  body.querySelectorAll('input[data-c="nc"]').forEach(cb => cb.addEventListener('change', () => _dmMarcarNoCursa(+cb.dataset.r, cb.checked)));
+  const solo = document.getElementById('dmSolo');
+  if (solo) solo.addEventListener('change', () => {
+    _dmCtx.solo = solo.checked;
+    try { localStorage.setItem('tut_dm_solo', solo.checked ? '1' : '0'); } catch (e) {}
+    body.querySelector('.dm-tabla')?.classList.toggle('dm-solo', solo.checked);
+  });
+  const blanco = document.getElementById('dmBlancoNC');
+  if (blanco) blanco.addEventListener('click', () => {
+    const vacia = f => !f.nc && !f.susp && ['nota', 'fi', 'fj', 're', 'ac', 'pa', 'com'].every(c => !String(f[c] || '').trim());
+    const idx = _dmCtx.filas.map((f, i) => vacia(f) ? i : -1).filter(i => i >= 0);
+    if (!idx.length) { showToast('ℹ No hay nadie en blanco'); return; }
+    if (idx.length === _dmCtx.filas.length) { mostrarAviso('Están todos en blanco: mete primero las notas de quien la cursa.'); return; }
+    idx.forEach(i => _dmMarcarNoCursa(i, true));
+    showToast(`🚫 ${idx.length} marcado${idx.length === 1 ? '' : 's'} como «no la cursa» · guarda para conservarlo`);
+  });
 }
 
 window.guardarDatosMateria = function() {
@@ -262,7 +302,7 @@ window.guardarDatosMateria = function() {
   // Validación: notas de 0 a 10 y números enteros; las casillas mal escritas se marcan.
   let malas = 0;
   document.querySelectorAll('#dmBody input.dm-in').forEach(inp => {
-    const col = _DM_COLS.find(c => c.k === inp.dataset.c); if (!col || col.tipo === 't') return;
+    const col = _DM_COLS.find(c => c.k === inp.dataset.c); if (!col || col.tipo === 't' || inp.disabled) return;
     const ok = (col.tipo === 'nota' ? _dmLeerNota(inp.value) : _dmLeerCuenta(inp.value)).ok;
     inp.classList.toggle('dm-mal', !ok); if (!ok) malas++;
   });
@@ -273,15 +313,26 @@ window.guardarDatosMateria = function() {
   let cambiosSusp = 0;
   _dmAlumnos().forEach((a, i) => {
     const f = _dmCtx.filas[i]; if (!f) return;
+    const existe = Object.keys(a.porMateria || {}).find(m => _tNorm(m) === _tNorm(materia));
+    // No la cursa: se apunta para todo el curso y se quita lo que hubiera de esa materia.
+    _tPonerNoCursa(a, materia, !!f.nc);
+    if (f.nc) {
+      if (existe) delete a.porMateria[existe];
+      if (_tAjustarSuspensa(a, campo, evalCampo, existe || materia, false)) cambiosSusp++;
+      return;
+    }
+    const nota = _dmLeerNota(f.nota).v;
+    const algo = nota !== null || f.susp || f.com.trim() || ['fi', 'fj', 're', 'ac', 'pa'].some(c => _dmLeerCuenta(f[c]).v > 0);
+    if (!existe && !algo) { if (_tAjustarSuspensa(a, campo, evalCampo, materia, false)) cambiosSusp++; return; }   // en blanco: no se crea nada
     if (!a.porMateria || typeof a.porMateria !== 'object') a.porMateria = {};
-    const clave = Object.keys(a.porMateria).find(m => _tNorm(m) === _tNorm(materia)) || materia;
+    const clave = existe || materia;
     const d = a.porMateria[clave] || (a.porMateria[clave] = { origen: 'manual', notas: {}, faltas: {}, convivencia: {}, comentarios: {} });
     ['notas', 'faltas', 'convivencia', 'comentarios', 'suspensa', 'manual'].forEach(x => { if (!d[x] || typeof d[x] !== 'object') d[x] = {}; });
-    const nota = _dmLeerNota(f.nota).v;
     pn.forEach(p => {
       if (nota === null) delete d.notas[p]; else d.notas[p] = nota;
       if (f.com.trim()) d.comentarios[p] = f.com.trim(); else delete d.comentarios[p];
-      d.suspensa[p] = !!f.susp; d.manual[p] = true;
+      d.suspensa[p] = !!f.susp;
+      if (nota !== null || f.susp) d.manual[p] = true; else delete d.manual[p];   // calificado a mano en este periodo
     });
     d.faltas[k] = { injustificadas: _dmLeerCuenta(f.fi).v, justificadas: _dmLeerCuenta(f.fj).v, retrasos: _dmLeerCuenta(f.re).v };
     d.convivencia[k] = { ac: _dmLeerCuenta(f.ac).v, rc: (d.convivencia[k] || {}).rc || 0, pa: _dmLeerCuenta(f.pa).v };

@@ -53,6 +53,23 @@ function _acAbrevs(materias) {
   });
 }
 function _acNota(n) { return (Math.round(n * 100) / 100).toString().replace('.', ','); }
+// Columna agrupada del acta en la que va la materia ('' = columna propia), como LE II, Optativa o Religión en Itaca.
+function _acColumnaDe(m) {
+  const k = Object.keys(_columnasActa).find(x => _tNorm(x) === _tNorm(m));
+  return k ? _columnasActa[k] : '';
+}
+function _acPonerColumna(m, col) {
+  Object.keys(_columnasActa).filter(x => _tNorm(x) === _tNorm(m)).forEach(x => delete _columnasActa[x]);
+  col = String(col || '').trim().slice(0, 24);
+  if (col) _columnasActa[String(m).trim()] = col;
+  markDirty();
+}
+// Aprobados, suspensos, % y media de un conjunto de calificaciones.
+function _acCifras(cs) {
+  const notas = cs.filter(x => typeof x.n === 'number').map(x => x.n), susp = cs.filter(x => x.susp).length;
+  return { calificados: cs.length, aprobados: cs.length - susp, suspensos: susp, pctAprob: cs.length ? Math.round((cs.length - susp) / cs.length * 100) : null,
+    media: notas.length ? Math.round(notas.reduce((s, x) => s + x, 0) / notas.length * 100) / 100 : null };
+}
 
 /* Todas las cifras del acta, sin HTML (también las usan las pruebas). */
 function datosActaCalificaciones(nivel, grupo, k) {
@@ -63,6 +80,7 @@ function datosActaCalificaciones(nivel, grupo, k) {
   const profes = _getAsistenciaData(nivel, grupo).profesores;
   const entrada = (a, m) => { const cl = Object.keys(a.porMateria || {}).find(x => _tNorm(x) === _tNorm(m)); return cl ? a.porMateria[cl] : null; };
   const celda = (a, m) => {
+    if (_tNoCursa(a, m)) return { nc: true, texto: '—' };
     const d = entrada(a, m);
     const n = d ? periodos.map(p => (d.notas || {})[p]).find(x => typeof x === 'number') : undefined;
     if (typeof n === 'number') return { n, texto: _acNota(n), susp: n < 5 };
@@ -76,35 +94,65 @@ function datosActaCalificaciones(nivel, grupo, k) {
   (getMateriasParaNivel(nivel, grupo) || []).forEach(add);
   _ieMateriasGrupo(nivel, grupo, k).forEach(add);
   alumnos.forEach(a => Object.keys(a.porMateria || {}).forEach(add));
-  const materias = cand.filter(m => profes.some(p => _tNorm(p.materia) === _tNorm(m)) || alumnos.some(a => celda(a, m)));
+  const calificada = x => x && !x.nc;
+  const materias = cand.filter(m => profes.some(p => _tNorm(p.materia) === _tNorm(m)) || alumnos.some(a => calificada(celda(a, m))));
   const abrevs = _acAbrevs(materias);
   const filas = alumnos.map((a, i) => {
     const celdas = materias.map(m => celda(a, m));
-    const notas = celdas.filter(x => x && typeof x.n === 'number').map(x => x.n);
-    const susp = Math.max(celdas.filter(x => x && x.susp).length, +a[c.n] || 0);
+    const notas = celdas.filter(x => calificada(x) && typeof x.n === 'number').map(x => x.n);
+    const susp = Math.max(celdas.filter(x => calificada(x) && x.susp).length, +a[c.n] || 0);
     return { orden: i + 1, nombre: a.nombre, celdas, susp, media: notas.length ? Math.round(notas.reduce((s, x) => s + x, 0) / notas.length * 100) / 100 : null };
   });
   const porMateria = materias.map((m, j) => {
-    const cs = filas.map(f => f.celdas[j]).filter(Boolean), notas = cs.filter(x => typeof x.n === 'number').map(x => x.n);
-    const susp = cs.filter(x => x.susp).length, p = profes.find(x => _tNorm(x.materia) === _tNorm(m));
-    const d = alumnos.map(a => entrada(a, m)).find(x => x && x.profesor);
-    return { materia: m, abrev: abrevs[j], profesor: (p && p.nombre) || (d && d.profesor) || '', calificados: cs.length, aprobados: cs.length - susp, suspensos: susp,
-      pctAprob: cs.length ? Math.round((cs.length - susp) / cs.length * 100) : null, media: notas.length ? Math.round(notas.reduce((s, x) => s + x, 0) / notas.length * 100) / 100 : null };
+    const todas = filas.map(f => f.celdas[j]), cs = todas.filter(calificada), noCursan = todas.filter(x => x && x.nc).length;
+    const p = profes.find(x => _tNorm(x.materia) === _tNorm(m)), d = alumnos.map(a => entrada(a, m)).find(x => x && x.profesor);
+    return { materia: m, abrev: abrevs[j], profesor: (p && p.nombre) || (d && d.profesor) || '', ..._acCifras(cs),
+      noCursan, matriculados: filas.length - noCursan, sinNota: filas.length - noCursan - cs.length };
+  });
+  // Columnas del acta: una por materia, salvo las que se agrupan (LE II, Optativa, Religión…), que comparten
+  // columna con su abreviatura delante de la nota; van donde está la primera de ellas.
+  const columnas = [];
+  materias.forEach((m, j) => {
+    const g = _acColumnaDe(m), ya = g && columnas.find(x => x.agrupada && _tNorm(x.nombre) === _tNorm(g));
+    if (ya) ya.idx.push(j); else columnas.push({ nombre: g || abrevs[j], agrupada: !!g, idx: [j] });
+  });
+  filas.forEach(f => {
+    f.cols = columnas.map(col => {
+      const items = col.idx.filter(j => calificada(f.celdas[j])).map(j => ({ ...f.celdas[j], abrev: abrevs[j] }));
+      if (items.length) return { items, susp: items.some(x => x.susp) };
+      return col.idx.every(j => f.celdas[j] && f.celdas[j].nc) ? { nc: true } : null;
+    });
+  });
+  columnas.forEach((col, ci) => {
+    const cs = [].concat(...filas.map(f => (f.cols[ci] && f.cols[ci].items) || []));
+    Object.assign(col, { materias: col.idx.map(j => materias[j]), ..._acCifras(cs), sinNota: filas.filter(f => !f.cols[ci]).length });
   });
   const reparto = [['Todo aprobado', f => f.susp === 0], ['1 suspensa', f => f.susp === 1], ['2 suspensas', f => f.susp === 2], ['3 o más', f => f.susp >= 3]]
     .map(([etq, fn]) => ({ etq, n: filas.filter(fn).length }));
   const fecha = (getDates(nivel) || {})['eval' + k];
   const d0 = fecha ? new Date(fecha) : new Date(), y = d0.getFullYear(), curso = d0.getMonth() >= 7 ? `${y}-${y + 1}` : `${y - 1}-${y}`;
   return { nivel, grupo, k, nombreEval: FT_NOMBRE_EVAL[k], fecha: fecha ? fmtDate(fecha) : '', curso, tutor: tutores[`${nivel}-${grupo}`] || '',
-    centro: (document.getElementById('headerIesName')?.value || '').trim(), materias, abrevs, filas, porMateria, reparto,
-    sinCalificar: porMateria.filter(x => !x.calificados).map(x => x.materia) };
+    centro: (document.getElementById('headerIesName')?.value || '').trim(), materias, abrevs, filas, porMateria, columnas, reparto,
+    sinCalificar: porMateria.filter(x => !x.calificados).map(x => x.materia),
+    faltanNotas: porMateria.filter(x => x.calificados && x.sinNota).map(x => ({ materia: x.materia, n: x.sinNota })) };
 }
 
 function actaCalificacionesHTML(nivel, grupo, k, opciones) {
   const o = opciones || {}, D = datosActaCalificaciones(nivel, grupo, k), e = s => _tEsc(s == null ? '' : String(s));
   const EVAL = { '1': 'PRIMERA EVALUACIÓN', '2': 'SEGUNDA EVALUACIÓN', '3': 'EVALUACIÓN FINAL' }[D.k];
   const titulo = `Acta de calificaciones — ${nivel} ${grupo} — ${D.nombreEval}`;
-  const pie = (etq, fn) => `<tr class="pie"><th colspan="2" scope="row">${etq}</th>${D.porMateria.map(fn).join('')}<td></td><td></td></tr>`;
+  const hayGrupos = D.columnas.some(x => x.agrupada), rs = hayGrupos ? ' rowspan="2"' : '';
+  const pie = (etq, fn) => `<tr class="pie"><th colspan="2" scope="row">${etq}</th>${D.columnas.map(col => `<td${col.agrupada ? ' colspan="2"' : ''}>${fn(col)}</td>`).join('')}<td></td><td></td></tr>`;
+  const celdaCol = (col, x) => {
+    if (col.agrupada) {
+      if (!x) return '<td class="ab"></td><td></td>';
+      if (x.nc) return '<td class="ab"></td><td class="nc">—</td>';
+      return `<td class="ab">${x.items.map(i => e(i.abrev)).join('<br>')}</td><td class="${x.susp ? 's' : ''}">${x.items.map(i => e(i.texto)).join('<br>')}</td>`;
+    }
+    if (!x) return '<td></td>';
+    if (x.nc) return '<td class="nc">—</td>';
+    return `<td class="${x.susp ? 's' : ''}">${e(x.items[0].texto)}</td>`;
+  };
   return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${e(titulo)}</title>
 <style>
@@ -119,6 +167,7 @@ function actaCalificacionesHTML(nivel, grupo, k, opciones) {
   .acta thead th{background:#eef1f5;font-size:9.5px}
   .acta td.nom,.acta th.nom{text-align:left;white-space:nowrap}
   .acta td.ord{width:26px;color:#444} .acta th.m{width:54px} .acta th.t{width:50px}
+  .acta td.ab,.acta th.ab{font-size:9px;color:#333;width:46px} .acta td.nc{color:#777}
   .acta td.s{font-weight:700;background:#fde2e2;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .acta td.tot{font-weight:700;background:#f6f7f9} .acta td.tot.mal{color:#b91c1c}
   .acta tr:nth-child(even) td:not(.s){background:#fafbfc}
@@ -145,21 +194,25 @@ function actaCalificacionesHTML(nivel, grupo, k, opciones) {
   <td><small>Evaluación</small><b>${e(D.nombreEval)}</b></td>
 </tr></table>
 <table class="acta">
-  <thead><tr><th scope="col">Ord.</th><th scope="col" class="nom">Apellidos y nombre</th>
-    ${D.porMateria.map(m => `<th scope="col" class="m" title="${e(m.materia)}">${e(m.abrev)}</th>`).join('')}
-    <th scope="col" class="t" title="Materias suspensas">Nº susp.</th><th scope="col" class="t">Media</th></tr></thead>
+  <thead><tr><th scope="col"${rs}>Ord.</th><th scope="col"${rs} class="nom">Apellidos y nombre</th>
+    ${D.columnas.map(col => col.agrupada
+      ? `<th scope="colgroup" colspan="2" title="${e(col.materias.join(' / '))}">${e(col.nombre)}</th>`
+      : `<th scope="col"${rs} class="m" title="${e(D.materias[col.idx[0]])}">${e(col.nombre)}</th>`).join('')}
+    <th scope="col"${rs} class="t" title="Materias suspensas">Nº susp.</th><th scope="col"${rs} class="t">Media</th></tr>
+    ${hayGrupos ? `<tr>${D.columnas.filter(col => col.agrupada).map(() => '<th scope="col" class="ab">Abr.</th><th scope="col" class="m">Calif.</th>').join('')}</tr>` : ''}</thead>
   <tbody>${D.filas.map(f => `<tr><td class="ord">${f.orden}</td><td class="nom">${o.sinNombres ? '*' : e(f.nombre)}</td>
-    ${f.celdas.map(x => x ? `<td class="${x.susp ? 's' : ''}">${e(x.texto)}</td>` : '<td></td>').join('')}
+    ${D.columnas.map((col, ci) => celdaCol(col, f.cols[ci])).join('')}
     <td class="tot ${f.susp ? 'mal' : ''}">${f.susp}</td><td class="tot">${f.media == null ? '' : _acNota(f.media)}</td></tr>`).join('')}
   </tbody>
   <tfoot>
-    ${pie('Aprobados', m => `<td>${m.calificados ? m.aprobados : ''}</td>`)}
-    ${pie('Suspensos', m => `<td>${m.calificados ? m.suspensos : ''}</td>`)}
-    ${pie('% de aprobados', m => `<td>${m.pctAprob == null ? '' : m.pctAprob + '%'}</td>`)}
-    ${pie('Nota media', m => `<td>${m.media == null ? '' : _acNota(m.media)}</td>`)}
+    ${pie('Aprobados', m => m.calificados ? m.aprobados : '')}
+    ${pie('Suspensos', m => m.calificados ? m.suspensos : '')}
+    ${pie('% de aprobados', m => m.pctAprob == null ? '' : m.pctAprob + '%')}
+    ${pie('Nota media', m => m.media == null ? '' : _acNota(m.media))}
+    ${D.columnas.some(col => col.calificados && col.sinNota) ? pie('Sin nota', m => m.calificados && m.sinNota ? m.sinNota : '') : ''}
   </tfoot>
 </table>
-<p class="notas">Nota numérica de 0 a 10; en rojo, las suspensas. <b>S</b>: suspensa, sin nota numérica. En blanco: sin calificación en Tutoría (materia que no cursa o datos que aún no han llegado).${D.sinCalificar.length ? ` Sin ninguna calificación todavía: ${e(D.sinCalificar.join(', '))}.` : ''}</p>
+<p class="notas">Nota numérica de 0 a 10; en rojo, las suspensas. <b>S</b>: suspensa, sin nota numérica. <b>—</b>: no cursa la materia. En blanco: falta su calificación.${D.faltanNotas.length ? ` Faltan notas de: ${e(D.faltanNotas.map(x => `${x.materia} (${x.n})`).join(', '))}.` : ''}${D.sinCalificar.length ? ` Sin ninguna calificación todavía: ${e(D.sinCalificar.join(', '))}.` : ''}</p>
 <div class="bloques">
   <div><h2>Resultados del grupo</h2><table class="mini"><tbody>
     ${D.reparto.map(r => `<tr><th scope="row">${e(r.etq)}</th><td class="n">${r.n}</td><td class="n">${D.filas.length ? Math.round(r.n / D.filas.length * 100) : 0}%</td></tr>`).join('')}
@@ -193,14 +246,17 @@ window.abrirActaCalificaciones = function(nivel, grupo, k) {
       <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px">Evaluación
         <select class="tdlg-in" style="width:auto;margin:0" id="acEval">${['1', '2', '3'].map(x => `<option value="${x}" ${x === k ? 'selected' : ''}>${FT_NOMBRE_EVAL[x]}</option>`).join('')}</select></label>
       <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px"><input type="checkbox" id="acSinNombres" ${sinNombres ? 'checked' : ''}> Sin los nombres (solo el número de orden)</label>
-      ${D.porMateria.length ? `<details id="acAbrevs" style="margin-top:10px;font-size:13px" ${abrevAbierto ? 'open' : ''}><summary style="cursor:pointer;font-weight:600">✏️ Abreviaturas de las materias (como en Itaca)</summary>
-        <p style="font-size:12px;color:var(--text2);margin:6px 0">Escribe la abreviatura que quieres en el acta (por ejemplo, MATCS2 o EDN). Vacía: se pone sola. Sirven para todos los grupos.</p>
-        <div style="max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:8px"><table class="inf-tabla" style="margin:0"><tbody>
+      ${D.porMateria.length ? `<details id="acAbrevs" style="margin-top:10px;font-size:13px" ${abrevAbierto ? 'open' : ''}><summary style="cursor:pointer;font-weight:600">✏️ Abreviaturas y columnas (como en Itaca)</summary>
+        <p style="font-size:12px;color:var(--text2);margin:6px 0"><strong>Abreviatura</strong>: la que quieres en el acta (MATCS2, EDN, AN…); vacía, se pone sola. <strong>Columna</strong>: escribe el mismo nombre en las materias que van juntas, como en Itaca (LE II para Inglés y Francés, Optativa, Religión); vacía, columna propia. Sirven para todos los grupos.</p>
+        <div style="max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:8px"><table class="inf-tabla" style="margin:0">
+        <thead><tr><th scope="col" style="text-align:left;padding:3px 8px">Materia</th><th scope="col">Abreviatura</th><th scope="col">Columna</th></tr></thead><tbody>
         ${D.porMateria.map((m, j) => `<tr><th scope="row" style="font-weight:500;text-align:left;padding:3px 8px">${_tEsc(m.materia)}</th>
-          <td style="width:120px;padding:3px 6px"><input class="tdlg-in" style="margin:0;padding:4px 8px;width:110px" data-abrev="${j}" maxlength="12" value="${_tEsc(_acAbrevPropia(m.materia))}" placeholder="${_tEsc(_acAbrev(m.materia))}" aria-label="Abreviatura de ${_tEsc(m.materia)}"></td></tr>`).join('')}
+          <td style="width:110px;padding:3px 6px"><input class="tdlg-in" style="margin:0;padding:4px 8px;width:100px" data-abrev="${j}" maxlength="12" value="${_tEsc(_acAbrevPropia(m.materia))}" placeholder="${_tEsc(_acAbrev(m.materia))}" aria-label="Abreviatura de ${_tEsc(m.materia)}"></td>
+          <td style="width:120px;padding:3px 6px"><input class="tdlg-in" style="margin:0;padding:4px 8px;width:110px" data-columna="${j}" maxlength="24" value="${_tEsc(_acColumnaDe(m.materia))}" placeholder="propia" aria-label="Columna del acta de ${_tEsc(m.materia)}"></td></tr>`).join('')}
         </tbody></table></div></details>` : ''}
       <p style="font-size:12.5px;margin:10px 0 0;padding:8px 10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border)">${conDatos
-        ? `✅ ${conDatos} de ${D.porMateria.length} materias con calificaciones.${D.sinCalificar.length ? ` Faltan: ${_tEsc(D.sinCalificar.join(', '))}.` : ''}`
+        ? `✅ ${conDatos} de ${D.porMateria.length} materias con calificaciones.${D.sinCalificar.length ? ` Faltan: ${_tEsc(D.sinCalificar.join(', '))}.` : ''}${D.faltanNotas.length
+          ? `<br>⚠ Alumnado sin nota (o sin marcar «No la cursa»): ${_tEsc(D.faltanNotas.map(x => `${x.materia} (${x.n})`).join(', '))}.` : ''}`
         : '🕐 Todavía no hay calificaciones de esta evaluación: llegan con los archivos del Cuaderno o con «✍️ Introducir datos de una materia».'}</p>
       <div class="tdlg-bar" style="flex-wrap:wrap">
         <button class="tdlg-no" data-acc="cerrar">Cerrar</button>
@@ -213,6 +269,10 @@ window.abrirActaCalificaciones = function(nivel, grupo, k) {
     const det = ov.querySelector('#acAbrevs'); if (det) det.ontoggle = () => { abrevAbierto = det.open; };
     ov.querySelectorAll('input[data-abrev]').forEach(inp => {
       inp.onchange = () => { _acPonerAbrev(D.porMateria[+inp.dataset.abrev].materia, inp.value); showToast('✏️ Abreviatura guardada'); };
+      inp.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); inp.blur(); } };
+    });
+    ov.querySelectorAll('input[data-columna]').forEach(inp => {
+      inp.onchange = () => { _acPonerColumna(D.porMateria[+inp.dataset.columna].materia, inp.value); showToast(inp.value.trim() ? `🧩 ${D.porMateria[+inp.dataset.columna].materia} va en la columna «${inp.value.trim()}»` : '🧩 Columna propia'); };
       inp.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); inp.blur(); } };
     });
     ov.querySelector('[data-acc="cerrar"]').onclick = () => ov.remove();

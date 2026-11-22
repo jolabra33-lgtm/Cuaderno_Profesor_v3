@@ -2990,3 +2990,8 @@ body.sesion-abierta { overflow: hidden; }
 .dm-in:focus { outline: 2px solid var(--accent); outline-offset: 0; }
 .dm-in.dm-mal { border-color: var(--red); background: rgba(239,68,68,.08); }
 .dm-tabla tr.dm-susp th[scope="row"] { color: var(--red); }
+.dm-tabla tr.dm-nc th[scope="row"] { color: var(--text3); font-weight: 400; }
+.dm-tabla tr.dm-nc .dm-in { opacity: .35; }
+.dm-tabla.dm-solo tr.dm-nc { display: none; }
+.dm-acciones { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 0 0 8px; font-size: 12.5px; }
+.dm-acciones label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
