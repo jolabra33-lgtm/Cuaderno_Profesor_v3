@@ -254,43 +254,43 @@ function openGuide() {
     overlay.style.zIndex = '700';
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
     overlay.innerHTML = `
-      <div class="modal" style="width:560px;max-height:80vh;overflow-y:auto;">
-        <div class="modal-title">📖 Guía rápida — Gestor de Tutoría</div>
-        <div style="font-size:13px;color:var(--text2);line-height:1.8;">
-          <p style="margin-bottom:12px">Gestor de Tutoría: seguimiento de evaluaciones, promoción y tutoría para centros de secundaria de la Comunitat Valenciana. Tiene sus propios datos y su propio archivo <code>.json</code>. Del Cuaderno del profesor puede recibir la lista de alumnado (botón <strong>📥 Del Cuaderno</strong> de cada grupo) y los suspensos de cada materia (⚙️ Gestión del Curso → «Importar suspensos del Cuaderno»).</p>
-          <div style="font-weight:700;color:var(--text);margin-bottom:4px">🏠 Pestañas principales</div>
+      <div class="modal" style="width:640px;max-width:96vw;max-height:84vh;overflow-y:auto;" role="dialog" aria-modal="true" aria-labelledby="guiaTutTit">
+        <div class="modal-title" id="guiaTutTit">📖 Guía rápida — Gestor de Tutoría</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.75;">
+          <p style="margin-bottom:12px">Seguimiento de evaluaciones, promoción y tutoría para centros de secundaria de la Comunitat Valenciana. Tiene sus propios datos, separados de los del Cuaderno, y se conecta con él en los dos sentidos (abajo). La explicación completa está en la <a href="../guia_mejorada.html#tutoria" target="_blank" rel="noopener" style="color:var(--accent)">guía de uso</a>.</p>
+
+          <div style="font-weight:700;color:var(--text);margin-bottom:4px">🏠 Pestañas</div>
           <ul style="margin:0 0 12px 16px">
-            <li><strong>Inicio</strong> — Resumen global con propuestas por nivel, FPB, PDC y Titulación</li>
-            <li><strong>📅 Calendario</strong> — Fechas de las sesiones de evaluación (círculos de color) y <strong>tus propios eventos</strong> (cuadrados): pulsa cualquier día para añadir reunión, junta, entrega, actividad… Vista de mes o cronología</li>
-            <li><strong>🎓 Informe Académico</strong> — Estadísticas de aprobados/suspensos por materia y nivel, con subpestañas para I Eval., II Eval., Evaluación Final y Extraordinaria; incluye el PDF Estadísticas</li>
-            <li><strong>📞 Seguimientos</strong> — Listado por grupo de todos los registros de "Seguimiento con familia", para consultarlos o imprimirlos juntos (por ejemplo, si inspección los pide)</li>
-            <li><strong>🤝 Informe Convivencia</strong> — Amonestaciones, partes, expedientes y faltas de asistencia, calculados a partir de las tablas de cada evaluación</li>
-            <li><strong>⚙ Materias</strong> — Personaliza las materias disponibles por nivel</li>
+            <li><strong>Inicio</strong> — Empieza por <strong>🧭 Qué me falta</strong>: por grupo, la próxima sesión de evaluación (o el aviso de que faltan las fechas), las materias que aún no han enviado sus datos, las decisiones finales pendientes, el alumnado con alertas y las próximas citas con familias. Todo se pulsa. <em>⚙ Umbrales de las alertas</em> decide a partir de cuánto avisa cada alerta. Debajo, el resumen del centro.</li>
+            <li><strong>Los niveles</strong> (1º ESO…) — Van justo después de Inicio. Arriba de cada nivel están sus <strong>fechas de evaluación</strong>: la edad y la evaluación en curso se calculan con ellas.</li>
+            <li><strong>📅 Calendario</strong>, <strong>📞 Seguimientos</strong> (todos los seguimientos con familia de un grupo, para imprimirlos juntos), <strong>🎓 Informe Académico</strong>, <strong>🤝 Informe Convivencia</strong>, <strong>🗂️ Actas no Oficiales</strong> y <strong>⚙ Materias</strong>.</li>
           </ul>
-          <div style="font-weight:700;color:var(--text);margin-bottom:4px">👤 Por alumno (una columna por botón, al final de su fila)</div>
+
+          <div style="font-weight:700;color:var(--text);margin-bottom:4px">📋 En cada grupo</div>
           <ul style="margin:0 0 12px 16px">
-            <li><strong>📅</strong> Historial académico de cursos anteriores</li>
-            <li><strong>📋</strong> Informe de seguimiento individual (PDF), generado automáticamente con sus datos</li>
-            <li><strong>📞</strong> <strong>Seguimiento con familia</strong> — para cuando los padres piden reunión: anota, materia por materia, lo que te ha dicho cada profesor/a (Trabajo, Exámenes, Comportamiento). Quita las materias que no correspondan y añade las que hagan falta. Cada vez que guardas se crea un registro nuevo fechado, así que puedes repetirlo tantas veces al año como haga falta; cada uno se imprime por separado</li>
-            <li><strong>↗</strong> Mover alumno a otro grupo o nivel</li>
+            <li><strong>🎓 Sesión de evaluación</strong> — Pantalla completa para proyectar en la junta. En <em>👥 El grupo</em>: asistencia del profesorado, horas, valoración, acuerdos y resultados. Después, alumno por alumno: suspensas, lo que ha enviado cada profesor/a, alertas, la propuesta (en la 3.ª, la decisión final) y los acuerdos. «Revisado y siguiente» o las flechas del teclado pasan al siguiente. Al terminar: <strong>📝 Acta de la sesión</strong> y <strong>📤 Ficha para el profesorado</strong>.</li>
+            <li><strong>📥 Del Cuaderno</strong> — Trae la lista de un grupo de tu Cuaderno (en este navegador) con fecha de nacimiento, NESE, repetición y contactos de la familia; a quien ya está le completa lo que falte. También ofrece traer lo de tu materia.</li>
+            <li><strong>📋 Acta Oficial</strong> y, en <strong>⋯ Más</strong>: Actas no Oficiales, <strong>👥 Asistencia a la sesión</strong>, <strong>👨‍🏫 Equipo docente</strong> (nombres en «Apellidos, Nombre», materia y correo; se puede ordenar por apellidos y escribir a todos), <strong>📬 Información del equipo docente</strong> (qué materias han enviado sus datos, recordatorio por correo a quien falta y vista por alumno/a), <strong>📤 Ficha del grupo para el profesorado</strong>, observaciones, plano, horario y fotos del grupo.</li>
           </ul>
-          <div style="font-weight:700;color:var(--text);margin-bottom:4px">📋 Por grupo (cabecera de grupo)</div>
+
+          <div style="font-weight:700;color:var(--text);margin-bottom:4px">👤 En cada alumno/a</div>
           <ul style="margin:0 0 12px 16px">
-            <li><strong>🗂️ Actas no Oficiales</strong> — Pestaña que centraliza el acceso a las Actas I/II/Final (editables) de todos los grupos; se puede ocultar/mostrar con el icono 🗂️👁️ junto a "＋ Nivel"</li>
-            <li><strong>Acta I/II/Final</strong> — Actas de sesión de evaluación, editables y guardables; se pueden exportar a PDF, Word o HTML (esta última conserva la maquetación exacta)</li>
-            <li><strong>Acta Oficial</strong> — Genera el acta de sesión para I, II o Evaluación Final, con estadísticas de materias suspendidas, pendientes de cursos anteriores, alumnado NESE/Compensatoria con leyenda de códigos, faltas/convivencia y evolución entre evaluaciones; permite guardar acuerdos, firmas y decisiones sobre pendientes, y exportar a PDF, Word o HTML</li>
-            <li><strong>🖼️ Fotos del grupo</strong> — Galería de fotos del alumnado</li>
-            <li><strong>🪑 Plano del grupo</strong> — Distribución de mesas: toca un alumno/a (de la lista o de una mesa) y luego una mesa; si está libre se sienta ahí, si está ocupada se intercambian. Tamaño de cuadrícula ajustable e imprimible</li>
-            <li><strong>🕐 Horario del grupo</strong> — Horario semanal del grupo</li>
-            <li><strong>👥 Asistencia sesión</strong> — Pasa lista al equipo docente en cada junta de evaluación</li>
-            <li><strong>👨‍🏫 Equipo docente</strong> — Nombre, materia y correo corporativo de cada profesor/a del grupo. Es la lista que usa "Asistencia sesión" para pasar lista, y desde aquí puedes enviar un correo a una persona, a varias seleccionadas o a todo el equipo (se abre tu propio Outlook con los destinatarios puestos)</li>
-            <li><strong>📝 Observaciones del grupo</strong> — Notas generales del grupo</li>
+            <li>Junto al nombre: <strong>📝</strong> observaciones, <strong>👤</strong> <strong>ficha completa</strong> (resumen con alertas, familia y línea de tiempo; académico; faltas y convivencia; entrevistas; seguimientos) y, si tiene alertas, la insignia <strong>⚠</strong>.</li>
+            <li><strong>Entrevistas con la familia</strong> (en la ficha) — Medio, quién la pide, asistentes, motivo, acuerdos y <strong>próxima cita</strong>, con acta para firmar. La cita avisa en Inicio y, si pasa sin anotarse, sale como alerta.</li>
+            <li>Al final de la fila: <strong>📅</strong> historial académico, <strong>📋</strong> informe de seguimiento, <strong>📞</strong> seguimiento con familia (contactos de la familia y lo que dice cada profesor/a; <em>📬 Rellenar con lo recibido</em> lo completa solo) y <strong>↗</strong> mover a otro grupo.</li>
           </ul>
+
+          <div style="font-weight:700;color:var(--text);margin-bottom:4px">🔗 Con el Cuaderno del profesor</div>
+          <ul style="margin:0 0 12px 16px">
+            <li><strong>Del Cuaderno a Tutoría</strong> — Cada profesor/a pulsa <em>👥 Para la tutoría</em> en Resultados y te envía el archivo (notas, faltas, convivencia y comentarios de su materia). Tú lo cargas en <em>⚙️ Gestión del Curso → Importar suspensos del Cuaderno</em>, con varios archivos a la vez si quieres.</li>
+            <li><strong>De Tutoría al Cuaderno</strong> — Tras la sesión, envía la <em>📤 Ficha para el profesorado</em>; cada uno la carga en su Cuaderno con <em>📥 De la tutoría</em> (Resultados). No lleva contactos de las familias ni entrevistas.</li>
+          </ul>
+
           <div style="font-weight:700;color:var(--text);margin-bottom:4px">💾 Guardar datos</div>
           <ul style="margin:0 0 12px 16px">
-            <li>Los datos se guardan automáticamente en el navegador (localStorage), siempre en formato JSON</li>
-            <li>Usa <strong>Ctrl+S</strong> o el menú de guardar para escribir al archivo <code>.json</code></li>
-            <li>El archivo <code>.json</code> es portable — lo puedes abrir en cualquier ordenador, e incluso con un editor de texto</li>
+            <li>Todo se guarda solo en este navegador (en IndexedDB, con una copia ligera en localStorage para abrir al instante) y hay copias automáticas en <em>🛟 Copias de seguridad</em>.</li>
+            <li><strong>Ctrl+S</strong> o el menú de guardar escriben tu archivo <code>.json</code>, que puedes abrir en otro ordenador. Exporta uno de vez en cuando como copia propia.</li>
+            <li><strong>Ctrl+Z</strong> deshace los cambios en el alumnado de un grupo (también importaciones y decisiones de la sesión).</li>
           </ul>
         </div>
         <div class="modal-actions">
