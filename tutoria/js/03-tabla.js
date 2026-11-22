@@ -5,6 +5,9 @@
 
 // ===================== RENDER =====================
 function renderAll() {
+  // Orden alfabético en todas partes (01). Solo en memoria: no marca cambios (al cargar no debe impedir
+  // recuperar la copia interna más reciente); se guarda con el siguiente cambio de verdad.
+  _tOrdenarTodo();
   renderNivelTabs();
   syncDateInputs();   // la barra de fechas solo se ve en la pantalla de un nivel
   const addBtn = document.getElementById('btnAddAlumnoHeader');
@@ -956,6 +959,8 @@ function applyColVisibility(key, nivel, evalTab) {
 }
 
 function updateTable(nivel, grupo) {
+  // Tras cambiar un nombre o dar de alta a alguien, el grupo vuelve al orden alfabético (01).
+  _tOrdenarGrupo(nivel, grupo);
   const key = `${nivel}-${grupo}`;
   const tw = document.getElementById(`table-${key}`);
   if (!tw) return;

@@ -146,7 +146,7 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
 ## Pruebas (`tests/`)
 
 - `tests/calculo-notas.html`: más de 30 casos del motor de notas, calculados a mano. Se abre en el navegador.
-- `tests/navegador/`: 58 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
+- `tests/navegador/`: 59 pruebas que abren la app en Chromium y la usan como una persona (Tutoría, apóstrofos,
   importaciones, dos ventanas, versión del curso, sin conexión, almacenamiento lleno, copia en carpeta, texto hostil,
   curso nuevo, modo proyector, PIN, accesibilidad y contraste, actualización…).
 - `tests/version/`: huella de la versión (`npm run sellar`) y su comprobación.
@@ -208,6 +208,15 @@ Los bloques de HTML que había entre los scripts (ventanas de historial, asisten
   29 pantallas revisadas con axe-core (WCAG 2 A/AA) no dan ningún error (no se ha revisado el contraste de color).
 
 ## Cambios recientes
+
+### Tutoría · alumnado siempre en orden alfabético (noviembre de 2026)
+
+- La tabla ordenaba solo a la vista (`_sortState`), y el resto de pantallas recorre `data[nivel][grupo]` en el orden de alta:
+  al cambiar un nombre, el alumno/a seguía en su sitio antiguo fuera de la tabla. Ahora el array del grupo se mantiene en orden
+  alfabético (`_tOrdenarGrupo`, `_tOrdenarTodo`, `_tCompararNombres` en 01): en `updateTable` (también tras cambiar el nombre:
+  `'nombre'` entra en `_VISUAL_FIELDS`) y en `renderAll` (datos cargados o archivos antiguos). Reordena el mismo array, conserva
+  la selección de filas (`_bulkSel`) y no llama a `markDirty` (al arrancar no debe impedir recuperar la copia de IndexedDB).
+  El Acta Oficial ya ordenaba por nombre, así que sus anotaciones guardadas no cambian.
 
 ### Tutoría · materias que no cursa todo el grupo y columnas agrupadas en el acta (noviembre de 2026)
 

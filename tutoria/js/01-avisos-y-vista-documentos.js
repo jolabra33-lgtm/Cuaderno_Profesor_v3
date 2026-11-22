@@ -292,6 +292,33 @@ function _tAplicarProfesor(nivel,grupo,materia,profesor){
 }
 // Suma o quita una materia de una lista de suspensas y ajusta el número (sube si hay más materias en la
 // lista y baja si se quita alguna; nunca por debajo de la lista). Lo usan las importaciones y la entrada a mano.
+/* El alumnado de cada grupo se guarda en orden alfabético («Apellidos, Nombre», como la relación de Itaca),
+   para que la sesión de evaluación, las actas, los informes y las demás pantallas lo muestren igual que la
+   tabla aunque se cambie un nombre o se dé de alta a alguien después. Los nombres vacíos van al final.
+   Se reordena el mismo array (quien lo tenga guardado sigue viendo el grupo) y la selección de filas de la
+   tabla sigue apuntando a los mismos alumnos/as. Devuelve true si ha cambiado el orden. */
+function _tCompararNombres(x,y){
+  const a=String((x&&x.nombre)||'').trim(), b=String((y&&y.nombre)||'').trim();
+  if(!a||!b) return (a?0:1)-(b?0:1);
+  return a.localeCompare(b,'es',{sensitivity:'base',numeric:true});
+}
+function _tOrdenarGrupo(nivel,grupo){
+  const arr=data[nivel]&&data[nivel][grupo];
+  if(!Array.isArray(arr)||arr.length<2) return false;
+  const ordenado=arr.slice().sort(_tCompararNombres);
+  if(ordenado.every((a,i)=>a===arr[i])) return false;
+  const key=`${nivel}-${grupo}`, sel=window._bulkSel&&window._bulkSel[key];
+  const elegidos=sel?[...sel].map(i=>arr[i]).filter(Boolean):null;
+  arr.splice(0,arr.length,...ordenado);
+  if(elegidos) window._bulkSel[key]=new Set(elegidos.map(a=>arr.indexOf(a)).filter(i=>i>=0));
+  return true;
+}
+function _tOrdenarTodo(){
+  let cambia=false;
+  Object.keys(data||{}).forEach(n=>Object.keys(data[n]||{}).forEach(g=>{ if(_tOrdenarGrupo(n,g)) cambia=true; }));
+  return cambia;
+}
+
 /* Materias que el alumno/a no cursa (optativas, Inglés o Francés, Religión…): alumno.noCursa = ['Francés II', …].
    Vale para todo el curso. Se marca en «✍️ Datos de una materia» y la usan el acta de calificaciones y 📬. */
 function _tNoCursa(a,materia){ return (a.noCursa||[]).some(m=>_tNorm(m)===_tNorm(materia)); }

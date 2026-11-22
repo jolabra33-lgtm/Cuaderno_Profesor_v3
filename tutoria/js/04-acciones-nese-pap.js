@@ -19,7 +19,8 @@ function selectGrupo(grupo) {
 const _VISUAL_FIELDS = new Set([
   'promociona','propuesta2','propuesta3','eval1','eval2','eval3','evalExtr',
   'repetidor','nese','compensatoria','codComp','lenguaBase','pendientesIII','pendientesExtr',
-  'fecha'
+  'fecha',
+  'nombre'   // al cambiar un nombre, el grupo vuelve al orden alfabético (updateTable → _tOrdenarGrupo)
 ]);
 let _tableDebounce = {};
 

@@ -287,8 +287,10 @@ export const PRUEBAS = [
     await esperar(1200);
     // En Tutoría ya están tres, sin fecha y con el nombre escrito de otra forma; una tiene ya otra fecha.
     await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['garcia lopez, ana', 'LUIS PÉREZ RUIZ', 'López Vidal, Marta']);
-    await p.evaluate(() => { data['1º ESO'].A[1].fecha = '2012-01-01'; });
+    await p.evaluate(() => { data['1º ESO'].A.find(a => a.nombre === 'LUIS PÉREZ RUIZ').fecha = '2012-01-01'; });
     const tabla = () => p.evaluate(() => data['1º ESO'].A.map(a => ({ n: a.nombre, f: a.fecha, nese: a.nese, rep: a.repetidor, ids: (a.idsCuaderno || []).length })));
+    // El grupo está en orden alfabético: a cada uno se le busca por su nombre.
+    const de = (l, re) => l.find(a => re.test(a.n)) || {};
     await p.evaluate(() => abrirImportarDelCuaderno('1º ESO', 'A')); await esperar(500);
     const vista = (await p.textContent('#impCuadPlan')).replace(/\s+/g, ' ');
     t.ok(/2 nuevos/.test(vista) && /se completa/i.test(vista) && /distint/i.test(vista), 'la vista previa dice qué se añade, qué se completa y qué es distinto', vista.slice(0, 300));
@@ -297,17 +299,18 @@ export const PRUEBAS = [
     await p.click('#importCuadernoOverlay button:has-text("Importar")'); await esperar(1200);
     let l = await tabla();
     t.ok(l.length === 4, 'no duplica a quien ya estaba aunque el nombre esté en mayúsculas o en otro orden', JSON.stringify(l));
-    t.ok(l[0].f === '2012-03-15' && l[0].nese === 'Sí', 'a quien ya estaba se le completan la fecha de nacimiento y NESE', JSON.stringify(l[0]));
-    t.ok(l[1].f === '2012-01-01' && l[1].rep === 'Sí', 'un dato distinto no se cambia sin pedirlo; lo vacío sí se completa', JSON.stringify(l[1]));
-    t.ok(l[2].f === '2012-05-05' && l[2].n === 'López Vidal, Marta', 'el nombre parecido confirmado se completa sin cambiarle el nombre', JSON.stringify(l[2]));
-    t.ok(l[3].n === 'Sanz Martí, Íria' && l[3].f === '2013-01-20', 'quien falta se añade con su fecha de nacimiento', JSON.stringify(l[3]));
+    t.ok(de(l, /^garcia/).f === '2012-03-15' && de(l, /^garcia/).nese === 'Sí', 'a quien ya estaba se le completan la fecha de nacimiento y NESE', JSON.stringify(de(l, /^garcia/)));
+    t.ok(de(l, /^LUIS/).f === '2012-01-01' && de(l, /^LUIS/).rep === 'Sí', 'un dato distinto no se cambia sin pedirlo; lo vacío sí se completa', JSON.stringify(de(l, /^LUIS/)));
+    t.ok(de(l, /Vidal/).f === '2012-05-05' && de(l, /Vidal/).n === 'López Vidal, Marta', 'el nombre parecido confirmado se completa sin cambiarle el nombre', JSON.stringify(de(l, /Vidal/)));
+    t.ok(de(l, /^Sanz/).n === 'Sanz Martí, Íria' && de(l, /^Sanz/).f === '2013-01-20', 'quien falta se añade con su fecha de nacimiento', JSON.stringify(de(l, /^Sanz/)));
+    t.ok(JSON.stringify(l.map(a => a.n)) === JSON.stringify(['garcia lopez, ana', 'López Vidal, Marta', 'LUIS PÉREZ RUIZ', 'Sanz Martí, Íria']), 'y el grupo queda en orden alfabético', JSON.stringify(l.map(a => a.n)));
     t.ok(l.every(a => a.ids === 1), 'todos quedan vinculados con su identificador del Cuaderno', JSON.stringify(l));
     await p.evaluate(() => abrirImportarDelCuaderno('1º ESO', 'A')); await esperar(500);
     await p.check('#impCuadSustituir'); await p.click('#importCuadernoOverlay button:has-text("Importar")'); await esperar(800);
-    t.ok((await tabla())[1].f === '2012-11-02', '«Sustituir los datos distintos» pone el dato del Cuaderno');
+    t.ok(de(await tabla(), /^LUIS/).f === '2012-11-02', '«Sustituir los datos distintos» pone el dato del Cuaderno');
     await p.evaluate(() => { _undoPop(); _undoPop(); }); await esperar(300);
     l = await tabla();
-    t.ok(l.length === 3 && !l[0].f, 'Ctrl+Z deshace la importación', JSON.stringify(l));
+    t.ok(l.length === 3 && !de(l, /^garcia/).f, 'Ctrl+Z deshace la importación', JSON.stringify(l));
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
@@ -664,7 +667,7 @@ export const PRUEBAS = [
     t.ok(JSON.stringify(D.nombres) === JSON.stringify(['Andrés Lozano, Claudia', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria']), 'relación alfabética del alumnado', JSON.stringify(D.nombres));
     t.ok(JSON.stringify(D.mats) === JSON.stringify([['HE', 3, 2, 4.5, 'Pérez Gil, Ana'], ['LCL II', 0, 0, null, 'Gil Mora, Eva'], ['HA', 3, 1, 6.83, 'Ruiz Sanz, Toni']]),
       'cada materia con su abreviatura, calificados, suspensos, media y profesor/a, en el orden del nivel', JSON.stringify(D.mats));
-    t.ok(JSON.stringify(D.celdas) === JSON.stringify([['S', '', '7,5'], ['6', '', '4'], ['3', '', '9']]) && JSON.stringify(D.susp) === '[1,1,1]' && JSON.stringify(D.media) === '[7.5,5,6]',
+    t.ok(JSON.stringify(D.celdas) === JSON.stringify([['6', '', '4'], ['S', '', '7,5'], ['3', '', '9']]) && JSON.stringify(D.susp) === '[1,1,1]' && JSON.stringify(D.media) === '[5,7.5,6]',
       'la nota de cada alumno/a en cada materia (S si suspende sin nota), sus suspensas y su media', JSON.stringify(D));
     t.ok(JSON.stringify(D.reparto) === '[0,3,0,0]' && JSON.stringify(D.sin) === JSON.stringify(['Lengua Castellana y Literatura II']), 'reparto por número de suspensas y aviso de la materia sin calificar', JSON.stringify(D));
     // Desde el pie de la tabla: ventana del acta, sin nombres y descarga.
@@ -760,6 +763,36 @@ export const PRUEBAS = [
     t.ok(await p.evaluate(N => _columnasActa['Inglés II'] === 'LE II' && buildState().columnasActa['Francés II'] === 'LE II' && (data[N].HS[0].noCursa || [])[0] === 'Francés II', N),
       'las columnas y quién no cursa qué se conservan al recargar y van en el archivo');
     t.ok(await p.evaluate(() => { const st = buildState(); delete st.columnasActa; applyFilePayload(st); return !Object.keys(_columnasActa).length; }), 'un archivo sin columnas agrupadas vuelve a una columna por materia');
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-orden-alfabetico', descripcion: 'Tutoría: el alumnado queda en orden alfabético en toda la app al darlo de alta o cambiarle el nombre (selección, otras pantallas, recarga, deshacer, archivos antiguos)', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '2º ESO', 'A', ['Pérez Ruiz, Luis', 'García López, Ana', 'Zapata Mora, Eva']);
+    const orden = () => p.evaluate(() => data['2º ESO'].A.map(a => a.nombre));
+    t.ok(JSON.stringify(await orden()) === JSON.stringify(['García López, Ana', 'Pérez Ruiz, Luis', 'Zapata Mora, Eva']), 'al dar de alta, el grupo queda en orden alfabético', JSON.stringify(await orden()));
+    await p.evaluate(() => { currentGrupos['2º ESO'] = 'A'; selectNivel('2º ESO'); bulkToggleRow('2º ESO', 'A', 2, true); }); await esperar(150);
+    // Cambiar el nombre desde la columna «Alumno/a» de la tabla.
+    const inp = p.locator('#mainContent input.cell-input[value="Pérez Ruiz, Luis"]');
+    await inp.fill('Aguilar Ruiz, Luis'); await inp.press('Tab'); await esperar(400);
+    t.ok(JSON.stringify(await orden()) === JSON.stringify(['Aguilar Ruiz, Luis', 'García López, Ana', 'Zapata Mora, Eva']), 'al cambiar un nombre, el grupo se reordena', JSON.stringify(await orden()));
+    t.ok(await p.evaluate(() => [..._bulkSel['2º ESO-A']].map(i => data['2º ESO'].A[i].nombre).join() === 'Zapata Mora, Eva'), 'la selección de filas sigue en los mismos alumnos/as');
+    const pantallas = await p.evaluate(() => {
+      openDatosMateria('2º ESO', 'A', '1', 'Inglés'); const dm = document.querySelector('#dmBody tbody th[scope="row"]').textContent.trim(); _dmCtx.cambios = false; closeDatosMateria();
+      const ie = datosInformeEquipo('2º ESO', 'A', '1').alumnos.map(x => x.nombre)[0];
+      return [dm, ie]; });
+    t.ok(pantallas.every(x => x === 'Aguilar Ruiz, Luis'), 'las demás pantallas (datos de una materia, informe para el equipo) lo muestran ya en su sitio', JSON.stringify(pantallas));
+    await esperar(1200); await p.reload(); await esperar(1500);
+    t.ok(JSON.stringify(await orden()) === JSON.stringify(['Aguilar Ruiz, Luis', 'García López, Ana', 'Zapata Mora, Eva']), 'el orden se conserva al recargar');
+    await p.evaluate(() => { hideWelcomeScreen(); currentGrupos['2º ESO'] = 'A'; selectNivel('2º ESO'); }); await esperar(150);
+    const inp2 = p.locator('#mainContent input.cell-input[value="Zapata Mora, Eva"]');
+    await inp2.fill('Bernal Mora, Eva'); await inp2.press('Tab'); await esperar(400);
+    t.ok(JSON.stringify(await orden()) === JSON.stringify(['Aguilar Ruiz, Luis', 'Bernal Mora, Eva', 'García López, Ana']), 'otro cambio de nombre', JSON.stringify(await orden()));
+    await p.evaluate(() => _undoPop()); await esperar(300);
+    t.ok(JSON.stringify(await orden()) === JSON.stringify(['Aguilar Ruiz, Luis', 'García López, Ana', 'Zapata Mora, Eva']), 'Ctrl+Z devuelve el nombre y su sitio', JSON.stringify(await orden()));
+    // Un archivo de antes, con el alumnado desordenado, se ve en orden alfabético.
+    const r = await p.evaluate(() => { const st = JSON.parse(JSON.stringify(buildState())); st.data['2º ESO'].A.reverse(); applyFilePayload(st); renderAll(); return data['2º ESO'].A.map(a => a.nombre); });
+    t.ok(JSON.stringify(r) === JSON.stringify(['Aguilar Ruiz, Luis', 'García López, Ana', 'Zapata Mora, Eva']), 'un archivo con el alumnado desordenado se muestra en orden alfabético', JSON.stringify(r));
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
