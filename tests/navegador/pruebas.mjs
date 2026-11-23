@@ -2076,7 +2076,9 @@ export const PRUEBAS = [
     t.ok(await p.locator('.modal-overlay tbody tr').count() === 3, 'con un valor no válido avisa y no cierra');
     await p.locator('.dlg-overlay #dlgOk').click();
     await filas.nth(2).locator('[data-pts]').fill('');
-    await p.locator('#extraSi').click(); await esperar(200);
+    await p.locator('#extraSi').click();
+    // Espera a que se guarde (con la máquina cargada, 200 ms fijos no siempre bastaban).
+    await p.waitForFunction(id => !!((state.grupos[0].extras || {})[id] || {}).e1, ids[0], { timeout: 5000 }).catch(() => {});
     const r1 = await p.evaluate(ids => { const g = state.grupos[0], a = g.actividades[0];
       return { ex: g.extras, n0: notaActividad(g, ids[0], a), n1: notaActividad(g, ids[1], a), guardada: g.notasCuant[ids[0]].e1,
         pills: document.querySelectorAll('.extra-pill').length, colado: !!document.querySelector('img[onerror]') }; }, ids);

@@ -67,6 +67,7 @@ function _aeMigrar(nivel, grupo, k) {
     acta.migrado = true;
     const ao = (window._actasOficialesData || {})[`${nivel}-${grupo}-eval${k}`];
     if (ao) {
+      if (typeof markDirty === 'function') markDirty();   // solo se guarda si había algo que pasar
       const t = _aeTextoDeHtml(ao.acuerdos);
       if (t && !String(acta.acuerdosGrupo || '').includes(t)) acta.acuerdosGrupo = acta.acuerdosGrupo ? acta.acuerdosGrupo.trim() + '\n\n' + t : t;
       if (!acta.jefeEstudios && ao.jefeEstudios) acta.jefeEstudios = ao.jefeEstudios;
@@ -80,7 +81,6 @@ function _aeMigrar(nivel, grupo, k) {
         if (!s.pendAnt[m]) s.pendAnt[m] = { estado: v.estado || '', nota: v.nota || '', motivo: v.motivo || '' };
       });
     }
-    if (typeof markDirty === 'function') markDirty();
   }
   if (!acta.jefeEstudios || !acta.director) {
     const otras = ['1', '2', '3'].filter(x => x !== k).map(x => ((_getAsistenciaData(nivel, grupo).actasSesion || {})[x]) || {});

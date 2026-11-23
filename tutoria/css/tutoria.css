@@ -3019,3 +3019,5 @@ body.sesion-abierta { overflow: hidden; }
 .ses-subt { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .4px; margin: 14px 0 6px; }
 .ses-nota-ayuda { font-size: 12px; color: var(--text3); margin: 4px 0 0; }
 .ses-tabla-pend td:nth-child(2) { text-align: left; font-weight: 400; width: auto; }
+.ses-tabla-pend select, .ses-tabla-pend input:not(.ses-nota) { font: inherit; font-size: 13.5px; padding: 5px 8px; border: 1px solid var(--border2, var(--border)); border-radius: 7px; background: var(--bg); color: var(--text); }
+.ses-tabla-pend input:not(.ses-nota) { width: 100%; }
