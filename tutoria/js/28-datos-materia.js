@@ -72,6 +72,29 @@ function _dmLeerCuenta(t) {
   return (Number.isInteger(n) && n >= 0 && n <= 9999) ? { ok: true, v: n } : { ok: false };
 }
 
+/* La nota de UN alumno/a en UNA materia y evaluación, como la guarda esta ventana (también la usa la sesión de
+   evaluación): alumno.porMateria[materia].notas (en la 3.ª, como III y como final), si está suspensa, y la lista
+   de suspensas de la evaluación con su número (columna I/II/III PEND.). nota: número de 0 a 10 o null (sin nota);
+   susp: true/false (con nota, sale sola: < 5). Devuelve true si ha cambiado la lista de suspensas. */
+function _tGuardarNotaAlumno(a, k, materia, nota, susp) {
+  k = String(k);
+  const [campo, evalCampo] = _DM_PEND[k], pn = _DM_PERIODOS_NOTA[k];
+  if (typeof nota === 'number') susp = nota < 5;
+  const existe = Object.keys(a.porMateria || {}).find(m => _tNorm(m) === _tNorm(materia));
+  if (!existe && nota === null && !susp) return _tAjustarSuspensa(a, campo, evalCampo, materia, false);
+  if (!a.porMateria || typeof a.porMateria !== 'object') a.porMateria = {};
+  const clave = existe || materia;
+  const d = a.porMateria[clave] || (a.porMateria[clave] = { origen: 'manual', notas: {}, faltas: {}, convivencia: {}, comentarios: {} });
+  ['notas', 'faltas', 'convivencia', 'comentarios', 'suspensa', 'manual'].forEach(x => { if (!d[x] || typeof d[x] !== 'object') d[x] = {}; });
+  pn.forEach(p => {
+    if (nota === null) delete d.notas[p]; else d.notas[p] = nota;
+    d.suspensa[p] = !!susp;
+    if (nota !== null || susp) d.manual[p] = true; else delete d.manual[p];
+  });
+  d.generado = new Date().toISOString();
+  return _tAjustarSuspensa(a, campo, evalCampo, clave, !!susp);
+}
+
 // Carga en la tabla lo que ya hay de esa materia y evaluación (de un archivo del Cuaderno o de antes).
 function _dmCargarFilas() {
   const { k, materia } = _dmCtx, [pend] = _DM_PEND[k], pn = _DM_PERIODOS_NOTA[k];

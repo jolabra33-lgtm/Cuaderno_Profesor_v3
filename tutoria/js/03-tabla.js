@@ -19,7 +19,8 @@ function renderAll() {
   if (currentNivel === '__convivencia__') { renderConvivencia(); return; }
   if (currentNivel === '__informe__') { renderInformeAcademico(); return; }
   if (currentNivel === '__segfam__') { renderSegFamiliaListado(); return; }
-  if (currentNivel === '__actasnooficiales__') { renderActasNoOficiales(); return; }
+  // Las «Actas no Oficiales» ya no tienen pestaña: el acta sale de la sesión de evaluación (30-acta-evaluacion.js).
+  if (currentNivel === '__actasnooficiales__') { currentNivel = '__home__'; renderMain(); return; }
   // v6: si la pestaña activa no es un nivel que exista (nivel borrado, o una
   // pestaña interna sin pantalla propia como '__vacantes__'), se vuelve a
   // Inicio en vez de romper la pantalla.
@@ -35,13 +36,9 @@ function renderNivelTabs() {
   const informeTab = `<div class="nivel-tab ${currentNivel === '__informe__' ? 'active' : ''}" onclick="selectNivel('__informe__')">🎓 Informe Académico</div>`;
   const segFamTab = `<div class="nivel-tab ${currentNivel === '__segfam__' ? 'active' : ''}" onclick="selectNivel('__segfam__')">📞 Seguimientos</div>`;
   const convivenciaTab = `<div class="nivel-tab ${currentNivel === '__convivencia__' ? 'active' : ''}" onclick="selectNivel('__convivencia__')">🤝 Informe Convivencia</div>`;
-  const actasNoOficialesTab = _actasNoOficialesTabVisible
-    ? `<div class="nivel-tab ${currentNivel === '__actasnooficiales__' ? 'active' : ''}" onclick="selectNivel('__actasnooficiales__')">🗂️ Actas no Oficiales</div>`
-    : '';
   const vacantesTab = `<div class="nivel-tab ${currentNivel === '__vacantes__' ? 'active' : ''}" onclick="selectNivel('__vacantes__')">🏗️ Unidades Vacantes</div>`;
   const materiasTab = `<div class="nivel-tab ${currentNivel === '__materias__' ? 'active' : ''}" onclick="selectNivel('__materias__')">⚙ Materias</div>`;
   const addNivelTab = `<div class="nivel-tab nivel-tab-add" onclick="openAddNivelModal()" title="Crear un nuevo nivel" style="font-weight:700;">＋ Nivel</div>`;
-  const actasNoOficialesToggle = `<div class="nivel-tab" onclick="toggleActasNoOficialesTab()" title="${_actasNoOficialesTabVisible ? 'Ocultar' : 'Mostrar'} la pestaña «Actas no Oficiales»" style="opacity:0.55;font-weight:400;">${_actasNoOficialesTabVisible ? '🗂️🙈' : '🗂️👁️'}</div>`;
   // Orden: Inicio y los niveles primero (es donde se trabaja a diario), luego las herramientas.
   // Antes los niveles iban detrás de seis pestañas y en un portátil quedaban fuera de la pantalla.
   const separador = '<div class="nivel-tab-sep" aria-hidden="true"></div>';
@@ -68,7 +65,7 @@ function renderNivelTabs() {
         style="opacity:0.4;transition:opacity 0.15s;"
         onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.4'">✕</button>
     </div>
-  `;}).join('') + addNivelTab + separador + calendarioTab + segFamTab + informeTab + convivenciaTab + actasNoOficialesTab + materiasTab + actasNoOficialesToggle;
+  `;}).join('') + addNivelTab + separador + calendarioTab + segFamTab + informeTab + convivenciaTab + materiasTab;
   // Que la pestaña activa se vea aunque la barra tenga que desplazarse.
   const activa = c.querySelector('.nivel-tab.active');
   if (activa && c.scrollWidth > c.clientWidth) {
@@ -291,11 +288,10 @@ function renderGrupoContent(mc, grupoBlock, nivel, grupo, alumnos) {
           title="Modo compacto — reduce el tamaño de las filas"
           onclick="_toggleCompact('${jsAttr(nivel)}','${jsAttr(grupo)}',this)">${window._compactMode?'⊡ Normal':'⊟ Compacto'}</button>
         <button class="btn btn-ghost btn-sm" onclick="openSesionEvaluacion('${jsAttr(nivel)}','${jsAttr(grupo)}')" title="Pantalla para llevar la junta de evaluación alumno por alumno (proyectable)">🎓 Sesión de evaluación</button>
-        <button class="btn btn-ghost btn-sm" onclick="openActaOficialMenu('${jsAttr(nivel)}','${jsAttr(grupo)}')">📋 Acta Oficial</button>
+        <button class="btn btn-ghost btn-sm" onclick="openActaMenu('${jsAttr(nivel)}','${jsAttr(grupo)}')" title="El acta de cada evaluación (se rellena en la sesión de evaluación) y el acta de calificaciones">📋 Acta de evaluación</button>
         <details class="mas-menu">
           <summary class="btn btn-ghost btn-sm" title="Más herramientas del grupo">⋯ Más${_getAsistenciaIndicator(nivel, grupo) || ((window._obsGrupoData||{})[`${nivel}-${grupo}`] ? ' <span class="mas-punto"></span>' : '')}</summary>
           <div class="mas-menu-lista" role="menu">
-            <button role="menuitem" onclick="selectNivel('__actasnooficiales__')" title="Las Actas I/II/Final de todos los grupos se gestionan en su propia pestaña">🗂️ Actas no Oficiales</button>
             <button role="menuitem" onclick="openAsistencia('${jsAttr(nivel)}','${jsAttr(grupo)}')">👥 Asistencia a la sesión${_getAsistenciaIndicator(nivel, grupo)}</button>
             <button role="menuitem" onclick="openEquipoDocente('${jsAttr(nivel)}','${jsAttr(grupo)}')">👨‍🏫 Equipo docente</button>
             <button role="menuitem" onclick="openInformacionEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}')">📬 Información del equipo docente</button>
