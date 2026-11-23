@@ -288,9 +288,9 @@ export const PRUEBAS = [
     const ok = await p.evaluate(async () => {
       window.__colado = 0; window._actasData = window._actasData || {};
       window._actasData[_actaKey('1º ESO', 'A', 1)] = { html: '<p>Mi acta</p><img src="x" onerror="window.__colado++">', savedAt: new Date().toISOString() };
-      openInforme('1º ESO', 'A', 1);
+      verActaAntigua('1º ESO', 'A', 1);   // las actas del modelo anterior se consultan (solo lectura)
       await new Promise(r => setTimeout(r, 600));
-      return { texto: (document.getElementById('informeContent') || {}).innerHTML || '', colado: window.__colado };
+      return { texto: document.querySelector('#tdocOverlay iframe')?.contentDocument?.body?.innerHTML || '', colado: window.__colado };
     });
     t.ok(/Mi acta/.test(ok.texto) && ok.colado === 0, 'un acta guardada con código dentro se abre sin ejecutarlo', JSON.stringify(ok).slice(0, 200));
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
@@ -539,7 +539,7 @@ export const PRUEBAS = [
     await p.check('#sesMain input[type=radio] >> nth=1'); await esperar(150);
     await p.fill('#sesMain input[aria-label="Motivo de la ausencia"]', 'Formación');
     await p.fill('#sesMain textarea[aria-label="Valoración general del grupo"]', 'Grupo trabajador pero hablador.');
-    await p.fill('#sesMain textarea[aria-label="Acuerdos del grupo"]', 'Cambiar la distribución de las mesas.');
+    await p.fill('#sesMain textarea[aria-label="Propuestas de mejora y acuerdos del equipo docente"]', 'Cambiar la distribución de las mesas.');
     await p.click('#sesMain button:has-text("Empezar")'); await esperar(200);
     t.ok(/García López|GARCÍA LÓPEZ/.test(await p.textContent('#sesMain .ses-alumno-nombre')) && /Matemáticas/.test(await p.textContent('#sesMain .ses-mats')), 'cada alumno/a sale con sus materias suspensas');
     await p.click('#sesMain .ses-prop:has-text("Promoción")'); await esperar(150);
@@ -552,9 +552,9 @@ export const PRUEBAS = [
       return { prop: ana.propuesta1.tipo, ac: ana.sesionEval['1'].acuerdos, rev: ana.sesionEval['1'].revisado, val: d.actasSesion['1'].valoracion, as: d.sesiones.eval1[0] }; });
     t.ok(r.prop === 'Promoción' && r.ac === 'Plan de refuerzo en Matemáticas.' && r.rev && r.val === 'Grupo trabajador pero hablador.' && r.as.asistio === false && r.as.justificacion === 'Formación',
       'se guardan la propuesta, los acuerdos, la valoración y la asistencia', JSON.stringify(r));
-    await p.click('#sesCab button:has-text("Acta de la sesión")'); await esperar(400);
+    await p.click('#sesCab button:has-text("Acta de evaluación")'); await esperar(400);
     const acta = await p.evaluate(() => document.querySelector('#tdocOverlay iframe')?.srcdoc || '');
-    t.ok(/Acta de la sesión de evaluación/.test(acta) && /Plan de refuerzo en Matemáticas/.test(acta) && /Promoción/.test(acta) && /Zapata Ruiz, Luis \(Matemáticas\): Formación/.test(acta) && /Cambiar la distribución/.test(acta),
+    t.ok(/ACTA DE LA PRIMERA EVALUACIÓN/.test(acta) && /Plan de refuerzo en Matemáticas/.test(acta) && /Promoción/.test(acta) && /Zapata Ruiz, Luis[\s\S]{0,200}Matemáticas[\s\S]{0,80}No asiste<\/span> — Formación/.test(acta) && /Cambiar la distribución/.test(acta),
       'el acta se genera con asistencia, valoración, acuerdos y la propuesta de cada alumno/a');
     await p.evaluate(() => { __cerrarVistaDocT(); closeSesionEvaluacion(); });
     const ficha = await p.evaluate(() => fichaGrupoParaProfesorado('1º ESO', 'A', '1'));
@@ -889,9 +889,9 @@ export const PRUEBAS = [
       return { prof, griego: cat.includes('Griego II') && !cat.some(m => m !== m.trim()) }; });
     await esperar(400);
     Object.assign(r, await p.evaluate(() => { const texto = document.querySelector('.tdoc-ov iframe')?.contentDocument?.body?.textContent || ''; window.__cerrarVistaDocT();
-      return { sustituto: /Sanz Leal, Leo \(Producción Musical \(sustituto\/a\)\)/.test(texto), latin: /Pitarch Mafe, Gracia \(Latín II\)/.test(texto) }; }));
+      return { sustituto: /Sanz Leal, Leo\s*Producción Musical \(sustituto\/a\)/.test(texto), latin: /Pitarch Mafe, Gracia\s*Latín II\s*Asiste/.test(texto) }; }));
     t.ok(r.prof === 'Latín II' && r.griego, 'los nombres de materia con espacios de más se limpian (equipo docente y ⚙ Materias)', JSON.stringify(r));
-    t.ok(r.sustituto && r.latin, 'el acta de la sesión pone «(sustituto/a)» a quien sustituye y la materia sin espacios', JSON.stringify(r));
+    t.ok(r.sustituto && r.latin, 'el acta de evaluación pone «(sustituto/a)» a quien sustituye y la materia sin espacios', JSON.stringify(r));
     await p.evaluate(() => openEquipoDocente('2º Bach.', 'HS')); await esperar(150);
     // «✍️ Datos de una materia»: solo se guardan materias de ⚙ Materias; los nombres antiguos se ven aparte y se pasan.
     await p.evaluate(() => { closeEquipoDocente(); window.__dialogosAuto = { confirmar: true }; window.__dialogosLog = [];
@@ -965,6 +965,97 @@ export const PRUEBAS = [
     await esperar(1200); await p.reload(); await esperar(2000);
     r = await p.evaluate(() => ({ cat: getMateriasParaNivel('2º Bach.', 'HS'), profs: _getAsistenciaData('2º Bach.', 'HS').profesores.map(x => x.materia + (x.sustituto ? '*' : '')), pend: data['2º Bach.'].HS[0].pendientes1 }));
     t.ok(r.cat.includes('Lengua extranjera II (Inglés)') && r.cat.includes('Filosofía y Ciudadanía') && !r.cat.includes('Química') && r.profs.includes('Producción Musical*') && r.pend.includes('Matemáticas aplicadas a las CCSS II'), 'al reabrir sigue todo: catálogo, equipo docente y suspensas', JSON.stringify(r).slice(0, 400));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
+  { nombre: 'tutoria-acta-evaluacion', descripcion: 'Tutoría: una sola acta de evaluación, desde la sesión: asistencia real, notas editables que llegan a todas partes, «Para el acta», secciones del centro (ESO y Bachillerato), lo guardado antes pasa a la sesión y las actas antiguas se consultan', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '1º ESO', 'A', ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria']);
+    await p.evaluate(() => {
+      const N = '1º ESO', G = 'A', d = _getAsistenciaData(N, G);
+      [['Zapata Ruiz, Luis', 'Matemáticas'], ['Gil Mora, Eva', 'Geografía e Historia'], ['Roig Puig, Pau', 'Geografía e Historia']].forEach(([nombre, materia], i) => {
+        d.profesores.push({ id: 'p' + i, nombre, materia, correo: '' }); ['eval1', 'eval2', 'eval3'].forEach(k => d.sesiones[k].push({ asistio: null, justificacion: '' })); });
+      d.profesores[0].esTutor = true; d.profesores[2].sustituto = true; tutores['1º ESO-A'] = 'Zapata Ruiz, Luis';
+      const [ana, luis, iria] = data[N][G];
+      ana.repetidor = 'Sí'; ana.nese = 'Sí'; ana.recursoNese = ['PT']; ana.pendientesAnteriores = ['Matemáticas (6º Primaria)'];
+      luis.pendientes2 = ['Geografía e Historia']; luis.eval2 = 1;
+      // Lo guardado antes: Acta Oficial (acuerdos, firmas, decisión sobre una pendiente) y un acta del Calendario.
+      window._actasOficialesData = { '1º ESO-A-eval2': { acuerdos: '<p>Reunión con <b>familias</b> en enero</p>', jefeEstudios: 'Mora Gil, Iván', director: 'Puig Roig, Toni', pendAnt: { '0-0': { estado: 'No recuperada', nota: '3', motivo: 'No entregó el cuadernillo' } } } };
+      window._actasData = { [_actaKey(N, G, 2)]: { html: '<div class="inf-section"><div class="inf-section-title">Acta antigua</div><p contenteditable="true">Texto de antes</p></div>', savedAt: '2026-01-15T10:00:00Z' } };
+      currentGrupos[N] = G; selectNivel(N); renderNivelTabs();
+    }); await esperar(200);
+    let r = await p.evaluate(() => ({ botones: [...document.querySelectorAll('#mainContent button')].map(b => b.textContent.trim()), pestanas: document.getElementById('nivelTabs').textContent }));
+    t.ok(r.botones.some(b => /📋 Acta de evaluación/.test(b)) && !r.botones.some(b => /Acta Oficial|Actas no Oficiales/.test(b)) && !/Actas no Oficiales/.test(r.pestanas),
+      'el grupo tiene «📋 Acta de evaluación»; ya no están el Acta Oficial ni las Actas no Oficiales', JSON.stringify(r.botones.filter(b => /Acta/.test(b))));
+    await p.click('#mainContent button:has-text("📋 Acta de evaluación")'); await esperar(150);
+    r = await p.$$eval('#actaMenuOverlay button', l => l.map(b => b.textContent.trim()));
+    t.ok(['Acta I Evaluación', 'Acta II Evaluación', 'Acta Evaluación Final', 'Abrir la sesión', 'Acta de calificaciones', '📂 II Ev.'].every(x => r.some(b => b.includes(x))),
+      'su menú: acta de cada evaluación, la sesión, el acta de calificaciones y la antigua guardada (solo consulta)', JSON.stringify(r));
+    await p.click('#actaMenuOverlay button:has-text("📂 II Ev.")'); await esperar(500);
+    r = await p.evaluate(() => { const b = document.querySelector('#tdocOverlay iframe')?.contentDocument?.body; const x = { texto: b ? b.textContent : '', editable: b ? b.querySelectorAll('[contenteditable]').length : -1 }; __cerrarVistaDocT(); return x; });
+    t.ok(/Texto de antes/.test(r.texto) && /solo consulta/.test(r.texto) && r.editable === 0, 'el acta antigua se abre para consultarla, sin poder editarla', JSON.stringify(r).slice(0, 200));
+
+    // La sesión (II Evaluación): lo del Acta Oficial pasa a la sesión.
+    await p.evaluate(() => openSesionEvaluacion('1º ESO', 'A', '2')); await esperar(200);
+    r = await p.evaluate(() => ({ acuerdos: document.querySelector('#sesMain textarea[aria-label^="Propuestas de mejora"]').value, jefe: document.querySelector('#sesMain input[placeholder="Apellidos, Nombre"]').value,
+      pend: ((data['1º ESO'].A[0].sesionEval || {})['2'] || {}).pendAnt }));
+    t.ok(/Reunión con familias en enero/.test(r.acuerdos) && r.jefe === 'Mora Gil, Iván' && r.pend['Matemáticas (6º Primaria)'].estado === 'No recuperada',
+      'lo guardado en el antiguo Acta Oficial (acuerdos, firmas, decisión sobre pendientes) aparece en la sesión', JSON.stringify(r));
+    await p.evaluate(() => { const d = _getAsistenciaData('1º ESO', 'A'); d.sesiones.eval2[0].asistio = true; d.sesiones.eval2[1].asistio = false; d.sesiones.eval2[1].justificacion = 'Formación'; d.sesiones.eval2[2].asistio = true; renderSesion(); });
+    await p.fill('#sesMain .ses-rejilla textarea >> nth=0', 'Habladores pero respetuosos.');
+    await p.fill('#sesMain textarea[aria-label="Valoración general del grupo"]', 'Buen grupo.');
+
+    // Notas desde la sesión: se actualiza todo.
+    await p.evaluate(() => _sesIr(1)); await esperar(150);   // Pérez Ruiz, Luis
+    r = await p.$$eval('#sesMain input.ses-nota', l => l.map(x => x.getAttribute('aria-label')));
+    t.ok(r.includes('Nota de Matemáticas') && r.includes('Nota de Geografía e Historia'), 'cada alumno/a tiene una casilla de nota por materia del equipo docente', JSON.stringify(r));
+    await p.fill('#sesMain input[aria-label="Nota de Geografía e Historia"]', '7'); await p.keyboard.press('Enter'); await esperar(200);
+    await p.fill('#sesMain input[aria-label="Nota de Matemáticas"]', '3,5'); await p.keyboard.press('Tab'); await esperar(200);
+    r = await p.evaluate(() => { const a = data['1º ESO'].A[1]; const ac = actaCalificacionesHTML('1º ESO', 'A', '2');
+      return { pend: a.pendientes2, n: a.eval2, notas: Object.fromEntries(Object.entries(a.porMateria).map(([m, d]) => [m, d.notas['2']])), acta: /3,5/.test(ac) && /7(,0)?</.test(ac), cifra: document.querySelector('#sesMain .ses-cifras strong').textContent }; });
+    t.ok(JSON.stringify(r.pend) === '["Matemáticas"]' && r.n === 1 && r.notas['Matemáticas'] === 3.5 && r.notas['Geografía e Historia'] === 7 && r.cifra === '1',
+      'cambiar una nota en la sesión actualiza sus suspensas (lista y número): aprobar quita la materia, suspender la añade', JSON.stringify(r));
+    t.ok(r.acta, 'y el acta de calificaciones ya tiene las notas nuevas');
+
+    // «📋 Para el acta»
+    await p.evaluate(() => _sesIr(0)); await esperar(150);   // García López, Ana: repetidora, NESE, con pendiente
+    await p.check('#sesMain .ses-casos label:has-text("Comportamiento") input'); await esperar(150);
+    await p.fill('#sesMain .ses-para-acta input[placeholder^="Las materias"]', 'Lengua y Matemáticas');
+    await p.fill('#sesMain .ses-para-acta textarea[placeholder^="¿Está funcionando"]', 'Le está costando, pero mejora.');
+    await p.selectOption('#sesMain .ses-para-acta select >> nth=0', 'FPB'); await esperar(150);
+    await p.fill('#sesMain .ses-para-acta label:has-text("Familia profesional") input', 'Informática y Comunicaciones');
+    await p.fill('#sesMain .ses-para-acta textarea[placeholder^="Adaptaciones"]', 'ACI en Matemáticas; PT dos sesiones.');
+    await p.selectOption('#sesMain select[aria-label="Estado de Matemáticas (6º Primaria)"]', 'Recuperada');
+    await p.fill('#sesMain textarea[aria-label="Acuerdos para este alumno/a"]', 'Tutoría individual quincenal.');
+    r = await p.evaluate(() => { const a = data['1º ESO'].A[0]; return { s: a.sesionEval['2'], rec: a.recuperadasAnteriores, norec: a.noRecuperadasAnteriores }; });
+    t.ok(r.s.casos.includes('comportamiento') && r.s.programa === 'FPB' && r.s.fpbFamilia === 'Informática y Comunicaciones' && r.s.medidasNese && r.s.valoracionRepeticion && (r.rec || []).includes('Matemáticas (6º Primaria)') && !(r.norec || []).includes('Matemáticas (6º Primaria)'),
+      '«📋 Para el acta» guarda caso particular, repetición, programa / FPB, medidas NESE y la decisión de cada pendiente (también en la tabla del grupo)', JSON.stringify(r).slice(0, 400));
+
+    // El acta de la II Evaluación (ESO)
+    const leer = async () => { await esperar(500); return p.evaluate(() => { const x = document.querySelector('#tdocOverlay iframe')?.contentDocument?.body?.innerText || ''; __cerrarVistaDocT(); return x; }); };
+    await p.click('#sesCab button:has-text("Acta de evaluación")'); let acta = await leer();
+    t.ok(/ACTA DE LA SEGUNDA EVALUACIÓN/.test(acta) && /Zapata Ruiz, Luis\s*tutor\/a\s*Matemáticas\s*Asiste/.test(acta) && /Gil Mora, Eva\s*Geografía e Historia\s*No asiste — Formación/.test(acta) && /Roig Puig, Pau\s*Geografía e Historia \(sustituto\/a\)\s*Asiste/.test(acta),
+      'el acta lleva la asistencia marcada en la sesión: quién asiste, quién no y por qué, y quién es sustituto/a', acta.slice(0, 600));
+    t.ok(/Comportamiento \/ Convivencia\s*García López, Ana\s*Lengua y Matemáticas\s*Tutoría individual quincenal/.test(acta) && /Le está costando, pero mejora/.test(acta) && /Nivel III/i.test(acta)
+      && /García López, Ana\s*\S*\s*Informática y Comunicaciones/.test(acta.replace(/\n/g, ' ')) && /ACI en Matemáticas/.test(acta) && /Matemáticas \(6º Primaria\)\s*Recuperada\s*3\s*No entregó el cuadernillo/.test(acta),
+      'y las secciones del centro: casos particulares, repetidores, Nivel III y FPB, NESE y pendientes de cursos anteriores', acta.slice(acta.indexOf('CASOS PARTICULARES'), acta.indexOf('CASOS PARTICULARES') + 900));
+    t.ok(/Habladores pero respetuosos/.test(acta) && /Buen grupo/.test(acta) && /Reunión con familias en enero/.test(acta) && /Mora Gil, Iván/.test(acta) && /Puig Roig, Toni/.test(acta) && /Pérez Ruiz, Luis\s*1\s*Matemáticas/.test(acta),
+      'el análisis del grupo, los acuerdos, las firmas y los resultados con las notas cambiadas en la sesión', acta.slice(-900));
+
+    // Evaluación final (ESO): Plan de Repetición, Plan de Refuerzo y agrupación.
+    await p.evaluate(() => { const [ana, luis] = data['1º ESO'].A; ana.pendientesIII = ['Matemáticas', 'Lengua']; ana.eval3 = 2; luis.pendientesIII = ['Matemáticas']; luis.eval3 = 1;
+      _sesCambiarEval('3'); _sesIr(0); _sesPropuesta(0, 'tipo', 'Repetición'); _sesPropuesta(1, 'tipo', 'Promoción'); _sesIr(0); });
+    await p.fill('#sesMain .ses-para-acta label:has-text("Motivos de la no promoción") textarea', 'Dos materias instrumentales.');
+    await p.fill('#sesMain .ses-para-acta label:has-text("Agrupación") input', 'Separarla de Íria.');
+    await p.evaluate(() => generarActaEvaluacion('1º ESO', 'A', '3')); acta = await leer();
+    t.ok(/ACTA DE LA EVALUACIÓN FINAL/.test(acta) && /Plan de Repetición[\s\S]*García López, Ana[\s\S]*Dos materias instrumentales/i.test(acta) && /Plan de Refuerzo[\s\S]*Pérez Ruiz, Luis/i.test(acta) && /agrupación para el próximo curso[\s\S]*Separarla de Íria/i.test(acta),
+      'en la final: Plan de Repetición con sus motivos, Plan de Refuerzo y agrupación para el próximo curso', acta.slice(acta.search(/PLAN DE REPETICIÓN/i), acta.search(/PLAN DE REPETICIÓN/i) + 500));
+
+    // Bachillerato, evaluación final: extraordinaria y sin Nivel III.
+    await p.evaluate(() => { closeSesionEvaluacion(); });
+    await tutoriaConAlumnos(p, t.url, '2º Bach.', 'HS', ['Mascarell Haro, Ana']);
+    await p.evaluate(() => { const a = data['2º Bach.'].HS[0]; a.pendientesIII = ['Historia de España']; a.eval3 = 1; generarActaEvaluacion('2º Bach.', 'HS', '3'); }); acta = await leer();
+    t.ok(/Bachillerato · Evaluación Final/.test(acta) && /evaluación extraordinaria[\s\S]*Mascarell Haro, Ana\s*1\s*Historia de España/i.test(acta) && !/Nivel III/i.test(acta), 'en Bachillerato: alumnado para la extraordinaria y sin las secciones de ESO', acta.slice(0, 300));
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 

@@ -127,7 +127,7 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
       }
       limpiar();
     };
-    const especiales = ['__home__', '__calendario__', '__informe__', '__segfam__', '__convivencia__', '__actasnooficiales__', '__vacantes__', '__materias__'];
+    const especiales = ['__home__', '__calendario__', '__informe__', '__segfam__', '__convivencia__', '__vacantes__', '__materias__'];
     for (const e of especiales) { try { await pantalla(e, () => selectNivel(e)); } catch (err) { fallos.push(e + ': ' + err.message); } }
     const niveles = completo ? [NIVELES[0], NIVELES[NIVELES.length - 2], nivH] : [nivH];
     const pestanas = completo ? ['eval1', 'eval2', 'eval3', 'nese', 'final', 'extr'] : ['eval1', 'eval3', 'nese'];
@@ -149,17 +149,22 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
       ['SESIÓN · grupo', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '1'); }],
       ['SESIÓN · alumno/a', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '1'); _sesIr(0); }],
       ['SESIÓN · final', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '3'); _sesIr(0); }],
-      ['ACTA DE LA SESIÓN', () => { selectNivel(nivH); generarActaSesion(nivH, gH, '1'); }],
+      // El acta de evaluación (la única, desde la sesión) con todo relleno: lo de cada alumno/a y el análisis del grupo.
+      ...['1', '2', '3'].map(e => ['ACTA DE EVALUACIÓN · eval ' + e, () => { selectNivel(nivH); data[nivH][gH].forEach((a, i) => Object.assign(_aeDeAlumno(a, e), { casos: ['comportamiento', 'asistencia', 'diversidad'], casoMaterias: P('casoMat'),
+        valoracionRepeticion: P('valRep'), programa: i % 2 ? 'FPB' : 'PAC / Refuerzo', programaMotivo: P('progMot'), fpbFamilia: P('fpb'), medidasNese: P('medNese'), motivoNoPromocion: P('motNoProm'), agrupacion: P('agrup') }));
+        data[nivH][gH].forEach(a => { a.repetidor = 'Sí'; a[_SES_CAMPOS[e].prop] = { tipo: 'Repetición', destino: P('dest') }; });
+        Object.assign(_aeActa(nivH, gH, e), { jefeEstudios: P('jefe'), director: P('dir'), analisis: { comportamiento: P('anComp'), cohesion: P('anCoh'), otros: P('anOtros') } }); generarActaEvaluacion(nivH, gH, e); }]),
+      ['ACTA DE EVALUACIÓN · Bach. final', () => { const nb = NIVELES.find(n => isBach(n)); selectNivel(nb); generarActaEvaluacion(nb, GRUPOS_POR_NIVEL[nb][0], '3'); }],
+      ['SESIÓN · alumno/a con todo «Para el acta»', () => { currentGrupos[nivH] = gH; selectNivel(nivH); const a = data[nivH][gH][0]; a.repetidor = 'Sí'; Object.assign(_aeDeAlumno(a, '3'), { casos: ['asistencia'], programa: 'FPB' });
+        a.promociona = { tipo: 'Repetición', destino: '' }; openSesionEvaluacion(nivH, gH, '3'); _sesIr(0); }],
       ['DATOS DE UNA MATERIA', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openDatosMateria(nivH, gH, '1', Object.keys(data[nivH][gH][0].porMateria)[0]); }],
       ['ACTA DE CALIFICACIONES · ventana', () => { currentGrupos[nivH] = gH; selectNivel(nivH); const m = Object.keys(data[nivH][gH][0].porMateria)[0]; _abrevMaterias[m] = m.slice(0, 12); abrirActaCalificaciones(nivH, gH, '1'); document.getElementById('acAbrevs').open = true; }],
       ['DATOS DE UNA MATERIA · no la cursa', () => { currentGrupos[nivH] = gH; selectNivel(nivH); const al = data[nivH][gH], m = Object.keys(al[0].porMateria)[0]; _tPonerNoCursa(al[al.length - 1], m, true); openDatosMateria(nivH, gH, '1', m); }],
       ['ACTA DE CALIFICACIONES · columnas agrupadas', () => { selectNivel(nivH); const ms = Object.keys(data[nivH][gH][0].porMateria); ms.forEach(m => { _columnasActa[m] = m.slice(0, 24); _abrevMaterias[m] = m.slice(0, 12); }); const w = _ventanaDoc(); w.document.write(actaCalificacionesHTML(nivH, gH, '1')); w.document.close(); }],
       ['ACTA DE CALIFICACIONES · documento', () => { selectNivel(nivH); const w = _ventanaDoc(); w.document.write(actaCalificacionesHTML(nivH, gH, '1')); w.document.close(); }],
       ['INFORME PARA EL EQUIPO · ventana', () => { currentGrupos[nivH] = gH; selectNivel(nivH); abrirInformeEquipo(nivH, gH, '1'); }],
-      // Actas de cada evaluación: la del Calendario (ESO y Bachillerato) y el Acta Oficial.
-      ...[1, 3].map(e => ['ACTA (Calendario) ESO · eval ' + e, () => { selectNivel(nivH); openInforme(nivH, gH, e, true); }]),
-      ...[1, 3].map(e => ['ACTA (Calendario) Bach. · eval ' + e, () => { const nb = NIVELES.find(n => isBach(n)); selectNivel(nb); openInforme(nb, GRUPOS_POR_NIVEL[nb][0], e, true); }]),
-      ...[1, 3].map(e => ['ACTA OFICIAL · eval ' + e, () => { selectNivel(nivH); openActaOficial(nivH, gH, e); }]),
+      // Un acta guardada con el modelo anterior (solo consulta).
+      ['ACTA ANTIGUA', () => { selectNivel(nivH); window._actasData = window._actasData || {}; window._actasData[_actaKey(nivH, gH, 1)] = { html: '<p>' + P('actaAntigua') + '</p>', savedAt: new Date().toISOString() }; verActaAntigua(nivH, gH, '1'); }],
       ['INFORME PARA EL EQUIPO · documento', () => { selectNivel(nivH); const w = _ventanaDoc(); w.document.write(informeEquipoHTML(nivH, gH, '1')); w.document.close(); }],
     ];
     for (const [nombre, poner] of extra) { try { await pantalla(nombre, poner); } catch (err) { fallos.push(nombre + ': ' + err.message); } }

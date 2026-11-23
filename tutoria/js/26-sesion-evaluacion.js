@@ -48,6 +48,7 @@ function _sesEvalPropuesta(nivel) {
 window.openSesionEvaluacion = function(nivel, grupo, k) {
   if (!data[nivel]?.[grupo]) return;
   _sesCtx = { nivel, grupo, k: String(k || _sesEvalPropuesta(nivel)), sel: 'grupo' };
+  if (typeof _aeMigrar === 'function') _aeMigrar(nivel, grupo, _sesCtx.k);   // lo guardado en el antiguo Acta Oficial pasa a la sesión
   let ov = document.getElementById('sesionOverlay');
   if (!ov) {
     ov = document.createElement('div');
@@ -76,7 +77,7 @@ window.closeSesionEvaluacion = function() {
   renderAll();
 };
 window._sesIr = function(sel) { _sesCtx.sel = sel; renderSesion(); document.getElementById('sesMain')?.scrollTo(0, 0); };
-window._sesCambiarEval = function(k) { _sesCtx.k = String(k); renderSesion(); };
+window._sesCambiarEval = function(k) { _sesCtx.k = String(k); if (typeof _aeMigrar === 'function') _aeMigrar(_sesCtx.nivel, _sesCtx.grupo, _sesCtx.k); renderSesion(); };
 window._sesMover = function(paso) {
   const n = _sesAlumnos().length;
   const actual = _sesCtx.sel === 'grupo' ? -1 : +_sesCtx.sel;
@@ -98,7 +99,8 @@ function renderSesion() {
       <span class="ses-progreso" aria-live="polite">${revisados} de ${alumnos.length} revisados${fecha ? ' · ' + _tEsc(fmtDate(fecha)) : ''}</span>
       <span style="flex:1"></span>
       <button class="btn btn-ghost btn-sm" onclick="abrirInformeEquipo('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')" title="Resultados del grupo para el profesorado (previo a la sesión o actualizado tras ella)">📊 Informe para el equipo</button>
-      <button class="btn btn-ghost btn-sm" onclick="generarActaSesion('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')">📝 Acta de la sesión</button>
+      <button class="btn btn-primary btn-sm" onclick="generarActaEvaluacion('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')" title="El acta de la evaluación con todo lo apuntado en la sesión (imprimir, PDF, Word)">🖨 Acta de evaluación</button>
+      ${typeof _aeHayActaAntigua === 'function' && _aeHayActaAntigua(nivel, grupo, k) ? `<button class="btn btn-ghost btn-sm" onclick="verActaAntigua('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')" title="Acta de esta evaluación guardada con el modelo anterior (solo consulta)">📂 Acta antigua</button>` : ''}
       <button class="btn btn-ghost btn-sm" onclick="abrirActaCalificaciones('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')" title="Todas las notas del grupo en una hoja, como el acta de Itaca">📑 Acta de calificaciones</button>
       <button class="btn btn-ghost btn-sm" onclick="exportarFichaGrupo('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')">📤 Ficha para el profesorado</button>
       <button class="btn btn-primary btn-sm" onclick="closeSesionEvaluacion()">✕ Salir</button>
@@ -117,6 +119,8 @@ function renderSesion() {
   main.innerHTML = sel === 'grupo' ? _sesGrupoHTML() : _sesAlumnoHTML(+sel);
   _tA11y(main);
   document.querySelector('#sesLista .ses-item.activo')?.scrollIntoView({ block: 'nearest' });
+  // Al meter notas con Intro se pasa a la siguiente materia.
+  if (_sesCtx.foco != null) { const sig = main.querySelector(`input.ses-nota[data-m="${_sesCtx.foco}"]`); _sesCtx.foco = null; if (sig) { sig.focus(); sig.select(); } }
 }
 
 // Distribución de suspensas y materias con más suspensos (de las listas de materias de cada alumno/a).
@@ -163,13 +167,26 @@ function _sesGrupoHTML() {
       </div>
       ${r.ranking.length ? `<p style="font-size:14px;margin:10px 0 0">Materias con más suspensos: ${r.ranking.slice(0, 6).map(([m, n]) => `<strong>${_tEsc(m)}</strong> (${n})`).join(' · ')}</p>` : ''}
     </section>
+    <section class="ses-bloque"><h2>Análisis general del grupo</h2>
+      <div class="ses-rejilla">${(typeof _AE_ANALISIS !== 'undefined' ? _AE_ANALISIS : []).filter(([clave]) => clave !== 'cohesion' || k === '1' || (acta.analisis || {}).cohesion).map(([clave, etq]) => `
+        <label class="ent-form-campo"><span>${_tEsc(etq)}</span><textarea class="ficha-texto" rows="2" oninput="_sesAnalisis('${clave}',this.value)">${_tEsc((acta.analisis || {})[clave] || '')}</textarea></label>`).join('')}</div>
+    </section>
     <section class="ses-bloque"><h2>Valoración general del grupo</h2>
       <textarea class="ficha-texto ses-texto" rows="4" aria-label="Valoración general del grupo" placeholder="Ambiente de trabajo, convivencia, evolución respecto a la evaluación anterior…" oninput="_sesActaSet('valoracion',this.value)">${_tEsc(acta.valoracion)}</textarea>
     </section>
-    <section class="ses-bloque"><h2>Acuerdos del grupo</h2>
-      <textarea class="ficha-texto ses-texto" rows="4" aria-label="Acuerdos del grupo" placeholder="Medidas para todo el grupo, cambios de sitio, coordinación entre materias…" oninput="_sesActaSet('acuerdosGrupo',this.value)">${_tEsc(acta.acuerdosGrupo)}</textarea>
+    <section class="ses-bloque"><h2>Propuestas de mejora y acuerdos del equipo docente</h2>
+      <textarea class="ficha-texto ses-texto" rows="4" aria-label="Propuestas de mejora y acuerdos del equipo docente" placeholder="Medidas para todo el grupo, cambios de sitio, coordinación entre materias…" oninput="_sesActaSet('acuerdosGrupo',this.value)">${_tEsc(acta.acuerdosGrupo)}</textarea>
     </section>
-    <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" onclick="_sesIr(0)" ${r.total ? '' : 'disabled'}>Empezar con el alumnado ▶</button></div>`;
+    <section class="ses-bloque"><h2>Datos del acta</h2>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <label class="ent-form-campo" style="max-width:190px"><span>Fecha de la sesión</span><input type="date" value="${_tEsc(acta.fecha || getDates(nivel)['eval' + k] || '')}" onchange="_sesActaSet('fecha',this.value)"></label>
+        <label class="ent-form-campo" style="flex:1 1 220px"><span>Jefe/a de Estudios (firma)</span><input value="${_tEsc(acta.jefeEstudios || '')}" placeholder="Apellidos, Nombre" oninput="_sesActaSet('jefeEstudios',this.value)"></label>
+        <label class="ent-form-campo" style="flex:1 1 220px"><span>Director/a (firma)</span><input value="${_tEsc(acta.director || '')}" placeholder="Apellidos, Nombre" oninput="_sesActaSet('director',this.value)"></label>
+      </div>
+    </section>
+    <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="generarActaEvaluacion('${jsAttr(nivel)}','${jsAttr(grupo)}','${k}')">🖨 Acta de evaluación</button>
+      <button class="btn btn-primary" onclick="_sesIr(0)" ${r.total ? '' : 'disabled'}>Empezar con el alumnado ▶</button></div>`;
 }
 window._sesAsistencia = function(i, valor) {
   const d = _getAsistenciaData(_sesCtx.nivel, _sesCtx.grupo);
@@ -182,22 +199,39 @@ window._sesJustificacion = function(i, v) {
   s.justificacion = v; markDirty();
 };
 window._sesActaSet = function(campo, v) { _sesActa(_sesCtx.nivel, _sesCtx.grupo, _sesCtx.k)[campo] = v; markDirty(); };
+window._sesAnalisis = function(clave, v) { const acta = _sesActa(_sesCtx.nivel, _sesCtx.grupo, _sesCtx.k); if (!acta.analisis || typeof acta.analisis !== 'object') acta.analisis = {}; acta.analisis[clave] = v; markDirty(); };
 
 function _sesAlumnoHTML(i) {
   const { nivel, grupo, k } = _sesCtx;
   const a = _sesAlumnos()[i]; if (!a) return '';
   const c = _SES_CAMPOS[k], s = _sesDeAlumno(a, k);
   const sus = +a[c.n] || 0, antes = k > 1 ? (+a[_SES_CAMPOS[String(k - 1)].n] || 0) : null;
-  const mats = a[c.pend] || [];
+  const mats_ = a[c.pend] || [];
   const tutF = { j: +a['faltasJust' + k] || 0, i: +a['faltasInjust' + k] || 0, ac: +a['ac' + k] || 0, pa: +a['partes' + k] || 0 };
   const alertas = typeof _alertasAlumno === 'function' ? _alertasSerias(_alertasAlumno(a, nivel)) : [];
   const pm = a.porMateria || {};
   const kReg = k === '3' ? 'curso' : k;
-  const recibido = Object.keys(pm).sort((x, y) => x.localeCompare(y, 'es')).map(m => {
-    const d = pm[m], n = (d.notas || {})[c.periodo] ?? (d.notas || {})[k];
+  /* Notas de cada materia, editables aquí mismo: lo que se cambia va a las suspensas de la evaluación (columna
+     I/II/III PEND. y su número), al acta de calificaciones, a la ficha y a los informes (como «✍️ Datos de una materia»).
+     Materias: las del equipo docente, las que tienen datos y las suspensas; menos las que no cursa. */
+  const cat = getMateriasParaNivel(nivel, grupo) || [];
+  const mats = [];
+  const add = m => { m = String(m || '').trim(); if (m && _tNorm(m) !== 'tutoria' && !_tNoCursa(a, m) && !mats.some(x => _tNorm(x) === _tNorm(m))) mats.push(m); };
+  _getAsistenciaData(nivel, grupo).profesores.forEach(p => add(_tMatEnCatalogo(p.materia, cat) || p.materia));
+  Object.keys(pm).forEach(add); mats_.forEach(add);
+  const pos = m => { const j = cat.findIndex(x => _tNorm(x) === _tNorm(m)); return j < 0 ? 999 : j; };
+  mats.sort((x, y) => pos(x) - pos(y) || x.localeCompare(y, 'es'));
+  _sesCtx.mats = mats;
+  const recibido = mats.map((m, j) => {
+    const clave = Object.keys(pm).find(x => _tNorm(x) === _tNorm(m)), d = clave ? pm[clave] : {};
+    const n = (d.notas || {})[c.periodo] ?? (d.notas || {})[k];
     const f = (d.faltas || {})[kReg], cv = (d.convivencia || {})[kReg], com = (d.comentarios || {})[c.periodo] || (d.comentarios || {})[k] || '';
     const extra = [f && f.injustificadas ? `${f.injustificadas} F.s.j.` : '', cv && cv.ac ? `${cv.ac} AC` : '', cv && cv.pa ? `${cv.pa} partes` : ''].filter(Boolean).join(' · ');
-    return `<tr><th scope="row">${_tEsc(m)}</th><td class="${typeof n === 'number' && n < 5 ? 'mal' : ''}">${typeof n === 'number' ? _tEsc(String(n).replace('.', ',')) : '—'}</td>
+    const susp = typeof n === 'number' ? n < 5 : mats_.some(x => _tNorm(x) === _tNorm(m));
+    return `<tr><th scope="row">${_tEsc(m)}${d.profesor ? `<br><span class="ses-prof-m">${_tEsc(d.profesor)}</span>` : ''}</th>
+      <td style="text-align:center"><input class="ses-nota${susp ? ' mal' : ''}" data-m="${j}" inputmode="decimal" value="${typeof n === 'number' ? _tEsc(String(n).replace('.', ',')) : ''}" aria-label="Nota de ${_tEsc(m)}" placeholder="—"
+        onchange="_sesNota(${i},${j},this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();_sesCtx.foco=${j + 1};this.blur();}"></td>
+      <td style="text-align:center"><input type="checkbox" ${susp ? 'checked' : ''} ${typeof n === 'number' ? 'disabled title="Con nota, sale sola (menos de 5)"' : 'title="Suspensa sin nota"'} aria-label="${_tEsc(m)} suspensa" onchange="_sesSusp(${i},${j},this.checked)"></td>
       <td>${_tEsc(extra)}</td><td>${_tEsc(com)}</td></tr>`;
   }).join('');
   const p = getPropObj(a[c.prop]);
@@ -216,10 +250,10 @@ function _sesAlumnoHTML(i) {
       <div class="${tutF.i ? 'mal' : ''}"><strong>${tutF.i}</strong><span>faltas sin justificar · ${tutF.j} justificadas</span></div>
       <div class="${tutF.pa ? 'mal' : ''}"><strong>${tutF.ac} · ${tutF.pa}</strong><span>AC · partes</span></div>
     </div>
-    ${mats.length ? `<p class="ses-mats">Materias suspensas: ${mats.map(m => `<span class="ses-mat">${_tEsc(m)}</span>`).join('')}</p>` : ''}
+    ${mats_.length ? `<p class="ses-mats">Materias suspensas: ${mats_.map(m => `<span class="ses-mat">${_tEsc(m)}</span>`).join('')}</p>` : ''}
     ${alertas.length ? `<ul class="ficha-lista" style="margin-top:10px">${alertas.map(x => `<li class="ficha-alerta ${x.nivel}"><span aria-hidden="true">${x.icono}</span> ${_tEsc(x.texto)}</li>`).join('')}</ul>` : ''}
-    ${recibido ? `<section class="ses-bloque"><h2>Lo que dice el profesorado</h2><div style="overflow-x:auto"><table class="inf-tabla ses-tabla">
-      <thead><tr><th scope="col" style="text-align:left">Materia</th><th scope="col" style="text-align:center">Nota</th><th scope="col" style="text-align:left">Faltas y convivencia</th><th scope="col" style="text-align:left">Comentario</th></tr></thead><tbody>${recibido}</tbody></table></div></section>` : ''}
+    ${recibido ? `<section class="ses-bloque"><h2>Notas y lo que dice el profesorado <small style="font-weight:400;font-size:12px;color:var(--text3)">· las notas se pueden cambiar aquí (Intro pasa a la siguiente)</small></h2><div style="overflow-x:auto"><table class="inf-tabla ses-tabla">
+      <thead><tr><th scope="col" style="text-align:left">Materia</th><th scope="col" style="text-align:center">Nota</th><th scope="col" style="text-align:center">Susp.</th><th scope="col" style="text-align:left">Faltas y convivencia</th><th scope="col" style="text-align:left">Comentario</th></tr></thead><tbody>${recibido}</tbody></table></div></section>` : ''}
     <section class="ses-bloque"><h2>${c.propEtq}</h2>
       <div class="ses-props" role="group" aria-label="${c.propEtq}">
         ${PROPUESTA_TIPOS.map(t => `<button class="ses-prop ${t.cls}${p.tipo === t.key ? ' elegida' : ''}" aria-pressed="${p.tipo === t.key}" onclick="_sesPropuesta(${i},'tipo','${jsAttr(t.key)}')">${_tEsc(t.label)}</button>`).join('')}
@@ -232,6 +266,7 @@ function _sesAlumnoHTML(i) {
     <section class="ses-bloque"><h2>Acuerdos para este alumno/a</h2>
       <textarea class="ficha-texto ses-texto" rows="3" aria-label="Acuerdos para este alumno/a" placeholder="Medidas, quién se encarga, qué se comunica a la familia…" oninput="_sesAcuerdo(${i},this.value)">${_tEsc(s.acuerdos)}</textarea>
     </section>
+    ${_sesParaActaHTML(a, i)}
     <div class="ses-pie">
       <button class="btn btn-ghost" onclick="_sesMover(-1)">◀ Anterior</button>
       <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" ${s.revisado ? 'checked' : ''} onchange="_sesRevisado(${i},this.checked)"> Revisado</label>
@@ -250,6 +285,80 @@ window._sesPropuesta = function(i, campo, valor) {
   markDirty(); renderSesion();
 };
 window._sesAcuerdo = function(i, v) { const a = _sesAlumnos()[i]; if (!a) return; _sesDeAlumno(a, _sesCtx.k).acuerdos = v; markDirty(); };
+
+// Notas desde la sesión (ver _tGuardarNotaAlumno en 28-datos-materia.js).
+window._sesNota = function(i, j, valor) {
+  const { nivel, grupo, k } = _sesCtx, a = _sesAlumnos()[i], m = (_sesCtx.mats || [])[j]; if (!a || !m) return;
+  const n = _dmLeerNota(valor);
+  if (!n.ok) { _sesCtx.foco = null; showToast('⚠ La nota va de 0 a 10 (vale la coma)'); renderSesion(); return; }
+  const antes = ((Object.entries(a.porMateria || {}).find(([x]) => _tNorm(x) === _tNorm(m)) || [])[1] || {}).notas || {};
+  const periodo = _SES_CAMPOS[k].periodo; if ((antes[periodo] ?? null) === n.v) { renderSesion(); return; }
+  _undoPush(nivel, grupo);
+  const enLista = (a[_SES_CAMPOS[k].pend] || []).some(x => _tNorm(x) === _tNorm(m));
+  const cambio = _tGuardarNotaAlumno(a, k, m, n.v, n.v === null ? enLista : undefined);
+  markDirty(); renderSesion();
+  showToast(`✓ ${m}: ${n.v === null ? 'sin nota' : String(n.v).replace('.', ',')}${cambio ? ' · suspensas actualizadas' : ''}`);
+};
+window._sesSusp = function(i, j, marcada) {
+  const { nivel, grupo, k } = _sesCtx, a = _sesAlumnos()[i], m = (_sesCtx.mats || [])[j]; if (!a || !m) return;
+  _undoPush(nivel, grupo);
+  _tGuardarNotaAlumno(a, k, m, null, !!marcada);
+  markDirty(); renderSesion();
+};
+
+/* «📋 Para el acta»: lo que el acta de evaluación necesita de cada alumno/a (ver 30-acta-evaluacion.js). */
+function _sesParaActaHTML(a, i) {
+  const { nivel, k } = _sesCtx, c = _SES_CAMPOS[k], s = _aeDeAlumno(a, k), p = getPropObj(a[c.prop]);
+  const campo = (etq, clave, ph, filas) => `<label class="ent-form-campo"><span>${etq}</span>${filas
+    ? `<textarea class="ficha-texto" rows="${filas}" placeholder="${_tEsc(ph || '')}" oninput="_sesActaAl(${i},'${clave}',this.value)">${_tEsc(s[clave] || '')}</textarea>`
+    : `<input value="${_tEsc(s[clave] || '')}" placeholder="${_tEsc(ph || '')}" oninput="_sesActaAl(${i},'${clave}',this.value)">`}</label>`;
+  const neseOcomp = a.nese === 'Sí' || _getNeseCodes(a.recursoNese).length || (Array.isArray(a.codComp) ? a.codComp.length : a.codComp);
+  const ant = a.pendientesAnteriores || [];
+  const partes = [
+    `<div class="ses-casos" role="group" aria-label="Caso particular"><span>Caso particular:</span>${_AE_CASOS.map(([clave, etq]) =>
+      `<label><input type="checkbox" ${s.casos.includes(clave) ? 'checked' : ''} onchange="_sesCaso(${i},'${clave}',this.checked)"> ${_tEsc(etq.split(' (')[0])}</label>`).join('')}</div>
+     ${s.casos.length ? campo('Áreas / materias del caso', 'casoMaterias', 'Las materias en las que se nota (si no, salen sus suspensas)') + '<p class="ses-nota-ayuda">Las «medidas a tomar» son los acuerdos de arriba.</p>' : ''}`,
+    a.repetidor === 'Sí' ? campo('Valoración de la repetición', 'valoracionRepeticion', '¿Está funcionando la repetición?', 2) : '',
+    !isBach(nivel) && k !== '1' ? `<div class="ses-rejilla">
+      <label class="ent-form-campo"><span>Programa de atención a la diversidad (Nivel III) / FPB</span>
+        <select onchange="_sesActaAl(${i},'programa',this.value,true)"><option value="">— Ninguno —</option>${_AE_PROGRAMAS.map(x => `<option ${s.programa === x ? 'selected' : ''}>${_tEsc(x)}</option>`).join('')}</select></label>
+      ${s.programa ? campo('Motivo', 'programaMotivo', '') : ''}
+      ${s.programa === 'FPB' ? campo('Familia profesional (FPB)', 'fpbFamilia', '') : ''}</div>` : '',
+    neseOcomp ? campo('Medidas adoptadas (NESE / Compensatoria)', 'medidasNese', 'Adaptaciones, apoyos (PT, AL), seguimiento…', 2) : '',
+    ant.length ? `<div class="ses-subt">Pendientes de cursos anteriores — decisión</div><table class="inf-tabla ses-tabla ses-tabla-pend"><thead><tr><th scope="col" style="text-align:left">Materia</th><th scope="col" style="text-align:left">Estado</th><th scope="col" style="text-align:center">Nota</th><th scope="col" style="text-align:left">Motivo / observaciones</th></tr></thead><tbody>
+      ${ant.map((m, j) => { const v = _aePendAnt(a, k, m); return `<tr><th scope="row">${_tEsc(m)}</th>
+        <td><select aria-label="Estado de ${_tEsc(m)}" onchange="_sesPendAnt(${i},${j},'estado',this.value)">${_AE_ESTADOS_PEND.map(x => `<option ${v.estado === x ? 'selected' : ''}>${x}</option>`).join('')}</select></td>
+        <td style="text-align:center"><input class="ses-nota" style="width:60px" value="${_tEsc(v.nota)}" aria-label="Nota de ${_tEsc(m)}" oninput="_sesPendAnt(${i},${j},'nota',this.value)"></td>
+        <td><input value="${_tEsc(v.motivo)}" aria-label="Motivo de ${_tEsc(m)}" style="width:100%" oninput="_sesPendAnt(${i},${j},'motivo',this.value)"></td></tr>`; }).join('')}</tbody></table>` : '',
+    k === '3' && p.tipo === 'Repetición' ? campo('Motivos de la no promoción (Plan de Repetición)', 'motivoNoPromocion', '', 2) : '',
+    k === '3' ? campo('Agrupación para el próximo curso (observaciones)', 'agrupacion', 'Con quién sí / con quién no, optativas, grupo…') : '',
+  ].filter(Boolean);
+  return `<section class="ses-bloque ses-para-acta"><h2>📋 Para el acta</h2>${partes.join('')}</section>`;
+}
+window._sesActaAl = function(i, clave, v, redibujar) {
+  const a = _sesAlumnos()[i]; if (!a) return;
+  _aeDeAlumno(a, _sesCtx.k)[clave] = v; markDirty();
+  if (redibujar) renderSesion();
+};
+window._sesCaso = function(i, clave, marcado) {
+  const a = _sesAlumnos()[i]; if (!a) return;
+  const s = _aeDeAlumno(a, _sesCtx.k);
+  s.casos = s.casos.filter(x => x !== clave); if (marcado) s.casos.push(clave);
+  markDirty(); renderSesion();
+};
+window._sesPendAnt = function(i, j, campo, v) {
+  const a = _sesAlumnos()[i]; if (!a) return;
+  const m = (a.pendientesAnteriores || [])[j]; if (!m) return;
+  const s = _aeDeAlumno(a, _sesCtx.k);
+  s.pendAnt[m] = Object.assign({}, _aePendAnt(a, _sesCtx.k, m), s.pendAnt[m] || {}, { [campo]: v });
+  // El estado es el mismo que el de las columnas «Recuperadas» / «No recuperadas» de la tabla del grupo.
+  if (campo === 'estado') {
+    const quitar = l => (l || []).filter(x => x !== m);
+    a.recuperadasAnteriores = quitar(a.recuperadasAnteriores); a.noRecuperadasAnteriores = quitar(a.noRecuperadasAnteriores);
+    if (v === 'Recuperada') a.recuperadasAnteriores.push(m); else if (v === 'No recuperada') a.noRecuperadasAnteriores.push(m);
+  }
+  markDirty();
+};
 window._sesRevisado = function(i, v) {
   const a = _sesAlumnos()[i]; if (!a) return;
   const s = _sesDeAlumno(a, _sesCtx.k);
