@@ -176,86 +176,160 @@ function actaEvaluacionHTML(nivel, grupo, k) {
   if (k !== '1' && total) {
     const prev = k === '2' ? 'eval1' : 'eval2', etqPrev = k === '2' ? 'I Evaluación' : 'II Evaluación';
     const mPrev = alumnos.reduce((s, a) => s + (+a[prev] || 0), 0) / total, mAct = alumnos.reduce((s, a) => s + susp(a), 0) / total, dlt = mAct - mPrev;
-    evolucion = sec('Evolución respecto a la evaluación anterior') + `<div class="stats-grid tres">
+    evolucion = `<section class="bloque">${sec('Evolución respecto a la evaluación anterior')}<div class="stats-grid tres">
       <div class="stat-box"><div class="sv">${mPrev.toFixed(2).replace('.', ',')}</div><div class="sl">Media de suspensas · ${etqPrev}</div></div>
       <div class="stat-box"><div class="sv">${mAct.toFixed(2).replace('.', ',')}</div><div class="sl">Media de suspensas · ${_AE_NOMBRE[k]}</div></div>
-      <div class="stat-box ${dlt < 0 ? 'green' : dlt > 0 ? 'red' : 'yellow'}"><div class="sv">${dlt > 0 ? '+' : ''}${dlt.toFixed(2).replace('.', ',')}</div><div class="sl">${dlt < 0 ? 'Mejora' : dlt > 0 ? 'Empeora' : 'Sin cambios'}</div></div></div>`;
+      <div class="stat-box ${dlt < 0 ? 'green' : dlt > 0 ? 'red' : 'yellow'}"><div class="sv">${dlt > 0 ? '+' : ''}${dlt.toFixed(2).replace('.', ',')}</div><div class="sl">${dlt < 0 ? 'Mejora' : dlt > 0 ? 'Empeora' : 'Sin cambios'}</div></div></div></section>`;
   }
   const analisis = _AE_ANALISIS.filter(([clave]) => clave !== 'cohesion' || k === '1' || String(acta.analisis.cohesion || '').trim());
 
   const titulo = `Acta de ${final ? 'la Evaluación Final' : 'la ' + _AE_NOMBRE[k]} — ${nivel} ${grupo}`;
+  const archivo = `Acta_${_AE_CORTO[k]}_Evaluacion_${nivel}_${grupo}`.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '') + '.docx';
+  // Cada apartado va en su bloque: no se parte entre páginas (si cabe) y su título nunca se queda solo al pie.
+  // Solo puede seguir en la página siguiente un apartado largo (una tabla de más de 14 filas, que no cabría entera);
+  // los cortos van siempre enteros.
+  const bloque = (t, contenido) => `<section class="bloque${(contenido.match(/<tr/g) || []).length > 14 ? ' largo' : ''}">${sec(t)}${contenido}</section>`;
+  const tabla = (cab, filas) => `<table><thead><tr>${cab}</tr></thead><tbody>${filas}</tbody></table>`;
+  const listaAl = (l, celdas) => l.map(a => `<tr><td><strong>${esc(a.nombre)}</strong></td>${celdas(a)}</tr>`).join('');
+
+  const cuerpo = [
+    bloque('Profesorado asistente a la sesión', d.profesores.length
+      ? tabla('<th class="c" style="width:4%">#</th><th style="width:30%">Profesor/a</th><th style="width:36%">Materia que imparte</th><th>Asistencia</th>', filasProf) + `<div class="nota">${nAsisten} de ${d.profesores.length} asisten.</div>`
+      : ninguno('No hay equipo docente registrado (👨‍🏫 Equipo docente).'), 'largo'),
+    bloque('Relación de alumnado y resultados', tabla(`<th class="c" style="width:3.5%">Nº</th><th style="width:19%">Alumno/a</th><th class="c" style="width:6%">Mat. no sup.</th><th>Materias no superadas</th>${final ? '<th style="width:15%">Pend. cursos ant.</th>' : ''}<th style="width:11%">${esc(c.propEtq)}</th><th style="width:22%">Acuerdos</th>`,
+      filasAl || '<tr><td colspan="7" class="vacio">Sin alumnado</td></tr>'), 'largo'),
+    `<div class="dos-col">${bloque(final ? 'Resumen de decisiones' : 'Resumen de propuestas', tabla(`<th>${final ? 'Decisión' : 'Propuesta'}</th><th class="c" style="width:22%">Alumnos</th><th class="c" style="width:18%">%</th>`,
+        ['Promoción', 'Titulación', 'Repetición', 'Abandono', 'Sin decidir'].filter(t => tipos[t]).map(t => `<tr><td class="${colorProp(t === 'Sin decidir' ? '' : t)}"><strong>${t}</strong></td><td class="c">${tipos[t]}</td><td class="c">${pct(tipos[t])}</td></tr>`).join('') || '<tr><td colspan="3" class="vacio">—</td></tr>'))}
+      ${bloque('Análisis de resultados académicos del grupo', tabla('<th>Información relevante</th><th class="c" style="width:18%">Alumnos</th><th class="c" style="width:14%">%</th>',
+        `<tr><td>Alumnado con todo aprobado</td><td class="c"><strong>${cero}</strong></td><td class="c">${pct(cero)}</td></tr>
+         <tr><td>Alumnado con 1 o 2 materias no superadas</td><td class="c"><strong>${unaDos}</strong></td><td class="c">${pct(unaDos)}</td></tr>
+         <tr><td>Alumnado con 3 a 5 materias no superadas</td><td class="c"><strong>${tresCinco}</strong></td><td class="c">${pct(tresCinco)}</td></tr>
+         <tr><td>Alumnado con más de 5 materias no superadas</td><td class="c"><strong>${masCinco}</strong></td><td class="c">${pct(masCinco)}</td></tr>`))}</div>`,
+    bloque('Materias con más alumnado suspenso', `<div class="sub">Materias con más del 50 % de suspensos: ${mitad.length ? mitad.map(([m, v]) => `<span class="chip">${esc(m)} (${v} · ${pct(v)})</span>`).join(' ') : '<span class="vacio">ninguna</span>'}</div>
+      ${ranking.length ? tabla('<th>Materia</th><th class="c" style="width:10%">Suspensos</th><th class="c" style="width:8%">%</th><th style="width:35%">&nbsp;</th>',
+        ranking.map(([m, v]) => `<tr><td>${esc(m)}</td><td class="c"><strong class="mal">${v}</strong></td><td class="c">${pct(v)}</td><td><div class="barra"><div style="width:${Math.round(v / ranking[0][1] * 100)}%"></div></div></td></tr>`).join(''))
+        : ninguno('✓ No hay materias con alumnado suspenso en esta evaluación.')}`),
+    evolucion,
+    bloque('Relación de alumnado con dificultades (casos particulares)', casos ? tabla('<th style="width:22%">Problemática</th><th style="width:20%">Alumno/a</th><th style="width:20%">Áreas / materias</th><th>Medidas a tomar</th>', casos) : ninguno('No se ha señalado ningún caso particular.'), 'largo'),
+    bloque('Alumnado repetidor', reps.length ? tabla('<th style="width:28%">Alumno/a</th><th>Valoración de la repetición</th>', listaAl(reps, a => `<td>${esc(ses(a).valoracionRepeticion || '')}</td>`)) : ninguno('No hay alumnado repetidor.')),
+    !bach && k !== '1' ? bloque((final ? 'Propuesta' : 'Primera propuesta') + ' de alumnado para programas de atención a la diversidad grupal — Nivel III',
+      tabla(_AE_PROGRAMAS.slice(0, 3).map(p => `<th style="width:33.3%">${esc(p)}</th>`).join(''), `<tr>${_AE_PROGRAMAS.slice(0, 3).map(p => `<td>${prog(p).map(a => `<div><strong>${esc(a.nombre)}</strong>${ses(a).programaMotivo ? ` · <span class="gris">${esc(ses(a).programaMotivo)}</span>` : ''}</div>`).join('') || '<span class="vacio">—</span>'}</td>`).join('')}</tr>`)
+      + `<div class="sub">Propuesta de alumnado para FPB</div>` + (prog('FPB').length ? tabla('<th style="width:28%">Alumno/a</th><th>Motivo</th><th style="width:30%">Familia profesional (FPB)</th>', listaAl(prog('FPB'), a => `<td>${esc(ses(a).programaMotivo || '')}</td><td>${esc(ses(a).fpbFamilia || '')}</td>`)) : ninguno('Ninguna'))) : '',
+    final && !bach ? bloque('Permanencia un año más: deben elaborar Plan de Repetición', repiten.length ? tabla('<th style="width:24%">Alumno/a</th><th style="width:38%">Materias no superadas</th><th>Motivos de la no promoción</th>', listaAl(repiten, a => `<td>${chips(pend(a))}</td><td>${esc(ses(a).motivoNoPromocion || '')}</td>`)) : ninguno('Nadie')) : '',
+    final && !bach ? bloque('Alumnado que promociona con materias pendientes: deben elaborar Plan de Refuerzo', refuerzo.length ? tabla('<th style="width:28%">Alumno/a</th><th>Materias no superadas</th>', listaAl(refuerzo, a => `<td>${chips(pend(a))}</td>`)) : ninguno('Nadie')) : '',
+    final && bach ? bloque('Alumnado con materias para la evaluación extraordinaria', (extr.length ? tabla('<th style="width:28%">Alumno/a</th><th class="c" style="width:8%">Nº mat.</th><th>Materias</th>', listaAl(extr, a => `<td class="c">${susp(a)}</td><td>${chips(pend(a))}</td>`)) : ninguno('Nadie'))
+      + (repiten.length ? `<div class="sub">No promocionan / no titulan</div>` + tabla('<th style="width:28%">Alumno/a</th><th>Motivos</th>', listaAl(repiten, a => `<td>${esc(ses(a).motivoNoPromocion || '')}</td>`)) : '')) : '',
+    final ? bloque('Propuesta de agrupación para el próximo curso', agrupa.length ? tabla('<th style="width:24%">Alumno/a</th><th style="width:38%">Materias no superadas</th><th>Observaciones</th>', listaAl(agrupa, a => `<td>${chips(pend(a))}</td><td>${esc(ses(a).agrupacion)}</td>`)) : ninguno('Sin observaciones')) : '',
+    bloque('Materias pendientes de cursos anteriores — decisión adoptada', conPendAnt.length ? tabla('<th style="width:22%">Alumno/a</th><th style="width:26%">Materia pendiente</th><th style="width:17%">Estado</th><th class="c" style="width:7%">Nota</th><th>Motivo / observaciones</th>',
+      conPendAnt.map(a => (a.pendientesAnteriores || []).map((m, j) => { const v = _aePendAnt(a, k, m); return `<tr>${j === 0 ? `<td rowspan="${a.pendientesAnteriores.length}"><strong>${esc(a.nombre)}</strong></td>` : ''}<td>${esc(m)}</td><td class="${v.estado === 'Recuperada' ? 'ok' : v.estado === 'No recuperada' ? 'mal' : 'aviso'}">${esc(v.estado)}</td><td class="c">${esc(v.nota)}</td><td>${esc(v.motivo)}</td></tr>`; }).join('')).join(''))
+      : ninguno('✓ Ningún alumno/a tiene materias pendientes de cursos anteriores.'), 'largo'),
+    bloque('Alumnado NESE y de Compensatoria', neseAl.length ? tabla('<th style="width:24%">Alumno/a</th><th class="c" style="width:10%">Recurso</th><th style="width:14%">Cód. Comp.</th><th>Medidas adoptadas / observaciones</th>',
+        listaAl(neseAl, a => `<td class="c">${esc(_getNeseCodes(a.recursoNese).join(' / ')) || '—'}</td><td>${esc(Array.isArray(a.codComp) ? a.codComp.join(', ') : (a.codComp || '')) || '—'}</td><td>${esc(ses(a).medidasNese || '')}</td>`))
+      + (leyenda.length || usaAL || usaPT ? `<div class="nota"><strong>Leyenda:</strong> ${[usaAL ? '<strong>AL</strong> = Audición y Lenguaje' : '', usaPT ? '<strong>PT</strong> = Pedagogía Terapéutica' : '', ...leyenda.map(x => `<strong>${esc(x.code)}</strong> = ${esc(x.label)}`)].filter(Boolean).join(' · ')}</div>` : '')
+      : ninguno('Sin alumnado con medidas de atención específica.'), 'largo'),
+    bloque('Faltas de asistencia y convivencia', `<div class="stats-grid cinco">
+        <div class="stat-box blue"><div class="sv">${tot.fj}</div><div class="sl">Faltas justificadas</div></div>
+        <div class="stat-box red"><div class="sv">${tot.fi}</div><div class="sl">Faltas sin justificar</div></div>
+        <div class="stat-box yellow"><div class="sv">${tot.ac}</div><div class="sl">Amonestaciones (AC)</div></div>
+        <div class="stat-box red"><div class="sv">${tot.pa}</div><div class="sl">Partes</div></div>
+        <div class="stat-box red"><div class="sv">${tot.ex}</div><div class="sl">Expedientes</div></div></div>`
+      + (conIncid.length ? tabla('<th style="width:30%">Alumno/a</th><th class="c">F. justificadas</th><th class="c">F. sin justificar</th><th class="c">AC</th><th class="c">Partes</th><th class="c">Expedientes</th>',
+          listaAl(conIncid, a => Object.values(conv).map(b => `<td class="c">${cv(a, b) ? `<strong>${cv(a, b)}</strong>` : '0'}</td>`).join('')))
+        : ninguno('✓ No hay faltas ni incidencias registradas en esta evaluación.')), 'largo'),
+    bloque('Análisis general del grupo', tabla('<th style="width:28%">Aspecto</th><th>Valoración</th>', analisis.map(([clave, etq]) => `<tr><td><strong>${esc(etq)}</strong></td><td>${esc(acta.analisis[clave] || '')}</td></tr>`).join(''))
+      + `<div class="sub">Valoración general del grupo</div>${parrafo(acta.valoracion)}`),
+    bloque('Propuestas de mejora y acuerdos adoptados por el equipo docente', parrafo(acta.acuerdosGrupo)),
+    bloque('Firmas', `<div class="firmas-grid">
+      <div class="firma-block"><div class="firma-line"></div><div class="firma-label">Tutor/a del grupo</div><div class="firma-name">${esc(tutor)}</div></div>
+      <div class="firma-block"><div class="firma-line"></div><div class="firma-label">Jefe/a de Estudios</div><div class="firma-name">${esc(acta.jefeEstudios || '')}</div></div>
+      <div class="firma-block"><div class="firma-line"></div><div class="firma-label">Director/a del centro</div><div class="firma-name">${esc(acta.director || '')}</div></div></div>
+      <div class="pie">Generado el ${esc(new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }))} · Gestor de Tutoría${ies ? ' · ' + esc(ies) : ''}</div>`),
+  ].filter(Boolean).join('\n');
+
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${esc(titulo)}</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; color: #111; background:#fff; }
-  .page { padding: 14mm 16mm; max-width: 210mm; margin: 0 auto; }
-  .acta-header { border: 2px solid #1a3a6b; border-radius: 4px; margin-bottom: 14px; overflow: hidden; }
-  .acta-header-top { background: #1a3a6b; color: #fff; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  .acta-header-title { font-size: 13pt; font-weight: bold; letter-spacing: .3px; }
-  .acta-header-badge { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4); border-radius: 4px; padding: 3px 10px; font-size: 10pt; font-weight: bold; white-space: nowrap; }
-  .acta-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; }
-  .acta-meta-cell { padding: 7px 14px; border-right: 1px solid #c5d8ef; border-top: 1px solid #c5d8ef; font-size: 9.5pt; }
-  .acta-meta-cell:nth-child(3n) { border-right: none; }
-  .acta-meta-label { color: #5a6a8a; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 2px; }
-  .acta-meta-value { font-weight: bold; color: #1a2a4a; }
-  .section-title { font-size: 9pt; font-weight: bold; text-transform: uppercase; letter-spacing: .6px; color: #1a3a6b; border-bottom: 2px solid #1a3a6b; padding-bottom: 4px; margin: 18px 0 8px; }
-  .section-title span { background: #1a3a6b; color: #fff; padding: 1px 8px; border-radius: 3px; margin-right: 8px; }
-  .sub { font-size: 9pt; font-weight: bold; color: #1a3a6b; margin: 10px 0 5px; }
-  table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
-  th { background: #dce8f5; font-weight: bold; padding: 5px 8px; border: 1px solid #9ab5d4; text-align: left; color: #1a3a6b; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .3px; }
-  td { padding: 5px 8px; border: 1px solid #c0d0e0; vertical-align: top; }
-  tr:nth-child(even) td { background: #f8faff; }
-  th.c, td.c { text-align: center; }
-  td.grupo-etq { background: #dce8f5 !important; font-weight: bold; color: #1a3a6b; width: 24%; }
-  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+  /* A4 apaisado con 3 cm de margen: queda una caja de 23,7 × 15 cm. */
+  @page { size: A4 landscape; margin: 3cm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; line-height: 1.35; color: #111; background: #e8ebf0; }
+  .page { width: 237mm; margin: 14px auto 30px; padding: 12mm 14mm; background: #fff; box-shadow: 0 2px 14px rgba(0,0,0,.18); box-sizing: content-box; }
+  .acta-header { border: 1.5px solid #1a3a6b; border-radius: 3px; overflow: hidden; }
+  .acta-header-top { background: #1a3a6b; color: #fff; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .acta-header-org { font-size: 7pt; opacity: .85; letter-spacing: .8px; text-transform: uppercase; }
+  .acta-header-title { font-size: 11.5pt; font-weight: bold; letter-spacing: .3px; }
+  .acta-header-badge { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.45); border-radius: 3px; padding: 2px 9px; font-size: 8pt; font-weight: bold; white-space: nowrap; }
+  .acta-meta { display: grid; grid-template-columns: 1.2fr 1fr 1.3fr .8fr .7fr 1fr; }
+  .acta-meta-cell { padding: 4px 9px; border-right: 1px solid #c5d8ef; }
+  .acta-meta-cell:last-child { border-right: none; }
+  .acta-meta-label { color: #5a6a8a; font-size: 6.5pt; text-transform: uppercase; letter-spacing: .4px; }
+  .acta-meta-value { font-weight: bold; color: #1a2a4a; font-size: 8.5pt; }
+  .stats-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; margin: 8px 0 2px; }
   .stats-grid.tres { grid-template-columns: repeat(3, 1fr); }
-  .stat-box { border: 1px solid #c5d8ef; border-radius: 5px; padding: 8px 10px; text-align: center; background: #f8faff; }
-  .stat-box .sv { font-size: 18pt; font-weight: bold; line-height: 1.1; }
-  .stat-box .sl { font-size: 8pt; color: #5a6a8a; margin-top: 2px; }
+  .stats-grid.cinco { grid-template-columns: repeat(5, 1fr); margin: 0 0 6px; }
+  .stat-box { border: 1px solid #c5d8ef; border-radius: 4px; padding: 4px 6px; text-align: center; background: #f8faff; break-inside: avoid; }
+  .stat-box .sv { font-size: 13pt; font-weight: bold; line-height: 1.1; }
+  .stat-box .sl { font-size: 6.5pt; color: #5a6a8a; line-height: 1.2; }
   .stat-box.green { border-color: #86efac; background: #f0fdf4; } .stat-box.green .sv { color: #166534; }
   .stat-box.red { border-color: #fca5a5; background: #fef2f2; } .stat-box.red .sv { color: #991b1b; }
   .stat-box.yellow { border-color: #fde68a; background: #fefce8; } .stat-box.yellow .sv { color: #92400e; }
   .stat-box.blue { border-color: #93c5fd; } .stat-box.blue .sv { color: #1e40af; }
-  .chip { display: inline-block; background: #fee2e2; border: 1px solid #fecaca; border-radius: 3px; padding: 0 4px; font-size: 8pt; margin: 1px; }
-  .chip.roja { background: #fde68a55; border-color: #fde68a; }
-  .tag { display: inline-block; border: 1px solid #c5d8ef; border-radius: 3px; padding: 0 4px; font-size: 7.5pt; color: #1a3a6b; background: #eef4ff; font-weight: normal; }
+  .bloque { margin-top: 11px; break-inside: avoid; page-break-inside: avoid; }
+  .bloque.largo { break-inside: auto; page-break-inside: auto; }
+  .dos-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; break-inside: avoid; page-break-inside: avoid; }
+  .section-title { font-size: 8pt; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; color: #1a3a6b; border-bottom: 1.5px solid #1a3a6b; padding-bottom: 2px; margin-bottom: 5px; break-after: avoid; page-break-after: avoid; }
+  .section-title span { background: #1a3a6b; color: #fff; padding: 0 6px; border-radius: 2px; margin-right: 6px; }
+  .sub { font-size: 7.5pt; font-weight: bold; color: #1a3a6b; margin: 6px 0 4px; break-after: avoid; page-break-after: avoid; }
+  table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  th { background: #dce8f5; font-weight: bold; padding: 3px 5px; border: 1px solid #9ab5d4; text-align: left; color: #1a3a6b; font-size: 6.8pt; text-transform: uppercase; letter-spacing: .2px; vertical-align: bottom; }
+  td { padding: 3px 5px; border: 1px solid #c0d0e0; vertical-align: top; }
+  tbody tr:nth-child(even) td { background: #f8faff; }
+  th.c, td.c { text-align: center; }
+  td.grupo-etq { background: #dce8f5 !important; font-weight: bold; color: #1a3a6b; }
+  .chip { display: inline-block; background: #fee2e2; border: 1px solid #fecaca; border-radius: 2px; padding: 0 3px; font-size: 7pt; margin: 1px 0; line-height: 1.3; }
+  .chip.roja { background: #fef3c7; border-color: #fde68a; }
+  .tag { display: inline-block; border: 1px solid #c5d8ef; border-radius: 2px; padding: 0 3px; font-size: 6.5pt; color: #1a3a6b; background: #eef4ff; font-weight: normal; }
   .tag.nese { color: #92400e; border-color: #fde68a; background: #fefce8; }
   .ok { color: #166534; } .mal { color: #991b1b; } .aviso { color: #b45309; } .gris { color: #6b7280; }
-  .pequeno { font-size: 8.5pt; white-space: pre-wrap; }
-  .texto { border: 1.5px solid #c5d8ef; border-radius: 5px; padding: 8px 12px; background: #fafcff; white-space: pre-wrap; line-height: 1.6; }
-  .vacio { color: #9aa3bb; font-style: italic; font-size: 9pt; }
-  .barra { background: #f1f5f9; border-radius: 4px; height: 10px; overflow: hidden; } .barra div { height: 10px; background: #ef4444; }
-  .leyenda { font-size: 8pt; color: #3a4560; margin-top: 6px; line-height: 1.7; background: #f8faff; border: 1px solid #e2e8f5; border-radius: 5px; padding: 8px 10px; }
-  .firmas-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 30px; }
+  .pequeno { white-space: pre-wrap; }
+  .texto { border: 1px solid #c5d8ef; border-radius: 3px; padding: 5px 9px; background: #fafcff; white-space: pre-wrap; }
+  .vacio { color: #9aa3bb; font-style: italic; }
+  .nota { color: #5a6a8a; font-size: 7.5pt; margin-top: 3px; }
+  .barra { background: #f1f5f9; border-radius: 3px; height: 8px; overflow: hidden; } .barra div { height: 8px; background: #ef4444; }
+  .firmas-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; margin-top: 8px; }
   .firma-block { text-align: center; }
-  .firma-line { border-bottom: 1.5px solid #555; height: 46px; margin-bottom: 4px; }
-  .firma-label { font-size: 8.5pt; color: #5a6a8a; text-transform: uppercase; letter-spacing: .4px; }
-  .firma-name { font-size: 9pt; font-weight: bold; color: #1a2a4a; margin-top: 2px; min-height: 14px; }
-  .pie { text-align: right; margin-top: 12px; font-size: 8.5pt; color: #888; }
-  .acta-toolbar { position: sticky; top: 0; z-index: 50; background: #1a1d27; padding: 9px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-  .acta-toolbar span { font-size: 12.5px; color: #c8cde0; }
+  .firma-line { border-bottom: 1px solid #555; height: 46px; margin-bottom: 3px; }
+  .firma-label { font-size: 7pt; color: #5a6a8a; text-transform: uppercase; letter-spacing: .4px; }
+  .firma-name { font-size: 8pt; font-weight: bold; color: #1a2a4a; min-height: 11px; }
+  .pie { text-align: right; margin-top: 10px; font-size: 7pt; color: #888; }
+  .acta-toolbar { position: sticky; top: 0; z-index: 50; background: #1a1d27; padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .acta-toolbar span { font-size: 12px; color: #c8cde0; }
   .toolbar-btn { padding: 7px 14px; border-radius: 7px; border: none; cursor: pointer; font-family: Arial; font-size: 12px; font-weight: 600; background: #8a63d2; color: #fff; }
-  @media print { @page { margin: 12mm 14mm; size: A4; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } tr { page-break-inside: avoid; } .salto { page-break-before: always; } }
+  @media print {
+    body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { width: auto; margin: 0; padding: 0; box-shadow: none; }
+    .no-print { display: none !important; }
+  }
 </style></head><body>
-<div class="acta-toolbar no-print"><span>📋 Se rellena en «🎓 Sesión de evaluación»: para cambiar algo, vuelve allí y genera el acta de nuevo.</span>
+<div class="acta-toolbar no-print"><span>📋 Se rellena en «🎓 Sesión de evaluación»: para cambiar algo, vuelve allí y genera el acta de nuevo. Se imprime en A4 apaisado.</span>
   <button class="toolbar-btn" onclick="_aeWord()">📄 Exportar a Word</button></div>
 <div class="page">
   <div class="acta-header">
     <div class="acta-header-top">
-      <div><div style="font-size:9pt;opacity:.8;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">Generalitat Valenciana · Conselleria d'Educació</div>
+      <div><div class="acta-header-org">Generalitat Valenciana · Conselleria d'Educació</div>
         <div class="acta-header-title">ACTA DE ${final ? 'LA EVALUACIÓN FINAL' : 'LA ' + _AE_NOMBRE[k].toUpperCase()}</div></div>
       <div class="acta-header-badge">${bach ? 'Bachillerato' : 'ESO'} · Evaluación ${_AE_CORTO[k]}</div>
     </div>
     <div class="acta-meta">
       <div class="acta-meta-cell"><div class="acta-meta-label">Centro educativo</div><div class="acta-meta-value">${esc(ies) || '&nbsp;'}</div></div>
-      <div class="acta-meta-cell"><div class="acta-meta-label">Nivel y grupo</div><div class="acta-meta-value">${esc(nivel)} — Grupo ${esc(grupo)}</div></div>
+      <div class="acta-meta-cell"><div class="acta-meta-label">Nivel y grupo</div><div class="acta-meta-value">${esc(nivel)} — ${esc(grupo)}</div></div>
       <div class="acta-meta-cell"><div class="acta-meta-label">Tutor/a</div><div class="acta-meta-value">${esc(tutor) || '&nbsp;'}</div></div>
       <div class="acta-meta-cell"><div class="acta-meta-label">Fecha de la sesión</div><div class="acta-meta-value">${esc(fecha) || '&nbsp;'}</div></div>
-      <div class="acta-meta-cell"><div class="acta-meta-label">Horario</div><div class="acta-meta-value">${acta.horaInicio ? esc(acta.horaInicio) + (acta.horaFin ? ' – ' + esc(acta.horaFin) : '') : '&nbsp;'}</div></div>
-      <div class="acta-meta-cell"><div class="acta-meta-label">Curso escolar</div><div class="acta-meta-value">${_tCursoActual(' – ')} · ${total} alumnos</div></div>
+      <div class="acta-meta-cell"><div class="acta-meta-label">Horario</div><div class="acta-meta-value">${acta.horaInicio ? esc(acta.horaInicio) + (acta.horaFin ? '–' + esc(acta.horaFin) : '') : '&nbsp;'}</div></div>
+      <div class="acta-meta-cell"><div class="acta-meta-label">Curso escolar</div><div class="acta-meta-value">${_tCursoActual('–')} · ${total} alumnos</div></div>
     </div>
   </div>
-
   <div class="stats-grid">
     <div class="stat-box blue"><div class="sv">${total}</div><div class="sl">Total alumnado</div></div>
     <div class="stat-box green"><div class="sv">${cero}</div><div class="sl">Todo superado</div></div>
@@ -266,121 +340,174 @@ function actaEvaluacionHTML(nivel, grupo, k) {
     <div class="stat-box red"><div class="sv">${tipos['Repetición'] || 0}</div><div class="sl">${final ? 'Repiten' : 'Propuesta de repetición'}</div></div>
     <div class="stat-box green"><div class="sv">${(tipos['Promoción'] || 0) + (tipos['Titulación'] || 0)}</div><div class="sl">${final ? 'Promocionan / titulan' : 'Propuesta de promoción / titulación'}</div></div>
   </div>
-
-  ${sec('Profesorado asistente a la sesión')}
-  ${d.profesores.length ? `<table><thead><tr><th class="c" style="width:5%">#</th><th style="width:34%">Profesor/a</th><th>Materia que imparte</th><th style="width:28%">Asistencia</th></tr></thead><tbody>${filasProf}</tbody></table>
-  <div class="vacio" style="margin-top:4px;font-style:normal">${nAsisten} de ${d.profesores.length} asisten.</div>` : ninguno('No hay equipo docente registrado (👨‍🏫 Equipo docente).')}
-
-  ${sec('Relación de alumnado y resultados')}
-  <table><thead><tr><th class="c" style="width:4%">Nº</th><th style="width:22%">Alumno/a</th><th class="c" style="width:7%">Mat. no sup.</th><th>Materias no superadas</th>${final ? '<th style="width:15%">Pend. cursos ant.</th>' : ''}<th style="width:13%">${esc(c.propEtq)}</th><th style="width:20%">Acuerdos</th></tr></thead>
-    <tbody>${filasAl || '<tr><td colspan="7" class="vacio">Sin alumnado</td></tr>'}</tbody></table>
-
-  ${sec(final ? 'Resumen de decisiones' : 'Resumen de propuestas')}
-  <table style="max-width:460px"><thead><tr><th>${final ? 'Decisión' : 'Propuesta'}</th><th class="c">Alumnos</th><th class="c">%</th></tr></thead><tbody>
-    ${['Promoción', 'Titulación', 'Repetición', 'Abandono', 'Sin decidir'].filter(t => tipos[t]).map(t => `<tr><td class="${colorProp(t === 'Sin decidir' ? '' : t)}"><strong>${t}</strong></td><td class="c">${tipos[t]}</td><td class="c">${pct(tipos[t])}</td></tr>`).join('') || '<tr><td colspan="3" class="vacio">—</td></tr>'}
-  </tbody></table>
-
-  ${sec('Análisis de resultados académicos del grupo')}
-  <table style="max-width:560px"><thead><tr><th>Información relevante</th><th class="c">Alumnos</th><th class="c">%</th></tr></thead><tbody>
-    <tr><td>Alumnado con todo aprobado</td><td class="c"><strong>${cero}</strong></td><td class="c">${pct(cero)}</td></tr>
-    <tr><td>Alumnado con 1 o 2 materias no superadas</td><td class="c"><strong>${unaDos}</strong></td><td class="c">${pct(unaDos)}</td></tr>
-    <tr><td>Alumnado con 3 a 5 materias no superadas</td><td class="c"><strong>${tresCinco}</strong></td><td class="c">${pct(tresCinco)}</td></tr>
-    <tr><td>Alumnado con más de 5 materias no superadas</td><td class="c"><strong>${masCinco}</strong></td><td class="c">${pct(masCinco)}</td></tr>
-  </tbody></table>
-  <div class="sub">Materias con más del 50 % de suspensos</div>
-  ${mitad.length ? `<div>${mitad.map(([m, v]) => `<span class="chip">${esc(m)} (${v} · ${pct(v)})</span>`).join(' ')}</div>` : ninguno('Ninguna')}
-  <div class="sub">Materias con más alumnado suspenso</div>
-  ${ranking.length ? `<table style="max-width:560px"><thead><tr><th>Materia</th><th class="c" style="width:80px">Suspensos</th><th style="width:170px">&nbsp;</th></tr></thead><tbody>
-    ${ranking.map(([m, v]) => `<tr><td>${esc(m)}</td><td class="c"><strong class="mal">${v}</strong></td><td><div class="barra"><div style="width:${Math.round(v / ranking[0][1] * 100)}%"></div></div></td></tr>`).join('')}</tbody></table>` : ninguno('✓ No hay materias con alumnado suspenso en esta evaluación.')}
-
-  ${evolucion}
-
-  ${sec('Relación de alumnado con dificultades (casos particulares)', 'salto')}
-  ${casos ? `<table><thead><tr><th>Problemática</th><th style="width:24%">Alumno/a</th><th style="width:20%">Áreas / materias</th><th>Medidas a tomar</th></tr></thead><tbody>${casos}</tbody></table>` : ninguno('No se ha señalado ningún caso particular.')}
-
-  ${sec('Alumnado repetidor')}
-  ${reps.length ? `<table><thead><tr><th style="width:34%">Alumno/a</th><th>Valoración de la repetición</th></tr></thead><tbody>${reps.map(a => `<tr><td><strong>${esc(a.nombre)}</strong></td><td class="pequeno">${esc(ses(a).valoracionRepeticion || '')}</td></tr>`).join('')}</tbody></table>` : ninguno('No hay alumnado repetidor.')}
-
-  ${!bach && k !== '1' ? `${sec((final ? 'Propuesta' : 'Primera propuesta') + ' de alumnado para programas de atención a la diversidad grupal — Nivel III')}
-  <table><thead><tr>${_AE_PROGRAMAS.slice(0, 3).map(p => `<th style="width:33%">${esc(p)}</th>`).join('')}</tr></thead><tbody><tr>
-    ${_AE_PROGRAMAS.slice(0, 3).map(p => `<td>${prog(p).map(a => `<div><strong>${esc(a.nombre)}</strong>${ses(a).programaMotivo ? `<br><span class="pequeno gris">${esc(ses(a).programaMotivo)}</span>` : ''}</div>`).join('') || '<span class="vacio">—</span>'}</td>`).join('')}</tr></tbody></table>
-  <div class="sub">Propuesta de alumnado para FPB</div>
-  ${prog('FPB').length ? `<table><thead><tr><th style="width:34%">Alumno/a</th><th>Motivo</th><th style="width:28%">Familia profesional (FPB)</th></tr></thead><tbody>${prog('FPB').map(a => `<tr><td><strong>${esc(a.nombre)}</strong></td><td class="pequeno">${esc(ses(a).programaMotivo || '')}</td><td>${esc(ses(a).fpbFamilia || '')}</td></tr>`).join('')}</tbody></table>` : ninguno('Ninguna')}` : ''}
-
-  ${final && !bach ? `${sec('Permanencia un año más: deben elaborar Plan de Repetición')}
-  ${repiten.length ? `<table><thead><tr><th style="width:30%">Alumno/a</th><th style="width:35%">Materias no superadas</th><th>Motivos de la no promoción</th></tr></thead><tbody>${repiten.map(a => `<tr><td><strong>${esc(a.nombre)}</strong></td><td>${chips(pend(a))}</td><td class="pequeno">${esc(ses(a).motivoNoPromocion || '')}</td></tr>`).join('')}</tbody></table>` : ninguno('Nadie')}
-  ${sec('Alumnado que promociona con materias pendientes: deben elaborar Plan de Refuerzo')}
-  ${refuerzo.length ? `<table><thead><tr><th style="width:34%">Alumno/a</th><th>Materias no superadas</th></tr></thead><tbody>${refuerzo.map(a => `<tr><td><strong>${esc(a.nombre)}</strong></td><td>${chips(pend(a))}</td></tr>`).join('')}</tbody></table>` : ninguno('Nadie')}` : ''}
-  ${final && bach ? `${sec('Alumnado con materias para la evaluación extraordinaria')}
-  ${extr.length ? `<table><thead><tr><th style="width:34%">Alumno/a</th><th class="c" style="width:10%">Nº mat.</th><th>Materias</th></tr></thead><tbody>${extr.map(a => `<tr><td><strong>${esc(a.nombre)}</strong></td><td class="c">${susp(a)}</td><td>${chips(pend(a))}</td></tr>`).join('')}</tbody></table>` : ninguno('Nadie')}
-  ${repiten.length ? `<div class="sub">No promocionan / no titulan</div><table><thead><tr><th style="width:34%">Alumno/a</th><th>Motivos</th></tr></thead><tbody>${repiten.map(a => `<tr><td><strong>${esc(a.nombre)}</strong></td><td class="pequeno">${esc(ses(a).motivoNoPromocion || '')}</td></tr>`).join('')}</tbody></table>` : ''}` : ''}
-  ${final ? `${sec('Propuesta de agrupación para el próximo curso')}
-  ${agrupa.length ? `<table><thead><tr><th style="width:30%">Alumno/a</th><th style="width:35%">Materias no superadas</th><th>Observaciones</th></tr></thead><tbody>${agrupa.map(a => `<tr><td><strong>${esc(a.nombre)}</strong></td><td>${chips(pend(a))}</td><td class="pequeno">${esc(ses(a).agrupacion)}</td></tr>`).join('')}</tbody></table>` : ninguno('Sin observaciones')}` : ''}
-
-  ${sec('Materias pendientes de cursos anteriores — decisión adoptada', 'salto')}
-  ${conPendAnt.length ? `<table><thead><tr><th style="width:24%">Alumno/a</th><th style="width:22%">Materia pendiente</th><th style="width:19%">Estado</th><th class="c" style="width:8%">Nota</th><th>Motivo / observaciones</th></tr></thead><tbody>
-    ${conPendAnt.map(a => (a.pendientesAnteriores || []).map((m, j) => { const v = _aePendAnt(a, k, m); return `<tr>${j === 0 ? `<td rowspan="${a.pendientesAnteriores.length}"><strong>${esc(a.nombre)}</strong></td>` : ''}<td>${esc(m)}</td><td class="${v.estado === 'Recuperada' ? 'ok' : v.estado === 'No recuperada' ? 'mal' : 'aviso'}">${esc(v.estado)}</td><td class="c">${esc(v.nota)}</td><td class="pequeno">${esc(v.motivo)}</td></tr>`; }).join('')).join('')}</tbody></table>`
-    : ninguno('✓ Ningún alumno/a tiene materias pendientes de cursos anteriores.')}
-
-  ${sec('Alumnado NESE y de Compensatoria')}
-  ${neseAl.length ? `<table><thead><tr><th style="width:28%">Alumno/a</th><th class="c" style="width:12%">Recurso</th><th style="width:16%">Cód. Comp.</th><th>Medidas adoptadas / observaciones</th></tr></thead><tbody>
-    ${neseAl.map(a => `<tr><td><strong>${esc(a.nombre)}</strong></td><td class="c">${esc(_getNeseCodes(a.recursoNese).join(' / ')) || '—'}</td><td>${esc(Array.isArray(a.codComp) ? a.codComp.join(', ') : (a.codComp || '')) || '—'}</td><td class="pequeno">${esc(ses(a).medidasNese || '')}</td></tr>`).join('')}</tbody></table>
-  ${leyenda.length || usaAL || usaPT ? `<div class="leyenda"><strong>Leyenda</strong>${usaAL ? '<br><strong>AL</strong> = Audición y Lenguaje' : ''}${usaPT ? '<br><strong>PT</strong> = Pedagogía Terapéutica' : ''}${leyenda.map(x => `<br><strong>${esc(x.code)}</strong> = ${esc(x.label)}`).join('')}</div>` : ''}`
-    : ninguno('Sin alumnado con medidas de atención específica.')}
-
-  ${sec('Faltas de asistencia y convivencia')}
-  <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
-    <div class="stat-box blue"><div class="sv">${tot.fj}</div><div class="sl">Faltas justificadas</div></div>
-    <div class="stat-box red"><div class="sv">${tot.fi}</div><div class="sl">Faltas sin justificar</div></div>
-    <div class="stat-box yellow"><div class="sv">${tot.ac}</div><div class="sl">Amonestaciones (AC)</div></div>
-    <div class="stat-box red"><div class="sv">${tot.pa}</div><div class="sl">Partes</div></div>
-    <div class="stat-box red"><div class="sv">${tot.ex}</div><div class="sl">Expedientes</div></div>
-  </div>
-  ${conIncid.length ? `<table><thead><tr><th style="width:30%">Alumno/a</th><th class="c">F. just.</th><th class="c">F. sin just.</th><th class="c">AC</th><th class="c">Partes</th><th class="c">Expedientes</th></tr></thead><tbody>
-    ${conIncid.map(a => `<tr><td><strong>${esc(a.nombre)}</strong></td>${Object.values(conv).map(b => `<td class="c">${cv(a, b) ? `<strong>${cv(a, b)}</strong>` : '0'}</td>`).join('')}</tr>`).join('')}</tbody></table>`
-    : ninguno('✓ No hay faltas ni incidencias registradas en esta evaluación.')}
-
-  ${sec('Análisis general del grupo', 'salto')}
-  <table><thead><tr><th style="width:32%">Aspecto</th><th>Valoración</th></tr></thead><tbody>
-    ${analisis.map(([clave, etq]) => `<tr><td><strong>${esc(etq)}</strong></td><td class="pequeno">${esc(acta.analisis[clave] || '')}</td></tr>`).join('')}</tbody></table>
-  <div class="sub">Valoración general del grupo</div>
-  ${parrafo(acta.valoracion)}
-
-  ${sec('Propuestas de mejora y acuerdos adoptados por el equipo docente')}
-  ${parrafo(acta.acuerdosGrupo)}
-
-  ${sec('Firmas')}
-  <div class="firmas-grid">
-    <div class="firma-block"><div class="firma-line"></div><div class="firma-label">Tutor/a del grupo</div><div class="firma-name">${esc(tutor)}</div></div>
-    <div class="firma-block"><div class="firma-line"></div><div class="firma-label">Jefe/a de Estudios</div><div class="firma-name">${esc(acta.jefeEstudios || '')}</div></div>
-    <div class="firma-block"><div class="firma-line"></div><div class="firma-label">Director/a del centro</div><div class="firma-name">${esc(acta.director || '')}</div></div>
-  </div>
-  <div class="pie">Generado el ${esc(new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }))} · Gestor de Tutoría${ies ? ' · ' + esc(ies) : ''}</div>
+${cuerpo}
 </div>
 <script>
-// Word no entiende la rejilla (grid): cabecera, cifras y firmas pasan a tablas antes de exportar.
+/* «Exportar a Word»: lo hace la app (un .docx de verdad, ver _aeExportarDocx en 30-acta-evaluacion.js). */
+var _AE_ARCHIVO = '${jsAttr(archivo)}';
 function _aeWord() {
-  var clon = document.querySelector('.page').cloneNode(true);
-  var rejilla = function (cont, sel, porFila) {
-    if (!cont) return; var items = Array.prototype.filter.call(cont.children, function (e) { return e.matches(sel); }); if (!items.length) return;
-    var t = document.createElement('table'); t.style.cssText = 'width:100%;border-collapse:collapse;table-layout:fixed;';
-    for (var i = 0; i < items.length; i += porFila) { var tr = document.createElement('tr');
-      for (var j = i; j < Math.min(i + porFila, items.length); j++) { var td = document.createElement('td'); td.className = items[j].className; td.style.cssText = 'vertical-align:top;border:none;padding:3px;'; td.innerHTML = items[j].innerHTML; tr.appendChild(td); }
-      t.appendChild(tr); }
-    cont.parentNode.replaceChild(t, cont);
-  };
-  rejilla(clon.querySelector('.acta-meta'), '.acta-meta-cell', 3);
-  Array.prototype.forEach.call(clon.querySelectorAll('.stats-grid'), function (g) { rejilla(g, '.stat-box', 4); });
-  rejilla(clon.querySelector('.firmas-grid'), '.firma-block', 3);
-  var css = document.querySelector('style').textContent;
-  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + document.title + '</title><style>@page Section1 { size: 21cm 29.7cm; margin: 1.2cm 1.4cm 1.8cm 1.4cm; } div.Section1 { page: Section1; } ' + css + '</style></head><body><div class="Section1">' + clon.outerHTML + '</div></body></html>';
-  var u = URL.createObjectURL(new Blob(['\\ufeff', html], { type: 'application/msword' }));
-  var a = document.createElement('a'); a.href = u; a.download = document.title.replace(/[^a-zA-Z0-9ÁÉÍÓÚÑÜáéíóúñü]+/g, '_') + '.doc'; document.body.appendChild(a); a.click();
-  setTimeout(function () { a.remove(); URL.revokeObjectURL(u); }, 300);
+  try { if (window.parent && window.parent !== window && typeof window.parent._aeExportarDocx === 'function') { window.parent._aeExportarDocx(document, _AE_ARCHIVO); return; } } catch (e) {}
+  alert('Para exportar a Word, abre el acta desde el Gestor de Tutoría (🎓 Sesión de evaluación → 🖨 Acta de evaluación).');
 }
 <\/script>
 </body></html>`;
 }
+/* ---------------- Exportar a Word: un .docx de verdad ----------------
+   Se construye a partir del acta tal como se ve (su documento ya dibujado): cada apartado, tabla, cifra y firma pasa
+   a WordprocessingML con sus colores, negritas, fondos y anchos. Página A4 apaisada con 3 cm de margen, filas que no se
+   parten, cabecera de las tablas repetida en cada página y el título de cada apartado siempre con lo que le sigue.
+   Sin librerías (funciona sin conexión): el .docx es un .zip sin comprimir con cinco archivos XML. */
+const _AE_DOCX_ANCHO = 16838 - 2 * 1701;   // ancho útil en twips: A4 apaisado (29,7 cm) menos 3 cm por lado
+function _aeZip(archivos) {
+  const enc = new TextEncoder(), tablaCrc = [];
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; tablaCrc[n] = c >>> 0; }
+  const crc = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = tablaCrc[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  const u16 = v => [v & 255, (v >>> 8) & 255], u32 = v => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
+  const partes = [], central = []; let pos = 0;
+  archivos.forEach(([nombre, texto]) => {
+    const nb = enc.encode(nombre), datos = enc.encode(texto), c = crc(datos);
+    const cab = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(c), ...u32(datos.length), ...u32(datos.length), ...u16(nb.length), ...u16(0)]);
+    partes.push(cab, nb, datos);
+    central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(c), ...u32(datos.length), ...u32(datos.length), ...u16(nb.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(pos)]), nb);
+    pos += cab.length + nb.length + datos.length;
+  });
+  const tamCentral = central.reduce((s, b) => s + b.length, 0);
+  const fin = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(archivos.length), ...u16(archivos.length), ...u32(tamCentral), ...u32(pos), ...u16(0)]);
+  return new Blob([...partes, ...central, fin], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+function _aeDocxXml(doc) {
+  const win = doc.defaultView, cs = el => win.getComputedStyle(el);
+  const x = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const hex = v => { const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/.exec(v || ''); if (!m || (m[4] !== undefined && +m[4] < 0.05)) return ''; return [m[1], m[2], m[3]].map(n => (+n).toString(16).padStart(2, '0')).join('').toUpperCase(); };
+  // El fondo tal como se ve: los semitransparentes, mezclados con lo que tienen debajo (la etiqueta de la cabecera azul).
+  const rgba = v => { const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/.exec(v || ''); return m ? [+m[1], +m[2], +m[3], m[4] === undefined ? 1 : +m[4]] : [0, 0, 0, 0]; };
+  const fondoVisto = el => {
+    const capas = []; for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const c = rgba(cs(e).backgroundColor); if (c[3] > 0) { capas.push(c); if (c[3] >= 1) break; } }
+    if (!capas.length) return '';
+    let col = [255, 255, 255]; capas.reverse().forEach(c => { col = col.map((v, n) => Math.round(c[n] * c[3] + v * (1 - c[3]))); });
+    return col.map(n => n.toString(16).padStart(2, '0')).join('').toUpperCase();
+  };
+  const BLOQUE = /^(DIV|P|SECTION|TABLE|UL|OL|LI|H1|H2|H3)$/;
+  const esBloque = n => n.nodeType === 1 && (n.tagName === 'TABLE' || (BLOQUE.test(n.tagName) && !/^inline/.test(cs(n).display)));
+  // Un trozo de texto con su formato: negrita, cursiva, color, tamaño, mayúsculas y el fondo de las etiquetas (chips).
+  const run = (texto, st, fondo) => {
+    const sz = Math.max(10, Math.round(parseFloat(st.fontSize) * 0.75 * 2)), col = hex(st.color);
+    return `<w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>${+st.fontWeight >= 600 ? '<w:b/>' : ''}${st.fontStyle === 'italic' ? '<w:i/>' : ''}${st.textTransform === 'uppercase' ? '<w:caps/>' : ''}${col ? `<w:color w:val="${col}"/>` : ''}<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>${fondo ? `<w:shd w:val="clear" w:color="auto" w:fill="${fondo}"/>` : ''}</w:rPr><w:t xml:space="preserve">${x(texto)}</w:t></w:r>`;
+  };
+  const runs = (nodos, fondo) => {
+    let out = '';
+    nodos.forEach(n => {
+      if (n.nodeType === 3) { const t = n.nodeValue.replace(/\s+/g, ' '); if (t) out += run(t, cs(n.parentElement), fondo); return; }
+      if (n.nodeType !== 1 || /no-print/.test(n.className)) return;
+      if (n.tagName === 'BR') { out += '<w:r><w:br/></w:r>'; return; }
+      if (n.classList.contains('barra')) { const w = parseFloat((n.firstElementChild && n.firstElementChild.style.width) || 0); out += `<w:r><w:rPr><w:color w:val="EF4444"/><w:sz w:val="14"/></w:rPr><w:t>${'█'.repeat(Math.max(1, Math.round(w / 4)))}</w:t></w:r>`; return; }
+      const propio = /^inline/.test(cs(n).display) && rgba(cs(n).backgroundColor)[3] >= 0.9 ? hex(cs(n).backgroundColor) : '';   // chips, etiquetas y el número de cada apartado
+      out += runs([...n.childNodes], propio || fondo);
+      if (/\bchip\b/.test(n.className)) out += '<w:r><w:t xml:space="preserve"> </w:t></w:r>';
+    });
+    return out;
+  };
+  const alin = st => { const a = st && st.textAlign; return a === 'center' ? 'center' : (a === 'right' || a === 'end') ? 'right' : 'left'; };
+  // Párrafo. o.seguir: mantener con el siguiente (los apartados cortos no se parten y los títulos no se quedan solos).
+  const p = (contenido, st, o = {}) => `<w:p><w:pPr>${o.seguir ? '<w:keepNext/><w:keepLines/>' : ''}${o.pBdr || ''}${o.shd ? `<w:shd w:val="clear" w:color="auto" w:fill="${o.shd}"/>` : ''}<w:spacing w:before="${o.antes || 0}" w:after="${o.despues || 0}" w:line="240" w:lineRule="auto"/><w:jc w:val="${alin(st)}"/></w:pPr>${contenido}</w:p>`;
+  // Lo de dentro de un elemento: el texto seguido va en un párrafo; cada bloque (div, tabla…) aparte.
+  const contenido = (el, ancho, o = {}) => {
+    let out = '', linea = [];
+    const cerrar = () => { const r = runs(linea); if (r) out += p(r, cs(el), o); linea = []; };
+    el.childNodes.forEach(n => { if (esBloque(n)) { cerrar(); out += n.tagName === 'TABLE' ? tabla(n, ancho, o) : elemento(n, ancho, o); } else linea.push(n); });
+    cerrar();
+    return out;
+  };
+  const casilla = (inner, ancho, st, extra, el) => {
+    const fondo = el && el.nodeType === 1 ? fondoVisto(el) : (st ? hex(st.backgroundColor) : '');
+    inner = inner || p('', st);
+    if (/<\/w:tbl>$/.test(inner)) inner += '<w:p><w:pPr><w:spacing w:after="0" w:line="120" w:lineRule="exact"/></w:pPr></w:p>';
+    return `<w:tc><w:tcPr><w:tcW w:w="${Math.round(ancho)}" w:type="dxa"/>${extra || ''}${fondo ? `<w:shd w:val="clear" w:color="auto" w:fill="${fondo}"/>` : ''}<w:vAlign w:val="${st && st.verticalAlign === 'middle' ? 'center' : 'top'}"/></w:tcPr>${inner}</w:tc>`;
+  };
+  const bordes = (color, sz) => ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(b => `<w:${b} w:val="${color ? 'single' : 'nil'}" w:sz="${sz || 4}" w:space="0" w:color="${color || 'auto'}"/>`).join('');
+  // Propiedades de una tabla, en el orden que exige Word (si no, puede decir que el archivo está dañado).
+  const tblPr = (ancho, brd, mar, sep) => `<w:tblPr><w:tblW w:w="${Math.round(ancho)}" w:type="dxa"/>${sep ? `<w:tblCellSpacing w:w="${sep}" w:type="dxa"/>` : ''}<w:tblBorders>${brd}</w:tblBorders><w:tblLayout w:type="fixed"/>${mar}</w:tblPr>`;
+  const margenes = (v, h) => `<w:tblCellMar><w:top w:w="${v}" w:type="dxa"/><w:left w:w="${h}" w:type="dxa"/><w:bottom w:w="${v}" w:type="dxa"/><w:right w:w="${h}" w:type="dxa"/></w:tblCellMar>`;
+  // Tabla con sus anchos reales, cabecera repetida en cada página, filas que no se parten y casillas combinadas.
+  function tabla(t, ancho, o = {}) {
+    const filas = [...t.rows]; if (!filas.length) return '';
+    const total = t.getBoundingClientRect().width || 1;
+    const rej = filas.map(() => []); let ncols = 0;
+    filas.forEach((f, i) => { let c = 0; [...f.cells].forEach(cel => { while (rej[i][c]) c++; for (let a = 0; a < cel.rowSpan && i + a < filas.length; a++) for (let b = 0; b < cel.colSpan; b++) rej[i + a][c + b] = { cel, a }; c += cel.colSpan; ncols = Math.max(ncols, c); }); });
+    const px = Array(ncols).fill(0);
+    rej.forEach(f => f.forEach((z, c) => { if (z && z.cel.colSpan === 1 && !px[c]) px[c] = z.cel.getBoundingClientRect().width; }));
+    const sin = px.filter(w => !w).length, resto = Math.max(0, total - px.reduce((s, w) => s + w, 0));
+    const tw = px.map(w => (w || resto / Math.max(1, sin)) / total * ancho);
+    const borde = hex(cs(filas[0].cells[0]).borderTopColor) || 'C0D0E0';
+    let out = `<w:tbl>${tblPr(ancho, bordes(borde, 4), margenes(25, 70))}<w:tblGrid>${tw.map(w => `<w:gridCol w:w="${Math.round(w)}"/>`).join('')}</w:tblGrid>`;
+    filas.forEach((f, i) => {
+      const cab = f.parentElement.tagName === 'THEAD', ultima = i === filas.length - 1;
+      out += `<w:tr><w:trPr><w:cantSplit/>${cab ? '<w:tblHeader/>' : ''}</w:trPr>`;
+      for (let c = 0; c < ncols;) {
+        const z = rej[i][c]; if (!z) { out += casilla('', tw[c], null); c++; continue; }
+        const span = z.cel.colSpan, w = tw.slice(c, c + span).reduce((s, v) => s + v, 0);
+        // Bordes también en cada casilla (además de en la tabla): así se ven en cualquier programa.
+        const extra = (span > 1 ? `<w:gridSpan w:val="${span}"/>` : '') + (z.cel.rowSpan > 1 ? (z.a === 0 ? '<w:vMerge w:val="restart"/>' : '<w:vMerge/>') : '')
+          + `<w:tcBorders>${['top', 'left', 'bottom', 'right'].map(l => `<w:${l} w:val="single" w:sz="4" w:space="0" w:color="${borde}"/>`).join('')}</w:tcBorders>`;
+        // La cabecera va siempre unida a la primera fila; en un apartado corto, toda la tabla junta.
+        out += casilla(z.a === 0 ? contenido(z.cel, w, { seguir: cab || (o.seguir && !ultima) }) : '', w, cs(z.cel), extra, z.cel);
+        c += span;
+      }
+      out += '</w:tr>';
+    });
+    return out + '</w:tbl>';
+  }
+  // Rejillas de la pantalla (cabecera, cifras, dos columnas, firmas): una tabla sin bordes; cada caja con su fondo y su borde.
+  function rejilla(el, ancho, o, conBordes, vMargen) {
+    const hijos = [...el.children]; if (!hijos.length) return '';
+    const fr = hijos.map(h => h.getBoundingClientRect().width || 1), suma = fr.reduce((s, v) => s + v, 0), sep = conBordes ? 80 : 0;
+    const ws = fr.map(v => v / suma * ancho);
+    return `<w:tbl>${tblPr(ancho, bordes('', 0), margenes(vMargen == null ? 40 : vMargen, 80), sep / 2)}<w:tblGrid>${ws.map(w => `<w:gridCol w:w="${Math.round(w)}"/>`).join('')}</w:tblGrid><w:tr><w:trPr><w:cantSplit/></w:trPr>${hijos.map((h, n) => {
+      const st = cs(h), b = conBordes ? hex(st.borderTopColor) : '';
+      return casilla(contenido(h, ws[n] - 160, o), ws[n], st, (b ? `<w:tcBorders>${['top', 'left', 'bottom', 'right'].map(l => `<w:${l} w:val="single" w:sz="6" w:space="0" w:color="${b}"/>`).join('')}</w:tcBorders>` : ''), h);
+    }).join('')}</w:tr></w:tbl>`;
+  }
+  function elemento(el, ancho, o = {}) {
+    const c = el.classList;
+    if (c.contains('no-print')) return '';
+    if (c.contains('section-title')) return p(runs([...el.childNodes]), cs(el), { seguir: true, pBdr: '<w:pBdr><w:bottom w:val="single" w:sz="10" w:space="1" w:color="1A3A6B"/></w:pBdr>', antes: 220, despues: 80 });
+    if (c.contains('sub')) return p(runs([...el.childNodes]), cs(el), { seguir: true, antes: 100, despues: 50 });
+    if (c.contains('texto')) {
+      const caja = '<w:pBdr>' + ['top', 'left', 'bottom', 'right'].map(l => `<w:${l} w:val="single" w:sz="4" w:space="4" w:color="C5D8EF"/>`).join('') + '</w:pBdr>';
+      return el.textContent.split('\n').map(l => p(run(l || ' ', cs(el)), cs(el), { pBdr: caja, shd: 'FAFCFF', seguir: o.seguir })).join('');
+    }
+    if (c.contains('acta-header')) {
+      const st = cs(el.querySelector('.acta-header-top') || el);
+      return `<w:tbl>${tblPr(ancho, bordes('1A3A6B', 12), margenes(0, 0))}<w:tblGrid><w:gridCol w:w="${Math.round(ancho)}"/></w:tblGrid>`
+        + `<w:tr><w:trPr><w:cantSplit/></w:trPr>${casilla(rejilla(el.querySelector('.acta-header-top'), ancho, o, false, 60), ancho, st)}</w:tr>`
+        + `<w:tr><w:trPr><w:cantSplit/></w:trPr>${casilla(rejilla(el.querySelector('.acta-meta'), ancho, o, false, 30), ancho, null)}</w:tr></w:tbl>`;
+    }
+    if (c.contains('dos-col') || c.contains('firmas-grid')) return rejilla(el, ancho, o, false, 0);
+    if (c.contains('stats-grid')) return rejilla(el, ancho, o, true) + p('', null, { despues: 40 });
+    if (c.contains('firma-line')) return p('', null, { pBdr: '<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="555555"/></w:pBdr>', antes: 700 });
+    if (c.contains('bloque')) {
+      const xml = contenido(el, ancho, { seguir: !c.contains('largo') });
+      return xml.replace(/<w:keepNext\/>(?![\s\S]*<w:keepNext\/>)/, '');   // el final del apartado no arrastra al siguiente
+    }
+    return contenido(el, ancho, o);
+  }
+  const cuerpo = [...doc.querySelector('.page').children].map(el => elemento(el, _AE_DOCX_ANCHO)).join('');
+  const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  return [
+    ['[Content_Types].xml', xml + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>'],
+    ['_rels/.rels', xml + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'],
+    ['word/_rels/document.xml.rels', xml + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+    ['word/document.xml', xml + `<w:document ${W}><w:body>${cuerpo}<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="1701" w:right="1701" w:bottom="1701" w:left="1701" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>`],
+    ['word/styles.xml', xml + `<w:styles ${W}><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial" w:eastAsia="Arial"/><w:sz w:val="17"/><w:szCs w:val="17"/><w:lang w:val="es-ES"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style><w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:tblPr><w:tblCellMar><w:left w:w="70" w:type="dxa"/><w:right w:w="70" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>`],
+  ];
+}
+// El botón «📄 Exportar a Word» del acta (en su vista) llama aquí con su documento ya dibujado.
+window._aeExportarDocx = function(doc, nombre) {
+  try { _tGuardarArchivo(_aeZip(_aeDocxXml(doc)), nombre || 'Acta_de_evaluacion.docx'); }
+  catch (e) { mostrarAviso('No se ha podido crear el documento de Word: ' + (e.message || e)); }
+};
+
 window.generarActaEvaluacion = function(nivel, grupo, k) {
   k = String(k || (typeof _sesEvalPropuesta === 'function' ? _sesEvalPropuesta(nivel) : '1'));
   if (!data[nivel]?.[grupo]) return;
