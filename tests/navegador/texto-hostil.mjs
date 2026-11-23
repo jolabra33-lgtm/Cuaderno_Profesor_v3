@@ -150,7 +150,8 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
       ['SESIÓN · alumno/a', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '1'); _sesIr(0); }],
       ['SESIÓN · final', () => { currentGrupos[nivH] = gH; selectNivel(nivH); openSesionEvaluacion(nivH, gH, '3'); _sesIr(0); }],
       // El acta de evaluación (la única, desde la sesión) con todo relleno: lo de cada alumno/a y el análisis del grupo.
-      ...['1', '2', '3'].map(e => ['ACTA DE EVALUACIÓN · eval ' + e, () => { selectNivel(nivH); data[nivH][gH].forEach((a, i) => Object.assign(_aeDeAlumno(a, e), { casos: ['comportamiento', 'asistencia', 'diversidad'], casoMaterias: P('casoMat'),
+      // La de la final lleva casi todas las secciones (Nivel III, FPB, Plan de Repetición y de Refuerzo, agrupación…).
+      ...['3'].map(e => ['ACTA DE EVALUACIÓN · eval ' + e, () => { selectNivel(nivH); data[nivH][gH].forEach((a, i) => Object.assign(_aeDeAlumno(a, e), { casos: ['comportamiento', 'asistencia', 'diversidad'], casoMaterias: P('casoMat'),
         valoracionRepeticion: P('valRep'), programa: i % 2 ? 'FPB' : 'PAC / Refuerzo', programaMotivo: P('progMot'), fpbFamilia: P('fpb'), medidasNese: P('medNese'), motivoNoPromocion: P('motNoProm'), agrupacion: P('agrup') }));
         data[nivH][gH].forEach(a => { a.repetidor = 'Sí'; a[_SES_CAMPOS[e].prop] = { tipo: 'Repetición', destino: P('dest') }; });
         Object.assign(_aeActa(nivH, gH, e), { jefeEstudios: P('jefe'), director: P('dir'), analisis: { comportamiento: P('anComp'), cohesion: P('anCoh'), otros: P('anOtros') } }); generarActaEvaluacion(nivH, gH, e); }]),
