@@ -2995,3 +2995,12 @@ body.sesion-abierta { overflow: hidden; }
 .dm-tabla.dm-solo tr.dm-nc { display: none; }
 .dm-acciones { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 0 0 8px; font-size: 12.5px; }
 .dm-acciones label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+/* Equipo docente: materia elegida del catálogo, sustituto/a y aviso de materia fuera del catálogo */
+.eq-sust { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text3); cursor: pointer; margin-top: 2px; }
+.eq-mat-hint { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; margin: 0 0 10px; padding: 7px 10px; border-radius: 8px; border: 1px solid rgba(245,158,11,.45); background: rgba(245,158,11,.08); color: var(--text2); }
+.eq-mat-hint .btn { white-space: normal; text-align: left; max-width: 100%; }
+/* En el móvil, cada campo del profesor/a en su línea (si no, no se lee el nombre ni la materia) */
+@media (max-width: 640px) {
+  #eqDocenteBody .asist-prof-row { flex-wrap: wrap; }
+  #eqDocenteBody .asist-prof-row > div:has(> label) { flex: 1 1 100% !important; }
+}

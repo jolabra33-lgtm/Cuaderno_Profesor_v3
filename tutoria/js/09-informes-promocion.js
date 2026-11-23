@@ -1036,40 +1036,37 @@ function openPendientesPanel(e, nivel, grupo, idx, field) {
       <div class="pendientes-list">
         ${!materias.length ? `<div style="padding:14px 8px;font-size:11px;color:var(--text3);line-height:1.5;text-align:center;">${isAnt ? (NIVELES.indexOf(nivel) <= 0 && !_normalizarNivelAcademico(nivel) ? 'No hay niveles anteriores definidos a la izquierda de este nivel en la barra de pestañas.' : (_normalizarNivelAcademico(nivel) === '1º ESO' ? 'No hay cursos anteriores a 1º ESO.' : 'Este curso no tiene materias previas registradas.')) + '<br>Las materias se toman del catálogo de la pestaña ⚙ Materias.' : 'No hay materias definidas para este nivel.'}</div>` : ''}
         ${(() => {
-          if (!isAnt) {
-            return materias.map(m => {
-              const mSafe = _tEsc(m);
-              return `
-              <label class="pendientes-option" data-label="${mSafe}">
-                <input type="checkbox" value="${mSafe}" ${selected.includes(m)?'checked':''}
+          // Cada casilla guarda el nombre tal como está en el alumno: una materia escrita con otras mayúsculas o
+          // tildes sale marcada en su sitio del catálogo y no se renombra al guardar.
+          const guardada = m => selected.find(s => _tNorm(s) === _tNorm(m));
+          const opcion = (valor, etiqueta, marcada) => `
+              <label class="pendientes-option" data-label="${_tEsc(etiqueta)}">
+                <input type="checkbox" value="${_tEsc(valor)}" ${marcada ? 'checked' : ''}
                   onchange="(function(cb){
                     var panel=cb.closest('.pendientes-panel');
                     var sel=Array.from(panel.querySelectorAll('input[type=checkbox]:checked')).map(c=>c.value);
                     panel.querySelector('.pendientes-panel-title span:last-child').textContent=
                       sel.length?sel.length+' seleccionada'+(sel.length>1?'s':''):'ninguna';
                   })(this)" />
-                <span class="pendientes-option-label">${_tEsc(m)}</span>
+                <span class="pendientes-option-label">${_tEsc(etiqueta)}</span>
               </label>`;
-            }).join('');
+          // Las que tiene el alumno pero no están en el catálogo (escritas a mano, de un archivo…) se muestran
+          // arriba y marcadas: si no se vieran, «Hecho» las borraría sin avisar.
+          const fuera = selected.filter(s => !materias.some(m => _tNorm(m) === _tNorm(s)));
+          const htmlFuera = fuera.length ? `<div class="pendientes-group-header" title="El alumno las tiene marcadas pero no están en la pestaña ⚙ Materias de este nivel">Fuera del catálogo</div>` +
+            fuera.map(m => opcion(m, m, true)).join('') : '';
+          if (!isAnt) {
+            return htmlFuera + (fuera.length && materias.length ? `<div class="pendientes-group-header">Catálogo del nivel</div>` : '') +
+              materias.map(m => { const g = guardada(m); return opcion(g || m, m, !!g); }).join('');
           }
           // Modo "ant": agrupar visualmente por curso de origen
           let lastCurso = null;
-          return materias.map(m => {
+          return htmlFuera + materias.map(m => {
             const { materia, curso } = _splitMateriaCurso(m);
-            const mSafe = _tEsc(m);
             const header = curso !== lastCurso ? `<div class="pendientes-group-header">${_tEsc(curso)}</div>` : '';
             lastCurso = curso;
-            return `${header}
-              <label class="pendientes-option" data-label="${mSafe}">
-                <input type="checkbox" value="${mSafe}" ${selected.includes(m)?'checked':''}
-                  onchange="(function(cb){
-                    var panel=cb.closest('.pendientes-panel');
-                    var sel=Array.from(panel.querySelectorAll('input[type=checkbox]:checked')).map(c=>c.value);
-                    panel.querySelector('.pendientes-panel-title span:last-child').textContent=
-                      sel.length?sel.length+' seleccionada'+(sel.length>1?'s':''):'ninguna';
-                  })(this)" />
-                <span class="pendientes-option-label">${_tEsc(materia)}</span>
-              </label>`;
+            const g = guardada(m);
+            return header + opcion(g || m, materia, !!g);
           }).join('');
         })()}
       </div>

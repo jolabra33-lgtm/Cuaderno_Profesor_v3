@@ -225,13 +225,24 @@ function _tImpCuadernoModal(o,nombreArchivo,opc){
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
       <select id="impCNivel" class="tdlg-in" style="width:auto;margin:0" aria-label="Nivel">${opcNivel}</select>
       <select id="impCGrupo" class="tdlg-in" style="width:auto;margin:0" aria-label="Grupo"></select>
-      <input id="impCMateria" class="tdlg-in" style="flex:1;min-width:180px;margin:0" value="${_tEsc(o.materia)}" aria-label="Nombre de la materia en Tutoría" list="impCMatList"><datalist id="impCMatList"></datalist>
+      <select id="impCMateria" class="tdlg-in" style="flex:1;min-width:180px;width:auto;margin:0" aria-label="Materia en Tutoría (de ⚙ Materias)"></select>
     </div>
     <div id="impCResumen" class="tdlg-msg" style="font-size:12.5px;margin-top:10px;max-height:34vh;overflow:auto"></div>
     <div class="tdlg-bar"><button class="tdlg-no">${opc.total>1?'Omitir este archivo':'Cancelar'}</button><button class="tdlg-si" id="impCOk">Importar</button></div></div>`;
   document.body.appendChild(ov);
   const selN=ov.querySelector('#impCNivel'), selG=ov.querySelector('#impCGrupo'), inM=ov.querySelector('#impCMateria');
-  const pintarGrupos=()=>{ const gs=GRUPOS_POR_NIVEL[selN.value]||[]; selG.innerHTML=gs.map(g=>`<option ${_tNorm(g)===_tNorm(letra)?'selected':''}>${_tEsc(g)}</option>`).join(''); const mats=getMateriasParaNivel(selN.value, selG.value)||[]; ov.querySelector('#impCMatList').innerHTML=mats.map(m=>`<option value="${_tEsc(m)}">`).join(''); const exacta=mats.find(m=>_tNorm(m)===_tNorm(o.materia)); if(exacta) inM.value=exacta; };
+  /* La materia se elige de ⚙ Materias (manda el catálogo): de entrada, la que se llama igual o la más parecida.
+     Si no está, «＋ Añadir» la pone en el catálogo con el nombre del Cuaderno. */
+  let elegida='';
+  const pintarMaterias=()=>{
+    const mats=getMateriasParaNivel(selN.value, selG.value)||[];
+    elegida=_tMatEnCatalogo(elegida,mats) || _tMatEnCatalogo(o.materia,mats) || _tMateriaParecida(o.materia,mats) || '';
+    const nueva=String(o.materia||'').trim();
+    inM.innerHTML=`<option value="">— Elige la materia de ⚙ Materias —</option>`+mats.map(m=>`<option value="${_tEsc(m)}" ${m===elegida?'selected':''}>${_tEsc(m)}</option>`).join('')+
+      (nueva && !_tMatEnCatalogo(nueva,mats)?`<option value="__anadir">＋ Añadir «${_tEsc(nueva)}» a ⚙ Materias</option>`:'');
+    inM.value=elegida;
+  };
+  const pintarGrupos=()=>{ const gs=GRUPOS_POR_NIVEL[selN.value]||[]; selG.innerHTML=gs.map(g=>`<option ${_tNorm(g)===_tNorm(letra)?'selected':''}>${_tEsc(g)}</option>`).join(''); pintarMaterias(); };
   // Propuestas de nombre parecido: marcadas de entrada si el parecido es muy alto.
   let confirmados=new Map(), grupoDePropuestas='';
   const plan=()=>{
@@ -246,7 +257,8 @@ function _tImpCuadernoModal(o,nombreArchivo,opc){
     const p=plan(); const mats=getMateriasParaNivel(selN.value, selG.value)||[];
     const prof=_tProfesorDelPaquete(selN.value,selG.value,inM.value.trim(),o.profesor);
     ov.querySelector('#impCResumen').innerHTML=
-      (mats.length && !mats.some(m=>_tNorm(m)===_tNorm(inM.value))?`<div style="color:#f59e0b">⚠️ «${_tEsc(inM.value)}» no está en la lista de materias de ${_tEsc(selN.value)}. Elige la equivalente en el desplegable.</div>`:'')+
+      (o.materia && inM.value.trim() && _tNorm(inM.value)!==_tNorm(o.materia)?`<div style="margin-bottom:4px">ℹ️ En el Cuaderno se llama «${_tEsc(o.materia)}»; en Tutoría se guarda como <strong>«${_tEsc(inM.value)}»</strong>, la de ⚙ Materias. Cámbiala arriba si no es esa.</div>`:'')+
+      (!inM.value?`<div style="color:#f59e0b">⚠️ «${_tEsc(o.materia||'')}» no está en ⚙ Materias de ${_tEsc(selN.value)}: elige la equivalente en el desplegable o añádela.</div>`:'')+
       `<div>✓ ${p.emparejados.length} alumnos encontrados en ${_tEsc(selN.value)} ${_tEsc(selG.value)} · ${p.cambios} cambios en sus pendientes.</div>`+
       (trae.length>1?`<div style="margin-top:4px">✓ Se guardan también ${trae.slice(1).join(', ')} de ${_tEsc(inM.value)} (📬 Información del equipo docente).</div>`:'')+
       (prof.accion==='nuevo'?`<div style="margin-top:4px">👨‍🏫 Se añade al equipo docente: <strong>${_tEsc(prof.nombre)}</strong> (${_tEsc(inM.value)}).</div>`:'')+
@@ -256,12 +268,13 @@ function _tImpCuadernoModal(o,nombreArchivo,opc){
       (p.noEncontrados.filter(n=>!p.propuestas.some(pr=>pr.nombre===n)).length?`<div style="color:#f59e0b;margin-top:6px">⚠️ Sin encontrar: ${p.noEncontrados.filter(n=>!p.propuestas.some(pr=>pr.nombre===n)).map(_tEsc).join(', ')}. Comprueba que el nombre coincide («Apellidos, Nombre»).</div>`:'');
     ov.querySelectorAll('#impCResumen input[data-prop]').forEach(cb=>{ cb.onchange=()=>{ const pr=p.propuestas[+cb.dataset.prop]; if(cb.checked) confirmados.set(pr.nombre,pr.idx); else confirmados.delete(pr.nombre); pintarResumen(); }; });
   };
-  selN.onchange=()=>{ pintarGrupos(); pintarResumen(); }; selG.onchange=pintarResumen; inM.oninput=pintarResumen;
+  selN.onchange=()=>{ pintarGrupos(); pintarResumen(); }; selG.onchange=()=>{ pintarMaterias(); pintarResumen(); };
+  inM.onchange=()=>{ if(inM.value==='__anadir'){ elegida=_tAnadirAlCatalogo(selN.value,selG.value,o.materia); showToast(`✅ «${elegida}» está en ⚙ Materias de ${selN.value}`); pintarMaterias(); } else elegida=inM.value; pintarResumen(); };
   pintarGrupos(); pintarResumen();
   let terminado=false;
   const cerrar=(importado)=>{ ov.remove(); if(!terminado){ terminado=true; if(opc.alTerminar) setTimeout(()=>opc.alTerminar(!!importado),0); } };
   ov.querySelector('.tdlg-no').onclick=()=>cerrar(false);
-  ov.querySelector('#impCOk').onclick=()=>{ const p=plan(); if(!p.emparejados.length){ mostrarAviso('No se ha encontrado a ningún alumno/a de este archivo en ese grupo.'); return; }
+  ov.querySelector('#impCOk').onclick=()=>{ if(!inM.value){ mostrarAviso('Elige la materia de ⚙ Materias a la que corresponde este archivo (o añádela con «＋ Añadir»).'); return; } const p=plan(); if(!p.emparejados.length){ mostrarAviso('No se ha encontrado a ningún alumno/a de este archivo en ese grupo.'); return; }
     const prof=_tImpCuadernoAplicar(p,o); cerrar(true);
     showToast(`✓ ${p.materia}: ${p.cambios} cambios en ${p.emparejados.length} alumnos${p.noEncontrados.length?` · ${p.noEncontrados.length} sin encontrar`:''}${prof.accion==='nuevo'?' · profesor/a añadido al equipo docente':''}`); };
   ov.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.stopPropagation(); cerrar(false); } });

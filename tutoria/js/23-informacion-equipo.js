@@ -56,7 +56,7 @@ function _infResumenMateria(nivel, grupo, materia, periodo) {
   r.matriculados = _infAlumnos(nivel, grupo).filter(a => !_tNoCursa(a, materia)).length;   // sin quien no la cursa
   r.hayDatos = r.conNota > 0 || r.introducido > 0;   // ha llegado (o se ha introducido) algo de este periodo
   if (!r.profesor) {
-    const p = ((window._asistenciaData || {})[`${nivel}-${grupo}`] || { profesores: [] }).profesores.find(x => _tNorm(x.materia) === _tNorm(materia));
+    const p = _tProfesorDeMateria(((window._asistenciaData || {})[`${nivel}-${grupo}`] || { profesores: [] }).profesores, materia);
     if (p) r.profesor = p.nombre || '';
   }
   return r;
@@ -160,7 +160,7 @@ function _infCorreoRecordatorio(nivel, grupo, periodo) {
   const equipo = ((window._asistenciaData || {})[`${nivel}-${grupo}`] || { profesores: [] }).profesores;
   const correos = [], sinCorreo = [];
   faltan.forEach(m => {
-    const p = equipo.find(x => _tNorm(x.materia) === _tNorm(m));
+    const p = _tProfesorDeMateria(equipo, m);
     if (p && String(p.correo || '').trim()) { if (!correos.includes(p.correo.trim())) correos.push(p.correo.trim()); }
     else sinCorreo.push(m);
   });

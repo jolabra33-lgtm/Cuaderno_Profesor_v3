@@ -141,7 +141,7 @@ function _sesGrupoHTML() {
   const profes = d.profesores.map((p, i) => {
     const s = ses[i] || {};
     return `<div class="ses-prof">
-      <span style="flex:1;min-width:0"><strong>${_tEsc(p.nombre || '—')}</strong> <span style="color:var(--text3)">${_tEsc(p.materia || '')}${p.esTutor ? ' · tutor/a' : ''}</span></span>
+      <span style="flex:1;min-width:0"><strong>${_tEsc(p.nombre || '—')}</strong> <span style="color:var(--text3)">${_tEsc(_tMateriaDeProfesor(p))}${p.esTutor ? ' · tutor/a' : ''}</span></span>
       <label><input type="radio" name="sesAs${i}" ${s.asistio === true ? 'checked' : ''} onchange="_sesAsistencia(${i},true)"> Asiste</label>
       <label><input type="radio" name="sesAs${i}" ${s.asistio === false ? 'checked' : ''} onchange="_sesAsistencia(${i},false)"> No asiste</label>
       ${s.asistio === false ? `<input class="tdlg-in" style="margin:0;flex:1 1 160px" placeholder="Motivo" aria-label="Motivo de la ausencia" value="${_tEsc(s.justificacion || '')}" oninput="_sesJustificacion(${i},this.value)">` : ''}

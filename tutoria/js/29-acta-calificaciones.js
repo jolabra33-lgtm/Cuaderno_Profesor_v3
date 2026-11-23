@@ -105,7 +105,7 @@ function datosActaCalificaciones(nivel, grupo, k) {
   });
   const porMateria = materias.map((m, j) => {
     const todas = filas.map(f => f.celdas[j]), cs = todas.filter(calificada), noCursan = todas.filter(x => x && x.nc).length;
-    const p = profes.find(x => _tNorm(x.materia) === _tNorm(m)), d = alumnos.map(a => entrada(a, m)).find(x => x && x.profesor);
+    const p = _tProfesorDeMateria(profes, m), d = alumnos.map(a => entrada(a, m)).find(x => x && x.profesor);
     return { materia: m, abrev: abrevs[j], profesor: (p && p.nombre) || (d && d.profesor) || '', ..._acCifras(cs),
       noCursan, matriculados: filas.length - noCursan, sinNota: filas.length - noCursan - cs.length };
   });
