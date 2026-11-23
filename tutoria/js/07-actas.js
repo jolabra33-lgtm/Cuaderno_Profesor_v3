@@ -486,7 +486,7 @@ function openInforme(nivel, grupo, evalNum, forzarRegenerar) {
     <div class="inf-section">
       <div class="inf-section-title">${secNum}. Análisis de resultados académicos del grupo</div>
       <table class="inf-table">
-        <tr><th style="width:55%">Información relevante</th><th>Datos</th></tr>
+        <tr><th style="width:55%">Información relevante</th><th style="text-align:center">Datos</th></tr>
         <tr><td>Alumnado con todo aprobado</td><td contenteditable="true" style="font-weight:bold;text-align:center;">${todos0}</td></tr>
         <tr><td>Alumnado entre 1 y 2 materias no superadas</td><td contenteditable="true" style="font-weight:bold;text-align:center;">${entre1_2}</td></tr>
         <tr><td>Alumnado entre 3 y 5 materias no superadas</td><td contenteditable="true" style="font-weight:bold;text-align:center;">${entre3_5}</td></tr>

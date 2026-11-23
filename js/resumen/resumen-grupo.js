@@ -137,7 +137,7 @@ function resumenAsistConvGrupoHTML(grupo,desde,hasta){
       <td style="text-align:center">${conv.pa||"—"}</td>
     </tr>`;
   }).join("");
-  return `<table><thead><tr><th>Alumno/a</th><th>Faltas justif.</th><th>Faltas no justif.</th><th>Retrasos</th><th>AC</th><th>RC</th><th>PA</th></tr></thead><tbody>${filas}</tbody></table>`;
+  return `<table><thead><tr><th>Alumno/a</th><th style="text-align:center">Faltas justif.</th><th style="text-align:center">Faltas no justif.</th><th style="text-align:center">Retrasos</th><th style="text-align:center">AC</th><th style="text-align:center">RC</th><th style="text-align:center">PA</th></tr></thead><tbody>${filas}</tbody></table>`;
 }
 window.setResumenFiltroTrim=(v)=>{ state.ui.resumenFiltroTrim=v; save(); render(); };
 function renderResumen(grupo){

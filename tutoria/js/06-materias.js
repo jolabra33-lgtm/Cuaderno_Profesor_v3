@@ -265,7 +265,10 @@ const MATERIAS_POR_NIVEL = {
   ]
 };
 
+// Las listas guardadas en ⚙ Materias, sin espacios de más al principio o al final de cada nombre.
+function _tLimpiarLista(l) { if (Array.isArray(l)) l.forEach((m, i) => { if (typeof m === 'string' && m !== m.trim()) l[i] = m.trim(); }); return l; }
 function getMateriasParaNivel(nivel, grupo) {
+  Object.values(_materiasCustom).forEach(_tLimpiarLista);
   const g = (grupo||'').toUpperCase();
   if (g === 'PDC' || g.endsWith('PDC')) {
     const pdcKey = nivel.includes('3º') ? '3º PDC' : nivel.includes('4º') ? '4º PDC' : null;

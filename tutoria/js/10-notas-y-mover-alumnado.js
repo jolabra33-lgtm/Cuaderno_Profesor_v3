@@ -437,7 +437,7 @@ function openInformeBach(nivel, grupo, evalNum, forzarRegenerar) {
     <div class="inf-section">
       <div class="inf-section-title">1. Análisis de resultados académicos</div>
       <table class="inf-table">
-        <tr><th style="width:55%">Información</th><th>Datos</th></tr>
+        <tr><th style="width:55%">Información</th><th style="text-align:center">Datos</th></tr>
         <tr><td>Total alumnado</td><td style="text-align:center;font-weight:bold">${totalAl}</td></tr>
         <tr><td>Alumnado con todo aprobado</td><td contenteditable="true" style="text-align:center;font-weight:bold">${todos0}</td></tr>
         <tr><td>Alumnado con 1-2 materias no superadas</td><td contenteditable="true" style="text-align:center;font-weight:bold">${entre1_2}</td></tr>
@@ -452,7 +452,7 @@ function openInformeBach(nivel, grupo, evalNum, forzarRegenerar) {
       <div class="inf-section">
         <div class="inf-section-title">2. Propuestas de evaluación</div>
         <table class="inf-table">
-          <tr><th style="width:35%">Decisión</th><th>Alumnado</th><th style="width:35%">Observaciones</th></tr>
+          <tr><th style="width:35%">Decisión</th><th style="text-align:center">Alumnado</th><th style="width:35%">Observaciones</th></tr>
           <tr><td style="font-weight:bold;color:#c0392b">No Promociona / Repite</td>
             <td contenteditable="true" style="text-align:center">${repAlumnos.length > 0 ? repAlumnos.map(a=>a.nombre).join(', ') : '—'}</td>
             <td contenteditable="true">&nbsp;</td></tr>
@@ -471,7 +471,7 @@ function openInformeBach(nivel, grupo, evalNum, forzarRegenerar) {
       <div class="inf-section">
         <div class="inf-section-title">3. Alumnado con materias pendientes de Evaluación Extraordinaria</div>
         <table class="inf-table">
-          <tr><th style="width:40%">Alumno/a</th><th style="width:15%">Nº Mat.</th><th>Observaciones</th></tr>
+          <tr><th style="width:40%">Alumno/a</th><th style="width:15%;text-align:center">Nº Mat.</th><th>Observaciones</th></tr>
           ${extrRows}
         </table>
       </div>`;

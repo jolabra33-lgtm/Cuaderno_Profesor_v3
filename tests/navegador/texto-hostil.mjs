@@ -17,7 +17,7 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
   return p.evaluate(async ({ modo, completo }) => {
     const DOBLE = modo === 'doble';
     const dormir = ms => new Promise(r => setTimeout(r, ms));
-    const ejecutados = {}, inyectados = {}, dobles = {}; let donde = 'arranque';
+    const ejecutados = {}, inyectados = {}, dobles = {}, desalineadas = {}; let donde = 'arranque';
     window.__x = re => { (ejecutados[re.source] = ejecutados[re.source] || {})[donde] = 1; };
     const P = DOBLE ? (tag => `d'Alt & "${tag}" <i>x</i>`)
       : (tag => `Zq"'><img src=x onerror=top.__x(/${tag}/)>');top.__x(/${tag}_js/);('&#39;);top.__x(/${tag}_ent/);(&#39;`);
@@ -78,6 +78,8 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
     const documentos = () => { const d = [document]; document.querySelectorAll('iframe').forEach(f => { try { if (f.contentDocument) d.push(f.contentDocument); } catch (e) {} }); return d; };
     const escanear = () => documentos().forEach((d, k) => {
       const pre = k ? 'DOCUMENTO: ' : '';
+      // Tablas: el título de cada columna, alineado como sus casillas (tests/navegador/tablas.mjs).
+      if (window.__auditarTablas) try { window.__auditarTablas(d, pre + donde.replace(/(Zq|d').*?(?=[›\]]|$)/g, '…').slice(0, 90), desalineadas); } catch (e) {}
       d.querySelectorAll('img[onerror*="__x"]').forEach(im => { const tag = (im.getAttribute('onerror').match(/__x\(\/(\w+)\//) || [])[1]; inyectados[tag + ' @ ' + pre + ruta(im)] = donde.slice(0, 70); });
       if (!DOBLE || !d.body) return;
       const w = d.createTreeWalker(d.body, NodeFilter.SHOW_TEXT); let n;
@@ -91,6 +93,7 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
       document.querySelectorAll('.tdlg-ov').forEach(o => o.remove());
       document.querySelectorAll('.modal-overlay.open, .overlay.open, .open[id$="Overlay"], .show[id$="Overlay"]').forEach(o => { o.classList.remove('open'); o.classList.remove('show'); });
       try { closeModal(); } catch (e) {}
+      try { const io = document.getElementById('informeOverlay'); if (io) io.style.display = 'none'; } catch (e) {}
       document.querySelectorAll('details[open]').forEach(d => d.removeAttribute('open'));
       document.getElementById('sesionOverlay')?.classList.remove('open'); document.body.classList.remove('sesion-abierta');
     };
@@ -153,10 +156,14 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
       ['ACTA DE CALIFICACIONES · columnas agrupadas', () => { selectNivel(nivH); const ms = Object.keys(data[nivH][gH][0].porMateria); ms.forEach(m => { _columnasActa[m] = m.slice(0, 24); _abrevMaterias[m] = m.slice(0, 12); }); const w = _ventanaDoc(); w.document.write(actaCalificacionesHTML(nivH, gH, '1')); w.document.close(); }],
       ['ACTA DE CALIFICACIONES · documento', () => { selectNivel(nivH); const w = _ventanaDoc(); w.document.write(actaCalificacionesHTML(nivH, gH, '1')); w.document.close(); }],
       ['INFORME PARA EL EQUIPO · ventana', () => { currentGrupos[nivH] = gH; selectNivel(nivH); abrirInformeEquipo(nivH, gH, '1'); }],
+      // Actas de cada evaluación: la del Calendario (ESO y Bachillerato) y el Acta Oficial.
+      ...[1, 3].map(e => ['ACTA (Calendario) ESO · eval ' + e, () => { selectNivel(nivH); openInforme(nivH, gH, e, true); }]),
+      ...[1, 3].map(e => ['ACTA (Calendario) Bach. · eval ' + e, () => { const nb = NIVELES.find(n => isBach(n)); selectNivel(nb); openInforme(nb, GRUPOS_POR_NIVEL[nb][0], e, true); }]),
+      ...[1, 3].map(e => ['ACTA OFICIAL · eval ' + e, () => { selectNivel(nivH); openActaOficial(nivH, gH, e); }]),
       ['INFORME PARA EL EQUIPO · documento', () => { selectNivel(nivH); const w = _ventanaDoc(); w.document.write(informeEquipoHTML(nivH, gH, '1')); w.document.close(); }],
     ];
     for (const [nombre, poner] of extra) { try { await pantalla(nombre, poner); } catch (err) { fallos.push(nombre + ': ' + err.message); } }
     const lista = o => Object.entries(o).map(([k, v]) => `${k}   ← ${typeof v === 'string' ? v : Object.keys(v)[0]}`);
-    return { clics, fallos, inyectados: lista(inyectados), ejecutados: lista(ejecutados), dobles: lista(dobles) };
+    return { clics, fallos, inyectados: lista(inyectados), ejecutados: lista(ejecutados), dobles: lista(dobles), desalineadas: Object.keys(desalineadas) };
   }, { modo, completo });
 }

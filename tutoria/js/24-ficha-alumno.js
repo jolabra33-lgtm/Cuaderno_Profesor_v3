@@ -192,14 +192,14 @@ function _fichaConvivencia(a) {
   const pm = a.porMateria || {};
   const mats = Object.keys(pm).filter(m => (pm[m].faltas || {}).curso || (pm[m].convivencia || {}).curso).sort((x, y) => x.localeCompare(y, 'es'));
   const cuad = mats.length ? `<div style="overflow-x:auto"><table class="inf-tabla" style="width:100%;border-collapse:collapse;font-size:12.5px">
-      <thead><tr><th scope="col">Materia</th><th scope="col">Sin justificar</th><th scope="col">Justificadas</th><th scope="col">Retrasos</th><th scope="col">AC</th><th scope="col">Reconocimientos</th><th scope="col">Partes</th></tr></thead>
+      <thead><tr><th scope="col" style="text-align:left">Materia</th>${['Sin justificar', 'Justificadas', 'Retrasos', 'AC', 'Reconocimientos', 'Partes'].map(x => `<th scope="col" style="text-align:center">${x}</th>`).join('')}</tr></thead>
       <tbody>${mats.map(m => { const f = (pm[m].faltas || {}).curso || {}, c = (pm[m].convivencia || {}).curso || {};
         return `<tr><th scope="row" style="text-align:left">${_tEsc(m)}</th>${[f.injustificadas, f.justificadas, f.retrasos, c.ac, c.rc, c.pa].map(n => `<td style="text-align:center">${n || 0}</td>`).join('')}</tr>`; }).join('')}</tbody></table></div>`
     : '<p class="ficha-vacio">Aún no ha llegado nada de los Cuadernos del profesorado (📬).</p>';
   return `
     <section><h3>Registrado en Tutoría</h3>
       <div style="overflow-x:auto"><table class="inf-tabla" style="width:100%;border-collapse:collapse;font-size:12.5px">
-        <thead><tr><th scope="col"></th><th scope="col">I</th><th scope="col">II</th><th scope="col">III</th><th scope="col">Total</th></tr></thead>
+        <thead><tr><th scope="col"></th>${['I', 'II', 'III', 'Total'].map(x => `<th scope="col" style="text-align:center">${x}</th>`).join('')}</tr></thead>
         <tbody>${tabla}</tbody></table></div>
       <p style="font-size:11.5px;color:var(--text3);margin:6px 0 0">Se cambian en la tabla del grupo, en cada evaluación.</p></section>
     <section style="margin-top:16px"><h3>Registrado por el profesorado en su materia (curso)</h3>${cuad}</section>`;
