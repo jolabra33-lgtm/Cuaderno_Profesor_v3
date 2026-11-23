@@ -271,7 +271,7 @@ window.generarActaSesion = function(nivel, grupo, k) {
   const sinMarcar = d.profesores.filter((p, i) => ses[i]?.asistio !== true && ses[i]?.asistio !== false);
   const prop = p => { const o = getPropObj(p); return [o.tipo, o.destino].filter(Boolean).join(' → '); };
   const parrafo = t => t ? `<p style="white-space:pre-wrap">${_tEsc(t)}</p>` : '<p style="color:#999">—</p>';
-  const filas = alumnos.map((a, i) => `<tr><td>${i + 1}</td><td>${_tEsc(a.nombre)}</td><td style="text-align:center">${+a[c.n] || 0}</td>
+  const filas = alumnos.map((a, i) => `<tr><td style="text-align:center">${i + 1}</td><td>${_tEsc(a.nombre)}</td><td style="text-align:center">${+a[c.n] || 0}</td>
     <td>${_tEsc((a[c.pend] || []).join(', '))}</td><td>${_tEsc(prop(a[c.prop]))}</td><td style="white-space:pre-wrap">${_tEsc(((a.sesionEval || {})[k] || {}).acuerdos || '')}</td></tr>`).join('');
   const win = _ventanaDoc();
   win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Acta de la sesión de evaluación — ${_tEsc(nivel)} ${_tEsc(grupo)} — ${FT_NOMBRE_EVAL[k]}</title>
@@ -301,7 +301,7 @@ window.generarActaSesion = function(nivel, grupo, k) {
       <h2>Valoración general del grupo</h2>${parrafo(acta.valoracion)}
       <h2>Acuerdos del grupo</h2>${parrafo(acta.acuerdosGrupo)}
       <h2>Alumnado</h2>
-      <table><thead><tr><th>Nº</th><th>Alumno/a</th><th>Susp.</th><th>Materias</th><th>${c.propEtq}</th><th>Acuerdos</th></tr></thead><tbody>${filas}</tbody></table>
+      <table><thead><tr><th style="text-align:center">Nº</th><th>Alumno/a</th><th style="text-align:center">Susp.</th><th>Materias</th><th>${c.propEtq}</th><th>Acuerdos</th></tr></thead><tbody>${filas}</tbody></table>
       <div class="firmas"><div>Fdo.: el tutor/a${tutor ? '<br>' + _tEsc(tutor) : ''}</div><div>Vº Bº jefatura de estudios</div></div>
     </div></body></html>`);
   win.document.close();
