@@ -9,7 +9,8 @@ jobs:
     # Versión fija de Ubuntu (con soporte hasta 2029): así una subida de «ubuntu-latest» no deja las pruebas en rojo
     # sin haber tocado nada. Playwright va fijado en package.json; al actualizarlo, comprueba que `npm test` sigue en verde.
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # La suite completa tarda unos 15 minutos (recorre todas las pantallas revisando textos y tablas): margen de sobra.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
