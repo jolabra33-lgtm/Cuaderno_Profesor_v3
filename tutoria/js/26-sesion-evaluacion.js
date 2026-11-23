@@ -219,7 +219,7 @@ function _sesAlumnoHTML(i) {
     ${mats.length ? `<p class="ses-mats">Materias suspensas: ${mats.map(m => `<span class="ses-mat">${_tEsc(m)}</span>`).join('')}</p>` : ''}
     ${alertas.length ? `<ul class="ficha-lista" style="margin-top:10px">${alertas.map(x => `<li class="ficha-alerta ${x.nivel}"><span aria-hidden="true">${x.icono}</span> ${_tEsc(x.texto)}</li>`).join('')}</ul>` : ''}
     ${recibido ? `<section class="ses-bloque"><h2>Lo que dice el profesorado</h2><div style="overflow-x:auto"><table class="inf-tabla ses-tabla">
-      <thead><tr><th scope="col">Materia</th><th scope="col">Nota</th><th scope="col">Faltas y convivencia</th><th scope="col">Comentario</th></tr></thead><tbody>${recibido}</tbody></table></div></section>` : ''}
+      <thead><tr><th scope="col" style="text-align:left">Materia</th><th scope="col" style="text-align:center">Nota</th><th scope="col" style="text-align:left">Faltas y convivencia</th><th scope="col" style="text-align:left">Comentario</th></tr></thead><tbody>${recibido}</tbody></table></div></section>` : ''}
     <section class="ses-bloque"><h2>${c.propEtq}</h2>
       <div class="ses-props" role="group" aria-label="${c.propEtq}">
         ${PROPUESTA_TIPOS.map(t => `<button class="ses-prop ${t.cls}${p.tipo === t.key ? ' elegida' : ''}" aria-pressed="${p.tipo === t.key}" onclick="_sesPropuesta(${i},'tipo','${jsAttr(t.key)}')">${_tEsc(t.label)}</button>`).join('')}
@@ -271,7 +271,7 @@ window.generarActaSesion = function(nivel, grupo, k) {
   const sinMarcar = d.profesores.filter((p, i) => ses[i]?.asistio !== true && ses[i]?.asistio !== false);
   const prop = p => { const o = getPropObj(p); return [o.tipo, o.destino].filter(Boolean).join(' → '); };
   const parrafo = t => t ? `<p style="white-space:pre-wrap">${_tEsc(t)}</p>` : '<p style="color:#999">—</p>';
-  const filas = alumnos.map((a, i) => `<tr><td>${i + 1}</td><td>${_tEsc(a.nombre)}</td><td style="text-align:center">${+a[c.n] || 0}</td>
+  const filas = alumnos.map((a, i) => `<tr><td style="text-align:center">${i + 1}</td><td>${_tEsc(a.nombre)}</td><td style="text-align:center">${+a[c.n] || 0}</td>
     <td>${_tEsc((a[c.pend] || []).join(', '))}</td><td>${_tEsc(prop(a[c.prop]))}</td><td style="white-space:pre-wrap">${_tEsc(((a.sesionEval || {})[k] || {}).acuerdos || '')}</td></tr>`).join('');
   const win = _ventanaDoc();
   win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Acta de la sesión de evaluación — ${_tEsc(nivel)} ${_tEsc(grupo)} — ${FT_NOMBRE_EVAL[k]}</title>
@@ -292,8 +292,8 @@ window.generarActaSesion = function(nivel, grupo, k) {
       <h1>Acta de la sesión de evaluación · ${FT_NOMBRE_EVAL[k]}</h1>
       <div class="sub">${_tEsc(nivel)} · Grupo ${_tEsc(grupo)}${fecha ? ' · ' + _tEsc(fmtDate(fecha)) : ''}${acta.horaInicio ? ' · de ' + _tEsc(acta.horaInicio) + (acta.horaFin ? ' a ' + _tEsc(acta.horaFin) : '') : ''}${tutor ? ' · Tutor/a: ' + _tEsc(tutor) : ''}</div>
       <h2>Asistentes</h2>
-      ${asisten.length ? `<p>${asisten.map(p => `${_tEsc(p.nombre)}${p.materia || p.esTutor ? ' (' + [p.materia, p.esTutor ? 'tutor/a' : ''].filter(Boolean).map(_tEsc).join(', ') + ')' : ''}`).join('; ')}.</p>` : '<p style="color:#999">—</p>'}
-      ${faltan.length ? `<p><strong>No asisten:</strong> ${faltan.map(x => `${_tEsc(x.p.nombre)}${x.p.materia ? ' (' + _tEsc(x.p.materia) + ')' : ''}${x.s.justificacion ? ': ' + _tEsc(x.s.justificacion) : ''}`).join('; ')}.</p>` : ''}
+      ${asisten.length ? `<p>${asisten.map(p => `${_tEsc(p.nombre)}${p.materia || p.esTutor ? ' (' + [_tMateriaDeProfesor(p), p.esTutor ? 'tutor/a' : ''].filter(Boolean).map(_tEsc).join(', ') + ')' : ''}`).join('; ')}.</p>` : '<p style="color:#999">—</p>'}
+      ${faltan.length ? `<p><strong>No asisten:</strong> ${faltan.map(x => `${_tEsc(x.p.nombre)}${x.p.materia ? ' (' + _tEsc(_tMateriaDeProfesor(x.p)) + ')' : ''}${x.s.justificacion ? ': ' + _tEsc(x.s.justificacion) : ''}`).join('; ')}.</p>` : ''}
       ${sinMarcar.length ? `<p style="color:#999">Sin anotar: ${sinMarcar.map(p => _tEsc(p.nombre)).join('; ')}.</p>` : ''}
       <h2>Resultados</h2>
       <div class="cifras"><div><strong>${r.total}</strong>alumnos</div><div><strong>${r.cero}</strong>todo aprobado</div><div><strong>${r.unaDos}</strong>1 o 2 suspensas</div><div><strong>${r.tresMas}</strong>3 o más</div></div>
@@ -301,7 +301,7 @@ window.generarActaSesion = function(nivel, grupo, k) {
       <h2>Valoración general del grupo</h2>${parrafo(acta.valoracion)}
       <h2>Acuerdos del grupo</h2>${parrafo(acta.acuerdosGrupo)}
       <h2>Alumnado</h2>
-      <table><thead><tr><th>Nº</th><th>Alumno/a</th><th>Susp.</th><th>Materias</th><th>${c.propEtq}</th><th>Acuerdos</th></tr></thead><tbody>${filas}</tbody></table>
+      <table><thead><tr><th style="text-align:center">Nº</th><th>Alumno/a</th><th style="text-align:center">Susp.</th><th>Materias</th><th>${c.propEtq}</th><th>Acuerdos</th></tr></thead><tbody>${filas}</tbody></table>
       <div class="firmas"><div>Fdo.: el tutor/a${tutor ? '<br>' + _tEsc(tutor) : ''}</div><div>Vº Bº jefatura de estudios</div></div>
     </div></body></html>`);
   win.document.close();

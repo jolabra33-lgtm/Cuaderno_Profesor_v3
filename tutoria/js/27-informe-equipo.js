@@ -218,6 +218,11 @@ function _ieNombreArchivo(nivel, grupo, k) {
   return `informe-equipo-${limpio(nivel)}-${limpio(grupo)}-eval${k}-${_ieTrasSesion(nivel, grupo, String(k)) ? 'tras-la-sesion' : 'previo'}.html`;
 }
 
+// Enlace a «Redactar» de Outlook en el navegador (Microsoft 365) con destinatarios, asunto y texto.
+function _ieUrlOutlookWeb(correos, { asunto, cuerpo }) {
+  return 'https://outlook.office.com/mail/deeplink/compose?to=' + correos.map(encodeURIComponent).join(',') +
+    '&subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
+}
 /* Ventana para elegir la evaluación y qué hacer: verlo, descargar el .html o preparar el correo al equipo. */
 window.abrirInformeEquipo = function(nivel, grupo, k) {
   k = String(k || (typeof _sesEvalPropuesta === 'function' ? _sesEvalPropuesta(nivel) : '1'));
@@ -234,9 +239,11 @@ window.abrirInformeEquipo = function(nivel, grupo, k) {
       <p style="font-size:12.5px;margin:10px 0 0;padding:8px 10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border)">${tras
         ? '✅ <strong>Versión tras la sesión</strong>: incluye la propuesta y los acuerdos de cada alumno/a y la valoración y los acuerdos del grupo.'
         : '🕐 <strong>Versión previa a la sesión</strong>. Después de la sesión de evaluación vuelve a generarlo y llevará también las propuestas y los acuerdos.'}</p>
+      ${correos.length ? '<p style="font-size:12px;color:var(--text2);margin:8px 0 0">✉ El correo se abre con los destinatarios, el asunto y el texto ya puestos; el informe hay que adjuntarlo: descárgalo antes con «⬇ Descargar .html».</p>' : ''}
       <div class="tdlg-bar" style="flex-wrap:wrap">
         <button class="tdlg-no" data-acc="cerrar">Cerrar</button>
-        <button class="tdlg-no" data-acc="correo" ${correos.length ? '' : 'disabled title="Añade los correos en «👨‍🏫 Equipo docente»"'}>✉ Correo al equipo (${correos.length})</button>
+        <button class="tdlg-no" data-acc="outlook" ${correos.length ? 'title="Abre la ventana de redactar de Outlook en el navegador, con la cuenta con la que hayas entrado (la corporativa)"' : 'disabled title="Añade los correos en «👨‍🏫 Equipo docente»"'}>✉ Outlook web (${correos.length})</button>
+        <button class="tdlg-no" data-acc="correo" ${correos.length ? 'title="Abre el programa de correo de este equipo"' : 'disabled title="Añade los correos en «👨‍🏫 Equipo docente»"'}>✉ Programa de correo</button>
         <button class="tdlg-no" data-acc="ver">👁 Ver</button>
         <button class="tdlg-si" data-acc="descargar">⬇ Descargar .html</button>
       </div></div>`;
@@ -247,12 +254,22 @@ window.abrirInformeEquipo = function(nivel, grupo, k) {
       await _tGuardarArchivo(new Blob([informeEquipoHTML(nivel, grupo, k)], { type: 'text/html' }), _ieNombreArchivo(nivel, grupo, k));
       showToast('⬇ Informe guardado: envíalo al equipo docente (o pulsa «✉ Correo al equipo» y adjúntalo)');
     };
-    ov.querySelector('[data-acc="correo"]').onclick = () => {
+    const correo = () => {
       const tras = _ieTrasSesion(nivel, grupo, k);
-      const asunto = `${nivel} ${grupo} · ${FT_NOMBRE_EVAL[k]} · informe ${tras ? 'tras la sesión' : 'previo a la sesión'} de evaluación`;
-      const cuerpo = `Hola:\n\nOs adjunto el informe ${tras ? 'actualizado tras la sesión' : 'previo a la sesión'} de evaluación de ${nivel} ${grupo} (${FT_NOMBRE_EVAL[k]}${getDates(nivel)['eval' + k] ? ', ' + fmtDate(getDates(nivel)['eval' + k]) : ''}). ` +
-        `Es un archivo .html: se abre con doble clic en cualquier navegador.\n\nContiene datos del alumnado: por favor, no lo reenviéis fuera del equipo docente.\n\nUn saludo.`;
+      return { asunto: `${nivel} ${grupo} · ${FT_NOMBRE_EVAL[k]} · informe ${tras ? 'tras la sesión' : 'previo a la sesión'} de evaluación`,
+        cuerpo: `Hola:\n\nOs adjunto el informe ${tras ? 'actualizado tras la sesión' : 'previo a la sesión'} de evaluación de ${nivel} ${grupo} (${FT_NOMBRE_EVAL[k]}${getDates(nivel)['eval' + k] ? ', ' + fmtDate(getDates(nivel)['eval' + k]) : ''}). ` +
+          `Es un archivo .html: se abre con doble clic en cualquier navegador.\n\nContiene datos del alumnado: por favor, no lo reenviéis fuera del equipo docente.\n\nUn saludo.` };
+    };
+    // Programa de correo del equipo (el que esté como predeterminado).
+    ov.querySelector('[data-acc="correo"]').onclick = () => {
+      const { asunto, cuerpo } = correo();
       window.location.href = 'mailto:' + correos.map(encodeURIComponent).join(',') + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
+    };
+    // Outlook en el navegador: sale con la cuenta con la que se haya entrado allí (la corporativa @edu.gva.es),
+    // sea cual sea el programa de correo del equipo. El adjunto lo pone el tutor/a (ningún navegador deja adjuntar solo).
+    ov.querySelector('[data-acc="outlook"]').onclick = () => {
+      const w = window.open(_ieUrlOutlookWeb(correos, correo()), '_blank', 'noopener');
+      showToast(w === null ? 'ℹ Si no se ha abierto Outlook, permite las ventanas emergentes de esta página' : '✉ Outlook web abierto: adjunta el informe .html que has descargado');
     };
   };
   document.body.appendChild(ov);

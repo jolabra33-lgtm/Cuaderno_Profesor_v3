@@ -29,6 +29,8 @@ function _getAsistenciaData(nivel, grupo) {
   d.profesores.forEach(p => {
     if (!p.id) p.id = 'prof' + Math.random().toString(36).slice(2, 9);
     if (typeof p.correo !== 'string') p.correo = '';
+    // La materia sale del catálogo: sin espacios de más (los escritos a mano antes salían como «( Latín II)»).
+    if (typeof p.materia === 'string' && p.materia !== p.materia.trim()) p.materia = p.materia.trim();
   });
   // Normaliza: cada evaluación debe tener exactamente una sesión por profesor
   // (mismo índice). Si faltan (datos antiguos, guardado parcial, etc.) se

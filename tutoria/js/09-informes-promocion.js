@@ -85,13 +85,13 @@ function printPropuestasFinales() {
       </div>
       <table>
         <thead><tr>
-          <th style="width:4%">#</th>
+          <th style="width:4%" class="num">#</th>
           <th style="width:26%">Alumno/a</th>
-          <th style="width:7%">Grupo</th>
+          <th style="width:7%" class="ctr">Grupo</th>
           <th style="width:14%">Decisión final</th>
           <th style="width:15%">Destino</th>
-          <th style="width:6%">NESE</th>
-          <th style="width:6%">Rep.</th>
+          <th style="width:6%" class="ctr">NESE</th>
+          <th style="width:6%" class="ctr">Rep.</th>
           <th>Observaciones</th>
         </tr></thead>
         <tbody>${rows}</tbody>
@@ -127,6 +127,7 @@ function printPropuestasFinales() {
   tr:nth-child(even) td { background: #f5f9f7; }
   td.num { text-align: center; color: #999; font-size: 9pt; }
   td.ctr { text-align: center; }
+  th.num, th.ctr { text-align: center; }
   td.nom { font-weight: 600; }
   td.obs { font-size: 9pt; color: #444; }
   .footer { margin-top: 26px; font-size: 9pt; color: #888; border-top: 1px solid #ccc; padding-top: 8px; display: flex; justify-content: space-between; }
@@ -208,6 +209,7 @@ function _promocionaReportStyles() {
   tr:nth-child(even) td { background: #f5f9f7; }
   td.num { text-align: center; color: #999; font-size: 9pt; }
   td.ctr { text-align: center; }
+  th.num, th.ctr { text-align: center; }
   td.nom { font-weight: 600; }
   td.obs { font-size: 9pt; color: #444; }
 
@@ -354,11 +356,11 @@ function _buildPromocionaGroupSection(nivel, grupo) {
   <div class="section-label">Listado de alumnado y decisión</div>
   <table>
     <thead><tr>
-      <th style="width:34px">#</th>
+      <th style="width:34px" class="num">#</th>
       <th style="width:24%">Alumno/a</th>
-      <th style="width:48px">Rep.</th>
-      <th style="width:52px">NESE</th>
-      <th style="width:10%">${suspHeader}</th>
+      <th style="width:48px" class="ctr">Rep.</th>
+      <th style="width:52px" class="ctr">NESE</th>
+      <th style="width:10%;text-align:center">${suspHeader}</th>
       <th style="width:13%">Decisión</th>
       <th style="width:17%">Destino</th>
       <th>Observaciones</th>
@@ -483,10 +485,10 @@ function printDestinoList(propField, destino, icon, label, color) {
   <table>
     <thead>
       <tr>
-        <th style="width:4%">#</th>
+        <th style="width:4%;text-align:center">#</th>
         <th style="width:28%">Alumno/a</th>
-        <th style="width:10%">Nivel</th>
-        <th style="width:8%">Grupo</th>
+        <th style="width:10%;text-align:center">Nivel</th>
+        <th style="width:8%;text-align:center">Grupo</th>
         <th style="width:28%">CEIP de procedencia</th>
         <th>Observaciones</th>
       </tr>
@@ -602,11 +604,11 @@ function printPendientesNivel(nivel) {
   <table>
     <thead>
       <tr>
-        <th style="width:3%">#</th>
+        <th style="width:3%;text-align:center">#</th>
         <th style="width:26%">Alumno/a</th>
-        <th style="width:7%">Grupo</th>
+        <th style="width:7%;text-align:center">Grupo</th>
         ${bachThs}
-        <th style="width:5%">Nº</th>
+        <th style="width:5%;text-align:center">Nº</th>
       </tr>
     </thead>
     <tbody>${rows}</tbody>

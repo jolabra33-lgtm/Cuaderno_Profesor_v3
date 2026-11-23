@@ -21,9 +21,10 @@ Abren la app en un Chromium sin ventana y comprueban que funciona de verdad:
 | `tutoria-guardado` | Alta de alumnado en Tutoría, contador, columna del nombre, recarga |
 | `tutoria-manifiesto` | Tutoría no provoca «Actualización de aplicación disponible» dentro de la app del Cuaderno |
 | `tutoria-apostrofo` | Grupos y niveles con apóstrofo («PMAR d'Alt», «FPB l'Horta») |
-| `tutoria-texto-hostil` | Tutoría: ningún nombre, grupo, materia, observación, contacto de la familia, entrevista, acuerdo de sesión o dato recibido del Cuaderno con HTML o comillas se cuela como código ni se escapa dos veces (también en la ficha, la sesión de evaluación, las actas y «📬») |
+| `tutoria-texto-hostil` | Tutoría: ningún nombre, grupo, materia, observación, contacto de la familia, entrevista, acuerdo de sesión o dato recibido del Cuaderno con HTML o comillas se cuela como código ni se escapa dos veces (también en la ficha, la sesión de evaluación, las actas y «📬»); de paso, en todas las tablas que recorre, el título de cada columna va alineado como sus casillas |
 | `tutoria-alertas` | Alertas del alumnado (faltas, partes de los Cuadernos, suspensas, empeora, cita vencida, sin contacto), «🧭 Qué me falta», umbrales guardados con el archivo e insignia en la tabla |
 | `tutoria-ficha` | Ficha completa del alumno/a y entrevistas con la familia: alta con asistentes propuestos, próxima cita, edición, acta, guardado, borrado y deshacer |
+| `cuaderno-tablas` | Cuaderno: recorre pestañas, modos y lo que abren sus botones; en todas las tablas, el título de cada columna va alineado como sus casillas (Tutoría lo revisa en `tutoria-texto-hostil`) |
 | `cuaderno-texto-hostil` | Cuaderno: lo mismo en 20 pantallas y el buscador; una copia con identificadores manipulados no se carga |
 | `sesion-evaluacion` | Sesión de evaluación (asistencia, valoración, propuesta, acuerdos, revisado, teclado, deshacer), acta automática y ficha del grupo sin datos privados que el Cuaderno carga con «📥 De la tutoría» (vista previa, NESE, repite, pendiente de su materia, acuerdos en la ficha y en Resultados) |
 | `tutoria-informe-equipo` | Informe HTML para el equipo docente: distribución, más y menos suspensos, cada materia (media, profesor/a, evolución), comparación con la evaluación anterior, casos para comentar, descarga sin scripts ni datos privados, versión tras la sesión |

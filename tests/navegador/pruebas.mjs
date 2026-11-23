@@ -9,6 +9,8 @@ import os from 'node:os';
 import { createRequire } from 'node:module';
 import { servir, nuevaPagina, esperar, elegir, cuadernoConGrupo, tutoriaConAlumnos, llenarLocalStorage, vaciarRelleno } from './utilidades.mjs';
 import { rastrearTutoria } from './texto-hostil.mjs';
+import { instalarAuditoriaTablas } from './tablas.mjs';
+import { rastrearCuaderno } from './rastreo-cuaderno.mjs';
 import { calcularHuella, selloActual, listaCache } from '../version/huella.mjs';
 
 const require = createRequire(import.meta.url);
@@ -177,15 +179,32 @@ export const PRUEBAS = [
       const ctx = await t.navegador.newContext({ viewport: { width: 1366, height: 900 } });
       const p = await nuevaPagina(ctx); p.setDefaultTimeout(0);
       await p.goto(t.url + '/tutoria/'); await esperar(1500);
+      await instalarAuditoriaTablas(p);
       const r = await rastrearTutoria(p, { modo, completo });
       t.ok(r.clics > (completo ? 1500 : 250) && !r.fallos.length, `[${modo}] el rastreo recorre las pantallas (${r.clics} pulsaciones)`, r.fallos.join('; '));
       if (modo === 'hostil') {
         t.ok(!r.inyectados.length, 'ningún texto se convierte en un elemento de la página o de un documento', r.inyectados.slice(0, 6).join('\n        '));
         t.ok(!r.ejecutados.length, 'ningún texto se ejecuta como código', r.ejecutados.slice(0, 6).join('\n        '));
-      } else t.ok(!r.dobles.length, 'ningún texto se escapa dos veces (no se ve «&amp;» ni «&#39;»)', r.dobles.slice(0, 6).join('\n        '));
+      } else {
+        t.ok(!r.dobles.length, 'ningún texto se escapa dos veces (no se ve «&amp;» ni «&#39;»)', r.dobles.slice(0, 6).join('\n        '));
+        // De paso, en todas las pantallas y documentos que recorre: el título de cada columna, alineado como sus casillas.
+        const cols = [...new Set(r.desalineadas.map(x => x.slice(x.indexOf(' · tabla «') + 3)))];
+        t.ok(!cols.length, 'en todas las tablas, el título de cada columna va alineado como sus casillas', cols.slice(0, 6).join('\n        '));
+      }
       t.ok(!p.errores.length, `[${modo}] sin errores de JavaScript`, p.errores.slice(0, 3).join('; '));
       await ctx.close();
     }
+  } },
+
+  { nombre: 'cuaderno-tablas', descripcion: 'Cuaderno: en todas las tablas (pestañas, modos y las ventanas y documentos que abren sus botones), el título de cada columna va alineado como sus casillas', async fn(t) {
+    const p = await nuevaPagina(t.contexto); p.setDefaultTimeout(0);
+    await cuadernoConGrupo(p, t.url, { nombres: ['García López, Ana', 'Pérez Ruiz, Luis', 'Sanz Martí, Íria', 'Vidal Roca, Pau'] });
+    await instalarAuditoriaTablas(p);
+    const r = await rastrearCuaderno(p);
+    t.ok(r.clics > 300 && !r.fallos.length, `el recorrido pasa por todas las pantallas (${r.clics} pulsaciones)`, r.fallos.join('; '));
+    const cols = [...new Set(r.desalineadas.map(x => x.slice(x.indexOf(' · tabla «') + 3)))];
+    t.ok(!cols.length, 'el título de cada columna va alineado como sus casillas', cols.slice(0, 6).join('\n        '));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.slice(0, 3).join('; '));
   } },
 
   { nombre: 'cuaderno-texto-hostil', descripcion: 'Cuaderno: los textos con HTML o comillas no se cuelan como código y los archivos con identificadores manipulados no se cargan', async fn(t) {
@@ -457,6 +476,15 @@ export const PRUEBAS = [
     await p.evaluate(() => { const a = data['1º ESO'].A[0]; a.familia = [{ parentesco: 'Madre', nombre: 'López Sanz, Marta', email: 'm@correo.es', telefono: '' }]; tutores['1º ESO-A'] = 'Gil Mora, Eva'; renderMain(); });
     await p.locator('#mainContent button[aria-label="Ficha completa del alumno/a"]').first().click(); await esperar(300);
     t.ok(/García López, Ana/.test(await p.textContent('#fichaCab')), 'el botón 👤 abre la ficha del alumno/a');
+    // «Notas recibidas del equipo docente»: los títulos I, II, III y Final, centrados sobre sus notas.
+    await p.evaluate(() => { data['1º ESO'].A[0].porMateria = { 'Matemáticas': { profesor: 'Zapata Ruiz, Luis', notas: { 1: 4, 2: 6.5, 3: 7, final: 7 } } }; });
+    await p.click('#fichaPestanas button:has-text("Académico")'); await esperar(150);
+    const desvio = await p.evaluate(() => { const tablas = [...document.querySelectorAll('#fichaBody table')], medio = el => { const r = (el.querySelector('span') || el).getBoundingClientRect(); return r.left + r.width / 2; };
+      const t2 = tablas[1], ths = [...t2.querySelectorAll('thead th')].slice(1), tds = [...t2.querySelectorAll('tbody tr:first-child td')];
+      const t1 = tablas[0], th1 = t1.querySelectorAll('thead th')[1], td1 = t1.querySelector('tbody tr td');
+      const centroTexto = th => { const rg = document.createRange(); rg.selectNodeContents(th); const r = rg.getBoundingClientRect(); return r.left + r.width / 2; };
+      return [...ths.map((th, i) => Math.abs(centroTexto(th) - medio(tds[i]))), Math.abs(centroTexto(th1) - medio(td1))].map(Math.round); });
+    t.ok(desvio.length === 5 && desvio.every(d => d <= 3), 'en «Académico», los títulos I, II, III, Final y Suspensas quedan centrados sobre sus números', JSON.stringify(desvio));
     for (const pest of ['Académico', 'Faltas y convivencia', 'Seguimientos', 'Resumen']) { await p.click(`#fichaPestanas button:has-text("${pest}")`); await esperar(120); }
     await p.fill('#fichaBody textarea[aria-label="Observaciones del alumno/a"]', 'Le cuesta organizarse.');
     await p.dispatchEvent('#fichaBody textarea[aria-label="Observaciones del alumno/a"]', 'change');
@@ -578,6 +606,17 @@ export const PRUEBAS = [
     await p.click('#mainContent .mas-menu > summary'); await p.click('#mainContent button:has-text("Informe para el equipo docente")'); await esperar(200);
     await p.selectOption('#informeEquipoOv #ieEval', '2'); await esperar(100);
     t.ok(/Versión previa a la sesión/.test(await p.textContent('#informeEquipoOv')), 'la ventana avisa de que es la versión previa');
+    // Correo: «Outlook web» abre la ventana de redactar de Outlook en el navegador (cuenta corporativa); el de siempre sigue.
+    await p.evaluate(() => { const d = _getAsistenciaData('2º ESO', 'A'); d.profesores.forEach((x, i) => { x.correo = `profe${i}@edu.gva.es`; });
+      window.__abiertas = []; window.open = (u, dest, op) => { window.__abiertas.push([u, dest, op]); return {}; }; });
+    await p.selectOption('#informeEquipoOv #ieEval', '1'); await p.selectOption('#informeEquipoOv #ieEval', '2'); await esperar(100);
+    await p.click('#informeEquipoOv button:has-text("Outlook web")'); await esperar(100);
+    const ow = await p.evaluate(() => ({ abiertas: window.__abiertas, n: _getAsistenciaData('2º ESO', 'A').profesores.length, botones: [...document.querySelectorAll('#informeEquipoOv button')].map(b => b.textContent.trim()) }));
+    const url = new URL(ow.abiertas[0]?.[0] || 'about:blank');
+    t.ok(url.origin === 'https://outlook.office.com' && url.pathname === '/mail/deeplink/compose' && url.searchParams.get('to').split(',').length === ow.n && /^profe0@edu\.gva\.es/.test(url.searchParams.get('to')) &&
+      /2º ESO A · II Evaluación · informe previo/.test(url.searchParams.get('subject')) && /Os adjunto el informe/.test(url.searchParams.get('body')) && ow.abiertas[0][1] === '_blank',
+      '«✉ Outlook web» abre «Redactar» de Outlook en el navegador con destinatarios, asunto y texto', JSON.stringify(ow).slice(0, 400));
+    t.ok(ow.botones.some(b => /Programa de correo/.test(b)) && /adjuntarlo: descárgalo antes/.test(await p.textContent('#informeEquipoOv')), 'sigue el botón del programa de correo del equipo y explica que el .html se adjunta a mano', JSON.stringify(ow.botones));
     const bajada = p.waitForEvent('download');
     await p.click('#informeEquipoOv button:has-text("Descargar")');
     const arch = await bajada; const fs = await import('node:fs');
@@ -840,6 +879,20 @@ export const PRUEBAS = [
     // Al importar del Cuaderno se propone el nombre del catálogo.
     r = await p.evaluate(() => { const cat = getMateriasParaNivel('2º Bach.', 'HS'); return ['Matemáticas aplicadas a la CCSS II', 'Empresa y diseño de modelos de negocio', 'Educación Física', 'Matemáticas', 'Lengua extranjera II (Francés)'].map(m => _tMateriaParecida(m, cat)); });
     t.ok(JSON.stringify(r) === JSON.stringify(['Matemáticas CCSS II', 'Empresa y Diseño de Mod. de Negocio', '', '', '']), 'nombres del Cuaderno → catálogo, sin inventar cuando no está claro', JSON.stringify(r));
+    // Espacios de más (datos escritos a mano antes): fuera, en el equipo docente y en ⚙ Materias. Y el acta de la sesión dice quién es sustituto/a.
+    r = await p.evaluate(() => { const d = _getAsistenciaData('2º Bach.', 'HS'); d.profesores.push({ id: 'pl', nombre: 'Pitarch Mafe, Gracia', materia: ' Latín II ', correo: '' });
+      ['eval1', 'eval2', 'eval3'].forEach(k => d.sesiones[k].push({ asistio: true, justificacion: '' }));
+      d.sesiones.eval1.forEach(x => { x.asistio = true; });
+      _materiasCustom[_tClaveCatalogo('2º Bach.', 'HS')].push('  Griego II '); const cat = getMateriasParaNivel('2º Bach.', 'HS');
+      const prof = _getAsistenciaData('2º Bach.', 'HS').profesores.find(x => x.id === 'pl').materia;
+      closeEquipoDocente(); generarActaSesion('2º Bach.', 'HS', '1');
+      return { prof, griego: cat.includes('Griego II') && !cat.some(m => m !== m.trim()) }; });
+    await esperar(400);
+    Object.assign(r, await p.evaluate(() => { const texto = document.querySelector('.tdoc-ov iframe')?.contentDocument?.body?.textContent || ''; window.__cerrarVistaDocT();
+      return { sustituto: /Sanz Leal, Leo \(Producción Musical \(sustituto\/a\)\)/.test(texto), latin: /Pitarch Mafe, Gracia \(Latín II\)/.test(texto) }; }));
+    t.ok(r.prof === 'Latín II' && r.griego, 'los nombres de materia con espacios de más se limpian (equipo docente y ⚙ Materias)', JSON.stringify(r));
+    t.ok(r.sustituto && r.latin, 'el acta de la sesión pone «(sustituto/a)» a quien sustituye y la materia sin espacios', JSON.stringify(r));
+    await p.evaluate(() => openEquipoDocente('2º Bach.', 'HS')); await esperar(150);
     // «✍️ Datos de una materia»: solo se guardan materias de ⚙ Materias; los nombres antiguos se ven aparte y se pasan.
     await p.evaluate(() => { closeEquipoDocente(); window.__dialogosAuto = { confirmar: true }; window.__dialogosLog = [];
       const a = data['2º Bach.'].HS[0]; a.porMateria['Hist. del Arte'] = { origen: 'manual', notas: { 1: 4 }, faltas: {}, convivencia: {}, comentarios: {} }; a.pendientes1.push('Hist. del Arte');
