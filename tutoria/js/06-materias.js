@@ -433,6 +433,10 @@ function _tRenombrarEnGruposDelCatalogo(clave, de, a, comprobar) {
   });
   return { choque, profes, alumnos };
 }
+// Si la tabla de ese grupo está a la vista, se redibuja (si se está en otra pantalla, se verá al volver).
+function _tRefrescarTablaGrupo(nivel, grupo) {
+  if (nivel === currentNivel && grupo === currentGrupos[currentNivel] && GRUPOS_POR_NIVEL[nivel] && typeof updateTable === 'function') updateTable(nivel, grupo);
+}
 // La materia de un profesor/a para mostrarla: «Producción Musical (sustituto/a)».
 function _tMateriaDeProfesor(p) { const m = String((p && p.materia) || '').trim(); return m && p.sustituto ? m + ' (sustituto/a)' : m; }
 // El profesor/a de una materia en el equipo docente: si hay titular y sustituto/a, quien da la clase ahora (el sustituto/a).

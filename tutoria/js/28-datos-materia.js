@@ -41,12 +41,16 @@ function _dmMateriasGrupos(nivel, grupo, k) {
   const catalogo = getMateriasParaNivel(nivel, grupo) || [];
   const pos = m => { const i = catalogo.findIndex(x => _tNorm(x) === _tNorm(m)); return i < 0 ? 999 : i; };
   const lista = () => { const out = []; out.add = m => { m = String(m || '').trim(); if (m && _tNorm(m) !== 'tutoria' && !out.some(x => _tNorm(x) === _tNorm(m))) out.push(m); }; return out; };
-  const delGrupo = lista(), otras = lista();
-  _ieMateriasGrupo(nivel, grupo, k).forEach(delGrupo.add);
-  (data[nivel]?.[grupo] || []).forEach(a => Object.keys(a.porMateria || {}).forEach(delGrupo.add));
+  // ⚙ Materias manda: solo se eligen materias del catálogo (con su nombre de allí). Las que el grupo tiene con
+  // otro nombre van aparte («fuera»): se pueden ver y pasar a una del catálogo, pero no se guarda con ellas.
+  const delGrupo = lista(), otras = lista(), fuera = lista();
+  const usadas = lista();
+  _ieMateriasGrupo(nivel, grupo, k).forEach(usadas.add);
+  (data[nivel]?.[grupo] || []).forEach(a => Object.keys(a.porMateria || {}).forEach(usadas.add));
+  usadas.forEach(m => { const c = _tMatEnCatalogo(m, catalogo); if (c) delGrupo.add(c); else fuera.add(m); });
   delGrupo.sort((x, y) => pos(x) - pos(y) || x.localeCompare(y, 'es'));
   catalogo.forEach(m => { if (!delGrupo.some(x => _tNorm(x) === _tNorm(m))) otras.add(m); });
-  return { delGrupo: [...delGrupo], otras: [...otras] };
+  return { delGrupo: [...delGrupo], otras: [...otras], fuera: [...fuera].sort((x, y) => x.localeCompare(y, 'es')) };
 }
 function _dmEntrada(a, materia) {
   const pm = a.porMateria || {};
@@ -94,7 +98,8 @@ window.openDatosMateria = async function(nivel, grupo, k, materia) {
   if (!materia) {
     // Propuesta: la primera materia del equipo docente que aún no tiene datos de esta evaluación.
     const periodo = _DM_PERIODOS_NOTA[k][_DM_PERIODOS_NOTA[k].length - 1];
-    const equipo = _getAsistenciaData(nivel, grupo).profesores.map(p => p.materia).filter(m => (m || '').trim() && _tNorm(m) !== 'tutoria');
+    const cat = getMateriasParaNivel(nivel, grupo) || [];
+    const equipo = _getAsistenciaData(nivel, grupo).profesores.map(p => _tMatEnCatalogo(p.materia, cat)).filter(Boolean);
     materia = equipo.find(m => !_infResumenMateria(nivel, grupo, m, periodo).hayDatos) || equipo[0] || '';
   }
   let solo = false; try { solo = localStorage.getItem('tut_dm_solo') === '1'; } catch (e) {}
@@ -135,9 +140,38 @@ window._dmCambiar = async function(campo, valor) {
 // Desplegable de materias: «➕ Otra materia…» muestra un cuadro para escribirla.
 window._dmElegirMateria = function(v) {
   if (v !== '__otra') { _dmCambiar('materia', v); return; }
+  // La que se escriba se añade a ⚙ Materias (ver _dmOtraMateria).
   const sel = document.getElementById('dmMateriaSel'), otra = document.getElementById('dmMateriaOtra');
   if (sel) sel.value = _dmCtx.materia || '';
   if (otra) { otra.hidden = false; otra.focus(); }
+};
+// «➕ Otra materia»: lo escrito se añade a ⚙ Materias del nivel y se elige.
+window._dmOtraMateria = function(t) {
+  t = String(t || '').trim(); if (!t) return;
+  const m = _tAnadirAlCatalogo(_dmCtx.nivel, _dmCtx.grupo, t);
+  showToast(`✅ «${m}» está en ⚙ Materias de ${_dmCtx.nivel}`);
+  _dmCambiar('materia', m);
+};
+/* Una materia que el grupo tiene con un nombre que no está en ⚙ Materias: se puede ver, y pasarla a la del
+   catálogo (también en el alumnado y el equipo docente del grupo) o añadirla al catálogo. */
+function _dmAvisoFueraHTML(materia) {
+  const cat = getMateriasParaNivel(_dmCtx.nivel, _dmCtx.grupo) || [], prop = _tMateriaParecida(materia, cat);
+  return `<div class="eq-mat-hint" role="status"><span style="flex:1 1 260px">⚠ «${_tEsc(materia)}» no está en ⚙ Materias de ${_tEsc(_dmCtx.nivel)}: puedes ver sus datos, pero para guardar hay que pasarla a una materia del catálogo${prop ? ` (¿es <strong>«${_tEsc(prop)}»</strong>?)` : ''}.</span>
+    ${prop ? `<button type="button" class="btn btn-ghost btn-sm" onclick="_dmPasarMateria('${jsAttr(prop)}')">✓ Pasar a «${_tEsc(prop)}»</button>` : ''}
+    <button type="button" class="btn btn-ghost btn-sm" onclick="_dmPasarMateria(null)">＋ Añadir «${_tEsc(_tSinSustituto(materia))}» a ⚙ Materias</button></div>`;
+}
+window._dmPasarMateria = async function(destino) {
+  if (!(await _dmPuedeSalir())) return;
+  const { nivel, grupo } = _dmCtx, antes = _dmCtx.materia;
+  destino = destino || _tAnadirAlCatalogo(nivel, grupo, _tSinSustituto(antes));
+  const r = _tRenombrarMateriaGrupo(nivel, grupo, antes, destino);
+  if (r.choque) { mostrarAviso(`No se ha cambiado: ${r.choque.length === 1 ? 'un alumno/a ya tiene' : r.choque.length + ' alumnos/as ya tienen'} datos de «${destino}» y también de «${antes}» (${r.choque.slice(0, 3).map(a => a.nombre).join('; ')}), y se mezclarían. Revisa cuál es cuál.`); return; }
+  _getAsistenciaData(nivel, grupo).profesores.forEach(p => { if (_tNorm(p.materia) === _tNorm(antes)) { if (_tEsSustituto(p.materia)) p.sustituto = true; p.materia = destino; } });
+  markDirty();
+  _tRefrescarTablaGrupo(nivel, grupo);
+  showToast(`✅ «${antes}» es ahora «${destino}» en ${nivel} ${grupo}`);
+  _dmCtx.cambios = false;
+  await _dmCambiar('materia', destino);
 };
 function _dmPeriodo(k) { return _DM_PERIODOS_NOTA[k][_DM_PERIODOS_NOTA[k].length - 1]; }
 // La materia que va después de la actual (en el orden del desplegable de antes de guardar): la siguiente
@@ -162,7 +196,8 @@ window._dmGuardarYSiguiente = async function() {
 function renderDatosMateria() {
   const { nivel, grupo, k, materia, profesor, filas } = _dmCtx;
   const grupos = _dmMateriasGrupos(nivel, grupo, k);
-  if (materia && !grupos.delGrupo.concat(grupos.otras).some(m => _tNorm(m) === _tNorm(materia))) grupos.delGrupo.push(materia);
+  if (materia && !grupos.delGrupo.concat(grupos.otras, grupos.fuera).some(m => _tNorm(m) === _tNorm(materia))) grupos.fuera.push(materia);
+  const fueraDeCatalogo = !!materia && !_tMatEnCatalogo(materia, getMateriasParaNivel(nivel, grupo) || []);
   const conDatos = m => _infResumenMateria(nivel, grupo, m, _dmPeriodo(k)).hayDatos;
   const alumnos = _dmAlumnos();
   document.getElementById('dmCab').innerHTML = `
@@ -178,9 +213,11 @@ function renderDatosMateria() {
           ${materia ? '' : '<option value="" selected>— Elige la materia —</option>'}
           ${[['Materias del grupo', grupos.delGrupo], ['Otras materias del nivel', grupos.otras]].filter(([, l]) => l.length).map(([etq, l]) => `<optgroup label="${etq}">${l.map(m =>
             `<option value="${_tEsc(m)}" ${_tNorm(m) === _tNorm(materia) ? 'selected' : ''}>${conDatos(m) ? '✓ ' : ''}${_tEsc(m)}</option>`).join('')}</optgroup>`).join('')}
-          <option value="__otra">➕ Otra materia…</option>
+          ${grupos.fuera.length ? `<optgroup label="⚠ Fuera de ⚙ Materias (solo para consultar)">${grupos.fuera.map(m =>
+            `<option value="${_tEsc(m)}" ${_tNorm(m) === _tNorm(materia) ? 'selected' : ''}>⚠ ${_tEsc(m)}</option>`).join('')}</optgroup>` : ''}
+          <option value="__otra">➕ Otra materia (se añade a ⚙ Materias)…</option>
         </select>
-        <input id="dmMateriaOtra" hidden placeholder="Escribe la materia y pulsa Intro" style="margin-top:4px" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" onchange="if(this.value.trim())_dmCambiar('materia',this.value.trim())"></label>
+        <input id="dmMateriaOtra" hidden placeholder="Escribe la materia y pulsa Intro" style="margin-top:4px" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" onchange="_dmOtraMateria(this.value)"></label>
       <label class="ent-form-campo"><span>Profesor/a (Apellidos, Nombre)</span><input value="${_tEsc(profesor)}" placeholder="Se añade al equipo docente" oninput="_dmCtx.profesor=this.value;_dmCtx.cambios=true"></label>
     </div>`;
   const cab = _DM_COLS.map(c => `<th scope="col"${c.ancho ? ` style="width:${c.ancho}px"` : ''}${c.ayuda ? ` title="${_tEsc(c.ayuda)}"` : ''}>${c.etq}</th>`).join('');
@@ -191,8 +228,8 @@ function renderDatosMateria() {
     return `<td><input class="dm-in" data-r="${i}" data-c="${c.k}" value="${_tEsc(v)}"${dis} inputmode="${c.tipo === 'nota' ? 'decimal' : 'numeric'}" aria-label="${_tEsc(c.etq)} de ${_tEsc(alumnos[i].nombre)}"></td>`;
   };
   document.getElementById('dmBody').innerHTML = !materia
-    ? '<p class="ficha-vacio">Elige o escribe la materia.</p>'
-    : `<p style="font-size:12px;color:var(--text2);margin:0 0 6px">⌨️ Intro baja a la fila siguiente. 📋 Puedes copiar una columna (o varias) de Excel y pegarla en la primera casilla: se reparte hacia abajo y hacia la derecha, saltándose a quien no la cursa. La casilla <strong>Susp.</strong> se marca sola con una nota menor que 5; sin nota, márcala tú. En optativas, Inglés o Francés y Religión, marca <strong>No la cursa</strong> (se recuerda en las demás evaluaciones).</p>
+    ? '<p class="ficha-vacio">Elige la materia.</p>'
+    : (fueraDeCatalogo ? _dmAvisoFueraHTML(materia) : '') + `<p style="font-size:12px;color:var(--text2);margin:0 0 6px">⌨️ Intro baja a la fila siguiente. 📋 Puedes copiar una columna (o varias) de Excel y pegarla en la primera casilla: se reparte hacia abajo y hacia la derecha, saltándose a quien no la cursa. La casilla <strong>Susp.</strong> se marca sola con una nota menor que 5; sin nota, márcala tú. En optativas, Inglés o Francés y Religión, marca <strong>No la cursa</strong> (se recuerda en las demás evaluaciones).</p>
       <div class="dm-acciones">
         <label><input type="checkbox" id="dmSolo" ${_dmCtx.solo ? 'checked' : ''}> Ver solo a quien la cursa</label>
         <button class="btn btn-ghost btn-sm" id="dmBlancoNC" title="Para optativas: después de meter las notas de quien la cursa, marca al resto">🚫 Quien está en blanco no la cursa</button>
@@ -299,6 +336,10 @@ function _dmEnlazar() {
 window.guardarDatosMateria = function() {
   const { nivel, grupo, k } = _dmCtx, materia = String(_dmCtx.materia || '').trim();
   if (!materia) { mostrarAviso('Elige la materia.'); return false; }
+  if (!_tMatEnCatalogo(materia, getMateriasParaNivel(nivel, grupo) || [])) {
+    mostrarAviso(`«${materia}» no está en ⚙ Materias de ${nivel}, así que no se guarda con ese nombre: las suspensas no saldrían en su sitio en la columna de pendientes. Pásala a una materia del catálogo (o añádela) con los botones de arriba.`);
+    return false;
+  }
   // Validación: notas de 0 a 10 y números enteros; las casillas mal escritas se marcan.
   let malas = 0;
   document.querySelectorAll('#dmBody input.dm-in').forEach(inp => {

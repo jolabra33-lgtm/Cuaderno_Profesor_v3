@@ -708,7 +708,9 @@ export const PRUEBAS = [
     const N = '2º Bach.';
     await tutoriaConAlumnos(p, t.url, N, 'HS', ['Andrés Lozano, Claudia', 'Barabaschi Godoy, Santiago', 'Bataller Martínez, Nuria', 'Boente Barberá, Paula']);
     const pegar = (r, txt) => p.evaluate(({ r, txt }) => { const inp = document.querySelector(`#dmBody input[data-r="${r}"][data-c="nota"]`), dt = new DataTransfer(); dt.setData('text/plain', txt); inp.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }, { r, txt });
-    await p.evaluate(N => { ['Historia de España|Pérez Gil, Ana', 'Inglés II|Gil Mora, Eva', 'Francés II|Roig Puig, Pau'].forEach(x => { const [m, pr] = x.split('|'); _tAplicarProfesor(N, 'HS', m, pr); });
+    // Inglés II y Francés II no vienen en la plantilla de 2.º Bach.: se añaden a ⚙ Materias, como haría el tutor/a (ahí manda el catálogo).
+    await p.evaluate(N => { ['Inglés II', 'Francés II'].forEach(m => _tAnadirAlCatalogo(N, 'HS', m));
+      ['Historia de España|Pérez Gil, Ana', 'Inglés II|Gil Mora, Eva', 'Francés II|Roig Puig, Pau'].forEach(x => { const [m, pr] = x.split('|'); _tAplicarProfesor(N, 'HS', m, pr); });
       currentGrupos[N] = 'HS'; selectNivel(N); openDatosMateria(N, 'HS', '1', 'Francés II'); }, N); await esperar(200);
     // Francés: solo Barabaschi (1) y Boente (3). Se marca al resto, se ven solo quienes la cursan y se pega la columna del profesor/a.
     await p.check('#dmBody input[data-r="0"][data-c="nc"]'); await p.check('#dmBody input[data-r="2"][data-c="nc"]');
@@ -838,6 +840,44 @@ export const PRUEBAS = [
     // Al importar del Cuaderno se propone el nombre del catálogo.
     r = await p.evaluate(() => { const cat = getMateriasParaNivel('2º Bach.', 'HS'); return ['Matemáticas aplicadas a la CCSS II', 'Empresa y diseño de modelos de negocio', 'Educación Física', 'Matemáticas', 'Lengua extranjera II (Francés)'].map(m => _tMateriaParecida(m, cat)); });
     t.ok(JSON.stringify(r) === JSON.stringify(['Matemáticas CCSS II', 'Empresa y Diseño de Mod. de Negocio', '', '', '']), 'nombres del Cuaderno → catálogo, sin inventar cuando no está claro', JSON.stringify(r));
+    // «✍️ Datos de una materia»: solo se guardan materias de ⚙ Materias; los nombres antiguos se ven aparte y se pasan.
+    await p.evaluate(() => { closeEquipoDocente(); window.__dialogosAuto = { confirmar: true }; window.__dialogosLog = [];
+      const a = data['2º Bach.'].HS[0]; a.porMateria['Hist. del Arte'] = { origen: 'manual', notas: { 1: 4 }, faltas: {}, convivencia: {}, comentarios: {} }; a.pendientes1.push('Hist. del Arte');
+      openDatosMateria('2º Bach.', 'HS', '1'); }); await esperar(200);
+    r = await p.$$eval('#dmMateriaSel optgroup', g => g.map(x => [x.label, [...x.children].map(o => o.value)]));
+    const fueraDm = (r.find(x => /Fuera de ⚙ Materias/.test(x[0])) || [])[1] || [], delGrupoDm = (r.find(x => x[0] === 'Materias del grupo') || [])[1] || [];
+    t.ok(fueraDm.includes('Hist. del Arte') && fueraDm.includes('Religión Católica') && !delGrupoDm.includes('Hist. del Arte') && delGrupoDm.includes('Matemáticas CCSS II'),
+      '«Datos de una materia»: las del grupo son las de ⚙ Materias; los nombres antiguos van aparte, «fuera de ⚙ Materias»', JSON.stringify(r).slice(0, 400));
+    await p.selectOption('#dmMateriaSel', 'Hist. del Arte'); await esperar(200);
+    r = await p.evaluate(() => ({ aviso: (document.querySelector('#dmBody .eq-mat-hint') || {}).textContent || '', guarda: guardarDatosMateria(), dialogos: window.__dialogosLog }));
+    t.ok(/no está en ⚙ Materias/.test(r.aviso) && /Pasar a «Historia del Arte»/.test(r.aviso) && r.guarda === false && /no se guarda con ese nombre/.test(r.dialogos.join(' ')),
+      'con un nombre antiguo se ven sus datos, pero no se guarda: propone pasarla a la del catálogo', JSON.stringify(r).slice(0, 300));
+    await p.click('#dmBody button:has-text("Pasar a «Historia del Arte»")'); await esperar(300);
+    r = await p.evaluate(() => { const a = data['2º Bach.'].HS[0]; return { m: _dmCtx.materia, pm: Object.keys(a.porMateria), pend: a.pendientes1, nota: (document.querySelector('#dmBody input[data-r="0"][data-c="nota"]') || {}).value }; });
+    t.ok(r.m === 'Historia del Arte' && r.pm.includes('Historia del Arte') && !r.pm.includes('Hist. del Arte') && r.pend.includes('Historia del Arte') && r.nota === '4',
+      '«Pasar a…» la cambia en el alumnado y la abre ya con su nombre del catálogo (con sus datos)', JSON.stringify(r));
+    await p.evaluate(() => _dmOtraMateria('Economía de la Empresa')); await esperar(200);
+    r = await p.evaluate(() => ({ m: _dmCtx.materia, cat: getMateriasParaNivel('2º Bach.', 'HS').includes('Economía de la Empresa') }));
+    t.ok(r.m === 'Economía de la Empresa' && r.cat, '«➕ Otra materia» la añade a ⚙ Materias antes de usarla', JSON.stringify(r));
+    await p.evaluate(() => { _dmCtx.cambios = false; closeDatosMateria(); }); await esperar(150);
+    // Importar del Cuaderno: la materia se elige de ⚙ Materias (la más parecida ya elegida) o se añade.
+    const paquete = nombre => ({ formato: 'cuaderno-a-tutoria', version: 1, materia: nombre, curso: '2.º Bach.', grupo: '2º Bach. HS', generado: new Date().toISOString(), alumnos: [{ nombre: 'Andrés Lozano, Claudia', notas: { 1: 3 } }] });
+    await p.evaluate(o => _tImpCuadernoModal(o, 'a.json', { nivel: '2º Bach.', grupo: 'HS' }), paquete('Empresa y diseño de modelos de negocio')); await esperar(300);
+    r = await p.evaluate(() => ({ tag: document.getElementById('impCMateria').tagName, valor: document.getElementById('impCMateria').value, resumen: document.getElementById('impCResumen').textContent }));
+    t.ok(r.tag === 'SELECT' && r.valor === 'Empresa y Diseño de Mod. de Negocio' && /En el Cuaderno se llama/.test(r.resumen), 'al importar, la materia es un desplegable de ⚙ Materias con la equivalente ya elegida', JSON.stringify(r).slice(0, 300));
+    await p.click('#impCOk'); await esperar(400);
+    const claudia = () => data['2º Bach.'].HS.find(a => a.nombre === 'Andrés Lozano, Claudia');
+    await p.addScriptTag({ content: `window.claudia = ${claudia.toString()};` });
+    t.ok(await p.evaluate(() => (claudia().pendientes1 || []).includes('Empresa y Diseño de Mod. de Negocio')), 'y la suspensa llega con el nombre del catálogo');
+    await p.evaluate(o => _tImpCuadernoModal(o, 'b.json', { nivel: '2º Bach.', grupo: 'HS' }), paquete('Psicología')); await esperar(300);
+    r = await p.evaluate(() => { const s = document.getElementById('impCMateria'); return { valor: s.value, anadir: [...s.options].some(o => o.value === '__anadir' && /Añadir «Psicología»/.test(o.textContent)) }; });
+    t.ok(r.valor === '' && r.anadir, 'si no está en ⚙ Materias, no se elige ninguna sola: se ofrece añadirla', JSON.stringify(r));
+    await p.click('#impCOk'); await esperar(200);
+    const ultimo = await p.evaluate(() => (window.__dialogosLog || []).slice(-1)[0] || '');
+    t.ok(/Elige la materia de ⚙ Materias/.test(ultimo), 'sin elegir materia no se importa', ultimo);
+    await p.selectOption('#impCMateria', '__anadir'); await esperar(200); await p.click('#impCOk'); await esperar(400);
+    r = await p.evaluate(() => ({ cat: getMateriasParaNivel('2º Bach.', 'HS').includes('Psicología'), pend: claudia().pendientes1 }));
+    t.ok(r.cat && r.pend.includes('Psicología'), '«＋ Añadir» la pone en ⚙ Materias y se importa con ella', JSON.stringify(r));
     // ⚙ Materias: cambiar un nombre lo cambia en todos los grupos que comparten la lista; quitar una avisa si se usa.
     await p.evaluate(() => { window.__dialogosAuto = undefined; window.__dialogosLog = [];
       const d = _getAsistenciaData('2º Bach.', 'A'); d.profesores.push({ id: 'pa', nombre: 'Soler Puig, Marta', materia: 'Matemáticas CCSS II', correo: '' });

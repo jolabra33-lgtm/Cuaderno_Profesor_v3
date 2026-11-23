@@ -184,7 +184,7 @@ async function _eqCambiarMateria(p, destino, mover) {
         (_tEsSustituto(antes) ? '' : ` Si en realidad son dos materias distintas, cancela y usa «＋ Añadir a ⚙ Materias».`), { ok: 'Cambiar solo el profesor/a', peligro: false });
       if (!solo) { renderEquipoDocenteBody(); return false; }
     }
-    if (r.alumnos && typeof renderMain === 'function') renderMain();
+    if (r.alumnos) _tRefrescarTablaGrupo(nivel, grupo);
   } else if (mover && antes && antes !== destino) {
     _tRenombrarMateriaGrupo(nivel, grupo, antes, destino);   // solo cambian mayúsculas o tildes
   }
