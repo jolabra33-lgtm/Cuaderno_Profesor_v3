@@ -838,10 +838,40 @@ export const PRUEBAS = [
     // Al importar del Cuaderno se propone el nombre del catálogo.
     r = await p.evaluate(() => { const cat = getMateriasParaNivel('2º Bach.', 'HS'); return ['Matemáticas aplicadas a la CCSS II', 'Empresa y diseño de modelos de negocio', 'Educación Física', 'Matemáticas', 'Lengua extranjera II (Francés)'].map(m => _tMateriaParecida(m, cat)); });
     t.ok(JSON.stringify(r) === JSON.stringify(['Matemáticas CCSS II', 'Empresa y Diseño de Mod. de Negocio', '', '', '']), 'nombres del Cuaderno → catálogo, sin inventar cuando no está claro', JSON.stringify(r));
+    // ⚙ Materias: cambiar un nombre lo cambia en todos los grupos que comparten la lista; quitar una avisa si se usa.
+    await p.evaluate(() => { window.__dialogosAuto = undefined; window.__dialogosLog = [];
+      const d = _getAsistenciaData('2º Bach.', 'A'); d.profesores.push({ id: 'pa', nombre: 'Soler Puig, Marta', materia: 'Matemáticas CCSS II', correo: '' });
+      ['eval1', 'eval2', 'eval3'].forEach(k => d.sesiones[k].push({ asistio: null, justificacion: '' }));
+      data['2º Bach.'].A = [{ nombre: 'Bosch Vila, Nil', pendientes1: ['Matemáticas CCSS II'], eval1: 1 }];
+      closeEquipoDocente(); renderMaterias(); document.getElementById('matLevelTab-2__Bach_').click(); });
+    await esperar(200);
+    await p.locator('#matEditorArea .mat-name', { hasText: /^Matemáticas CCSS II$/ }).dblclick();
+    await p.keyboard.press('Control+A'); await p.keyboard.type('Matemáticas aplicadas a las CCSS II'); await p.keyboard.press('Enter'); await esperar(300);
+    r = await p.evaluate(() => ({ cat: getMateriasParaNivel('2º Bach.', 'HS'), catA: getMateriasParaNivel('2º Bach.', 'A'), hs: _getAsistenciaData('2º Bach.', 'HS').profesores[1].materia, a: _getAsistenciaData('2º Bach.', 'A').profesores.find(x => x.id === 'pa').materia,
+      pendHS: data['2º Bach.'].HS[0].pendientes1, pmHS: Object.keys(data['2º Bach.'].HS[0].porMateria), pendA: data['2º Bach.'].A[0].pendientes1, toast: (document.getElementById('toast') || document.body).textContent }));
+    const NUEVO = 'Matemáticas aplicadas a las CCSS II';
+    t.ok(r.cat.includes(NUEVO) && !r.cat.includes('Matemáticas CCSS II') && r.catA.includes(NUEVO), 'renombrar en ⚙ Materias cambia la lista del curso (la comparten sus grupos)', JSON.stringify(r).slice(0, 200));
+    t.ok(r.hs === NUEVO && r.a === NUEVO && r.pendHS.includes(NUEVO) && r.pmHS.includes(NUEVO) && r.pendA.includes(NUEVO) && !r.pendHS.includes('Matemáticas CCSS II'),
+      'y también el equipo docente y las suspensas y notas del alumnado de todos esos grupos', JSON.stringify(r).slice(0, 400));
+    r = await p.evaluate(() => { const res = _tRenombrarEnGruposDelCatalogo('2º Bach.', 'Religión Católica', 'Religión'); const pm = data['2º Bach.'].HS[1].porMateria; return { choque: res.choque.length, notas: [pm['Religión Católica']?.notas[1], pm['Religión']?.notas[1]] }; });
+    t.ok(r.choque === 1 && r.notas[0] === 8 && r.notas[1] === 7, 'si renombrar juntaría las notas de dos materias en un alumno/a, no se toca ningún dato', JSON.stringify(r));
+    const quitar = nombre => p.evaluate(n => { const i = getMateriasParaNivel('2º Bach.', 'HS').indexOf(n); return _matDel('2º Bach.', i); }, nombre);
+    await quitar('Química'); await esperar(150);
+    r = await p.evaluate(() => ({ cat: getMateriasParaNivel('2º Bach.', 'HS'), dialogos: window.__dialogosLog }));
+    t.ok(!r.cat.includes('Química') && !r.dialogos.length, 'quitar una materia que nadie usa: sin preguntas', JSON.stringify(r.dialogos));
+    await p.evaluate(() => { window.__dialogosAuto = { confirmar: false }; }); await quitar(NUEVO); await esperar(150);
+    r = await p.evaluate(() => ({ cat: getMateriasParaNivel('2º Bach.', 'HS'), dialogos: window.__dialogosLog }));
+    t.ok(r.cat.includes(NUEVO) && /la usan 2 profesores\/as del equipo docente y 2 alumnos\/as/.test(r.dialogos[0] || '') && /2º Bach\. A/.test(r.dialogos[0]) && /no se borra ningún dato/.test(r.dialogos[0]),
+      'quitar una que se usa avisa antes (quién la usa y en qué grupos) y, si se cancela, no la quita', JSON.stringify(r.dialogos));
+    await p.evaluate(() => { window.__dialogosAuto = { confirmar: true }; }); await quitar(NUEVO); await esperar(150);
+    r = await p.evaluate(() => ({ cat: getMateriasParaNivel('2º Bach.', 'HS'), pend: data['2º Bach.'].HS[0].pendientes1, prof: _getAsistenciaData('2º Bach.', 'HS').profesores[1].materia }));
+    t.ok(!r.cat.includes(NUEVO) && r.pend.includes(NUEVO) && r.prof === NUEVO, 'si se confirma, sale del catálogo pero no se borra ningún dato', JSON.stringify(r).slice(0, 300));
+    await p.evaluate(() => { window.__dialogosAuto = undefined; openEquipoDocente('2º Bach.', 'HS'); }); await esperar(200);
+    t.ok(await p.evaluate(() => document.querySelectorAll('#eqDocenteBody .eq-mat-hint').length) === 1, 'y el profesor/a que la tenía sale señalado en el equipo docente');
     // Todo se guarda.
     await esperar(1200); await p.reload(); await esperar(2000);
     r = await p.evaluate(() => ({ cat: getMateriasParaNivel('2º Bach.', 'HS'), profs: _getAsistenciaData('2º Bach.', 'HS').profesores.map(x => x.materia + (x.sustituto ? '*' : '')), pend: data['2º Bach.'].HS[0].pendientes1 }));
-    t.ok(r.cat.includes('Lengua extranjera II (Inglés)') && r.cat.includes('Filosofía y Ciudadanía') && r.profs.includes('Producción Musical*') && r.pend.includes('Matemáticas CCSS II'), 'al reabrir sigue todo: catálogo, equipo docente y suspensas', JSON.stringify(r).slice(0, 400));
+    t.ok(r.cat.includes('Lengua extranjera II (Inglés)') && r.cat.includes('Filosofía y Ciudadanía') && !r.cat.includes('Química') && r.profs.includes('Producción Musical*') && r.pend.includes('Matemáticas aplicadas a las CCSS II'), 'al reabrir sigue todo: catálogo, equipo docente y suspensas', JSON.stringify(r).slice(0, 400));
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 

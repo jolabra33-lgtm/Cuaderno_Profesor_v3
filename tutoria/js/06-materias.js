@@ -392,6 +392,47 @@ function _tAlumnosConMateria(nivel, grupo, materia) {
     ['pendientes1', 'pendientes2', 'pendientesIII', 'pendientesExtr', 'noCursa'].some(c => (al[c] || []).some(m => _tNorm(m) === _tNorm(materia))) ||
     Object.keys(al.porMateria || {}).some(x => _tNorm(x) === _tNorm(materia))).length;
 }
+/* Grupos que toman su lista de materias de esa clave del catálogo (p. ej. «2º Bach.»: los grupos de
+   «2º Bachillerato HS» y «2º Bachillerato Científico» comparten la lista). */
+function _tGruposDelCatalogo(clave) {
+  const out = [];
+  (typeof NIVELES !== 'undefined' ? NIVELES : []).forEach(nivel => (GRUPOS_POR_NIVEL[nivel] || []).forEach(grupo => {
+    if (_tClaveCatalogo(nivel, grupo) === clave) out.push({ nivel, grupo });
+  }));
+  return out;
+}
+// Quién usa una materia del catálogo: profesores/as y alumnado de los grupos que comparten esa lista.
+function _tUsoMateriaCatalogo(clave, materia) {
+  const grupos = _tGruposDelCatalogo(clave).map(({ nivel, grupo }) => {
+    const d = (window._asistenciaData || {})[`${nivel}-${grupo}`];
+    const profes = ((d && d.profesores) || []).filter(p => _tNorm(p.materia) === _tNorm(materia)).length;
+    return { nivel, grupo, profes, alumnos: _tAlumnosConMateria(nivel, grupo, materia) };
+  }).filter(g => g.profes || g.alumnos);
+  return { grupos, profes: grupos.reduce((n, g) => n + g.profes, 0), alumnos: grupos.reduce((n, g) => n + g.alumnos, 0),
+    texto: grupos.map(g => `${g.nivel} ${g.grupo}`).join(', ') };
+}
+function _tUsoTexto(u) {
+  return [u.profes ? `${u.profes} profesor${u.profes === 1 ? '/a' : 'es/as'} del equipo docente` : '', u.alumnos ? `${u.alumnos} alumno${u.alumnos === 1 ? '/a' : 's/as'} (suspensas, notas o faltas)` : ''].filter(Boolean).join(' y ');
+}
+/* Cambia el nombre de una materia del catálogo en todo lo que la usa: equipo docente y alumnado de los grupos
+   que comparten esa lista. Si en algún alumno/a hay datos con los dos nombres no se cambian los datos (se
+   mezclarían dos materias): devuelve {choque} y no toca nada. */
+function _tRenombrarEnGruposDelCatalogo(clave, de, a, comprobar) {
+  const grupos = _tGruposDelCatalogo(clave);
+  const choque = [];
+  grupos.forEach(({ nivel, grupo }) => (data[nivel]?.[grupo] || []).forEach(al => {
+    const ks = Object.keys(al.porMateria || {});
+    if (_tNorm(de) !== _tNorm(a) && ks.some(k => _tNorm(k) === _tNorm(de)) && ks.some(k => _tNorm(k) === _tNorm(a))) choque.push(`${al.nombre} (${nivel} ${grupo})`);
+  }));
+  if (choque.length || comprobar) return { choque, profes: 0, alumnos: 0 };
+  let profes = 0, alumnos = 0;
+  grupos.forEach(({ nivel, grupo }) => {
+    const d = (window._asistenciaData || {})[`${nivel}-${grupo}`];
+    ((d && d.profesores) || []).forEach(p => { if (_tNorm(p.materia) === _tNorm(de)) { p.materia = a; profes++; } });
+    alumnos += _tRenombrarMateriaGrupo(nivel, grupo, de, a).alumnos || 0;
+  });
+  return { choque, profes, alumnos };
+}
 // La materia de un profesor/a para mostrarla: «Producción Musical (sustituto/a)».
 function _tMateriaDeProfesor(p) { const m = String((p && p.materia) || '').trim(); return m && p.sustituto ? m + ' (sustituto/a)' : m; }
 // El profesor/a de una materia en el equipo docente: si hay titular y sustituto/a, quien da la clase ahora (el sustituto/a).
@@ -670,8 +711,14 @@ function renderMaterias() {
     if (tab) tab.innerHTML = `${nivel} <span style="color:var(--yellow);font-size:10px">⚙</span>`;
   };
 
-  window._matDel = function(nivel, idx) {
+  window._matDel = async function(nivel, idx) {
     const mats = getMats(nivel);
+    // Quitarla del catálogo no borra datos: si alguien la usa, se avisa antes de lo que pasará.
+    const uso = _tUsoMateriaCatalogo(nivel, mats[idx]);
+    if (uso.profes || uso.alumnos) {
+      const ok = await confirmar(`«${mats[idx]}» la usan ${_tUsoTexto(uso)} en ${uso.texto}.\n\nSi la quitas de ⚙ Materias no se borra ningún dato: el alumnado la conserva («Fuera del catálogo» en las suspensas, y en el acta si tiene nota) y el profesor/a sale en amarillo en el equipo docente para elegirle otra.`, { titulo: '¿Quitar la materia del catálogo?', ok: 'Quitar de ⚙ Materias', peligro: true });
+      if (!ok) return;
+    }
     mats.splice(idx, 1);
     _materiasCustom[nivel] = mats;
     saveMateriaCustom();
@@ -716,14 +763,31 @@ function renderMaterias() {
     spanEl.replaceWith(input);
     input.focus();
     input.select();
-    function commit() {
+    let hecho = false;
+    async function commit() {
+      if (hecho) return; hecho = true;
       const val = input.value.trim();
       if (val && val !== current) {
         const mats = getMats(nivel);
-        mats[idx] = val;
-        _materiasCustom[nivel] = mats;
-        saveMateriaCustom();
-        showToast(`✅ Materia renombrada`);
+        if (mats.some((m, i) => i !== idx && _tNorm(m) === _tNorm(val))) showToast('⚠ Esa materia ya está en la lista');
+        else {
+          // El nombre nuevo pasa también al equipo docente y al alumnado de los grupos que usan esta lista:
+          // si no, se quedarían con el antiguo y dejarían de casar con el catálogo.
+          const uso = _tUsoMateriaCatalogo(nivel, current);
+          let datos = !!(uso.profes || uso.alumnos);
+          const prueba = datos ? _tRenombrarEnGruposDelCatalogo(nivel, current, val, true) : { choque: [] };
+          if (prueba.choque.length) {
+            const r = prueba;
+            const seguir = await confirmar(`Hay alumnado con datos de «${current}» y también de «${val}» (${r.choque.slice(0, 3).join('; ')}${r.choque.length > 3 ? '…' : ''}): no se pueden juntar sin perder unos u otros.\n\n¿Cambiar el nombre solo en ⚙ Materias? El equipo docente y el alumnado se quedan con «${current}» (saldrán como «fuera del catálogo»).`, { ok: 'Cambiar solo en ⚙ Materias', peligro: false });
+            if (!seguir) { document.getElementById('matEditorArea').innerHTML = buildEditor(nivel); window._initMatDrag(nivel); return; }
+            datos = false;
+          }
+          mats[idx] = val;
+          _materiasCustom[nivel] = mats;
+          saveMateriaCustom();
+          const r = datos ? _tRenombrarEnGruposDelCatalogo(nivel, current, val) : null;
+          showToast(r && (r.profes || r.alumnos) ? `✅ «${current}» → «${val}», también en ${_tUsoTexto(r)} (${uso.texto})` : '✅ Materia renombrada');
+        }
       }
       document.getElementById('matEditorArea').innerHTML = buildEditor(nivel);
       window._initMatDrag(nivel);
