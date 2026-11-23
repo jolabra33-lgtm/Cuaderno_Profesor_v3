@@ -262,8 +262,8 @@ function openActaOficial(nivel, grupo, evalNum) {
   }
 
   // ── HEADER COLUMNS for main table ──
-  const mainThFinal = `<th>Nº</th><th>Alumno/a</th><th style="text-align:center">Mat. no sup.</th><th>Materias pendientes</th><th>Pend. cursos ant.</th><th>Decisión final</th>`;
-  const mainThNonFinal = `<th>Nº</th><th>Alumno/a</th><th style="text-align:center">Mat. no sup.</th>${propField ? '<th>Propuesta</th>' : ''}`;
+  const mainThFinal = `<th style="text-align:center">Nº</th><th>Alumno/a</th><th style="text-align:center">Mat. no sup.</th><th>Materias pendientes</th><th>Pend. cursos ant.</th><th>Decisión final</th>`;
+  const mainThNonFinal = `<th style="text-align:center">Nº</th><th>Alumno/a</th><th style="text-align:center">Mat. no sup.</th>${propField ? '<th>Propuesta</th>' : ''}`;
 
   const html = `<!DOCTYPE html>
 <html lang="es">
@@ -582,7 +582,7 @@ function openActaOficial(nivel, grupo, evalNum) {
   <!-- SECCIÓN PROFESORES ASISTENTES -->
   <div class="section-title"><span>${nextSec()}</span>Profesorado asistente a la sesión</div>
   <table>
-    <thead><tr><th style="width:4%">#</th><th>Nombre del profesor/a</th><th>Materia que imparte</th></tr></thead>
+    <thead><tr><th style="width:4%;text-align:center">#</th><th>Nombre del profesor/a</th><th>Materia que imparte</th></tr></thead>
     <tbody>${profRows}</tbody>
   </table>
 

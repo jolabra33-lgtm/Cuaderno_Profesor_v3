@@ -23,7 +23,7 @@ export function instalarAuditoriaTablas(p) {
         const rs = [...rg.getClientRects()].filter(x => x.width > 0 && x.height > 0); if (!rs.length) return null;
         const tIzq = Math.min(...rs.map(x => x.left)), tDer = Math.max(...rs.map(x => x.right));
         const hueco1 = tIzq - izq, hueco2 = der - tDer;
-        if (hueco1 + hueco2 < 12) return null;   // el texto llena la casilla: no se nota
+        if (hueco1 + hueco2 < 6) return null;   // el texto llena la casilla: no se nota
         if (Math.abs(hueco1 - hueco2) <= Math.max(4, (hueco1 + hueco2) * 0.15)) return 'centrado';
         return hueco1 < hueco2 ? 'a la izquierda' : 'a la derecha';
       };
