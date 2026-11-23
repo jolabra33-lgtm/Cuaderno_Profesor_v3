@@ -137,6 +137,94 @@ window._eqOrdenarApellidos = function() {
   showToast('🔤 Equipo docente ordenado por apellidos');
 };
 
+/* ---- La materia de cada profesor/a sale del catálogo (⚙ Materias) ----
+   Así se llama igual que en las suspensas, las notas que llegan del Cuaderno y el acta. Lo que se escribió
+   a mano antes y no está en el catálogo se marca, con la materia del catálogo que más se parece para
+   cambiarla (también en las suspensas y los datos del alumnado del grupo) o la opción de añadirla. */
+const _EQ_NUEVA = '__nueva__';
+function _eqEsTutoria(m) { return _tNorm(m) === 'tutoria'; }
+function _eqMateriaFuera(p, catalogo) {
+  const m = String(p.materia || '').trim();
+  return !!m && !_eqEsTutoria(m) && !_tMatEnCatalogo(m, catalogo);
+}
+function _eqOpcionesMateria(p, catalogo) {
+  const m = String(p.materia || '').trim(), enCat = _tMatEnCatalogo(m, catalogo);
+  const opc = (v, t, sel) => `<option value="${_tEsc(v)}"${sel ? ' selected' : ''}>${_tEsc(t)}</option>`;
+  return opc('', '— Elige la materia —', !m) +
+    (_eqMateriaFuera(p, catalogo) ? opc(m, `⚠ ${m} (no está en ⚙ Materias)`, true) : '') +
+    catalogo.map(c => opc(c, c, c === enCat)).join('') +
+    opc('Tutoría', 'Tutoría (sin otra materia)', _eqEsTutoria(m)) +
+    opc(_EQ_NUEVA, '＋ Otra materia (se añade a ⚙ Materias)…', false);
+}
+function _eqMateriaHintHTML(p, catalogo, d) {
+  if (!_eqMateriaFuera(p, catalogo)) return '';
+  const { nivel, grupo } = _eqCtx, m = p.materia.trim(), base = _tSinSustituto(m);
+  const prop = _tMateriaParecida(m, catalogo);
+  const otro = prop ? d.profesores.find(x => x !== p && _tNorm(x.materia) === _tNorm(prop)) : null;
+  const n = _tAlumnosConMateria(nivel, grupo, m);
+  return `<div class="eq-mat-hint" role="status">
+    <span style="flex:1 1 260px">«${_tEsc(m)}» no está en ⚙ Materias de ${_tEsc(nivel)}${n ? ` (la usan las suspensas o los datos de ${n} alumno${n === 1 ? '' : 's'})` : ''}.
+      ${prop ? `¿Es <strong>«${_tEsc(prop)}»</strong>?${otro ? ` <span style="color:var(--text3)">(ya la tiene ${_tEsc(otro.nombre || 'otro profesor/a')}${_tEsSustituto(m) ? '' : '; si es otra materia, añádela'})</span>` : ''}` : 'Elige la equivalente en el desplegable o añádela al catálogo.'}</span>
+    ${prop ? `<button type="button" class="btn btn-ghost btn-sm" onclick="_eqUsarMateria('${jsAttr(p.id)}','${jsAttr(prop)}')">✓ Usar «${_tEsc(prop)}»</button>` : ''}
+    <button type="button" class="btn btn-ghost btn-sm" onclick="_eqAnadirMateriaCatalogo('${jsAttr(p.id)}')">＋ Añadir «${_tEsc(base)}» a ⚙ Materias</button>
+  </div>`;
+}
+// Pone «destino» como materia del profesor/a. Si «mover», pasa también las suspensas y los datos del alumnado
+// del grupo que estaban con el nombre antiguo. Devuelve false si no se ha podido (dos materias se mezclarían).
+async function _eqCambiarMateria(p, destino, mover) {
+  const { nivel, grupo } = _eqCtx, antes = String(p.materia || '').trim();
+  if (mover && antes && _tNorm(antes) !== _tNorm(destino)) {
+    const r = _tRenombrarMateriaGrupo(nivel, grupo, antes, destino);
+    if (r.choque) {
+      // No se mezclan: serían dos juegos de notas y faltas para la misma materia.
+      const quien = r.choque.slice(0, 3).map(a => a.nombre).join('; ') + (r.choque.length > 3 ? '…' : '');
+      const solo = await confirmar(`${r.choque.length === 1 ? 'Un alumno/a ya tiene' : r.choque.length + ' alumnos/as ya tienen'} datos de «${destino}» y también de «${antes}» (${quien}), así que sus datos no se pueden juntar sin perder unos u otros.
+
+¿Cambiar solo la materia del profesor/a? Los datos de «${antes}» se quedan con ese nombre.` +
+        (_tEsSustituto(antes) ? '' : ` Si en realidad son dos materias distintas, cancela y usa «＋ Añadir a ⚙ Materias».`), { ok: 'Cambiar solo el profesor/a', peligro: false });
+      if (!solo) { renderEquipoDocenteBody(); return false; }
+    }
+    if (r.alumnos && typeof renderMain === 'function') renderMain();
+  } else if (mover && antes && antes !== destino) {
+    _tRenombrarMateriaGrupo(nivel, grupo, antes, destino);   // solo cambian mayúsculas o tildes
+  }
+  if (_tEsSustituto(antes)) p.sustituto = true;
+  p.materia = destino;
+  markDirty();
+  renderEquipoDocenteBody();
+  return true;
+}
+window._eqUsarMateria = async function(id, destino) {
+  const p = _getAsistenciaData(_eqCtx.nivel, _eqCtx.grupo).profesores.find(x => x.id === id); if (!p) return;
+  const antes = p.materia;
+  if (await _eqCambiarMateria(p, destino, true)) showToast(`✅ «${antes}» es ahora «${destino}», también en las suspensas y los datos del alumnado`);
+};
+window._eqAnadirMateriaCatalogo = async function(id) {
+  const { nivel, grupo } = _eqCtx, p = _getAsistenciaData(nivel, grupo).profesores.find(x => x.id === id); if (!p) return;
+  const nombre = _tAnadirAlCatalogo(nivel, grupo, _tSinSustituto(p.materia));
+  if (await _eqCambiarMateria(p, nombre, true)) showToast(`✅ «${nombre}» añadida a ⚙ Materias de ${nivel}`);
+};
+// El desplegable de la materia.
+window._eqElegirMateria = async function(id, valor) {
+  const { nivel, grupo } = _eqCtx, p = _getAsistenciaData(nivel, grupo).profesores.find(x => x.id === id); if (!p) return;
+  if (valor === _EQ_NUEVA) {
+    const t = await _tDialogo({ titulo: '＋ Otra materia', mensaje: `Nombre de la materia tal como quieres que salga en las actas. Se añade a ⚙ Materias de ${nivel} y queda disponible para todos sus grupos.`, entrada: true, valor: _eqMateriaFuera(p, getMateriasParaNivel(nivel, grupo) || []) ? _tSinSustituto(p.materia) : '', ok: 'Añadir', cancelar: 'Cancelar' });
+    const nombre = String(t || '').trim();
+    if (!nombre) { renderEquipoDocenteBody(); return; }
+    valor = _tAnadirAlCatalogo(nivel, grupo, nombre);
+    showToast(`✅ «${valor}» añadida a ⚙ Materias de ${nivel}`);
+  }
+  const antes = String(p.materia || '').trim();
+  if (_tNorm(antes) === _tNorm(valor)) { if (antes !== valor) await _eqCambiarMateria(p, valor, true); else renderEquipoDocenteBody(); return; }
+  // Si la de antes estaba escrita a mano (fuera del catálogo) y el alumnado tiene datos con ella, se ofrece pasarlos.
+  let mover = false;
+  if (antes && !_eqEsTutoria(antes) && !_tMatEnCatalogo(antes, getMateriasParaNivel(nivel, grupo) || []) && valor && !_eqEsTutoria(valor)) {
+    const n = _tAlumnosConMateria(nivel, grupo, antes);
+    if (n) mover = await confirmar(`${n === 1 ? 'Un alumno/a tiene' : n + ' alumnos/as tienen'} suspensas, notas o faltas con «${antes}». ¿Pasarlas a «${valor}»?\n\nSi no, se quedan con el nombre antiguo (se ven como «Fuera del catálogo»).`, { ok: 'Sí, pasarlas', peligro: false });
+  }
+  await _eqCambiarMateria(p, valor, mover);
+};
+
 function renderEquipoDocenteBody() {
   const { nivel, grupo } = _eqCtx;
   const d = _getAsistenciaData(nivel, grupo);
@@ -147,6 +235,8 @@ function renderEquipoDocenteBody() {
   const conCorreo = d.profesores.filter(p => (p.correo || '').trim());
   const nSel = _eqCtx.seleccionados.size;
 
+  const catalogo = getMateriasParaNivel(nivel, grupo) || [];
+  const fueraDeCatalogo = d.profesores.filter(p => _eqMateriaFuera(p, catalogo)).length;
   const rows = d.profesores.map(p => {
     const marcado = _eqCtx.seleccionados.has(p.id);
     return `
@@ -161,11 +251,11 @@ function renderEquipoDocenteBody() {
           oninput="_eqUpdateProf('${p.id}','nombre',this.value)">
         <div id="eqHint-${_tEsc(p.id)}" class="eq-hint" style="font-size:11px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">${_eqHintHTML(p)}</div>
       </div>
-      <div style="flex:1 1 140px;min-width:0;display:flex;flex-direction:column;gap:3px;">
-        <label style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Materia</label>
-        <input style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;"
-          placeholder="Materia" value="${_tEsc((p.materia||''))}"
-          oninput="_eqUpdateProf('${p.id}','materia',this.value)">
+      <div style="flex:1 1 170px;min-width:0;display:flex;flex-direction:column;gap:3px;">
+        <label for="eqMat-${_tEsc(p.id)}" style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Materia</label>
+        <select id="eqMat-${_tEsc(p.id)}" class="eq-materia" style="width:100%;background:var(--bg);border:1px solid ${_eqMateriaFuera(p, catalogo) ? 'var(--yellow)' : 'var(--border)'};border-radius:7px;padding:7px 8px;color:var(--text);font-family:inherit;font-size:13px;"
+          onchange="_eqElegirMateria('${jsAttr(p.id)}',this.value)">${_eqOpcionesMateria(p, catalogo)}</select>
+        <label class="eq-sust" title="Sustituye al titular de esta materia: puede estar en el equipo a la vez que él o ella"><input type="checkbox" ${p.sustituto ? 'checked' : ''} onchange="_eqUpdateProf('${jsAttr(p.id)}','sustituto',this.checked)"> Sustituto/a</label>
       </div>
       <div style="flex:1 1 170px;min-width:0;display:flex;flex-direction:column;gap:3px;">
         <label style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Correo corporativo</label>
@@ -180,6 +270,7 @@ function renderEquipoDocenteBody() {
         <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:rgba(247,110,110,0.3)" onclick="_eqDelProf('${p.id}')" title="Eliminar">🗑</button>
       </div>
     </div>
+    ${_eqMateriaHintHTML(p, catalogo, d)}
     <div style="height:1px;background:var(--border);opacity:0.5"></div>`;
   }).join('');
 
@@ -187,7 +278,10 @@ function renderEquipoDocenteBody() {
     <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6;background:var(--surface2);border-radius:8px;padding:10px 14px;border:1px solid var(--border)">
       📋 Equipo docente de <strong>${_tEsc(nivel)} ${_tEsc(grupo)}</strong>. Se usa aquí y en "👥 Asistencia sesión" para pasar lista en las juntas de evaluación.
       Marca <strong>Tutor/a</strong> en el profesor/a que tutoriza el grupo: no hace falta añadirlo otra vez, y su nombre es el que sale como tutor/a en las actas y los informes.
+      La <strong>materia</strong> se elige de <strong>⚙ Materias</strong> (el catálogo del nivel): así casa con las suspensas, las notas y el acta. Si falta alguna, «＋ Otra materia» la añade al catálogo.
     </div>
+    ${fueraDeCatalogo ? `<div role="status" style="font-size:12.5px;margin-bottom:12px;padding:9px 12px;border-radius:8px;border:1px solid rgba(245,158,11,.45);background:rgba(245,158,11,.1)">
+      ⚠️ ${fueraDeCatalogo === 1 ? 'Una materia está escrita' : fueraDeCatalogo + ' materias están escritas'} con un nombre que no está en ⚙ Materias de ${_tEsc(nivel)}: sus suspensas y notas no casan con el resto de la app. Debajo de cada una tienes cómo ponerla al día.</div>` : ''}
     ${duplicados.length ? `<div role="status" style="font-size:12.5px;margin-bottom:12px;padding:9px 12px;border-radius:8px;border:1px solid rgba(245,158,11,.45);background:rgba(245,158,11,.1);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span style="flex:1">⚠️ ${_tEsc(duplicados[0].nombre)} aparece ${duplicados.length + 1} veces (como tutor/a y con su materia).</span>
       <button class="btn btn-ghost btn-sm" onclick="_eqUnirTutor()">🔗 Dejarlo una sola vez</button></div>` : ''}
@@ -234,6 +328,7 @@ window._eqUpdateProf = function(id, field, val) {
   const { nivel, grupo } = _eqCtx;
   const d = _getAsistenciaData(nivel, grupo);
   const p = d.profesores.find(x => x.id === id);
+  if (p && field === 'sustituto') { if (val) p.sustituto = true; else delete p.sustituto; markDirty(); return; }
   if (p) p[field] = val;
   if (p && field === 'nombre' && p.esTutor) { tutores[`${nivel}-${grupo}`] = val; _eqRefrescarCabeceraTutor(nivel, grupo); }
   markDirty();

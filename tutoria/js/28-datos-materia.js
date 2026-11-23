@@ -81,7 +81,7 @@ function _dmCargarFilas() {
       ac: c.ac ? String(c.ac) : '', pa: c.pa ? String(c.pa) : '', com: d ? _dmTexto(pn.map(p => (d.comentarios || {})[p]).find(Boolean)) : '' };
   });
   if (!_dmCtx.profesor) {
-    const p = _getAsistenciaData(_dmCtx.nivel, _dmCtx.grupo).profesores.find(x => _tNorm(x.materia) === _tNorm(materia));
+    const p = _tProfesorDeMateria(_getAsistenciaData(_dmCtx.nivel, _dmCtx.grupo).profesores, materia);
     const d = _dmAlumnos().map(a => _dmEntrada(a, materia)).find(Boolean);
     _dmCtx.profesor = p ? p.nombre : (d && d.profesor) || '';
   }

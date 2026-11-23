@@ -231,7 +231,7 @@ function _tImpCuadernoModal(o,nombreArchivo,opc){
     <div class="tdlg-bar"><button class="tdlg-no">${opc.total>1?'Omitir este archivo':'Cancelar'}</button><button class="tdlg-si" id="impCOk">Importar</button></div></div>`;
   document.body.appendChild(ov);
   const selN=ov.querySelector('#impCNivel'), selG=ov.querySelector('#impCGrupo'), inM=ov.querySelector('#impCMateria');
-  const pintarGrupos=()=>{ const gs=GRUPOS_POR_NIVEL[selN.value]||[]; selG.innerHTML=gs.map(g=>`<option ${_tNorm(g)===_tNorm(letra)?'selected':''}>${_tEsc(g)}</option>`).join(''); const mats=getMateriasParaNivel(selN.value, selG.value)||[]; ov.querySelector('#impCMatList').innerHTML=mats.map(m=>`<option value="${_tEsc(m)}">`).join(''); const exacta=mats.find(m=>_tNorm(m)===_tNorm(o.materia)); if(exacta) inM.value=exacta; };
+  const pintarGrupos=()=>{ const gs=GRUPOS_POR_NIVEL[selN.value]||[]; selG.innerHTML=gs.map(g=>`<option ${_tNorm(g)===_tNorm(letra)?'selected':''}>${_tEsc(g)}</option>`).join(''); const mats=getMateriasParaNivel(selN.value, selG.value)||[]; ov.querySelector('#impCMatList').innerHTML=mats.map(m=>`<option value="${_tEsc(m)}">`).join(''); const exacta=mats.find(m=>_tNorm(m)===_tNorm(o.materia)); const parecida=exacta?'':_tMateriaParecida(o.materia,mats); if(exacta||parecida) inM.value=exacta||parecida; else if(_tNorm(inM.value)!==_tNorm(o.materia)&&!mats.some(m=>_tNorm(m)===_tNorm(inM.value))) inM.value=o.materia||''; };
   // Propuestas de nombre parecido: marcadas de entrada si el parecido es muy alto.
   let confirmados=new Map(), grupoDePropuestas='';
   const plan=()=>{
@@ -246,6 +246,7 @@ function _tImpCuadernoModal(o,nombreArchivo,opc){
     const p=plan(); const mats=getMateriasParaNivel(selN.value, selG.value)||[];
     const prof=_tProfesorDelPaquete(selN.value,selG.value,inM.value.trim(),o.profesor);
     ov.querySelector('#impCResumen').innerHTML=
+      (o.materia && inM.value.trim() && _tNorm(inM.value)!==_tNorm(o.materia)?`<div style="margin-bottom:4px">ℹ️ En el Cuaderno se llama «${_tEsc(o.materia)}»; en Tutoría se guarda como <strong>«${_tEsc(inM.value)}»</strong>, como en ⚙ Materias. Cámbiala arriba si no es esa.</div>`:'')+
       (mats.length && !mats.some(m=>_tNorm(m)===_tNorm(inM.value))?`<div style="color:#f59e0b">⚠️ «${_tEsc(inM.value)}» no está en la lista de materias de ${_tEsc(selN.value)}. Elige la equivalente en el desplegable.</div>`:'')+
       `<div>✓ ${p.emparejados.length} alumnos encontrados en ${_tEsc(selN.value)} ${_tEsc(selG.value)} · ${p.cambios} cambios en sus pendientes.</div>`+
       (trae.length>1?`<div style="margin-top:4px">✓ Se guardan también ${trae.slice(1).join(', ')} de ${_tEsc(inM.value)} (📬 Información del equipo docente).</div>`:'')+

@@ -57,7 +57,7 @@ function datosInformeEquipo(nivel, grupo, k) {
     const susp = alum.filter(x => _ieTiene(x.materias, m));
     const antes = prev ? alumnos.filter(a => _ieTiene(a[prev.pend], m)).length : null;
     const notas = alumnos.map(a => { const d = Object.entries(a.porMateria || {}).find(([mm]) => _tNorm(mm) === _tNorm(m)); return d ? (d[1].notas || {})[periodo] : undefined; }).filter(n => typeof n === 'number');
-    const p = profes.find(x => _tNorm(x.materia) === _tNorm(m));
+    const p = _tProfesorDeMateria(profes, m);
     return { materia: m, profesor: p ? p.nombre : '', suspensos: susp.length, quienes: susp.map(x => x.nombre), antes,
       pct: alumnos.length ? Math.round(susp.length / alumnos.length * 100) : 0,
       media: notas.length ? Math.round(notas.reduce((s, n) => s + n, 0) / notas.length * 100) / 100 : null, conNota: notas.length };

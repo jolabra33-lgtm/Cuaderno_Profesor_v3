@@ -766,6 +766,85 @@ export const PRUEBAS = [
     t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
   } },
 
+  { nombre: 'tutoria-materias-catalogo', descripcion: 'Tutoría: la materia del equipo docente se elige de ⚙ Materias; las escritas a mano se ponen al día (también en el alumnado) y el desplegable de pendientes no esconde ni borra las que no están en el catálogo', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await tutoriaConAlumnos(p, t.url, '2º Bach.', 'HS', ['Fernández Fernández, Ismael', 'Andrés Lozano, Claudia']);
+    await p.evaluate(() => {
+      const d = _getAsistenciaData('2º Bach.', 'HS');
+      [['Mora Gil, Iván', 'Historia de España'], ['Pérez Gil, Ana', 'Matemáticas aplicadas a la CCSS II'], ['Gil Mora, Eva', 'Lengua extranjera II (Inglés)'],
+       ['Ruiz Sanz, Toni', 'Producción Musical'], ['Sanz Leal, Leo', 'Producción Musical (sustituto)'], ['Vidal Roig, Pau', 'Religión Católica']].forEach(([nombre, materia], i) => {
+        d.profesores.push({ id: 'p' + i, nombre, materia, correo: '' });
+        ['eval1', 'eval2', 'eval3'].forEach(k => d.sesiones[k].push({ asistio: null, justificacion: '' }));
+      });
+      const [a, b] = data['2º Bach.'].HS;
+      a.pendientes1 = ['Historia de España', 'Matemáticas aplicadas a la CCSS II', 'Lengua extranjera II (Inglés)', 'historia de la filosofia']; a.eval1 = 4;
+      a.porMateria = { 'Matemáticas aplicadas a la CCSS II': { origen: 'manual', notas: { 1: 3 }, faltas: {}, convivencia: {}, comentarios: {} } };
+      b.porMateria = { 'Religión Católica': { origen: 'manual', notas: { 1: 8 } }, 'Religión': { origen: 'manual', notas: { 1: 7 } } };
+      selectNivel('2º Bach.'); currentGrupos['2º Bach.'] = 'HS'; renderMain(); markDirty();
+    }); await esperar(300);
+    const abrirPend = () => p.evaluate(() => { const tbl = document.getElementById('tbl-2º Bach.-HS'); const el = tbl.querySelector('tbody tr[data-idx="0"] .pendientes-display[onclick*="\'pendientes1\'"]'); el.click(); });
+    const panel = () => p.evaluate(() => { const pn = document.querySelector('.pendientes-panel'); return { titulo: pn.querySelector('.pendientes-panel-title').textContent.replace(/\s+/g, ' ').trim(), grupos: [...pn.querySelectorAll('.pendientes-group-header')].map(h => h.textContent),
+      marcadas: [...pn.querySelectorAll('input:checked')].map(c => c.closest('label').textContent.trim()) }; });
+    // 1. El desplegable de I PEND.: las que no están en el catálogo se ven, marcadas, y «Hecho» no las borra.
+    await abrirPend(); await esperar(150);
+    let r = await panel();
+    t.ok(/4 seleccionadas/.test(r.titulo) && r.marcadas.length === 4, 'las 4 suspensas salen marcadas (antes solo se veían las del catálogo)', JSON.stringify(r));
+    t.ok(r.grupos[0] === 'Fuera del catálogo' && r.marcadas.includes('Matemáticas aplicadas a la CCSS II') && r.marcadas.includes('Lengua extranjera II (Inglés)'), 'las que no están en ⚙ Materias aparecen arriba, en «Fuera del catálogo»', JSON.stringify(r));
+    t.ok(r.marcadas.includes('Historia de la Filosofía'), 'una escrita con otras mayúsculas o sin tildes sale marcada en su sitio del catálogo', JSON.stringify(r));
+    await p.click('.pendientes-panel button:has-text("Hecho")'); await esperar(150);
+    let a0 = await p.evaluate(() => data['2º Bach.'].HS[0].pendientes1);
+    t.ok(a0.length === 4 && a0.includes('Matemáticas aplicadas a la CCSS II') && a0.includes('historia de la filosofia'), '«Hecho» sin tocar nada no borra ninguna (ni renombra la que estaba escrita distinta)', JSON.stringify(a0));
+    await abrirPend(); await esperar(150);
+    await p.evaluate(() => { [...document.querySelectorAll('.pendientes-panel input')].find(c => c.value === 'Lengua extranjera II (Inglés)').click(); });
+    await p.click('.pendientes-panel button:has-text("Hecho")'); await esperar(150);
+    a0 = await p.evaluate(() => data['2º Bach.'].HS[0].pendientes1);
+    t.ok(a0.length === 3 && !a0.includes('Lengua extranjera II (Inglés)'), 'desmarcar una de fuera del catálogo la quita solo a ella', JSON.stringify(a0));
+    await p.evaluate(() => { data['2º Bach.'].HS[0].pendientes1.push('Lengua extranjera II (Inglés)'); });
+    // 2. Equipo docente: la materia es un desplegable del catálogo y las escritas a mano se señalan.
+    await p.evaluate(() => openEquipoDocente('2º Bach.', 'HS')); await esperar(200);
+    r = await p.evaluate(() => ({ selects: document.querySelectorAll('#eqDocenteBody select.eq-materia').length, inputsMateria: document.querySelectorAll('#eqDocenteBody input[placeholder="Materia"]').length,
+      opciones: [...document.querySelector('#eqDocenteBody select.eq-materia').options].map(o => o.textContent), avisos: [...document.querySelectorAll('#eqDocenteBody .eq-mat-hint')].map(h => h.textContent.replace(/\s+/g, ' ').trim()),
+      banner: /4 materias están escritas con un nombre que no está en ⚙ Materias/.test(document.getElementById('eqDocenteBody').textContent) }));
+    t.ok(r.selects === 6 && !r.inputsMateria && r.opciones.includes('Matemáticas CCSS II') && r.opciones.some(o => /Otra materia/.test(o)), 'la materia se elige en un desplegable con el catálogo del nivel y «＋ Otra materia»', JSON.stringify(r).slice(0, 300));
+    t.ok(r.avisos.length === 4 && r.banner, 'señala las 4 materias escritas a mano que no están en el catálogo', JSON.stringify(r.avisos));
+    t.ok(/¿Es «Matemáticas CCSS II»\?/.test(r.avisos[0]) && /1 alumno/.test(r.avisos[0]), 'propone la del catálogo que más se parece y dice a cuánto alumnado afecta', r.avisos[0]);
+    t.ok(!/¿Es/.test(r.avisos[1]) && /Añadir «Lengua extranjera II \(Inglés\)»/.test(r.avisos[1]), '«(Inglés)» no se junta con «Lengua Extranjera II» a secas: propone añadirla', r.avisos[1]);
+    await p.click('#eqDocenteBody button:has-text("Usar «Matemáticas CCSS II»")'); await esperar(200);
+    r = await p.evaluate(() => { const a = data['2º Bach.'].HS[0]; return { prof: _getAsistenciaData('2º Bach.', 'HS').profesores[1].materia, pend: a.pendientes1, pm: Object.keys(a.porMateria) }; });
+    t.ok(r.prof === 'Matemáticas CCSS II' && r.pend.includes('Matemáticas CCSS II') && !r.pend.includes('Matemáticas aplicadas a la CCSS II') && r.pm[0] === 'Matemáticas CCSS II',
+      '«Usar» cambia la materia del profesor/a y también las suspensas y los datos del alumnado', JSON.stringify(r));
+    await p.click('#eqDocenteBody button:has-text("Usar «Producción Musical»")'); await esperar(200);
+    r = await p.evaluate(() => { const d = _getAsistenciaData('2º Bach.', 'HS'); return { p: d.profesores[4], quien: _tProfesorDeMateria(d.profesores, 'Producción Musical').nombre, texto: _tMateriaDeProfesor(d.profesores[4]),
+      casilla: document.querySelectorAll('#eqDocenteBody .eq-sust input')[4].checked }; });
+    t.ok(r.p.materia === 'Producción Musical' && r.p.sustituto && r.casilla && r.texto === 'Producción Musical (sustituto/a)', '«(sustituto)» pasa a ser la misma materia con la casilla «Sustituto/a»', JSON.stringify(r));
+    t.ok(r.quien === 'Sanz Leal, Leo', 'con titular y sustituto/a, la materia es de quien da la clase ahora (para el correo y el acta)', r.quien);
+    await p.click('#eqDocenteBody button:has-text("Añadir «Lengua extranjera II (Inglés)»")'); await esperar(200);
+    r = await p.evaluate(() => ({ cat: getMateriasParaNivel('2º Bach.', 'HS'), prof: _getAsistenciaData('2º Bach.', 'HS').profesores[2].materia, pend: data['2º Bach.'].HS[0].pendientes1 }));
+    t.ok(r.cat.includes('Lengua extranjera II (Inglés)') && r.prof === 'Lengua extranjera II (Inglés)' && r.pend.includes('Lengua extranjera II (Inglés)'), '«Añadir a ⚙ Materias» la pone en el catálogo del nivel y ya casa con las suspensas', JSON.stringify(r).slice(0, 200));
+    // Elegir en el desplegable una materia del catálogo, cuando las dos tienen datos: no se mezclan.
+    await p.evaluate(() => { window.__dialogosAuto = { confirmar: true }; });
+    await p.selectOption('#eqMat-p5', 'Religión'); await esperar(300);
+    r = await p.evaluate(() => ({ prof: _getAsistenciaData('2º Bach.', 'HS').profesores[5].materia, pm: data['2º Bach.'].HS[1].porMateria, dialogos: window.__dialogosLog || [] }));
+    t.ok(r.prof === 'Religión' && r.pm['Religión Católica'].notas[1] === 8 && r.pm['Religión'].notas[1] === 7, 'si el alumnado tiene datos con los dos nombres, cambia solo el profesor/a y no mezcla las notas', JSON.stringify(r).slice(0, 300));
+    t.ok(r.dialogos.some(m => /no se pueden juntar/.test(m)), 'y lo explica antes', JSON.stringify(r.dialogos).slice(0, 300));
+    r = await p.evaluate(() => ({ avisos: document.querySelectorAll('#eqDocenteBody .eq-mat-hint').length, banner: /no está en ⚙ Materias de/.test(document.getElementById('eqDocenteBody').textContent) }));
+    t.ok(!r.avisos && !r.banner, 'al terminar no queda ninguna materia fuera del catálogo', JSON.stringify(r));
+    // «＋ Otra materia»: se escribe una vez y queda en el catálogo para todos los grupos del nivel.
+    await p.evaluate(() => { window.__dialogosAuto = { confirmar: true, texto: 'Filosofía y Ciudadanía' }; _eqAddProf(); });
+    const nuevo = await p.evaluate(() => _getAsistenciaData('2º Bach.', 'HS').profesores[6].id);
+    await p.selectOption(`#eqMat-${nuevo}`, '__nueva__'); await esperar(300);
+    r = await p.evaluate(() => ({ cat: getMateriasParaNivel('2º Bach.', 'HS').slice(-2), prof: _getAsistenciaData('2º Bach.', 'HS').profesores[6].materia }));
+    t.ok(r.prof === 'Filosofía y Ciudadanía' && r.cat.includes('Filosofía y Ciudadanía'), '«＋ Otra materia» la añade a ⚙ Materias y se la pone al profesor/a', JSON.stringify(r));
+    // Al importar del Cuaderno se propone el nombre del catálogo.
+    r = await p.evaluate(() => { const cat = getMateriasParaNivel('2º Bach.', 'HS'); return ['Matemáticas aplicadas a la CCSS II', 'Empresa y diseño de modelos de negocio', 'Educación Física', 'Matemáticas', 'Lengua extranjera II (Francés)'].map(m => _tMateriaParecida(m, cat)); });
+    t.ok(JSON.stringify(r) === JSON.stringify(['Matemáticas CCSS II', 'Empresa y Diseño de Mod. de Negocio', '', '', '']), 'nombres del Cuaderno → catálogo, sin inventar cuando no está claro', JSON.stringify(r));
+    // Todo se guarda.
+    await esperar(1200); await p.reload(); await esperar(2000);
+    r = await p.evaluate(() => ({ cat: getMateriasParaNivel('2º Bach.', 'HS'), profs: _getAsistenciaData('2º Bach.', 'HS').profesores.map(x => x.materia + (x.sustituto ? '*' : '')), pend: data['2º Bach.'].HS[0].pendientes1 }));
+    t.ok(r.cat.includes('Lengua extranjera II (Inglés)') && r.cat.includes('Filosofía y Ciudadanía') && r.profs.includes('Producción Musical*') && r.pend.includes('Matemáticas CCSS II'), 'al reabrir sigue todo: catálogo, equipo docente y suspensas', JSON.stringify(r).slice(0, 400));
+    t.ok(!p.errores.length, 'sin errores de JavaScript', p.errores.join('; '));
+  } },
+
   { nombre: 'tutoria-orden-alfabetico', descripcion: 'Tutoría: el alumnado queda en orden alfabético en toda la app al darlo de alta o cambiarle el nombre (selección, otras pantallas, recarga, deshacer, archivos antiguos)', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await tutoriaConAlumnos(p, t.url, '2º ESO', 'A', ['Pérez Ruiz, Luis', 'García López, Ana', 'Zapata Mora, Eva']);

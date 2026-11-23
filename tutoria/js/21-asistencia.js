@@ -95,7 +95,7 @@ function renderAsistBody() {
     const rows = d.profesores.map(p => `
       <div class="asist-prof-row" style="align-items:center;gap:10px;padding:8px 0;">
         <div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">${_tEsc((p.nombre||'—'))}</div>
-        <div style="width:160px;font-size:12.5px;color:var(--text2)">${_tEsc((p.materia||'—'))}</div>
+        <div style="width:160px;font-size:12.5px;color:var(--text2)">${_tEsc((_tMateriaDeProfesor(p)||'—'))}</div>
         <div style="width:220px;font-size:12.5px;color:var(--text2)">${_tEsc((p.correo||'—'))}</div>
       </div>
       <div style="height:1px;background:var(--border);opacity:0.5"></div>`).join('');
@@ -154,7 +154,7 @@ function renderAsistBody() {
             <span>${stateIcon}</span>
           </div>
           <div class="asist-prof-name">${_tEsc((p.nombre||'—'))}${p.esTutor ? ' <span style="font-size:11px;color:var(--text3)">· tutor/a</span>' : ''}</div>
-          <div class="asist-prof-mat" style="margin-left:auto">${_tEsc((p.materia||'—'))}</div>
+          <div class="asist-prof-mat" style="margin-left:auto">${_tEsc((_tMateriaDeProfesor(p)||'—'))}</div>
           <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;flex-shrink:0;
             background:${s.asistio===true?'rgba(45,212,160,0.12)':s.asistio===false?'rgba(247,110,110,0.12)':'var(--surface3)'};
             color:${s.asistio===true?'var(--green)':s.asistio===false?'var(--red)':'var(--text3)'}">
@@ -310,7 +310,7 @@ function exportAsistenciaPDF() {
       const bg     = s.asistio===true ? '#f0fdf4' : s.asistio===false ? '#fef2f2' : '#fff';
       return `<tr style="background:${bg}">
         <td style="font-weight:600">${esc(p.nombre)||'—'}</td>
-        <td>${esc(p.materia)||'—'}</td>
+        <td>${esc(_tMateriaDeProfesor(p))||'—'}</td>
         <td style="text-align:center;font-weight:700;color:${col}">${estado}</td>
         <td style="font-size:9pt;color:${s.asistio===false?'#991b1b':'#555'};font-style:${s.justificacion?'normal':'italic'}">${esc(s.justificacion||'') || (s.asistio===false?'Sin justificar':'')}</td>
       </tr>`;

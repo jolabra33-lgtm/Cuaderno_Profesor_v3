@@ -288,6 +288,118 @@ function getMateriasParaNivel(nivel, grupo) {
   return [];
 }
 
+/* ===================== EL CATÁLOGO MANDA EN LOS NOMBRES DE MATERIA =====================
+   Las materias se cruzan por su nombre en todas partes (suspensas, notas, faltas, equipo docente,
+   acta…). Si el equipo docente pone «Matemáticas aplicadas a la CCSS II» y el catálogo (⚙ Materias)
+   dice «Matemáticas CCSS II», son dos materias distintas para la app. Por eso la materia del
+   profesor/a se elige del catálogo, y estas funciones ayudan a poner al día lo escrito antes a mano. */
+const _T_MAT_VACIAS = new Set(['de','del','la','las','el','los','y','e','a','al','en','para','con','por','aplicadas','aplicada']);
+const _T_MAT_ROMANOS = new Set(['i','ii','iii','iv']);
+const _T_RE_SUSTITUTO = /\s*\(\s*(?:sustitut[oa]s?|sust\.?)\s*\)\s*$/i;
+function _tMatPalabras(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\([^)]*\)/g, ' ')
+    .split(/[^a-z0-9]+/).filter(w => w && !_T_MAT_VACIAS.has(w));
+}
+// «Producción Musical (sustituto)» → «Producción Musical».
+function _tSinSustituto(m) { return String(m || '').replace(_T_RE_SUSTITUTO, '').trim(); }
+function _tEsSustituto(m) { return _T_RE_SUSTITUTO.test(String(m || '')); }
+// La materia tal como está escrita en el catálogo (sin mirar mayúsculas ni tildes), o ''.
+function _tMatEnCatalogo(m, catalogo) { return (catalogo || []).find(c => _tNorm(c) === _tNorm(m)) || ''; }
+/* La materia del catálogo que más se parece a «m», o '' si ninguna se parece lo bastante o hay dos igual de
+   buenas (entonces elige el usuario). «evitar»: nombres que ya usa otra materia del grupo.
+   «Matemáticas aplicadas a la CCSS II» → «Matemáticas CCSS II»; «Educación Física» no es «Física»;
+   «Matemáticas II» no es «Matemáticas I»; «Lengua extranjera II (Francés)» solo casa con una que diga «Francés». */
+function _tMateriaParecida(m, catalogo, evitar) {
+  evitar = (evitar || []).map(_tNorm);
+  m = _tSinSustituto(m);
+  const A = _tMatPalabras(m); if (!A.length) return '';
+  const parA = _tMatPalabras((String(m).match(/\(([^)]*)\)/g) || []).join(' ').replace(/[()]/g, ' '));
+  const romA = A.filter(w => _T_MAT_ROMANOS.has(w)), txtA = A.filter(w => !_T_MAT_ROMANOS.has(w));
+  const igual = (x, y) => x === y || (Math.min(x.length, y.length) >= 3 && (x.startsWith(y) || y.startsWith(x)));   // «Mod.» = «modelos»
+  const notas = [];
+  (catalogo || []).forEach(c => {
+    if (evitar.includes(_tNorm(c))) return;
+    const B = _tMatPalabras(c), romB = B.filter(w => _T_MAT_ROMANOS.has(w)), txtB = B.filter(w => !_T_MAT_ROMANOS.has(w));
+    if (romA.length && romB.length && romA.join() !== romB.join()) return;
+    if (!txtA.length || !txtB.length) return;
+    const todasB = _tMatPalabras(String(c).replace(/[()]/g, ' '));
+    if (parA.some(w => !todasB.includes(w))) return;
+    const comunes = txtA.filter(w => txtB.some(v => igual(w, v))).length;
+    if (!comunes || (comunes === 1 && txtB.length < txtA.length)) return;
+    const contiene = comunes / Math.min(txtA.length, txtB.length), cubre = comunes / Math.max(txtA.length, txtB.length);
+    notas.push({ c, contiene, comunes, p: 0.6 * contiene + 0.4 * cubre });
+  });
+  notas.sort((x, y) => y.contiene - x.contiene || y.comunes - x.comunes || y.p - x.p);
+  const [a, b] = notas;
+  if (!a || a.p < 0.7) return '';
+  if (b && b.contiene === a.contiene && b.comunes === a.comunes) return '';
+  return a.c;
+}
+// Clave del catálogo de la que sale la lista de un grupo (la misma que usa getMateriasParaNivel).
+function _tClaveCatalogo(nivel, grupo) {
+  const g = (grupo || '').toUpperCase();
+  if (g === 'PDC' || g.endsWith('PDC')) {
+    const pdc = nivel.includes('3º') ? '3º PDC' : nivel.includes('4º') ? '4º PDC' : null;
+    if (pdc && (_materiasCustom[pdc] || MATERIAS_POR_NIVEL[pdc])) return pdc;
+  }
+  if (_materiasCustom[nivel] || MATERIAS_POR_NIVEL[nivel]) return nivel;
+  const canon = _normalizarNivelAcademico(nivel);
+  if (canon && (_materiasCustom[canon] || MATERIAS_POR_NIVEL[canon])) return canon;
+  return nivel;
+}
+// Añade una materia al catálogo del nivel (si no estaba) y devuelve el nombre con el que queda.
+function _tAnadirAlCatalogo(nivel, grupo, materia) {
+  materia = String(materia || '').trim();
+  if (!materia) return '';
+  const actual = getMateriasParaNivel(nivel, grupo) || [];
+  const ya = _tMatEnCatalogo(materia, actual);
+  if (ya) return ya;
+  _materiasCustom[_tClaveCatalogo(nivel, grupo)] = [...actual, materia];
+  saveMateriaCustom();
+  return materia;
+}
+/* Cambia el nombre de una materia en el alumnado de un grupo: suspensas de cada evaluación, «no la cursa»
+   y sus datos (notas, faltas, comentarios). También su abreviatura del acta. Si algún alumno/a ya tiene
+   datos con los dos nombres no se toca nada (se mezclarían dos materias) y se devuelve {choque}. */
+function _tRenombrarMateriaGrupo(nivel, grupo, de, a) {
+  const alumnos = data[nivel]?.[grupo] || [];
+  if (!de || !a || de === a) return { alumnos: 0 };
+  const choque = alumnos.filter(al => { const ks = Object.keys(al.porMateria || {}); return ks.some(k => _tNorm(k) === _tNorm(de)) && ks.some(k => _tNorm(k) === _tNorm(a)) && _tNorm(de) !== _tNorm(a); });
+  if (choque.length) return { alumnos: 0, choque };
+  let n = 0;
+  alumnos.forEach(al => {
+    let cambia = false;
+    ['pendientes1', 'pendientes2', 'pendientesIII', 'pendientesExtr', 'noCursa'].forEach(campo => {
+      if (!Array.isArray(al[campo])) return;
+      const tieneA = al[campo].some(m => _tNorm(m) === _tNorm(a));
+      const nueva = [];
+      al[campo].forEach(m => { if (_tNorm(m) === _tNorm(de)) { cambia = true; if (!tieneA && !nueva.includes(a)) nueva.push(a); } else nueva.push(m); });
+      al[campo] = nueva;
+    });
+    const k = Object.keys(al.porMateria || {}).find(x => _tNorm(x) === _tNorm(de));
+    if (k && k !== a) { al.porMateria[a] = al.porMateria[k]; delete al.porMateria[k]; cambia = true; }
+    if (cambia) n++;
+  });
+  if (typeof _abrevMaterias === 'object' && _abrevMaterias) {
+    const k = Object.keys(_abrevMaterias).find(x => _tNorm(x) === _tNorm(de));
+    if (k && !Object.keys(_abrevMaterias).some(x => _tNorm(x) === _tNorm(a))) { _abrevMaterias[a] = _abrevMaterias[k]; delete _abrevMaterias[k]; }
+  }
+  return { alumnos: n };
+}
+// Cuántos alumnos/as del grupo tienen algo guardado con ese nombre de materia.
+function _tAlumnosConMateria(nivel, grupo, materia) {
+  return (data[nivel]?.[grupo] || []).filter(al =>
+    ['pendientes1', 'pendientes2', 'pendientesIII', 'pendientesExtr', 'noCursa'].some(c => (al[c] || []).some(m => _tNorm(m) === _tNorm(materia))) ||
+    Object.keys(al.porMateria || {}).some(x => _tNorm(x) === _tNorm(materia))).length;
+}
+// La materia de un profesor/a para mostrarla: «Producción Musical (sustituto/a)».
+function _tMateriaDeProfesor(p) { const m = String((p && p.materia) || '').trim(); return m && p.sustituto ? m + ' (sustituto/a)' : m; }
+// El profesor/a de una materia en el equipo docente: si hay titular y sustituto/a, quien da la clase ahora (el sustituto/a).
+function _tProfesorDeMateria(profesores, materia) {
+  const de = (profesores || []).filter(p => _tNorm(p.materia) === _tNorm(materia));
+  return de.find(p => p.sustituto) || de[0] || null;
+}
+
 // Materias de CURSOS ANTERIORES: unión (sin duplicados) de las materias de TODOS
 // los cursos académicamente anteriores al nivel del alumno — 1º ESO, 2º ESO, 3º ESO…
 // según corresponda — estén o no creados como pestaña en esta instalación.
