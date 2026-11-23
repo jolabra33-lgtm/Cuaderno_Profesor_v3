@@ -103,8 +103,9 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
     const abiertos = () => [...document.querySelectorAll('.tdlg-ov, .tdoc-ov, .modal-overlay.open, .overlay.open, [id$="Overlay"].open, [id$="Overlay"].show, [id$="Modal"].open, .col-manager-panel, .pendientes-panel, details[open] > :not(summary)')].filter(o => o.getBoundingClientRect().width > 0);
     const NO_PULSAR = /cargarDatosEjemplo|salirDatosEjemplo|toggleTheme|location\.|reload|href/i;
     const repeticiones = completo ? 2 : 1;
-    let clics = 0; const fallos = [];
+    let clics = 0; const fallos = [], tiempos = {};
     const pantalla = async (nombre, poner) => {
+      const t0 = performance.now(), c0 = clics;
       restaurar(); donde = nombre; await poner(); await dormir(60); escanear();
       const vistos = {}; const n0 = visibles(document.body).length;
       for (let i = 0; i < n0 && i < 400; i++) {
@@ -126,6 +127,7 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
         }
       }
       limpiar();
+      tiempos[nombre] = Math.round((performance.now() - t0) / 1000) + ' s · ' + (clics - c0) + ' pulsaciones';
     };
     const especiales = ['__home__', '__calendario__', '__informe__', '__segfam__', '__convivencia__', '__vacantes__', '__materias__'];
     for (const e of especiales) { try { await pantalla(e, () => selectNivel(e)); } catch (err) { fallos.push(e + ': ' + err.message); } }
@@ -170,6 +172,6 @@ export async function rastrearTutoria(p, { modo = 'hostil', completo = false } =
     ];
     for (const [nombre, poner] of extra) { try { await pantalla(nombre, poner); } catch (err) { fallos.push(nombre + ': ' + err.message); } }
     const lista = o => Object.entries(o).map(([k, v]) => `${k}   ← ${typeof v === 'string' ? v : Object.keys(v)[0]}`);
-    return { clics, fallos, inyectados: lista(inyectados), ejecutados: lista(ejecutados), dobles: lista(dobles), desalineadas: Object.keys(desalineadas) };
+    return { clics, fallos, inyectados: lista(inyectados), ejecutados: lista(ejecutados), dobles: lista(dobles), desalineadas: Object.keys(desalineadas), tiempos };
   }, { modo, completo });
 }
