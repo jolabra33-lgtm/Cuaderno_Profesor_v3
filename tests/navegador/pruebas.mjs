@@ -1042,6 +1042,24 @@ export const PRUEBAS = [
     t.ok(/Habladores pero respetuosos/.test(acta) && /Buen grupo/.test(acta) && /Reunión con familias en enero/.test(acta) && /Mora Gil, Iván/.test(acta) && /Puig Roig, Toni/.test(acta) && /Pérez Ruiz, Luis\s*1\s*Matemáticas/.test(acta),
       'el análisis del grupo, los acuerdos, las firmas y los resultados con las notas cambiadas en la sesión', acta.slice(-900));
 
+    // Formato: A4 apaisado con 3 cm de margen; los apartados cortos no se parten y los títulos no se quedan solos.
+    r = await p.evaluate(() => { const h = actaEvaluacionHTML('1º ESO', 'A', '2'); return { page: /@page \{ size: A4 landscape; margin: 3cm; \}/.test(h), bloque: /\.bloque \{[^}]*break-inside: avoid/.test(h), titulo: /\.section-title \{[^}]*break-after: avoid/.test(h), cabecera: /thead \{ display: table-header-group; \}/.test(h) }; });
+    t.ok(r.page && r.bloque && r.titulo && r.cabecera, 'el acta se imprime en A4 apaisado con 3 cm de margen, sin partir los cuadros cortos y con la cabecera de las tablas largas en cada página', JSON.stringify(r));
+    // Exportar a Word: un .docx de verdad, con su nombre, apaisado y con 3 cm de margen.
+    await p.evaluate(() => generarActaEvaluacion('1º ESO', 'A', '2')); await esperar(600);
+    const bajada = p.waitForEvent('download');
+    await p.frameLocator('#tdocOverlay iframe').locator('button:has-text("Exportar a Word")').click();
+    const word = await bajada, fsw = await import('node:fs');
+    const zip = fsw.readFileSync(await word.path());
+    // El .docx va sin comprimir: se saca word/document.xml del .zip leyendo su cabecera.
+    const sacar = nombre => { let i = -1; do { i = zip.indexOf(Buffer.from(nombre), i + 1); } while (i >= 0 && zip.readUInt32LE(i - 30) !== 0x04034b50); const tam = zip.readUInt32LE(i - 12), lnom = zip.readUInt16LE(i - 4), lext = zip.readUInt16LE(i - 2); return zip.slice(i + lnom + lext, i + lnom + lext + tam).toString('utf8'); };
+    const xmlDoc = sacar('word/document.xml');
+    const bien = await p.evaluate(x => !new DOMParser().parseFromString(x, 'application/xml').querySelector('parsererror'), xmlDoc);
+    t.ok(word.suggestedFilename() === 'Acta_II_Evaluacion_1_ESO_A.docx' && zip.slice(0, 2).toString() === 'PK' && bien, '«Exportar a Word» guarda un .docx con su nombre y bien formado', word.suggestedFilename() + ' · XML bien formado: ' + bien);
+    t.ok(/<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"\/>/.test(xmlDoc) && /<w:pgMar w:top="1701" w:right="1701" w:bottom="1701" w:left="1701"/.test(xmlDoc) && /<w:tblHeader\/>/.test(xmlDoc) && /<w:cantSplit\/>/.test(xmlDoc)
+      && /Zapata Ruiz, Luis/.test(xmlDoc) && /No asiste/.test(xmlDoc) && /Habladores pero respetuosos/.test(xmlDoc) && /Mora Gil, Iván/.test(xmlDoc),
+      'el Word va en A4 apaisado con 3 cm de margen, con la cabecera de las tablas repetida, filas que no se parten y todo el contenido del acta', xmlDoc.slice(0, 200));
+    await p.evaluate(() => __cerrarVistaDocT());
     // Evaluación final (ESO): Plan de Repetición, Plan de Refuerzo y agrupación.
     await p.evaluate(() => { const [ana, luis] = data['1º ESO'].A; ana.pendientesIII = ['Matemáticas', 'Lengua']; ana.eval3 = 2; luis.pendientesIII = ['Matemáticas']; luis.eval3 = 1;
       _sesCambiarEval('3'); _sesIr(0); _sesPropuesta(0, 'tipo', 'Repetición'); _sesPropuesta(1, 'tipo', 'Promoción'); _sesIr(0); });
