@@ -457,6 +457,15 @@ export const PRUEBAS = [
     await p.evaluate(() => { const a = data['1º ESO'].A[0]; a.familia = [{ parentesco: 'Madre', nombre: 'López Sanz, Marta', email: 'm@correo.es', telefono: '' }]; tutores['1º ESO-A'] = 'Gil Mora, Eva'; renderMain(); });
     await p.locator('#mainContent button[aria-label="Ficha completa del alumno/a"]').first().click(); await esperar(300);
     t.ok(/García López, Ana/.test(await p.textContent('#fichaCab')), 'el botón 👤 abre la ficha del alumno/a');
+    // «Notas recibidas del equipo docente»: los títulos I, II, III y Final, centrados sobre sus notas.
+    await p.evaluate(() => { data['1º ESO'].A[0].porMateria = { 'Matemáticas': { profesor: 'Zapata Ruiz, Luis', notas: { 1: 4, 2: 6.5, 3: 7, final: 7 } } }; });
+    await p.click('#fichaPestanas button:has-text("Académico")'); await esperar(150);
+    const desvio = await p.evaluate(() => { const tablas = [...document.querySelectorAll('#fichaBody table')], medio = el => { const r = (el.querySelector('span') || el).getBoundingClientRect(); return r.left + r.width / 2; };
+      const t2 = tablas[1], ths = [...t2.querySelectorAll('thead th')].slice(1), tds = [...t2.querySelectorAll('tbody tr:first-child td')];
+      const t1 = tablas[0], th1 = t1.querySelectorAll('thead th')[1], td1 = t1.querySelector('tbody tr td');
+      const centroTexto = th => { const rg = document.createRange(); rg.selectNodeContents(th); const r = rg.getBoundingClientRect(); return r.left + r.width / 2; };
+      return [...ths.map((th, i) => Math.abs(centroTexto(th) - medio(tds[i]))), Math.abs(centroTexto(th1) - medio(td1))].map(Math.round); });
+    t.ok(desvio.length === 5 && desvio.every(d => d <= 3), 'en «Académico», los títulos I, II, III, Final y Suspensas quedan centrados sobre sus números', JSON.stringify(desvio));
     for (const pest of ['Académico', 'Faltas y convivencia', 'Seguimientos', 'Resumen']) { await p.click(`#fichaPestanas button:has-text("${pest}")`); await esperar(120); }
     await p.fill('#fichaBody textarea[aria-label="Observaciones del alumno/a"]', 'Le cuesta organizarse.');
     await p.dispatchEvent('#fichaBody textarea[aria-label="Observaciones del alumno/a"]', 'change');
@@ -578,6 +587,17 @@ export const PRUEBAS = [
     await p.click('#mainContent .mas-menu > summary'); await p.click('#mainContent button:has-text("Informe para el equipo docente")'); await esperar(200);
     await p.selectOption('#informeEquipoOv #ieEval', '2'); await esperar(100);
     t.ok(/Versión previa a la sesión/.test(await p.textContent('#informeEquipoOv')), 'la ventana avisa de que es la versión previa');
+    // Correo: «Outlook web» abre la ventana de redactar de Outlook en el navegador (cuenta corporativa); el de siempre sigue.
+    await p.evaluate(() => { const d = _getAsistenciaData('2º ESO', 'A'); d.profesores.forEach((x, i) => { x.correo = `profe${i}@edu.gva.es`; });
+      window.__abiertas = []; window.open = (u, dest, op) => { window.__abiertas.push([u, dest, op]); return {}; }; });
+    await p.selectOption('#informeEquipoOv #ieEval', '1'); await p.selectOption('#informeEquipoOv #ieEval', '2'); await esperar(100);
+    await p.click('#informeEquipoOv button:has-text("Outlook web")'); await esperar(100);
+    const ow = await p.evaluate(() => ({ abiertas: window.__abiertas, n: _getAsistenciaData('2º ESO', 'A').profesores.length, botones: [...document.querySelectorAll('#informeEquipoOv button')].map(b => b.textContent.trim()) }));
+    const url = new URL(ow.abiertas[0]?.[0] || 'about:blank');
+    t.ok(url.origin === 'https://outlook.office.com' && url.pathname === '/mail/deeplink/compose' && url.searchParams.get('to').split(',').length === ow.n && /^profe0@edu\.gva\.es/.test(url.searchParams.get('to')) &&
+      /2º ESO A · II Evaluación · informe previo/.test(url.searchParams.get('subject')) && /Os adjunto el informe/.test(url.searchParams.get('body')) && ow.abiertas[0][1] === '_blank',
+      '«✉ Outlook web» abre «Redactar» de Outlook en el navegador con destinatarios, asunto y texto', JSON.stringify(ow).slice(0, 400));
+    t.ok(ow.botones.some(b => /Programa de correo/.test(b)) && /adjuntarlo: descárgalo antes/.test(await p.textContent('#informeEquipoOv')), 'sigue el botón del programa de correo del equipo y explica que el .html se adjunta a mano', JSON.stringify(ow.botones));
     const bajada = p.waitForEvent('download');
     await p.click('#informeEquipoOv button:has-text("Descargar")');
     const arch = await bajada; const fs = await import('node:fs');

@@ -163,7 +163,7 @@ function _fichaAcademico(a) {
   const mats = Object.keys(pm).sort((x, y) => x.localeCompare(y, 'es'));
   const nota = v => typeof v === 'number' ? `<span style="${v < 5 ? 'color:var(--red);font-weight:700' : ''}">${_tEsc(String(v).replace('.', ','))}</span>` : '<span style="color:var(--text3)">—</span>';
   const recibido = mats.length ? `<div style="overflow-x:auto"><table class="inf-tabla" style="width:100%;border-collapse:collapse;font-size:12.5px">
-      <thead><tr><th scope="col">Materia</th><th scope="col">I</th><th scope="col">II</th><th scope="col">III</th><th scope="col">Final</th></tr></thead>
+      <thead><tr><th scope="col" style="text-align:left">Materia</th>${['I', 'II', 'III', 'Final'].map(x => `<th scope="col" style="text-align:center">${x}</th>`).join('')}</tr></thead>
       <tbody>${mats.map(m => `<tr><th scope="row" style="text-align:left">${_tEsc(m)}<br><span style="font-size:11px;font-weight:400;color:var(--text3)">${_tEsc(pm[m].profesor || '')}</span></th>
         ${['1', '2', '3', 'final'].map(k => `<td style="text-align:center">${nota((pm[m].notas || {})[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
     : '<p class="ficha-vacio">Aún no ha llegado ninguna nota del equipo docente (📬).</p>';
@@ -171,7 +171,7 @@ function _fichaAcademico(a) {
   return `
     <section><h3>Por evaluación</h3>
       <div style="overflow-x:auto"><table class="inf-tabla" style="width:100%;border-collapse:collapse;font-size:12.5px">
-        <thead><tr><th scope="col"></th><th scope="col">Suspensas</th><th scope="col">Materias</th><th scope="col">Propuesta</th></tr></thead>
+        <thead><tr><th scope="col"></th><th scope="col" style="text-align:center">Suspensas</th><th scope="col" style="text-align:left">Materias</th><th scope="col" style="text-align:left">Propuesta</th></tr></thead>
         <tbody>${tabla}</tbody></table></div>
       <p style="font-size:13px;margin:10px 0 0">Decisión final: <strong>${decision}</strong></p>
     </section>
