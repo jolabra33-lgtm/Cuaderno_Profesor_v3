@@ -23,7 +23,7 @@ function renderCorCorregir(grupo){
     return `<tr>
       ${mbCeldaHTML(act,al)}
       <td>${esc(al.nombre)}${neseBadgeHTML(al)}${marcaBadgeHTML(grupo,al.id,act.id)}${cxVarianteDeAlumno(act,al.id)?(v=>` <span class="badge" title="${v.tipo==="ausencia"?"Hace un examen alternativo (otro día)":"Hace un examen adaptado"} y se corrige con su propia rúbrica">${v.tipo==="ausencia"?"📅 ":""}${esc(v.nombre||"Adaptada")}${v.fecha?" · "+esc(cxFechaCorta(v.fecha)):""}</span>`)(cxVarianteDeAlumno(act,al.id)):""}</td>
-      <td style="font-weight:600">${hecho?fmt(vc):"—"}${extraBadgeHTML(grupo,al.id,act)}${aeBadgeHTML(grupo,al.id,act)}</td>
+      <td style="font-weight:600">${hecho?fmtNota2(vc):"—"}${extraBadgeHTML(grupo,al.id,act)}${aeBadgeHTML(grupo,al.id,act)}</td>
       <td>${hecho?pillCuant(vc):'<span class="badge">Sin corregir</span>'}</td>
       <td><button class="btn small" onclick="cxIrAlumno('${al.id}')">${hecho?"Revisar":"Corregir"}</button>${hecho?` <button class="ghost small" style="border:1px solid var(--line)" title="Imprimir la rúbrica de este alumno/a" onclick="cxImprimirRubrica('${al.id}','${act.id}')">🖨️</button> <button class="ghost small" style="border:1px solid var(--line)" title="Imprimir la rúbrica resumida de este alumno/a: solo puntuaciones y anotaciones, para gastar menos papel" onclick="cxImprimirRubrica('${al.id}','${act.id}',true)">📄 Resumida</button>`:""}</td>
     </tr>`;
@@ -54,7 +54,7 @@ function renderCorCorregir(grupo){
     ${cxElegirTipoHTML(grupo,act)?`<div style="margin-top:12px">${cxElegirTipoHTML(grupo,act)}</div>`:""}
     ${cxAvisoNeseHTML(grupo,act)?`<div style="margin-top:12px">${cxAvisoNeseHTML(grupo,act)}</div>`:""}
     ${notas.length?`<div class="flex" style="margin-top:12px;gap:24px">
-      <div><div style="font-size:12.5px;color:var(--mut)">Media</div><span class="big" style="font-size:24px">${fmt(media)}</span></div>
+      <div><div style="font-size:12.5px;color:var(--mut)">Media</div><span class="big" style="font-size:24px">${fmtNota2(media)}</span></div>
       <div><div style="font-size:12.5px;color:var(--mut)">Aprobados</div><span class="big" style="font-size:24px">${aprob}/${notas.length}</span></div>
     </div>`:""}
     ${aeResumenGrupoHTML(grupo,act)}
@@ -219,7 +219,7 @@ function renderCxGradingAlumno(grupo,act,al){
   </div>
   <div class="card">
     <div style="font-size:12.5px;color:var(--mut)">Nota cuantitativa</div>
-    <span class="big" style="color:var(--accent-texto)">${vc==null?"—":fmt(vc)}</span>
+    <span class="big" style="color:var(--accent-texto)">${vc==null?"—":fmtNota2(vc)}</span>
     ${extraAplicadoActividad(grupo,al.id,act)?`<div style="margin-top:4px;font-size:14px">Con puntos extra: <strong>${textoNotaConExtra(notaActividadSinExtra(grupo,al.id,act),extraAplicadoActividad(grupo,al.id,act),notaActividad(grupo,al.id,act))}</strong></div>`:""}
     <p class="sub" style="margin:8px 0 0">Cuenta para la nota numérica del trimestre.</p>
     ${act.recupera?"":`<div style="margin-top:12px"><div style="font-size:12.5px;color:var(--mut);margin-bottom:4px">Puntos extra (opcional)${extraBadgeHTML(grupo,al.id,act)}</div>${extraCamposHTML("act",al.id,act.id,extraActividad(grupo,al.id,act.id))}</div>`}
@@ -268,7 +268,7 @@ window.cxExportarCSV=actId=>{
     const v=grupo.notasCuant?.[al.id]?.[act.id];
     const et=etiquetaNota(v,grupo);
     const va=cxVarianteDeAlumno(act,al.id);
-    csv+=`${q(al.nombre)};${v==null?'':String(fmt(v))};${et?et.etq:''};${q(va?(va.nombre||"Adaptada"):"General")}\n`;
+    csv+=`${q(al.nombre)};${v==null?'':String(fmtNota2(v))};${et?et.etq:''};${q(va?(va.nombre||"Adaptada"):"General")}\n`;
   });
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
   const u=URL.createObjectURL(blob); const a=document.createElement("a");
@@ -352,8 +352,8 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
           ${(grupo.examComentarios?.[al.id]?.[act.id+"|"+it.id]||"").trim()?`<div class="cx-item-desc cx-coment-item" style="font-style:italic">✎ ${comentRicoHTML(grupo.examComentarios[al.id][act.id+"|"+it.id])}</div>`:""}
         </td>
         <td style="text-align:right;white-space:nowrap;vertical-align:top">
-          <span class="cx-item-score">${val==null?"—":fmt(Number(val))}</span>
-          <small> / ${fmt(max)}</small>
+          <span class="cx-item-score">${val==null?"—":fmtNota2(Number(val))}</span>
+          <small> / ${fmtNota2(max)}</small>
         </td></tr>`;
   };
   // En los apartados "a elegir" se imprime solo lo que ha respondido el alumno/a.
@@ -363,7 +363,7 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
     const filas=(sec.items||[]).filter(it=>mostrar(it.id)).map(filaItem).join("");
     const subs=(sec.subs||[]).filter(s=>mostrar(s.id)).map(s=>nodoHTML(s,depth+1)).join("");
     const tit=esc(sec.title||CX_NOMBRE_TIPO[sec.tipo]||(depth===0?"Apartado":"Subapartado"));
-    const pts=`<span style="float:right;font-weight:600;color:#141b28;text-transform:none;letter-spacing:0">${ev.hay?fmt(ev.pts):"—"} / ${fmt(cxMaxNodo(sec))}</span>`;
+    const pts=`<span style="float:right;font-weight:600;color:#141b28;text-transform:none;letter-spacing:0">${ev.hay?fmtNota2(ev.pts):"—"} / ${fmtNota2(cxMaxNodo(sec))}</span>`;
     if(depth===0) return `<div class="cx-sec"><h2 style="white-space:pre-wrap${sec.tipo==="pregunta"?";text-transform:none;letter-spacing:0;font-size:13.5px;color:#141b28":""}">${pts}${tit}</h2>${filas?`<table><tbody>${filas}</tbody></table>`:""}${subs}</div>`;
     return `<div style="margin:12px 0 0 ${depth>1?"14px":"0"}"><h3 style="font-size:12.5px;color:#465064;margin:0 0 4px;white-space:pre-wrap">${pts}${tit}</h3>${filas?`<table><tbody>${filas}</tbody></table>`:""}${subs}</div>`;
   };
@@ -376,8 +376,8 @@ function cxRubricaBodyHTML(grupo,act,al,opts){
     <div class="cx-meta-line">${esc(act.nombre)}${mbHaceB(act,al.id)?" · Modelo "+mbModeloDe(act,al.id):""}${(v=>v?" · "+esc(v.nombre||"Adaptada")+(v.fecha?" ("+esc(cxFechaCorta(v.fecha))+")":""):"")(cxVarianteDeAlumno(act,al.id))}<span class="sep">·</span>${esc(cat.materia)} ${esc(cat.curso)}<span class="sep">·</span>Grupo ${esc(grupo.nombre)}<span class="sep">·</span><b>${fechaLarga}</b></div>
     ${seccionesHtml}
     <div class="cx-total-box">
-      <div><div class="cx-total-label">Puntuación total</div><div class="cx-total-value">${vc==null?"—":fmt(vc)} <small>/ ${fmt(cxEscalarDe(act,al.id)&&maxTotal>0&&Math.abs(maxTotal-10)>=0.01?10:maxTotal)}</small></div></div>
-      ${(x=>x?`<div><div class="cx-total-label">Puntos extra${(extraActividad(grupo,al.id,act.id).motivo||"").trim()?" · "+esc(extraActividad(grupo,al.id,act.id).motivo):""}</div><div class="cx-total-value">+${fmtPts(x)} <small>→ nota del examen</small> ${fmt(_sumarExtra(vc,x))}</div></div>`:"")(extraAplicadoActividad(grupo,al.id,act))}
+      <div><div class="cx-total-label">Puntuación total</div><div class="cx-total-value">${vc==null?"—":fmtNota2(vc)} <small>/ ${fmtNota2(cxEscalarDe(act,al.id)&&maxTotal>0&&Math.abs(maxTotal-10)>=0.01?10:maxTotal)}</small></div></div>
+      ${(x=>x?`<div><div class="cx-total-label">Puntos extra${(extraActividad(grupo,al.id,act.id).motivo||"").trim()?" · "+esc(extraActividad(grupo,al.id,act.id).motivo):""}</div><div class="cx-total-value">+${fmtPts(x)} <small>→ nota del examen</small> ${fmtNota2(_sumarExtra(vc,x))}</div></div>`:"")(extraAplicadoActividad(grupo,al.id,act))}
       <div>${pillCuant(_sumarExtra(vc,extraAplicadoActividad(grupo,al.id,act)))}</div>
     </div>
     ${comentario?`<div class="cx-comentario"><h2>Comentario del profesor/a</h2><div class="cx-comentario-txt">${comentRicoHTML(comentario)}</div></div>`:""}
@@ -394,7 +394,7 @@ function cxRubricasPortadaHTML(grupo,act,alumnos){
   const fechaLarga=new Date().toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"});
   const filas=alumnos.map(al=>{
     const vc=grupo.notasCuant?.[al.id]?.[act.id];
-    return `<tr><td>${esc(al.nombre)}</td><td style="text-align:right;font-weight:600;white-space:nowrap">${vc==null?"—":fmt(vc)}</td><td>${pillCuant(vc)}</td></tr>`;
+    return `<tr><td>${esc(al.nombre)}</td><td style="text-align:right;font-weight:600;white-space:nowrap">${vc==null?"—":fmtNota2(vc)}</td><td>${pillCuant(vc)}</td></tr>`;
   }).join("");
   return `
     <div>
@@ -432,7 +432,7 @@ function renderCalificarRubrica(grupo,act,acts){
       const v=grupo.notas?.[al.id]?.[act.id]?.[cid];
       return `${critLinkHTML(grupo.catalogoKey,cid)} ${v==null?"—":v.toFixed(1)}`;
     }).join(" · ");
-    return `<tr><td>${esc(al.nombre)}${neseBadgeHTML(al)}</td><td>${vc==null?"—":fmt(vc)}${extraBadgeHTML(grupo,al.id,act)}</td><td style="font-size:12.5px;color:var(--mut)">${crit||"—"}</td></tr>`;
+    return `<tr><td>${esc(al.nombre)}${neseBadgeHTML(al)}</td><td>${vc==null?"—":fmtNota2(vc)}${extraBadgeHTML(grupo,al.id,act)}</td><td style="font-size:12.5px;color:var(--mut)">${crit||"—"}</td></tr>`;
   }).join("");
   c.innerHTML=`<div class="card">
     <h2 style="margin-bottom:12px">Calificar actividad</h2>

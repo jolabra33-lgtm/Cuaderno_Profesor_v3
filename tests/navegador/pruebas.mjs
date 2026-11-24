@@ -1826,6 +1826,26 @@ export const PRUEBAS = [
     t.ok(JSON.stringify(notas) === '[7.5,4,null]', 'las notas se guardan', JSON.stringify(notas));
   } },
 
+  { nombre: 'corregir-dos-decimales', descripcion: 'Corregir con rúbrica: la nota del examen se ve con 2 decimales (6,75 y no 6,8)', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url);
+    await p.evaluate(() => { const g = state.grupos[0], A = g.alumnos[0].id, cr = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
+      g.actividades = [{ id: 'e1', nombre: 'Examen', trimestre: state.ui.trim, bloqueId: 'b0', esExamen: true, criterios: [{ critId: cr, peso: 100 }],
+        rubrica: [{ id: 's1', title: 'Pregunta 1', items: [{ id: 'i1', label: 'Ítem 1', max: 5, links: [{ critId: cr, peso: 100 }] }, { id: 'i2', label: 'Ítem 2', max: 5, links: [{ critId: cr, peso: 100 }] }], subs: [] }] }];
+      g.rubricScores = { [A]: { e1: { i1: 3.75, i2: 3 } } }; cxRecalcAlumno(g, g.actividades[0], A);
+      state.ui.appMode = 'corrector'; state.ui.corTab = 'corregir'; state.ui.corExamId = 'e1'; state.ui.corAlId = A; state.ui.corModoPreg = false; save(); render(); });
+    await esperar(300);
+    t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.notasCuant[g.alumnos[0].id].e1; }) === 6.75, 'la nota guardada es 6,75');
+    let txt = await p.evaluate(() => document.body.innerText);
+    t.ok(/6,75/.test(txt) && !/6,8\b/.test(txt), 'al corregir se ve 6,75', txt.slice(0, 400));
+    t.ok(/3,75/.test(txt), 'los puntos del ítem se ven con sus 2 decimales (3,75)');
+    await p.evaluate(() => { state.ui.corAlId = ''; save(); render(); });
+    await esperar(300);
+    txt = await p.evaluate(() => document.body.innerText);
+    t.ok(/6,75/.test(txt), 'en la lista del examen se ve 6,75');
+    t.ok(await p.evaluate(() => [fmtNota2(6.75), fmtNota2(7), fmtNota2(4.996), fmt(6.75)].join(' ')) === '6,75 7,00 4,99 6,8', 'fmtNota2: 2 decimales y nunca un 5 que no es; fmt sigue con 1 decimal para las medias');
+  } },
+
   { nombre: 'corregir-desplegable', descripcion: 'Corregir: la puntuación de cada ítem se elige en un desplegable de 0,05 en 0,05 y permite «No presentado»', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url);

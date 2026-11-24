@@ -226,7 +226,7 @@ function renderResultados(grupo){
            let notaCell;
            if(a.rubrica){
               const vc=grupo.notasCuant?.[al.id]?.[a.id];
-              notaCell = `<strong>${vc==null?"—":fmt(vc)}</strong> <button class="ghost small" title="Corregir en el Corrector de Exámenes" onclick="cxAbrirDesdeOtroModo('${a.id}')">🖊️</button>`;
+              notaCell = `<strong>${vc==null?"—":fmtNota2(vc)}</strong> <button class="ghost small" title="Corregir en el Corrector de Exámenes" onclick="cxAbrirDesdeOtroModo('${a.id}')">🖊️</button>`;
            } else if(a.esExamen){
               const vc=grupo.notasCuant?.[al.id]?.[a.id];
               notaCell = `<input type="text" inputmode="decimal" autocomplete="off" class="in miniw" style="width:76px" value="${vc==null?"":String(vc).replace(".",",")}" onchange="setNotaCuantExamen('${al.id}','${a.id}',this.value,true)">`;

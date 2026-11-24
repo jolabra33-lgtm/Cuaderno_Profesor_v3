@@ -294,6 +294,16 @@ const fmt=x=>{
   if(x<5 && r>=5) r=4.9;
   return r.toFixed(1).replace(".",",");
 };
+/* La nota de un examen y los puntos de su rúbrica, con 2 decimales (6,75; 0,25):
+   con un solo decimal un 6,75 se veía como 6,8. Misma excepción que fmt: por
+   debajo de 5 nunca sale "5,00". */
+const fmtNota2=x=>{
+  if(x==null||x===""||isNaN(Number(x))) return "—";
+  x=_limpiaFP(x);
+  let r=Math.round(_limpiaFP(x*100))/100;
+  if(x<5 && r>=5) r=4.99;
+  return r.toFixed(2).replace(".",",");
+};
 function pillHTML(grupo,p){
   const nv=nivel(grupo,p);
   if(!nv) return '<span style="color:var(--mut);font-size:13px">—</span>';
