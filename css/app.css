@@ -98,6 +98,19 @@
      un .grid/.flex el min-width:auto por defecto agrava el problema. */
   input[type="date"].in{min-width:0;max-width:100%;min-height:38px}
   .grid input[type="date"],.flex input[type="date"]{min-width:0}
+  /* En iPad, además, los de fecha y hora salen con el texto centrado, otra altura
+     que los demás campos (vacíos, más altos) y la hora se sale de la ventana.
+     Sin el aspecto nativo se comportan como un campo más: mismo alto, texto a la
+     izquierda y el ancho que se les da (el selector sigue abriéndose al tocarlos). */
+  input[type="date"].in,input[type="time"].in,input[type="datetime-local"].in,input[type="month"].in{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;height:40px;min-height:40px;line-height:20px;text-align:left}
+  .grid input[type="time"],.flex input[type="time"]{min-width:0}
+  input.in::-webkit-date-and-time-value{text-align:left;margin:0;min-height:20px}
+  /* Fila de dos campos (fecha | hora) de las ventanas: columnas que no se salen
+     y campos alineados abajo aunque una etiqueta ocupe dos líneas. */
+  .fila-campos{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,130px);gap:10px;align-items:end}
+  .fila-campos.mitades{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .fila-campos>label{min-width:0}
+  .modal-box .flex>label{min-width:0}
   /* Campo de fecha "dual": texto editable a mano + icono que abre el calendario nativo.
      El input[type=date] real queda invisible (opacity:0) mientras el 📅 es solo decoración;
      así el icono siempre se ve igual en cualquier navegador, incluido Safari/iPad. */
