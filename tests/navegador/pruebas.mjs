@@ -1853,6 +1853,27 @@ export const PRUEBAS = [
     t.ok(/6,75/.test(txt) && !/6,8\b/.test(txt), 'en Resultados la nota de la evaluación sale 6,75', txt.slice(0, 600));
   } },
 
+  { nombre: 'evento-ipad', descripcion: 'Calendario: en la ventana del evento (ancho de iPad) los campos de fecha y hora caben, van alineados y tienen el mismo alto', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await p.setViewportSize({ width: 820, height: 1180 });
+    await cuadernoConGrupo(p, t.url);
+    await p.evaluate(() => { state.ui.appMode = 'inicio'; save(); agAbrirModal('2026-12-14'); });
+    await esperar(300);
+    const m = await p.evaluate(() => {
+      const caja = document.querySelector('.modal-box').getBoundingClientRect();
+      const r = id => document.getElementById(id).getBoundingClientRect();
+      const ids = ['agFFecha', 'agFHora', 'agFFechaFin', 'agFHoraFin', 'agFTitulo'];
+      const fuera = ids.filter(id => { const x = r(id); return x.left < caja.left - 0.5 || x.right > caja.right + 0.5; });
+      const cs = getComputedStyle(document.getElementById('agFHora'));
+      return { fuera, filas: [r('agFFecha').top === r('agFHora').top, Math.abs(r('agFFechaFin').top - r('agFHoraFin').top) < 1],
+        altos: ids.map(id => Math.round(r(id).height)), alinea: cs.textAlign };
+    });
+    t.ok(!m.fuera.length, 'ningún campo se sale de la ventana', JSON.stringify(m));
+    t.ok(m.filas.every(Boolean), 'fecha y hora van a la misma altura en cada fila', JSON.stringify(m));
+    t.ok(new Set(m.altos.slice(0, 4)).size === 1 && Math.abs(m.altos[0] - m.altos[4]) <= 2, 'los campos de fecha y hora miden lo mismo que el del título', JSON.stringify(m.altos));
+    t.ok(m.alinea === 'left' || m.alinea === 'start', 'el texto de la fecha y la hora va a la izquierda', m.alinea);
+  } },
+
   { nombre: 'corregir-desplegable', descripcion: 'Corregir: la puntuación de cada ítem se elige en un desplegable de 0,05 en 0,05 y permite «No presentado»', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url);

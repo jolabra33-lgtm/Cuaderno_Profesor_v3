@@ -91,11 +91,11 @@ function agRenderModalFestivosHTML(){
         <button class="modal-close" onclick="agCerrarModalFestivos()">×</button>
       </div>
       <div class="grid" style="gap:12px;margin-top:10px">
-        <div class="flex" style="gap:10px;align-items:flex-start">
-          <label style="flex:1;font-size:12.5px;color:var(--mut);font-weight:500">Fecha inicio
+        <div class="fila-campos mitades">
+          <label style="font-size:12.5px;color:var(--mut);font-weight:500">Fecha inicio
             <input class="in" style="width:100%;margin-top:4px" type="date" id="agFestIni">
           </label>
-          <label style="flex:1;font-size:12.5px;color:var(--mut);font-weight:500">Fecha fin (opcional)
+          <label style="font-size:12.5px;color:var(--mut);font-weight:500">Fecha fin (opcional)
             <input class="in" style="width:100%;margin-top:4px" type="date" id="agFestFin">
           </label>
         </div>
@@ -826,19 +826,19 @@ function agRenderModalHTML(){
       ${vincRe?`<div class="alert-box" style="margin-top:8px">🗂️ Vinculado a la reunión "${esc(vincRe.titulo)}".
         <button class="btn small" onclick="agCerrarModal();reAbrirDesdeOtroModo('${vincRe.id}')">Ver reunión →</button></div>`:""}
       <div class="grid" style="gap:12px;margin-top:10px">
-        <div class="flex" style="gap:10px;align-items:flex-start">
-          <label style="flex:1;font-size:12.5px;color:var(--mut);font-weight:500">Fecha
+        <div class="fila-campos">
+          <label style="font-size:12.5px;color:var(--mut);font-weight:500">Fecha
             <input class="in" style="width:100%;margin-top:4px" type="date" id="agFFecha" value="${ev?ev.fecha:fecha}">
           </label>
-          <label style="width:130px;flex-shrink:0;font-size:12.5px;color:var(--mut);font-weight:500">Hora (opcional)
+          <label style="font-size:12.5px;color:var(--mut);font-weight:500">Hora (opcional)
             <input class="in" style="width:100%;margin-top:4px" type="time" id="agFHora" value="${ev?esc(ev.hora||""):""}">
           </label>
         </div>
-        <div class="flex" style="gap:10px;align-items:flex-start">
-          <label style="flex:1;font-size:12.5px;color:var(--mut);font-weight:500">Fecha fin (opcional, para eventos de varios días)
+        <div class="fila-campos">
+          <label style="font-size:12.5px;color:var(--mut);font-weight:500" title="Para eventos de varios días">Fecha fin (opcional)
             <input class="in" style="width:100%;margin-top:4px" type="date" id="agFFechaFin" value="${ev?esc(ev.fechaFin||""):""}">
           </label>
-          <label style="width:130px;flex-shrink:0;font-size:12.5px;color:var(--mut);font-weight:500">Hora fin (opcional)
+          <label style="font-size:12.5px;color:var(--mut);font-weight:500">Hora fin (opcional)
             <input class="in" style="width:100%;margin-top:4px" type="time" id="agFHoraFin" value="${ev?esc(ev.horaFin||""):""}">
           </label>
         </div>
