@@ -195,7 +195,7 @@ function renderCxGradingAlumno(grupo,act,al){
       const v=grupo.notas?.[al.id]?.[act.id]?.[cid];
       return `<div class="flex" style="justify-content:space-between">
         <span style="font-size:13px">${critLinkHTML(grupo.catalogoKey,cid)}</span>
-        <span style="font-size:13px;color:var(--mut)">${v==null?"—":v.toFixed(1)+"/10 · "+Math.round(v*10)+"%"}</span>
+        <span style="font-size:13px;color:var(--mut)">${v==null?"—":fmt(v)+"/10 · "+Math.round(v*10)+"%"}</span>
       </div>`;}).join("")}
   </div>` : '<p class="sub" style="margin:6px 0 0">Ningún ítem de esta rúbrica está vinculado todavía a un criterio.</p>';
   c.innerHTML=`
@@ -430,7 +430,7 @@ function renderCalificarRubrica(grupo,act,acts){
     const vc=grupo.notasCuant?.[al.id]?.[act.id];
     const crit=critIds.map(cid=>{
       const v=grupo.notas?.[al.id]?.[act.id]?.[cid];
-      return `${critLinkHTML(grupo.catalogoKey,cid)} ${v==null?"—":v.toFixed(1)}`;
+      return `${critLinkHTML(grupo.catalogoKey,cid)} ${v==null?"—":fmt(v)}`;
     }).join(" · ");
     return `<tr><td>${esc(al.nombre)}${neseBadgeHTML(al)}</td><td>${vc==null?"—":fmt(vc)}${extraBadgeHTML(grupo,al.id,act)}</td><td style="font-size:12.5px;color:var(--mut)">${crit||"—"}</td></tr>`;
   }).join("");

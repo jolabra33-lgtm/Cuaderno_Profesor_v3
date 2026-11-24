@@ -284,15 +284,15 @@ function notaFinalSinExtra(grupo,alId){
   }
   return sw>0? sv/sw : null;
 }
-/* Nota con 1 decimal (redondeo normal). Única excepción: una nota por debajo
-   de 5 nunca se muestra como "5,0" (4,96 → "4,9"), para que la cifra no
-   sugiera un aprobado que la nota de acta no da. */
+/* Nota con 2 decimales (6,75), redondeando al céntimo. Única excepción: una
+   nota por debajo de 5 nunca se muestra como "5,00" (4,996 → "4,99"), para que
+   la cifra no sugiera un aprobado que la nota de acta no da. */
 const fmt=x=>{
   if(x==null||x===""||isNaN(Number(x))) return "—";
   x=_limpiaFP(x);
-  let r=Math.round(_limpiaFP(x*10))/10;
-  if(x<5 && r>=5) r=4.9;
-  return r.toFixed(1).replace(".",",");
+  let r=Math.round(_limpiaFP(x*100))/100;
+  if(x<5 && r>=5) r=4.99;
+  return r.toFixed(2).replace(".",",");
 };
 function pillHTML(grupo,p){
   const nv=nivel(grupo,p);

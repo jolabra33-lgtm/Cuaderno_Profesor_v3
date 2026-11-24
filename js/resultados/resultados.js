@@ -239,7 +239,7 @@ function renderResultados(grupo){
                  const cv=grupo.notas?.[al.id]?.[a.id]?.[l.critId];
                  return `<span style="display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:12.5px">
                    <span style="color:var(--mut)">${critLinkHTML(grupo.catalogoKey,l.critId)}</span>
-                   <span style="color:var(--ink);font-weight:500">${cv==null?"—":cv.toFixed(1)+"/10"}</span>
+                   <span style="color:var(--ink);font-weight:500">${cv==null?"—":fmt(cv)+"/10"}</span>
                  </span>`;
                }).join("")
              : a.criterios.map(l=>{

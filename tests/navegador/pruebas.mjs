@@ -1826,6 +1826,33 @@ export const PRUEBAS = [
     t.ok(JSON.stringify(notas) === '[7.5,4,null]', 'las notas se guardan', JSON.stringify(notas));
   } },
 
+  { nombre: 'corregir-dos-decimales', descripcion: 'Notas con 2 decimales: el examen corregido con rúbrica, la nota de la evaluación y la final (6,75 y no 6,8)', async fn(t) {
+    const p = await nuevaPagina(t.contexto);
+    await cuadernoConGrupo(p, t.url);
+    await p.evaluate(() => { const g = state.grupos[0], A = g.alumnos[0].id, cr = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
+      g.actividades = [{ id: 'e1', nombre: 'Examen', trimestre: state.ui.trim, bloqueId: 'b0', esExamen: true, criterios: [{ critId: cr, peso: 100 }],
+        rubrica: [{ id: 's1', title: 'Pregunta 1', items: [{ id: 'i1', label: 'Ítem 1', max: 5, links: [{ critId: cr, peso: 100 }] }, { id: 'i2', label: 'Ítem 2', max: 5, links: [{ critId: cr, peso: 100 }] }], subs: [] }] }];
+      g.rubricScores = { [A]: { e1: { i1: 3.75, i2: 3 } } }; cxRecalcAlumno(g, g.actividades[0], A);
+      state.ui.appMode = 'corrector'; state.ui.corTab = 'corregir'; state.ui.corExamId = 'e1'; state.ui.corAlId = A; state.ui.corModoPreg = false; save(); render(); });
+    await esperar(300);
+    t.ok(await p.evaluate(() => { const g = state.grupos[0]; return g.notasCuant[g.alumnos[0].id].e1; }) === 6.75, 'la nota guardada es 6,75');
+    let txt = await p.evaluate(() => document.body.innerText);
+    t.ok(/6,75/.test(txt) && !/6,8\b/.test(txt), 'al corregir se ve 6,75', txt.slice(0, 400));
+    t.ok(/3,75/.test(txt), 'los puntos del ítem se ven con sus 2 decimales (3,75)');
+    await p.evaluate(() => { state.ui.corAlId = ''; save(); render(); });
+    await esperar(300);
+    txt = await p.evaluate(() => document.body.innerText);
+    t.ok(/6,75/.test(txt), 'en la lista del examen se ve 6,75');
+    t.ok(await p.evaluate(() => [fmt(6.75), fmt(7), fmt(4.996), fmt(6.746)].join(' ')) === '6,75 7,00 4,99 6,75', 'las notas se escriben con 2 decimales y nunca un 5 que no es', await p.evaluate(() => [fmt(6.75), fmt(7), fmt(4.996), fmt(6.746)].join(' ')));
+    // La nota de la evaluación y la final (con un único examen, 6,75) también con 2 decimales.
+    const ev = await p.evaluate(() => { const g = state.grupos[0], A = g.alumnos[0].id; return [notaTrimestre(g, A, state.ui.trim), fmt(notaTrimestre(g, A, state.ui.trim)), fmt(notaFinal(g, A))]; });
+    t.ok(ev[0] === 6.75 && ev[1] === '6,75' && ev[2] === '6,75', 'la nota de la evaluación y la final se ven con 2 decimales', JSON.stringify(ev));
+    await p.evaluate(() => { state.ui.appMode = 'competencial'; state.ui.tab = 'resultados'; save(); render(); });
+    await esperar(300);
+    txt = await p.evaluate(() => document.body.innerText);
+    t.ok(/6,75/.test(txt) && !/6,8\b/.test(txt), 'en Resultados la nota de la evaluación sale 6,75', txt.slice(0, 600));
+  } },
+
   { nombre: 'corregir-desplegable', descripcion: 'Corregir: la puntuación de cada ítem se elige en un desplegable de 0,05 en 0,05 y permite «No presentado»', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url);
@@ -2115,9 +2142,9 @@ export const PRUEBAS = [
         inf: informeAlumnoBodyHTML(g, g.alumnos[0]), det: informeDetalladoBodyHTML(g, g.alumnos[0], 0) }; }, ids);
     t.ok(r2.sin === 7.5 && r2.t === 8, 'la evaluación suma el extra: 7,5 + 0,5 = 8', JSON.stringify([r2.sin, r2.t]));
     t.ok(r2.f === 8, 'la nota final recoge la evaluación con su extra');
-    t.ok(/7,5 \+ 0,5 = 8,0/.test(r2.texto), 'Resultados explica la cuenta');
+    t.ok(/7,50 \+ 0,5 = 8,00/.test(r2.texto), 'Resultados explica la cuenta');
     t.ok(/incluye \+1 extra/.test(r2.inf) && /incluye \+0,5 extra/.test(r2.inf), 'el informe del alumno/a indica los extras');
-    t.ok(/Puntos extra/.test(r2.det) && /6,5 \+ 1 extra = <strong>7,5/.test(r2.det), 'el informe detallado desglosa los extras');
+    t.ok(/Puntos extra/.test(r2.det) && /6,50 \+ 1 extra = <strong>7,50/.test(r2.det), 'el informe detallado desglosa los extras');
     // Papelera: borrar y restaurar al alumno/a y la actividad conserva los extras
     const r3 = await p.evaluate(async ids => { window.__dialogosAuto = { confirmar: true };
       await delAlumno(ids[0]); let g = grupoActual(); const borrado = !g.extras[ids[0]] && !g.extrasEval[ids[0]];
@@ -2286,8 +2313,8 @@ export const PRUEBAS = [
     await esperar(300);
     // 2 · Aviso temprano
     const txt = (await p.textContent('.aviso-riesgo')) || '';
-    t.ok(/Alba Baja, Ana:[^·]*ha bajado de 8,0 a 5,0 respecto a la 1/.test(txt) && !/Alba Baja, Ana: 🔴/.test(txt), 'avisa de quien ha bajado 2 puntos o más (y no la da por suspensa con un 5)', txt);
-    t.ok(/Beltrán Suspende, Blas: 🔴\ssuspende \(3,0\)/.test(txt), 'avisa de quien va suspendiendo, con su nota', txt);
+    t.ok(/Alba Baja, Ana:[^·]*ha bajado de 8,00 a 5,00 respecto a la 1/.test(txt) && !/Alba Baja, Ana: 🔴/.test(txt), 'avisa de quien ha bajado 2 puntos o más (y no la da por suspensa con un 5)', txt);
+    t.ok(/Beltrán Suspende, Blas: 🔴\ssuspende \(3,00\)/.test(txt), 'avisa de quien va suspendiendo, con su nota', txt);
     t.ok(/Cano Faltas, Carla:.*2 «No presentado»/.test(txt), 'avisa de quien acumula «No presentado»', txt);
     t.ok(txt.indexOf('Beltrán') < txt.indexOf('Alba'), 'primero lo más grave (suspende antes que baja)');
     await p.locator('.aviso-riesgo button:has-text("Ver")').nth(txt.indexOf('Beltrán') < txt.indexOf('Cano') ? 0 : 1).click(); await esperar(300);
@@ -2319,11 +2346,11 @@ export const PRUEBAS = [
     await elegir(p.locator('select[aria-label="Autoevaluación: Ítem 2"]'), '4'); await esperar(200);
     await elegir(p.locator('select[aria-label="Coevaluación: Ítem 1"]'), '3'); await esperar(200);
     const r = await p.evaluate(A => { const g = state.grupos[0]; return { auto: g.autoeval[A].e1.auto.items, nota: g.notasCuant[A].e1, txt: document.querySelector('.ae-detalles').textContent }; }, A);
-    t.ok(r.auto.i1 === 5 && r.auto.i2 === 4 && /Se pone: 9,0 · tu nota: 7,0\s*\+2/.test(r.txt), 'compara la autoevaluación con tu nota (9 frente a 7: +2)', JSON.stringify(r));
+    t.ok(r.auto.i1 === 5 && r.auto.i2 === 4 && /Se pone: 9,00 · tu nota: 7,00\s*\+2/.test(r.txt), 'compara la autoevaluación con tu nota (9 frente a 7: +2)', JSON.stringify(r));
     t.ok(r.nota === 7, 'no cambia la nota del examen');
     await p.evaluate(() => { state.ui.corAlId = ''; render(); }); await esperar(300);
     const lista = await p.textContent('#tabContent');
-    t.ok(lista.includes('🙋 9,0') && lista.includes('👥 …') && /9,0 frente a tu 7,0/.test(lista) && !/Coevaluación ·/.test(lista), 'la lista lleva los distintivos y el resumen del grupo solo cuenta hojas completas', lista.slice(0, 600));
+    t.ok(lista.includes('🙋 9,00') && lista.includes('👥 …') && /9,00 frente a tu 7,00/.test(lista) && !/Coevaluación ·/.test(lista), 'la lista lleva los distintivos y el resumen del grupo solo cuenta hojas completas', lista.slice(0, 600));
     // Hojas para el alumnado: coevaluación en blanco (una por alumno/a) y autoevaluación con nombre.
     await p.click('button:has-text("🙋 Autoevaluación")'); await esperar(200);
     await p.check('input[name=aeTipo][value=co]'); await p.check('input[name=aeHojas][value=blanco]');

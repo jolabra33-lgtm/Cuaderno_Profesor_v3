@@ -278,7 +278,7 @@ function desgloseNotaActividadHTML(grupo,al,a){
   }
   const filas=(a.criterios||[]).map(l=>{
     const n=grupo.notas?.[al.id]?.[a.id]?.[l.critId];
-    return `<tr><td>${critLabelPlain(grupo.catalogoKey,l.critId)}</td><td style="text-align:right;white-space:nowrap">${n==null||n===""?"—":Number(n).toFixed(1).replace(".",",")}</td><td style="text-align:right;white-space:nowrap">${fmtPct(Number(l.peso)||0)}</td></tr>`;
+    return `<tr><td>${critLabelPlain(grupo.catalogoKey,l.critId)}</td><td style="text-align:right;white-space:nowrap">${n==null||n===""?"—":fmt(Number(n))}</td><td style="text-align:right;white-space:nowrap">${fmtPct(Number(l.peso)||0)}</td></tr>`;
   }).join("");
   if(!filas) return `<p class="dsg-note">Sin criterios calificados en esta actividad.</p>`;
   return `<table class="dsg-mini"><thead><tr><th>Criterio</th><th style="text-align:right">Nota</th><th style="text-align:right">Peso</th></tr></thead><tbody>${filas}</tbody></table>`;
@@ -297,7 +297,7 @@ function desgloseBloqueHTML(grupo,al,b,trim){
     const m=marcaDe(grupo,al.id,a.id);
     const recs=recuperacionesDe(grupo,a.id).filter(r=>notaActividadBase(grupo,al.id,r)!=null);
     const conRec=recs.length && va!=null && (vb==null || Math.abs(va-vb)>1e-9);
-    let celda=m==="EX"?"Exento":(conRec?`${vb==null?"—":fmt(vb)} → <strong>${fmt(va)}</strong>`:(va==null?"—":fmt(va)))+(m==="NP"?" (NP)":"");
+        let celda=m==="EX"?"Exento":(conRec?`${vb==null?"—":fmt(vb)} → <strong>${fmt(va)}</strong>`:(va==null?"—":fmt(va)))+(m==="NP"?" (NP)":"");
     if(ex) celda+=` + ${fmtPts(ex)} extra = <strong>${fmt(notaActividad(grupo,al.id,a))}</strong>`;
     // Cada actividad (fila + su desglose) es una pieza que no se parte entre dos páginas.
     return `<div class="dsg-act">
@@ -368,7 +368,7 @@ function desgloseCriterioHTML(grupo,al,cid,trim){
     const filas=acts.map(a=>{
       const l=a.criterios.find(x=>x.critId===cid);
       const n=grupo.notas?.[al.id]?.[a.id]?.[cid];
-      return `<tr><td>${esc(a.nombre)}</td><td style="text-align:right">${n==null||n===""?"—":Number(n).toFixed(1).replace(".",",")}</td><td style="text-align:right">${fmtPct(Number(l.peso)||0)}</td></tr>`;
+      return `<tr><td>${esc(a.nombre)}</td><td style="text-align:right">${n==null||n===""?"—":fmt(Number(n))}</td><td style="text-align:right">${fmtPct(Number(l.peso)||0)}</td></tr>`;
     }).join("");
     return `<table class="dsg-mini"><thead><tr><th>Actividad</th><th style="text-align:right">Nota (0-10)</th><th style="text-align:right">Peso</th></tr></thead><tbody>${filas}</tbody></table>`;
   });
