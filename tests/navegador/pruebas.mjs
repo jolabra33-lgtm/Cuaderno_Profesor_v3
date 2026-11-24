@@ -2142,9 +2142,9 @@ export const PRUEBAS = [
         inf: informeAlumnoBodyHTML(g, g.alumnos[0]), det: informeDetalladoBodyHTML(g, g.alumnos[0], 0) }; }, ids);
     t.ok(r2.sin === 7.5 && r2.t === 8, 'la evaluación suma el extra: 7,5 + 0,5 = 8', JSON.stringify([r2.sin, r2.t]));
     t.ok(r2.f === 8, 'la nota final recoge la evaluación con su extra');
-    t.ok(/7,5 \+ 0,5 = 8,0/.test(r2.texto), 'Resultados explica la cuenta');
+    t.ok(/7,50 \+ 0,5 = 8,00/.test(r2.texto), 'Resultados explica la cuenta');
     t.ok(/incluye \+1 extra/.test(r2.inf) && /incluye \+0,5 extra/.test(r2.inf), 'el informe del alumno/a indica los extras');
-    t.ok(/Puntos extra/.test(r2.det) && /6,5 \+ 1 extra = <strong>7,5/.test(r2.det), 'el informe detallado desglosa los extras');
+    t.ok(/Puntos extra/.test(r2.det) && /6,50 \+ 1 extra = <strong>7,50/.test(r2.det), 'el informe detallado desglosa los extras');
     // Papelera: borrar y restaurar al alumno/a y la actividad conserva los extras
     const r3 = await p.evaluate(async ids => { window.__dialogosAuto = { confirmar: true };
       await delAlumno(ids[0]); let g = grupoActual(); const borrado = !g.extras[ids[0]] && !g.extrasEval[ids[0]];
@@ -2313,8 +2313,8 @@ export const PRUEBAS = [
     await esperar(300);
     // 2 · Aviso temprano
     const txt = (await p.textContent('.aviso-riesgo')) || '';
-    t.ok(/Alba Baja, Ana:[^·]*ha bajado de 8,0 a 5,0 respecto a la 1/.test(txt) && !/Alba Baja, Ana: 🔴/.test(txt), 'avisa de quien ha bajado 2 puntos o más (y no la da por suspensa con un 5)', txt);
-    t.ok(/Beltrán Suspende, Blas: 🔴\ssuspende \(3,0\)/.test(txt), 'avisa de quien va suspendiendo, con su nota', txt);
+    t.ok(/Alba Baja, Ana:[^·]*ha bajado de 8,00 a 5,00 respecto a la 1/.test(txt) && !/Alba Baja, Ana: 🔴/.test(txt), 'avisa de quien ha bajado 2 puntos o más (y no la da por suspensa con un 5)', txt);
+    t.ok(/Beltrán Suspende, Blas: 🔴\ssuspende \(3,00\)/.test(txt), 'avisa de quien va suspendiendo, con su nota', txt);
     t.ok(/Cano Faltas, Carla:.*2 «No presentado»/.test(txt), 'avisa de quien acumula «No presentado»', txt);
     t.ok(txt.indexOf('Beltrán') < txt.indexOf('Alba'), 'primero lo más grave (suspende antes que baja)');
     await p.locator('.aviso-riesgo button:has-text("Ver")').nth(txt.indexOf('Beltrán') < txt.indexOf('Cano') ? 0 : 1).click(); await esperar(300);
@@ -2346,11 +2346,11 @@ export const PRUEBAS = [
     await elegir(p.locator('select[aria-label="Autoevaluación: Ítem 2"]'), '4'); await esperar(200);
     await elegir(p.locator('select[aria-label="Coevaluación: Ítem 1"]'), '3'); await esperar(200);
     const r = await p.evaluate(A => { const g = state.grupos[0]; return { auto: g.autoeval[A].e1.auto.items, nota: g.notasCuant[A].e1, txt: document.querySelector('.ae-detalles').textContent }; }, A);
-    t.ok(r.auto.i1 === 5 && r.auto.i2 === 4 && /Se pone: 9,0 · tu nota: 7,0\s*\+2/.test(r.txt), 'compara la autoevaluación con tu nota (9 frente a 7: +2)', JSON.stringify(r));
+    t.ok(r.auto.i1 === 5 && r.auto.i2 === 4 && /Se pone: 9,00 · tu nota: 7,00\s*\+2/.test(r.txt), 'compara la autoevaluación con tu nota (9 frente a 7: +2)', JSON.stringify(r));
     t.ok(r.nota === 7, 'no cambia la nota del examen');
     await p.evaluate(() => { state.ui.corAlId = ''; render(); }); await esperar(300);
     const lista = await p.textContent('#tabContent');
-    t.ok(lista.includes('🙋 9,0') && lista.includes('👥 …') && /9,0 frente a tu 7,0/.test(lista) && !/Coevaluación ·/.test(lista), 'la lista lleva los distintivos y el resumen del grupo solo cuenta hojas completas', lista.slice(0, 600));
+    t.ok(lista.includes('🙋 9,00') && lista.includes('👥 …') && /9,00 frente a tu 7,00/.test(lista) && !/Coevaluación ·/.test(lista), 'la lista lleva los distintivos y el resumen del grupo solo cuenta hojas completas', lista.slice(0, 600));
     // Hojas para el alumnado: coevaluación en blanco (una por alumno/a) y autoevaluación con nombre.
     await p.click('button:has-text("🙋 Autoevaluación")'); await esperar(200);
     await p.check('input[name=aeTipo][value=co]'); await p.check('input[name=aeHojas][value=blanco]');
