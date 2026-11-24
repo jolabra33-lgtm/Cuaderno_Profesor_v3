@@ -267,18 +267,18 @@ function desgloseNotaActividadHTML(grupo,al,a){
         const ev=cxEvalNodo(sec,sc);
         const itemsRows=(sec.items||[]).filter(it=>!it.unico).map(it=>{
           const val=sc[it.id]; const max=Number(it.max)||0;
-          return `<tr><td style="padding-left:${16+depth*12}px">${esc(it.label||"Ítem")}</td><td style="text-align:right;white-space:nowrap">${val==null?"—":fmtNota2(Number(val))} / ${fmtNota2(max)}</td></tr>`;
+          return `<tr><td style="padding-left:${16+depth*12}px">${esc(it.label||"Ítem")}</td><td style="text-align:right;white-space:nowrap">${val==null?"—":fmt(Number(val))} / ${fmt(max)}</td></tr>`;
         }).join("");
         return `<tr${sec.sinTitulo&&depth===0&&!cxElegirEf(sec)?' style="display:none"':""}><td style="font-size:10px;font-weight:700;${sec.tipo==="pregunta"||sec.tipo==="subpregunta"?"":"text-transform:uppercase;"}letter-spacing:.03em;color:var(--mu);padding-top:7px;padding-left:${depth*12}px">${esc((sec.title||"Apartado").split("\n")[0])}${cxElegirEf(sec)?` (${cxElegirEf(sec)} de ${cxNumHijos(sec)})`:""}</td><td style="text-align:right;font-size:11px;color:var(--mu);padding-top:7px">${ev.hay?fmt(ev.pts):"—"} / ${fmt(cxMaxNodo(sec))}</td></tr>${itemsRows}${(sec.subs||[]).map(s=>nodo(s,depth+1)).join("")}`;
       };
       const filas=(rubAl||[]).map(sec=>nodo(sec,0)).join("");
-      return `<table class="dsg-mini"><tbody>${filas}<tr><td style="font-weight:700">Total del examen (rúbrica)</td><td style="text-align:right;font-weight:700">${vc==null?"—":fmtNota2(vc)} / ${fmtNota2(cxEscalarDe(a,al.id)&&maxTotal>0&&Math.abs(maxTotal-10)>=0.01?10:maxTotal)}</td></tr></tbody></table>`;
+      return `<table class="dsg-mini"><tbody>${filas}<tr><td style="font-weight:700">Total del examen (rúbrica)</td><td style="text-align:right;font-weight:700">${vc==null?"—":fmt(vc)} / ${fmt(cxEscalarDe(a,al.id)&&maxTotal>0&&Math.abs(maxTotal-10)>=0.01?10:maxTotal)}</td></tr></tbody></table>`;
     }
-    return `<p class="dsg-note">Nota directa del examen (sin rúbrica): <strong>${vc==null?"—":fmtNota2(vc)}</strong> / 10.</p>`;
+    return `<p class="dsg-note">Nota directa del examen (sin rúbrica): <strong>${vc==null?"—":fmt(vc)}</strong> / 10.</p>`;
   }
   const filas=(a.criterios||[]).map(l=>{
     const n=grupo.notas?.[al.id]?.[a.id]?.[l.critId];
-    return `<tr><td>${critLabelPlain(grupo.catalogoKey,l.critId)}</td><td style="text-align:right;white-space:nowrap">${n==null||n===""?"—":Number(n).toFixed(1).replace(".",",")}</td><td style="text-align:right;white-space:nowrap">${fmtPct(Number(l.peso)||0)}</td></tr>`;
+    return `<tr><td>${critLabelPlain(grupo.catalogoKey,l.critId)}</td><td style="text-align:right;white-space:nowrap">${n==null||n===""?"—":fmt(Number(n))}</td><td style="text-align:right;white-space:nowrap">${fmtPct(Number(l.peso)||0)}</td></tr>`;
   }).join("");
   if(!filas) return `<p class="dsg-note">Sin criterios calificados en esta actividad.</p>`;
   return `<table class="dsg-mini"><thead><tr><th>Criterio</th><th style="text-align:right">Nota</th><th style="text-align:right">Peso</th></tr></thead><tbody>${filas}</tbody></table>`;
@@ -297,9 +297,8 @@ function desgloseBloqueHTML(grupo,al,b,trim){
     const m=marcaDe(grupo,al.id,a.id);
     const recs=recuperacionesDe(grupo,a.id).filter(r=>notaActividadBase(grupo,al.id,r)!=null);
     const conRec=recs.length && va!=null && (vb==null || Math.abs(va-vb)>1e-9);
-    const f=a.esExamen?fmtNota2:fmt;   // la nota de un examen, con sus 2 decimales (6,75)
-    let celda=m==="EX"?"Exento":(conRec?`${vb==null?"—":f(vb)} → <strong>${f(va)}</strong>`:(va==null?"—":f(va)))+(m==="NP"?" (NP)":"");
-    if(ex) celda+=` + ${fmtPts(ex)} extra = <strong>${f(notaActividad(grupo,al.id,a))}</strong>`;
+        let celda=m==="EX"?"Exento":(conRec?`${vb==null?"—":fmt(vb)} → <strong>${fmt(va)}</strong>`:(va==null?"—":fmt(va)))+(m==="NP"?" (NP)":"");
+    if(ex) celda+=` + ${fmtPts(ex)} extra = <strong>${fmt(notaActividad(grupo,al.id,a))}</strong>`;
     // Cada actividad (fila + su desglose) es una pieza que no se parte entre dos páginas.
     return `<div class="dsg-act">
         <div class="dsg-act-fila">
@@ -369,7 +368,7 @@ function desgloseCriterioHTML(grupo,al,cid,trim){
     const filas=acts.map(a=>{
       const l=a.criterios.find(x=>x.critId===cid);
       const n=grupo.notas?.[al.id]?.[a.id]?.[cid];
-      return `<tr><td>${esc(a.nombre)}</td><td style="text-align:right">${n==null||n===""?"—":Number(n).toFixed(1).replace(".",",")}</td><td style="text-align:right">${fmtPct(Number(l.peso)||0)}</td></tr>`;
+      return `<tr><td>${esc(a.nombre)}</td><td style="text-align:right">${n==null||n===""?"—":fmt(Number(n))}</td><td style="text-align:right">${fmtPct(Number(l.peso)||0)}</td></tr>`;
     }).join("");
     return `<table class="dsg-mini"><thead><tr><th>Actividad</th><th style="text-align:right">Nota (0-10)</th><th style="text-align:right">Peso</th></tr></thead><tbody>${filas}</tbody></table>`;
   });

@@ -62,7 +62,7 @@ function aeTarjetaHTML(grupo,act,al){
   const items=cxItemsFlat(rubVista);
   const aid=escJS(al.id), xid=escJS(act.id);
   const resumen=tipo=>{ const r=aeRegistro(grupo,al.id,act.id,tipo); if(!r) return ""; const n=aeNota(act,al.id,r.items);
-    return aeCompleto(act,al.id,r)? `${AE_TIPOS[tipo].icono} ${fmtNota2(n)}${vc!=null?" "+aeDifHTML(n-vc):""}` : `${AE_TIPOS[tipo].icono} a medias`; };
+    return aeCompleto(act,al.id,r)? `${AE_TIPOS[tipo].icono} ${fmt(n)}${vc!=null?" "+aeDifHTML(n-vc):""}` : `${AE_TIPOS[tipo].icono} a medias`; };
   const res=[resumen("auto"),resumen("co")].filter(Boolean).join(" · ");
   const bloque=tipo=>{
     const r=aeRegistro(grupo,al.id,act.id,tipo), vals=(r&&r.items)||{};
@@ -76,7 +76,7 @@ function aeTarjetaHTML(grupo,act,al){
       <div class="flex" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
         <strong style="font-size:14px">${AE_TIPOS[tipo].icono} ${AE_TIPOS[tipo].titulo}</strong>
         <span style="font-size:13px">${n!=null?(aeCompleto(act,al.id,r)
-          ?`${AE_TIPOS[tipo].quien}: <strong>${fmtNota2(n)}</strong>${vc!=null?` · tu nota: ${fmtNota2(vc)} ${aeDifHTML(n-vc)}`:""}`
+          ?`${AE_TIPOS[tipo].quien}: <strong>${fmt(n)}</strong>${vc!=null?` · tu nota: ${fmt(vc)} ${aeDifHTML(n-vc)}`:""}`
           :`<span class="sub" style="margin:0">Copiados ${Object.keys(vals).length} de ${items.length} ítems</span>`):'<span class="sub" style="margin:0">Sin datos todavía</span>'}</span>
       </div>
       ${por}
@@ -101,7 +101,7 @@ function aeTarjetaHTML(grupo,act,al){
 /* Distintivo en la lista de Corregir. */
 function aeBadgeHTML(grupo,alId,act){
   return ["auto","co"].map(tipo=>{ const r=aeRegistro(grupo,alId,act.id,tipo); if(!r) return "";
-    const txt=aeCompleto(act,alId,r)? fmtNota2(aeNota(act,alId,r.items)) : "…";
+    const txt=aeCompleto(act,alId,r)? fmt(aeNota(act,alId,r.items)) : "…";
     return ` <span class="badge" title="${AE_TIPOS[tipo].titulo}: ${aeCompleto(act,alId,r)?txt:"a medias"}">${AE_TIPOS[tipo].icono} ${txt}</span>`; }).join("");
 }
 /* Resumen del grupo en la cabecera del examen: cuánto se ponen frente a lo que les pones tú (mismo alumnado). */
@@ -112,7 +112,7 @@ function aeResumenGrupoHTML(grupo,act){
     if(!pares.length) return "";
     const ma=pares.reduce((s,x)=>s+x.a,0)/pares.length, mp=pares.reduce((s,x)=>s+x.p,0)/pares.length;
     return `<div><div style="font-size:12.5px;color:var(--mut)">${AE_TIPOS[tipo].icono} ${AE_TIPOS[tipo].titulo} · ${pares.length} alumno${pares.length===1?"":"s"}/a${pares.length===1?"":"s"}</div>
-      <span style="font-size:15px"><strong>${fmtNota2(ma)}</strong> frente a tu ${fmtNota2(mp)} ${aeDifHTML(ma-mp)}</span></div>`;
+      <span style="font-size:15px"><strong>${fmt(ma)}</strong> frente a tu ${fmt(mp)} ${aeDifHTML(ma-mp)}</span></div>`;
   }).filter(Boolean);
   return partes.length? `<div class="flex" style="margin-top:12px;gap:24px">${partes.join("")}</div>` : "";
 }

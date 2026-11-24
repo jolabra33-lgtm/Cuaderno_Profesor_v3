@@ -1826,7 +1826,7 @@ export const PRUEBAS = [
     t.ok(JSON.stringify(notas) === '[7.5,4,null]', 'las notas se guardan', JSON.stringify(notas));
   } },
 
-  { nombre: 'corregir-dos-decimales', descripcion: 'Corregir con rúbrica: la nota del examen se ve con 2 decimales (6,75 y no 6,8)', async fn(t) {
+  { nombre: 'corregir-dos-decimales', descripcion: 'Notas con 2 decimales: el examen corregido con rúbrica, la nota de la evaluación y la final (6,75 y no 6,8)', async fn(t) {
     const p = await nuevaPagina(t.contexto);
     await cuadernoConGrupo(p, t.url);
     await p.evaluate(() => { const g = state.grupos[0], A = g.alumnos[0].id, cr = getCatalogo('GeH_1ESO').ces[0].criterios[0].id;
@@ -1843,7 +1843,14 @@ export const PRUEBAS = [
     await esperar(300);
     txt = await p.evaluate(() => document.body.innerText);
     t.ok(/6,75/.test(txt), 'en la lista del examen se ve 6,75');
-    t.ok(await p.evaluate(() => [fmtNota2(6.75), fmtNota2(7), fmtNota2(4.996), fmt(6.75)].join(' ')) === '6,75 7,00 4,99 6,8', 'fmtNota2: 2 decimales y nunca un 5 que no es; fmt sigue con 1 decimal para las medias');
+    t.ok(await p.evaluate(() => [fmt(6.75), fmt(7), fmt(4.996), fmt(6.746)].join(' ')) === '6,75 7,00 4,99 6,75', 'las notas se escriben con 2 decimales y nunca un 5 que no es', await p.evaluate(() => [fmt(6.75), fmt(7), fmt(4.996), fmt(6.746)].join(' ')));
+    // La nota de la evaluación y la final (con un único examen, 6,75) también con 2 decimales.
+    const ev = await p.evaluate(() => { const g = state.grupos[0], A = g.alumnos[0].id; return [notaTrimestre(g, A, state.ui.trim), fmt(notaTrimestre(g, A, state.ui.trim)), fmt(notaFinal(g, A))]; });
+    t.ok(ev[0] === 6.75 && ev[1] === '6,75' && ev[2] === '6,75', 'la nota de la evaluación y la final se ven con 2 decimales', JSON.stringify(ev));
+    await p.evaluate(() => { state.ui.appMode = 'competencial'; state.ui.tab = 'resultados'; save(); render(); });
+    await esperar(300);
+    txt = await p.evaluate(() => document.body.innerText);
+    t.ok(/6,75/.test(txt) && !/6,8\b/.test(txt), 'en Resultados la nota de la evaluación sale 6,75', txt.slice(0, 600));
   } },
 
   { nombre: 'corregir-desplegable', descripcion: 'Corregir: la puntuación de cada ítem se elige en un desplegable de 0,05 en 0,05 y permite «No presentado»', async fn(t) {

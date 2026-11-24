@@ -178,8 +178,9 @@ function ejecutarPruebas() {
   comprobar('Sin aviso para quien tiene todas', bloquesSinNota(g, 'a1', 0), []);
 
   // --- Nota mostrada y nota de acta
-  comprobar('fmt: 6,65 se muestra 6,7', fmt(6.65), '6,7');
-  comprobar('fmt: 4,96 no se muestra como 5,0', fmt(4.96), '4,9');
+  comprobar('fmt: 6,75 se muestra 6,75 (2 decimales)', fmt(6.75), '6,75');
+  comprobar('fmt: 6,745 se muestra 6,75', fmt(6.745), '6,75');
+  comprobar('fmt: 4,996 no se muestra como 5,00', fmt(4.996), '4,99');
   comprobar('fmt: sin nota', fmt(null), '—');
   comprobar('Acta: 4,6 no aprueba por redondeo', notaActa(4.6, g), 4);
   comprobar('Acta: 5,5 → 6', notaActa(5.5, g), 6);

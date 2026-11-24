@@ -115,7 +115,7 @@ function renderCorLista(grupo){
             <input class="in" value="${esc(act.nombre)}" aria-label="Nombre del examen (se puede cambiar)" title="Pulsa para cambiar el nombre del examen" style="font-size:15px;font-weight:600;flex:1;min-width:0;width:100%" onchange="cxRenombrarExamen('${act.id}',this.value)">
             ${act.sda?`<span class="badge" style="vertical-align:middle">${esc(act.sda)}</span>`:''}
           </div>
-          <div style="font-size:12.5px;color:var(--mut);margin-top:2px">${b?esc(b.label):""} · ${notas.length}/${grupo.alumnos.length} corregido${notas.length===1?"":"s"}${media!=null?` · media ${fmtNota2(media)}`:""}</div>
+          <div style="font-size:12.5px;color:var(--mut);margin-top:2px">${b?esc(b.label):""} · ${notas.length}/${grupo.alumnos.length} corregido${notas.length===1?"":"s"}${media!=null?` · media ${fmt(media)}`:""}</div>
           ${cxAvisoCriteriosBadgeHTML(grupo,act)}
           ${cxVinculoProgHTML(grupo,act)}
         </div>

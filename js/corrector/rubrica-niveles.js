@@ -338,7 +338,7 @@ window.cxnElegir=(alId,actId,itemId,nivelId)=>{
 function cxnImprimirHTML(grupo,act,al,rub,sc,opts){
   const niv=cxnNiveles(rub), items=cxItemsFlat(rub);
   const anot=it=>{ const t=(grupo.examComentarios?.[al.id]?.[act.id+"|"+it.id]||"").trim(); return t?`<div class="cx-item-desc cx-coment-item" style="font-style:italic">✎ ${comentRicoHTML(t)}</div>`:""; };
-  const pts=it=>{ const v=sc[it.id]; return `<span class="cx-item-score">${v==null||v===""?"—":fmtNota2(Number(v))}</span><small> / ${fmtNota2(Number(it.max)||0)}</small>`; };
+  const pts=it=>{ const v=sc[it.id]; return `<span class="cx-item-score">${v==null||v===""?"—":fmt(Number(v))}</span><small> / ${fmt(Number(it.max)||0)}</small>`; };
   if(opts.resumida){
     const filas=items.map(it=>{ const pos=cxnPosicion(it,sc[it.id],niv); const l=pos&&pos.exacto&&niv.find(n=>n.id===pos.exacto);
       return `<tr><td><div class="cx-item-label">${esc(it.label||"(sin nombre)")}</div>${anot(it)}</td>

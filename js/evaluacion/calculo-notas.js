@@ -284,20 +284,10 @@ function notaFinalSinExtra(grupo,alId){
   }
   return sw>0? sv/sw : null;
 }
-/* Nota con 1 decimal (redondeo normal). Única excepción: una nota por debajo
-   de 5 nunca se muestra como "5,0" (4,96 → "4,9"), para que la cifra no
-   sugiera un aprobado que la nota de acta no da. */
+/* Nota con 2 decimales (6,75), redondeando al céntimo. Única excepción: una
+   nota por debajo de 5 nunca se muestra como "5,00" (4,996 → "4,99"), para que
+   la cifra no sugiera un aprobado que la nota de acta no da. */
 const fmt=x=>{
-  if(x==null||x===""||isNaN(Number(x))) return "—";
-  x=_limpiaFP(x);
-  let r=Math.round(_limpiaFP(x*10))/10;
-  if(x<5 && r>=5) r=4.9;
-  return r.toFixed(1).replace(".",",");
-};
-/* La nota de un examen y los puntos de su rúbrica, con 2 decimales (6,75; 0,25):
-   con un solo decimal un 6,75 se veía como 6,8. Misma excepción que fmt: por
-   debajo de 5 nunca sale "5,00". */
-const fmtNota2=x=>{
   if(x==null||x===""||isNaN(Number(x))) return "—";
   x=_limpiaFP(x);
   let r=Math.round(_limpiaFP(x*100))/100;
